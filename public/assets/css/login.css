@@ -1,0 +1,141 @@
+:root {
+  --bg: #0a0f1f;
+  --card: #121833;
+  --text: #e6ebff;
+  --muted: #8fa1ff;
+  --accent: #ff7f27;
+  --border: #1f2a55;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #141b3f, var(--bg));
+  color: var(--text);
+}
+
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--card);
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--border);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.logo {
+  font-weight: 600;
+  font-size: 22px;
+  margin-bottom: 8px;
+}
+
+.login-header h1 {
+  margin: 6px 0;
+  font-size: 22px;
+}
+
+.login-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #0b1024;
+  color: var(--text);
+  outline: none;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+}
+
+.options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.checkbox {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(135deg, #ff7f27, #ff9f57);
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.divider {
+  text-align: center;
+  margin: 18px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 22px;
+  font-size: 13px;
+}
