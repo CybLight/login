@@ -1,5 +1,5 @@
 (function () {
-  const routes = new Set(["username", "password", "2fa", "reset", "done"]);
+  const routes = new Set(["username", "strawberry-history", "password", "2fa", "reset", "done"]);
 
   function getRoute() {
     const path = location.pathname.replace(/^\/+/, "").replace(/\/+$/, "");
