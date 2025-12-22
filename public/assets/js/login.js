@@ -1,4 +1,11 @@
-const app = document.getElementById("app");
+const app = document.getElementById('app');
+
+// ===== Turnstile =====
+let turnstileToken = '';
+
+window.onTurnstileOk = (token) => {
+  turnstileToken = token;
+};
 
 // 🍓 Lightbox
 
@@ -9,38 +16,43 @@ const StrawberryLightbox = (() => {
   let index = 0;
 
   // swipe
-  let touchStartX = 0, touchStartY = 0;
+  let touchStartX = 0,
+    touchStartY = 0;
   let touchActive = false;
 
   // pinch-zoom / pan
-  let baseScale = 1;   // сохранённый scale после жеста
-  let scale = 1;       // текущий
-  let baseTx = 0, baseTy = 0;
-  let tx = 0, ty = 0;
+  let baseScale = 1; // сохранённый scale после жеста
+  let scale = 1; // текущий
+  let baseTx = 0,
+    baseTy = 0;
+  let tx = 0,
+    ty = 0;
 
   let isPinching = false;
   let pinchStartDist = 0;
   let pinchStartScale = 1;
 
   let isPanning = false;
-  let panStartX = 0, panStartY = 0;
-  let panStartTx = 0, panStartTy = 0;
+  let panStartX = 0,
+    panStartY = 0;
+  let panStartTx = 0,
+    panStartTy = 0;
 
   function ensure() {
-    lb = document.querySelector(".strawberry-lightbox");
+    lb = document.querySelector('.strawberry-lightbox');
     if (lb) {
-      imgEl = lb.querySelector(".strawberry-lightbox__img");
-      closeBtn = lb.querySelector(".strawberry-lightbox__close");
-      prevBtn = lb.querySelector(".strawberry-lightbox__nav.prev");
-      nextBtn = lb.querySelector(".strawberry-lightbox__nav.next");
-      counterEl = lb.querySelector(".strawberry-lightbox__counter");
-      captionEl = lb.querySelector(".strawberry-lightbox__caption");
-      hudEl = lb.querySelector(".strawberry-lightbox__hud");
-      stageEl = lb.querySelector(".strawberry-lightbox__stage");
+      imgEl = lb.querySelector('.strawberry-lightbox__img');
+      closeBtn = lb.querySelector('.strawberry-lightbox__close');
+      prevBtn = lb.querySelector('.strawberry-lightbox__nav.prev');
+      nextBtn = lb.querySelector('.strawberry-lightbox__nav.next');
+      counterEl = lb.querySelector('.strawberry-lightbox__counter');
+      captionEl = lb.querySelector('.strawberry-lightbox__caption');
+      hudEl = lb.querySelector('.strawberry-lightbox__hud');
+      stageEl = lb.querySelector('.strawberry-lightbox__stage');
       return lb;
     }
-    lb = document.createElement("div");
-    lb.className = "strawberry-lightbox";
+    lb = document.createElement('div');
+    lb.className = 'strawberry-lightbox';
     lb.innerHTML = `
       <div class="strawberry-lightbox__hud">
         <div class="strawberry-lightbox__counter">1 / 1</div>
@@ -58,41 +70,41 @@ const StrawberryLightbox = (() => {
     `;
     document.body.appendChild(lb);
 
-    imgEl = lb.querySelector(".strawberry-lightbox__img");
-    closeBtn = lb.querySelector(".strawberry-lightbox__close");
-    prevBtn = lb.querySelector(".strawberry-lightbox__nav.prev");
-    nextBtn = lb.querySelector(".strawberry-lightbox__nav.next");
-    counterEl = lb.querySelector(".strawberry-lightbox__counter");
-    captionEl = lb.querySelector(".strawberry-lightbox__caption");
-    hudEl = lb.querySelector(".strawberry-lightbox__hud");
-    stageEl = lb.querySelector(".strawberry-lightbox__stage");
+    imgEl = lb.querySelector('.strawberry-lightbox__img');
+    closeBtn = lb.querySelector('.strawberry-lightbox__close');
+    prevBtn = lb.querySelector('.strawberry-lightbox__nav.prev');
+    nextBtn = lb.querySelector('.strawberry-lightbox__nav.next');
+    counterEl = lb.querySelector('.strawberry-lightbox__counter');
+    captionEl = lb.querySelector('.strawberry-lightbox__caption');
+    hudEl = lb.querySelector('.strawberry-lightbox__hud');
+    stageEl = lb.querySelector('.strawberry-lightbox__stage');
 
     // закрытие по крестику
-    closeBtn.addEventListener("click", close);
-    prevBtn.addEventListener("click", prev);
-    nextBtn.addEventListener("click", next);
+    closeBtn.addEventListener('click', close);
+    prevBtn.addEventListener('click', prev);
+    nextBtn.addEventListener('click', next);
 
     // закрытие по клику на фон
-    lb.addEventListener("click", (e) => {
+    lb.addEventListener('click', (e) => {
       if (e.target === lb) close();
     });
 
     // keyboard
-    window.addEventListener("keydown", (e) => {
-      if (!lb.classList.contains("is-open")) return;
-      if (e.key === "Escape") close();
-      if (e.key === "ArrowLeft") prev();
-      if (e.key === "ArrowRight") next();
+    window.addEventListener('keydown', (e) => {
+      if (!lb.classList.contains('is-open')) return;
+      if (e.key === 'Escape') close();
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
     });
 
     // --- touch gestures (swipe + pinch) ---
     // используем imgEl, чтобы не ломать прокрутку страницы
-    imgEl.addEventListener("touchstart", onTouchStart, { passive: false });
-    imgEl.addEventListener("touchmove", onTouchMove, { passive: false });
-    imgEl.addEventListener("touchend", onTouchEnd, { passive: false });
+    imgEl.addEventListener('touchstart', onTouchStart, { passive: false });
+    imgEl.addEventListener('touchmove', onTouchMove, { passive: false });
+    imgEl.addEventListener('touchend', onTouchEnd, { passive: false });
 
     // mouse pan (for PC)
-    imgEl.addEventListener("mousedown", onMouseDown);
+    imgEl.addEventListener('mousedown', onMouseDown);
 
     return lb;
   }
@@ -106,8 +118,8 @@ const StrawberryLightbox = (() => {
   function preloadOne(src) {
     if (!src) return;
     const img = new Image();
-    img.decoding = "async";
-    img.loading = "eager";
+    img.decoding = 'async';
+    img.loading = 'eager';
     img.src = src;
   }
   function preloadNeighbors() {
@@ -117,7 +129,7 @@ const StrawberryLightbox = (() => {
 
   function updateHud() {
     if (counterEl) counterEl.textContent = `${index + 1} / ${sources.length || 1}`;
-    if (captionEl) captionEl.textContent = captions[index] || "";
+    if (captionEl) captionEl.textContent = captions[index] || '';
   }
 
   function resetTransform() {
@@ -125,7 +137,7 @@ const StrawberryLightbox = (() => {
     baseTx = tx = 0;
     baseTy = ty = 0;
     applyTransform();
-    lb?.classList.remove("is-zoomed");
+    lb?.classList.remove('is-zoomed');
   }
 
   function clamp(v, min, max) {
@@ -139,11 +151,13 @@ const StrawberryLightbox = (() => {
 
     // если scale == 1 — сбрасываем сдвиги
     if (scale <= 1.001) {
-      tx = 0; ty = 0;
-      baseTx = 0; baseTy = 0;
-      lb?.classList.remove("is-zoomed");
+      tx = 0;
+      ty = 0;
+      baseTx = 0;
+      baseTy = 0;
+      lb?.classList.remove('is-zoomed');
     } else {
-      lb?.classList.add("is-zoomed");
+      lb?.classList.add('is-zoomed');
     }
 
     imgEl.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
@@ -154,19 +168,19 @@ const StrawberryLightbox = (() => {
     index = (i + sources.length) % sources.length;
 
     ensure();
-    imgEl.classList.remove("is-ready");
+    imgEl.classList.remove('is-ready');
     resetTransform(); // при смене фото сбрасываем zoom/pan
 
     const src = sources[index];
     updateHud();
 
     const tmp = new Image();
-    tmp.decoding = "async";
+    tmp.decoding = 'async';
     tmp.src = src;
 
     const apply = () => {
       imgEl.src = src;
-      requestAnimationFrame(() => imgEl.classList.add("is-ready"));
+      requestAnimationFrame(() => imgEl.classList.add('is-ready'));
       preloadNeighbors();
     };
 
@@ -180,26 +194,28 @@ const StrawberryLightbox = (() => {
   function open(items, startIndex) {
     ensure();
     setItems(items, startIndex);
-    lb.classList.add("is-open");
+    lb.classList.add('is-open');
     showAt(index);
   }
 
   function close() {
     if (!lb) return;
-    lb.classList.remove("is-open");
+    lb.classList.remove('is-open');
     if (imgEl) {
-      imgEl.classList.remove("is-ready");
-      setTimeout(() => { imgEl.src = ""; }, 80);
+      imgEl.classList.remove('is-ready');
+      setTimeout(() => {
+        imgEl.src = '';
+      }, 80);
     }
     resetTransform();
   }
 
   function prev() {
-    if (!lb || !lb.classList.contains("is-open")) return;
+    if (!lb || !lb.classList.contains('is-open')) return;
     showAt(index - 1);
   }
   function next() {
-    if (!lb || !lb.classList.contains("is-open")) return;
+    if (!lb || !lb.classList.contains('is-open')) return;
     showAt(index + 1);
   }
 
@@ -211,7 +227,7 @@ const StrawberryLightbox = (() => {
   }
 
   function onTouchStart(e) {
-    if (!lb?.classList.contains("is-open")) return;
+    if (!lb?.classList.contains('is-open')) return;
 
     if (e.touches.length === 2) {
       // pinch start
@@ -242,7 +258,7 @@ const StrawberryLightbox = (() => {
   }
 
   function onTouchMove(e) {
-    if (!lb?.classList.contains("is-open")) return;
+    if (!lb?.classList.contains('is-open')) return;
 
     if (isPinching && e.touches.length === 2) {
       const d = dist2(e.touches[0], e.touches[1]);
@@ -264,13 +280,14 @@ const StrawberryLightbox = (() => {
   }
 
   function onTouchEnd(e) {
-    if (!lb?.classList.contains("is-open")) return;
+    if (!lb?.classList.contains('is-open')) return;
 
     // pinch end
     if (isPinching && e.touches.length < 2) {
       isPinching = false;
       baseScale = scale;
-      baseTx = tx; baseTy = ty;
+      baseTx = tx;
+      baseTy = ty;
       applyTransform();
       return;
     }
@@ -278,7 +295,8 @@ const StrawberryLightbox = (() => {
     // pan end
     if (isPanning && e.touches.length === 0) {
       isPanning = false;
-      baseTx = tx; baseTy = ty;
+      baseTx = tx;
+      baseTy = ty;
       applyTransform();
       return;
     }
@@ -310,7 +328,7 @@ const StrawberryLightbox = (() => {
 
   // ---- Mouse pan (desktop) ----
   function onMouseDown(e) {
-    if (!lb?.classList.contains("is-open")) return;
+    if (!lb?.classList.contains('is-open')) return;
     if (scale <= 1.01) return;
 
     isPanning = true;
@@ -328,12 +346,12 @@ const StrawberryLightbox = (() => {
 
     const onUp = () => {
       isPanning = false;
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
     };
 
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
   }
 
   return { open };
@@ -341,21 +359,21 @@ const StrawberryLightbox = (() => {
 
 // Функция рендера по маршруту
 function renderRoute(r) {
-  if (r === "username") return viewUsername();
-  if (r === "password") return viewPassword();
-  if (r === "reset") return viewReset();
-  if (r === "done") return viewDone();
-  if (r === "strawberry-history") return viewStrawberryHistory();
+  if (r === 'username') return viewUsername();
+  if (r === 'password') return viewPassword();
+  if (r === 'reset') return viewReset();
+  if (r === 'done') return viewDone();
+  if (r === 'strawberry-history') return viewStrawberryHistory();
   return viewUsername();
 }
 
 // Слушаем роут-события
-window.addEventListener("cyb:route", (e) => {
+window.addEventListener('cyb:route', (e) => {
   renderRoute(e.detail.route);
 });
 
 // Начальный рендер
-renderRoute(window.CybRouter?.getRoute?.() || "username");
+renderRoute(window.CybRouter?.getRoute?.() || 'username');
 
 function shell(contentHtml) {
   return `
@@ -425,34 +443,33 @@ function viewUsername() {
       <button class="btn-create" type="button" id="createAcc">Регистрируйся!</button>
     </div>
   `);
-  const oldBtn = document.getElementById("scrollTopBtn");
+  const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
-
-  document.getElementById("forgotUser").onclick = (e) => {
+  document.getElementById('forgotUser').onclick = (e) => {
     e.preventDefault();
-    CybRouter.navigate("reset");
+    CybRouter.navigate('reset');
   };
 
-  document.getElementById("keyLogin").onclick = () => {
-    alert("Ключ доступа (demo). Позже подключим passkey/WebAuthn.");
+  document.getElementById('keyLogin').onclick = () => {
+    alert('Ключ доступа (demo). Позже подключим passkey/WebAuthn.');
   };
 
-  document.getElementById("createAcc").onclick = () => {
-    alert("Регистрация (demo). Потом сделаем отдельный маршрут /signup.");
+  document.getElementById('createAcc').onclick = () => {
+    alert('Регистрация (demo). Потом сделаем отдельный маршрут /signup.');
   };
 
-  document.getElementById("f").addEventListener("submit", (e) => {
+  document.getElementById('f').addEventListener('submit', (e) => {
     e.preventDefault();
-    const login = document.getElementById("login").value.trim();
-    if (!login) return alert("Введите имя пользователя");
-    sessionStorage.setItem("cyb_login", login);
-    CybRouter.navigate("password");
+    const login = document.getElementById('login').value.trim();
+    if (!login) return alert('Введите имя пользователя');
+    sessionStorage.setItem('cyb_login', login);
+    CybRouter.navigate('password');
   });
 }
 
 function viewPassword() {
-  const login = sessionStorage.getItem("cyb_login") || "";
+  const login = sessionStorage.getItem('cyb_login') || '';
   app.innerHTML = shell(`
     <section class="auth-card">
       <div class="auth-head">
@@ -462,6 +479,12 @@ function viewPassword() {
         <div class="auth-title">
           <h1>Войти</h1>
         </div>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <div class="cf-turnstile"   
+             data-sitekey="0x4AAAAAACIMk1fcGPcs3NLf"
+             data-theme="dark"
+             data-callback="onTurnstileOk"></div>
       </div>
 
       <form id="f">
@@ -484,27 +507,68 @@ function viewPassword() {
       </form>
     </section>
   `);
-  const oldBtn = document.getElementById("scrollTopBtn");
+  const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
-
-  document.getElementById("back").onclick = (e) => {
+  document.getElementById('back').onclick = (e) => {
     e.preventDefault();
-    CybRouter.navigate("username");
+    CybRouter.navigate('username');
   };
-  document.getElementById("forgotPass").onclick = (e) => {
+  document.getElementById('forgotPass').onclick = (e) => {
     e.preventDefault();
-    CybRouter.navigate("reset");
+    CybRouter.navigate('reset');
   };
 
-  document.getElementById("f").addEventListener("submit", (e) => {
+  document.getElementById('f').addEventListener('submit', (e) => {
     e.preventDefault();
-    const pass = document.getElementById("pass").value.trim();
-    if (!pass) return alert("Введите пароль");
+    const pass = document.getElementById('pass').value.trim();
+    if (!pass) return alert('Введите пароль');
 
-    // demo
-    alert("Успешный вход (demo)");
-    CybRouter.navigate("done");
+    // TURNSTILE TOKEN
+    document.getElementById('f').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const pass = document.getElementById('pass').value.trim();
+      if (!pass) return alert('Введите пароль');
+
+      if (!turnstileToken) {
+        alert('Подтверди, что ты не робот');
+        return;
+      }
+
+      const login = sessionStorage.getItem('cyb_login');
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            login,
+            password: pass,
+            turnstileToken,
+          }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          // ❌ ОШИБКА — сбрасываем капчу
+          turnstile.reset();
+          turnstileToken = '';
+
+          alert(data.error || 'Ошибка входа');
+          return;
+        }
+
+        // ✅ УСПЕХ
+        CybRouter.navigate('done');
+      } catch (err) {
+        // ❌ СЕТЕВАЯ ОШИБКА — тоже сбрасываем
+        turnstile.reset();
+        turnstileToken = '';
+
+        alert('Ошибка сети. Попробуйте ещё раз.');
+      }
+    });
   });
 }
 
@@ -528,11 +592,10 @@ function viewReset() {
       <button class="btn btn-outline" style="margin-top:16px;" id="back">← Назад</button>
     </section>
   `);
-  const oldBtn = document.getElementById("scrollTopBtn");
+  const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
-  document.getElementById("back").onclick = () =>
-    CybRouter.navigate("username");
+  document.getElementById('back').onclick = () => CybRouter.navigate('username');
 }
 
 function viewDone() {
@@ -557,15 +620,14 @@ function viewDone() {
       </button>
     </section>
   `);
-  const oldBtn = document.getElementById("scrollTopBtn");
+  const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
-  document.getElementById("toUser").onclick = () =>
-    CybRouter.navigate("username");
+  document.getElementById('toUser').onclick = () => CybRouter.navigate('username');
 }
 
 function viewStrawberryHistory() {
-  const login = sessionStorage.getItem("cyb_login") || "Гость";
+  const login = sessionStorage.getItem('cyb_login') || 'Гость';
 
   app.innerHTML = shell(`
     <section class="auth-card strawberry-history">
@@ -601,61 +663,58 @@ function viewStrawberryHistory() {
     </section>
   `);
 
-  const btn = document.createElement("div");
-  btn.id = "scrollTopBtn";
-  btn.textContent = "⬆";
+  const btn = document.createElement('div');
+  btn.id = 'scrollTopBtn';
+  btn.textContent = '⬆';
   document.body.appendChild(btn);
 
-
   // подключаем лайтбокс к фоткам стенографии + подписи
-  const imgs = Array.from(document.querySelectorAll(".strawberry-grid img"));
+  const imgs = Array.from(document.querySelectorAll('.strawberry-grid img'));
 
   const sources = imgs.map((x) => x.src);
-  const captions = imgs.map((x) => x.alt || "🍓 Strawberry");
+  const captions = imgs.map((x) => x.alt || '🍓 Strawberry');
 
   imgs.forEach((img, i) => {
-    img.addEventListener("click", () => {
+    img.addEventListener('click', () => {
       StrawberryLightbox.open({ sources, captions }, i);
     });
   });
 
   // кнопка "Продолжить"
-  document.getElementById("toUsername").onclick = () => {
-    CybRouter.navigate("username");
+  document.getElementById('toUsername').onclick = () => {
+    CybRouter.navigate('username');
   };
 
   // Логика появления кнопки "вверх"
-  const scrollBtn = document.getElementById("scrollTopBtn");
+  const scrollBtn = document.getElementById('scrollTopBtn');
 
   function checkScroll() {
     if (window.scrollY > 300) {
-      scrollBtn.classList.add("show");
+      scrollBtn.classList.add('show');
     } else {
-      scrollBtn.classList.remove("show");
+      scrollBtn.classList.remove('show');
     }
   }
 
-  window.addEventListener("scroll", checkScroll, { passive: true });
+  window.addEventListener('scroll', checkScroll, { passive: true });
   checkScroll();
 
   // При нажатии — плавный скролл вверх
   scrollBtn.onclick = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-
 }
 
 function escapeHtml(s) {
-  return (s || "").replace(
+  return (s || '').replace(
     /[&<>"']/g,
     (c) =>
       ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
       }[c])
   );
 }
@@ -667,7 +726,7 @@ function escapeHtml(s) {
 
 (function initAlexStrawberries() {
   // --- CONFIG ---
-  const LOG_URL = "https://cyblight.org/e-log";
+  const LOG_URL = 'https://cyblight.org/e-log';
   const COUNT = 35;
 
   // ОДИН РАЗ на вкладку
@@ -685,34 +744,34 @@ function escapeHtml(s) {
   }
 
   function escapeHtml(s) {
-    return (s || "").replace(
+    return (s || '').replace(
       /[&<>"']/g,
       (c) =>
         ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;",
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
         }[c])
     );
   }
 
   function getRouteSafe() {
     try {
-      if (window.CybRouter && typeof CybRouter.getRoute === "function") {
+      if (window.CybRouter && typeof CybRouter.getRoute === 'function') {
         return CybRouter.getRoute();
       }
     } catch (_) {}
-    const path = location.pathname.replace(/^\/+/, "").replace(/\/+$/, "");
-    return path || "username";
+    const path = location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+    return path || 'username';
   }
 
   function sendWorkLog(extra = {}) {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    
+
     const payload = {
-      type: "alex_strawberry",
+      type: 'alex_strawberry',
       page: window.location.href,
       timezone: tz,
 
@@ -725,20 +784,20 @@ function escapeHtml(s) {
     };
 
     fetch(LOG_URL, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     }).catch(() => {});
   }
 
   // ---------- modal (injected, ONE for all pages) ----------
   function ensureModal() {
-    let modal = document.getElementById("customPrompt");
+    let modal = document.getElementById('customPrompt');
     if (modal) return modal;
 
-    modal = document.createElement("div");
-    modal.id = "customPrompt";
-    modal.className = "modal";
+    modal = document.createElement('div');
+    modal.id = 'customPrompt';
+    modal.className = 'modal';
 
     modal.innerHTML = `
       <div class="modal-content" role="dialog" aria-modal="true" aria-label="CybLight Modal">
@@ -762,17 +821,17 @@ function escapeHtml(s) {
     document.body.appendChild(modal);
 
     // Закрытие по клику на фон
-    modal.addEventListener("click", (e) => {
+    modal.addEventListener('click', (e) => {
       if (e.target === modal) {
-        const cancel = modal.querySelector("#cancelBtn");
+        const cancel = modal.querySelector('#cancelBtn');
         if (cancel) cancel.click();
       }
     });
 
     // Закрытие по Escape
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modal.style.display === "flex") {
-        const cancel = modal.querySelector("#cancelBtn");
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.style.display === 'flex') {
+        const cancel = modal.querySelector('#cancelBtn');
         if (cancel) cancel.click();
       }
     });
@@ -784,158 +843,156 @@ function escapeHtml(s) {
     return new Promise((resolve) => {
       const modal = ensureModal();
 
-      const input = modal.querySelector("#promptInput");
-      const ok = modal.querySelector("#confirmBtn");
-      const cancel = modal.querySelector("#cancelBtn");
-      const titleEl = modal.querySelector(".title");
-      const textEl = modal.querySelector(".subtitle");
-      const emojiEl = modal.querySelector(".emoji");
+      const input = modal.querySelector('#promptInput');
+      const ok = modal.querySelector('#confirmBtn');
+      const cancel = modal.querySelector('#cancelBtn');
+      const titleEl = modal.querySelector('.title');
+      const textEl = modal.querySelector('.subtitle');
+      const emojiEl = modal.querySelector('.emoji');
 
       // режим запроса ника
-      modal.classList.remove("modal--congrats");
-      modal.classList.add("modal--strawberry");
-      if (emojiEl) emojiEl.textContent = "🍓";
+      modal.classList.remove('modal--congrats');
+      modal.classList.add('modal--strawberry');
+      if (emojiEl) emojiEl.textContent = '🍓';
 
-      if (titleEl) titleEl.textContent = title || "";
-      if (textEl) textEl.textContent = subtitle || "";
+      if (titleEl) titleEl.textContent = title || '';
+      if (textEl) textEl.textContent = subtitle || '';
 
       // показываем input/cancel
-      input.style.display = "";
-      cancel.style.display = "";
-      ok.textContent = "OK";
+      input.style.display = '';
+      cancel.style.display = '';
+      ok.textContent = 'OK';
 
-      modal.style.display = "flex";
-      input.value = "";
+      modal.style.display = 'flex';
+      input.value = '';
       setTimeout(() => input.focus(), 0);
-    
+
       // ---- Функция проверки ----
       function submit() {
         const val = input.value.trim();
 
         if (!val) {
           // ❌ Показываем ошибку
-          input.classList.add("input-error");
-          input.style.animation = "shake .25s";
+          input.classList.add('input-error');
+          input.style.animation = 'shake .25s';
 
           // убираем shake, чтобы можно снова дергать
           setTimeout(() => {
-            input.style.animation = "";
+            input.style.animation = '';
           }, 300);
 
           return; // Не закрывать!
         }
 
-        input.classList.remove("input-error");
+        input.classList.remove('input-error');
 
         cleanup();
         resolve(val);
-    }
-
-    // ---- Enter только внутри модалки ----
-    function onKey(e) {
-      if (modal.style.display !== "flex") return;
-      if (modal.classList.contains("modal--congrats")) return;
-
-      if (e.key === "Enter") {
-        e.preventDefault();
-        submit();
       }
-    }
 
-     window.addEventListener("keydown", onKey, true);
+      // ---- Enter только внутри модалки ----
+      function onKey(e) {
+        if (modal.style.display !== 'flex') return;
+        if (modal.classList.contains('modal--congrats')) return;
 
-    // ---- Кнопки ----
-    ok.onclick = submit;
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submit();
+        }
+      }
+
+      window.addEventListener('keydown', onKey, true);
+
+      // ---- Кнопки ----
+      ok.onclick = submit;
 
       cancel.onclick = () => {
         cleanup();
-        resolve("");
+        resolve('');
       };
-      
+
       // ---- Очистка ----
       function cleanup() {
-            modal.style.display = "none";
-      ok.onclick = null;
-      cancel.onclick = null;
+        modal.style.display = 'none';
+        ok.onclick = null;
+        cancel.onclick = null;
 
-      // ВАЖНО: убираем глобальный листенер
-      window.removeEventListener("keydown", onKey, true);
+        // ВАЖНО: убираем глобальный листенер
+        window.removeEventListener('keydown', onKey, true);
 
-      // возвращаем скрытые элементы к норме
-      input.value = "";
-      input.style.display = "";
-      cancel.style.display = "";
-      ok.textContent = "OK";
-    }
-  });
-}
+        // возвращаем скрытые элементы к норме
+        input.value = '';
+        input.style.display = '';
+        cancel.style.display = '';
+        ok.textContent = 'OK';
+      }
+    });
+  }
 
   const _1xAbe = [
-    1090,1099,32,1087,1086,1081,1084,1072,1083,32,1077,1105,32,1074,1086,
-    1074,1088,1077,1084,1103,44,32,60,98,114,62,32,1087,1086,1082,1072,32,
-    1086,1085,1072,32,1085,1077,32,1088,1072,1079,1073,1080,1083,1072,1089,1100,
-    32,1086,1073,32,1092,1091,1090,1077,1088,32,1089,1072,1081,1090,1072,46
+    1090, 1099, 32, 1087, 1086, 1081, 1084, 1072, 1083, 32, 1077, 1105, 32, 1074, 1086, 1074, 1088,
+    1077, 1084, 1103, 44, 32, 60, 98, 114, 62, 32, 1087, 1086, 1082, 1072, 32, 1086, 1085, 1072, 32,
+    1085, 1077, 32, 1088, 1072, 1079, 1073, 1080, 1083, 1072, 1089, 1100, 32, 1086, 1073, 32, 1092,
+    1091, 1090, 1077, 1088, 32, 1089, 1072, 1081, 1090, 1072, 46,
   ]
-  .map(c => String.fromCharCode(c))
-  .join("");
+    .map((c) => String.fromCharCode(c))
+    .join('');
 
-  const _strPr2 = [1101,1090,1072,32,1082,1083,1091,1073,1085,1080,
-    1095,1082,1072,32,1073,1099,1083,1072,32,1086,1089,1086,1073,1077,
-    1085,1085,1072,1103
+  const _strPr2 = [
+    1101, 1090, 1072, 32, 1082, 1083, 1091, 1073, 1085, 1080, 1095, 1082, 1072, 32, 1073, 1099,
+    1083, 1072, 32, 1086, 1089, 1086, 1073, 1077, 1085, 1085, 1072, 1103,
   ]
-  .map(c => String.fromCharCode(c))
-  .join("");
-
+    .map((c) => String.fromCharCode(c))
+    .join('');
 
   const __al3x = [
-    1055,1086,1079,1076,1088,1072,1074,1083,1103,1102,33,32,1042,
-    1099,32,1085,1072,1096,1083,1080,32,1087,1072,1089,1093,1072,
-    1083,1082,1091,32,8470,50
+    1055, 1086, 1079, 1076, 1088, 1072, 1074, 1083, 1103, 1102, 33, 32, 1042, 1099, 32, 1085, 1072,
+    1096, 1083, 1080, 32, 1087, 1072, 1089, 1093, 1072, 1083, 1082, 1091, 32, 8470, 50,
   ]
-  .map(c => String.fromCharCode(c))
-  .join("");
+    .map((c) => String.fromCharCode(c))
+    .join('');
 
   function showCongratsModal(userName) {
     return new Promise((resolve) => {
       const modal = ensureModal();
 
-      const input = modal.querySelector("#promptInput");
-      const ok = modal.querySelector("#confirmBtn");
-      const cancel = modal.querySelector("#cancelBtn");
-      const titleEl = modal.querySelector(".title");
-      const textEl = modal.querySelector(".subtitle");
-      const emojiEl = modal.querySelector(".emoji");
-      const convex = modal.querySelector(".convariant");
+      const input = modal.querySelector('#promptInput');
+      const ok = modal.querySelector('#confirmBtn');
+      const cancel = modal.querySelector('#cancelBtn');
+      const titleEl = modal.querySelector('.title');
+      const textEl = modal.querySelector('.subtitle');
+      const emojiEl = modal.querySelector('.emoji');
+      const convex = modal.querySelector('.convariant');
 
       // --- очищаем ВСЕ старые обработчики Enter ---
       window.onkeydown = null;
-      window.removeEventListener("keydown", window.__customPromptEnter, true);
+      window.removeEventListener('keydown', window.__customPromptEnter, true);
       delete window.__customPromptEnter;
 
-      function baseCleanup () {
-        modal.style.display = "none";
-        modal.classList.remove("modal--congrats", "modal--strawberry");
+      function baseCleanup() {
+        modal.style.display = 'none';
+        modal.classList.remove('modal--congrats', 'modal--strawberry');
 
         // возвращаем состояние
         if (input) {
-          input.style.display = "";
-          input.value = "";
+          input.style.display = '';
+          input.value = '';
         }
-        if (cancel) cancel.style.display = "";
-        if (ok) ok.textContent = "OK";
+        if (cancel) cancel.style.display = '';
+        if (ok) ok.textContent = 'OK';
 
         ok.onclick = null;
         cancel.onclick = null;
 
-        emojiEl?.classList.remove("float");
+        emojiEl?.classList.remove('float');
 
         // убираем Keydown
-        window.removeEventListener("keydown", onEnterCongrats, true);
-      };
+        window.removeEventListener('keydown', onEnterCongrats, true);
+      }
 
       let cleanup = baseCleanup;
 
-      emojiEl.classList.add("float");
+      emojiEl.classList.add('float');
 
       // 3D эффект движения клубнички
       function tilt(e) {
@@ -950,70 +1007,66 @@ function escapeHtml(s) {
       }
 
       function resetTilt() {
-        emojiEl.style.transform = "rotateX(0deg) rotateY(0deg)";
+        emojiEl.style.transform = 'rotateX(0deg) rotateY(0deg)';
       }
 
-      convex.addEventListener("mousemove", tilt);
-      convex.addEventListener("mouseleave", resetTilt);
+      convex.addEventListener('mousemove', tilt);
+      convex.addEventListener('mouseleave', resetTilt);
 
       // убрать обработчики при закрытии
       const oldCleanup = cleanup;
       cleanup = () => {
-        convex.removeEventListener("mousemove", tilt);
-        convex.removeEventListener("mouseleave", resetTilt);
+        convex.removeEventListener('mousemove', tilt);
+        convex.removeEventListener('mouseleave', resetTilt);
         oldCleanup();
       };
 
-
       // режим поздравления
-      modal.classList.add("modal--congrats", "modal--strawberry");
-      if (emojiEl) emojiEl.textContent = "🎉";
+      modal.classList.add('modal--congrats', 'modal--strawberry');
+      if (emojiEl) emojiEl.textContent = '🎉';
 
-      if (titleEl) titleEl.textContent = "Поздравляю!";
+      if (titleEl) titleEl.textContent = 'Поздравляю!';
       if (textEl) {
-        textEl.innerHTML =
-          `<b>${escapeHtml(userName)}</b>,🍓 ${_strPr2} 😉<br> ${_1xAbe}`;
+        textEl.innerHTML = `<b>${escapeHtml(userName)}</b>,🍓 ${_strPr2} 😉<br> ${_1xAbe}`;
       }
 
       // скрываем input и cancel
-      if (input) input.style.display = "none";
-      if (cancel) cancel.style.display = "none";
-      if (ok) ok.textContent = "Круто!";
+      if (input) input.style.display = 'none';
+      if (cancel) cancel.style.display = 'none';
+      if (ok) ok.textContent = 'Круто!';
 
-      modal.style.display = "flex";
+      modal.style.display = 'flex';
 
       // центр модалки
-      const rect = modal.querySelector(".modal-content").getBoundingClientRect();
+      const rect = modal.querySelector('.modal-content').getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
 
       // эффекты
       spawnStrawberryConfetti(cx, cy);
       spawnRingWave(cx, cy);
-      flashModal(modal.querySelector(".modal-content"));
+      flashModal(modal.querySelector('.modal-content'));
       pulseBackground();
       launchBigStrawberries(cx, cy);
-      
 
-      
       function onEnterCongrats(e) {
-        if (e.key === "Enter") {
+        if (e.key === 'Enter') {
           e.preventDefault();
           ok.click();
         }
       }
 
-      window.addEventListener("keydown", onEnterCongrats, true);
+      window.addEventListener('keydown', onEnterCongrats, true);
 
       ok.onclick = () => {
         // Анимация кнопки
-        ok.classList.add("btn-okay-animate");
+        ok.classList.add('btn-okay-animate');
 
         // Вспышка клубнички
         if (emojiEl) {
-          emojiEl.classList.add("flash");
+          emojiEl.classList.add('flash');
 
-          setTimeout(() => emojiEl.classList.remove("flash"), 350);
+          setTimeout(() => emojiEl.classList.remove('flash'), 350);
         }
 
         // Вибрация на телефонах
@@ -1024,14 +1077,14 @@ function escapeHtml(s) {
         // Мини-пауза, чтобы анимация успела сыграть
         setTimeout(() => {
           cleanup();
-          CybRouter.navigate("strawberry-history");
-          resolve("ok");
+          CybRouter.navigate('strawberry-history');
+          resolve('ok');
         }, 300);
       };
 
       cancel.onclick = () => {
         cleanup();
-        resolve("cancel");
+        resolve('cancel');
       };
     });
   }
@@ -1039,31 +1092,31 @@ function escapeHtml(s) {
   // ---------- Logic-a ----------
   async function triggerAlex() {
     if (AlexUnlocked) return;
-    if (sessionStorage.getItem("alex_done") === "1") return;
+    if (sessionStorage.getItem('alex_done') === '1') return;
 
     AlexUnlocked = true;
-    sessionStorage.setItem("alex_done", "1");
+    sessionStorage.setItem('alex_done', '1');
 
-    let storedName = (localStorage.getItem("itemUserName") || "").trim();
+    let storedName = (localStorage.getItem('itemUserName') || '').trim();
 
     while (!storedName) {
-      const input = await customPrompt(__al3x, "Введите ваше имя пользователя:");
+      const input = await customPrompt(__al3x, 'Введите ваше имя пользователя:');
 
       if (!input) {
         // отмена -> даём шанс снова
         AlexUnlocked = false;
-        sessionStorage.removeItem("alex_done");
+        sessionStorage.removeItem('alex_done');
         return;
       }
 
       storedName = input.trim();
-      localStorage.setItem("itemUserName", storedName);
+      localStorage.setItem('itemUserName', storedName);
     }
 
-    sendWorkLog({ 
-      alex: 2, 
-      userName: storedName || null, 
-      source: "special_strawberry_click", 
+    sendWorkLog({
+      alex: 2,
+      userName: storedName || null,
+      source: 'special_strawberry_click',
     });
 
     await showCongratsModal(storedName);
@@ -1073,18 +1126,18 @@ function escapeHtml(s) {
     const COUNT = 28;
 
     for (let i = 0; i < COUNT; i++) {
-      const el = document.createElement("div");
-      el.className = "strawberry-confetti";
-      el.textContent = "🍓";
+      const el = document.createElement('div');
+      el.className = 'strawberry-confetti';
+      el.textContent = '🍓';
 
-      const angle = i * (Math.PI * 2 / COUNT);
+      const angle = i * ((Math.PI * 2) / COUNT);
       let radius = 0;
 
       const speed = 1.2 + Math.random() * 1.1;
       const spin = 0.15 + Math.random() * 0.2;
 
-      el.style.left = x + "px";
-      el.style.top = y + "px";
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
 
       document.body.appendChild(el);
 
@@ -1097,8 +1150,9 @@ function escapeHtml(s) {
 
         alpha -= 0.008;
 
-        el.style.transform =
-          `translate(${dx}px, ${dy}px) rotate(${radius * spin}deg) scale(${alpha})`;
+        el.style.transform = `translate(${dx}px, ${dy}px) rotate(${
+          radius * spin
+        }deg) scale(${alpha})`;
         el.style.opacity = alpha;
 
         if (alpha > 0) requestAnimationFrame(animate);
@@ -1110,12 +1164,12 @@ function escapeHtml(s) {
   }
 
   function spawnRingWave(x, y) {
-    const ring = document.createElement("div");
-    ring.className = "strawberry-ring-wave";
-    ring.style.left = x - 40 + "px";
-    ring.style.top = y - 40 + "px";
-    ring.style.width = "80px";
-    ring.style.height = "80px";
+    const ring = document.createElement('div');
+    ring.className = 'strawberry-ring-wave';
+    ring.style.left = x - 40 + 'px';
+    ring.style.top = y - 40 + 'px';
+    ring.style.width = '80px';
+    ring.style.height = '80px';
 
     document.body.appendChild(ring);
 
@@ -1123,37 +1177,37 @@ function escapeHtml(s) {
   }
 
   function flashModal(modal) {
-    modal.classList.remove("flash");
+    modal.classList.remove('flash');
     void modal.offsetWidth; // restart animation
-    modal.classList.add("flash");
+    modal.classList.add('flash');
   }
 
   function pulseBackground() {
-    document.body.classList.remove("body-pulse");
+    document.body.classList.remove('body-pulse');
     void document.body.offsetWidth;
-    document.body.classList.add("body-pulse");
+    document.body.classList.add('body-pulse');
   }
 
   function launchBigStrawberries(centerX, centerY) {
     const COUNT = 4 + Math.floor(Math.random() * 2); // 4–5 крупных клубничек
 
     for (let i = 0; i < COUNT; i++) {
-      const el = document.createElement("div");
-      el.className = "big-strawberry";
-      el.textContent = "🍓";
+      const el = document.createElement('div');
+      el.className = 'big-strawberry';
+      el.textContent = '🍓';
 
       document.body.appendChild(el);
 
       // Начальная позиция — чуть смещённая в случайную сторону
-      const offsetX = (Math.random() * 60 - 30);
-      const offsetY = (Math.random() * 30 - 15);
+      const offsetX = Math.random() * 60 - 30;
+      const offsetY = Math.random() * 30 - 15;
 
       let x = centerX + offsetX;
       let y = centerY + offsetY;
 
       // параметры slow-mo движения
-      const driftX = (Math.random() * 80 - 40); // горизонтальный дрейф
-      const rise = 180 + Math.random() * 120;  // высота подъёма
+      const driftX = Math.random() * 80 - 40; // горизонтальный дрейф
+      const rise = 180 + Math.random() * 120; // высота подъёма
       const sway = Math.random() * 0.02 + 0.015; // синусоида
       const rotSpeed = Math.random() * 0.6 - 0.3; // вращение
 
@@ -1167,12 +1221,11 @@ function escapeHtml(s) {
         const dy = -t * rise;
 
         // позиция
-        el.style.left = (x + dx + driftX * t) + "px";
-        el.style.top = (y + dy) + "px";
+        el.style.left = x + dx + driftX * t + 'px';
+        el.style.top = y + dy + 'px';
 
         // вращение + плавное уменьшение
-        el.style.transform =
-          `scale(${1 - t * 0.3}) rotate(${rotSpeed * t * 180}deg)`;
+        el.style.transform = `scale(${1 - t * 0.3}) rotate(${rotSpeed * t * 180}deg)`;
 
         // плавное исчезновение
         el.style.opacity = 1 - t * 0.9;
@@ -1188,56 +1241,55 @@ function escapeHtml(s) {
     }
   }
 
-
   // ---------- background strawberries ----------
   function initBackground() {
     // если уже есть фон — не дублируем
-    if (document.querySelector(".bg-strawberries")) return;
+    if (document.querySelector('.bg-strawberries')) return;
 
-    const bg = document.createElement("div");
-    bg.className = "bg-strawberries";
+    const bg = document.createElement('div');
+    bg.className = 'bg-strawberries';
     document.body.appendChild(bg);
 
     // выбранная особая клубника
     const specialIndex = rand(0, COUNT - 1);
 
     function createStrawberry(i) {
-      const el = document.createElement("div");
-      el.className = "strawberry" + (i === specialIndex ? " special" : "");
-      el.textContent = "🍓";
+      const el = document.createElement('div');
+      el.className = 'strawberry' + (i === specialIndex ? ' special' : '');
+      el.textContent = '🍓';
 
       const size = rand(16, 44);
       const left = rand(0, 100);
       const duration = rand(6, 14);
       const delay = rand(-12, 0);
-      const drift = rand(-120, 120) + "px";
-      const rot = rand(-360, 360) + "deg";
+      const drift = rand(-120, 120) + 'px';
+      const rot = rand(-360, 360) + 'deg';
 
-      el.style.left = left + "vw";
-      el.style.fontSize = size + "px";
-      el.style.setProperty("--drift", drift);
-      el.style.setProperty("--rot", rot);
+      el.style.left = left + 'vw';
+      el.style.fontSize = size + 'px';
+      el.style.setProperty('--drift', drift);
+      el.style.setProperty('--rot', rot);
       el.style.animation = `fallStrawberry ${duration}s linear ${delay}s infinite`;
 
       // На всякий: делаем клубнику "кликабельной" по поверхности
-      el.style.pointerEvents = "auto";
-      el.style.userSelect = "none";
+      el.style.pointerEvents = 'auto';
+      el.style.userSelect = 'none';
 
       if (i === specialIndex) {
-        el.title = "🤫";
-        el.style.cursor = "pointer";
+        el.title = '🤫';
+        el.style.cursor = 'pointer';
 
-        el.addEventListener("click", (e) => {
+        el.addEventListener('click', (e) => {
           e.preventDefault();
           e.stopPropagation();
           triggerAlex();
         });
       }
 
-      el.addEventListener("animationiteration", () => {
-        el.style.left = rand(0, 100) + "vw";
-        el.style.setProperty("--drift", rand(-120, 120) + "px");
-        el.style.setProperty("--rot", rand(-360, 360) + "deg");
+      el.addEventListener('animationiteration', () => {
+        el.style.left = rand(0, 100) + 'vw';
+        el.style.setProperty('--drift', rand(-120, 120) + 'px');
+        el.style.setProperty('--rot', rand(-360, 360) + 'deg');
       });
 
       return el;
@@ -1249,4 +1301,3 @@ function escapeHtml(s) {
   // Включаем фон сразу + работает на всех роуттах
   initBackground();
 })();
-
