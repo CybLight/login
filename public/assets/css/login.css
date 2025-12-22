@@ -1,8 +1,14 @@
-/* Layout */
+/* ============================
+              Layout           
+   ============================ 
+*/
+
 .auth-shell {
   min-height: 100vh;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   grid-template-rows: 1fr auto;
+  padding-bottom: 25px;
 }
 
 .auth-center {
@@ -11,6 +17,7 @@
   justify-content: center;
   padding: 48px 16px 24px;
   padding-bottom: 70px;
+  flex: 1 0 auto;
 }
 
 /* Card */
@@ -181,6 +188,7 @@
 /* Footer */
 .auth-footer {
   position: fixed;
+  flex-shrink: 0;
   bottom: 0;
   left: 0;
   right: 0;
@@ -251,31 +259,6 @@
 .footer-logo {
   width: 32px;
   height: 32px;
-}
-
-/* ===== MOBILE ===== */
-@media (max-width: 860px) {
-  .auth-footer {
-    height: auto;
-    padding: 8px 0;
-  }
-
-  .footer-row {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .footer-copy {
-    align-items: center;
-  }
-
-  .footer-links {
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    text-align: center;
-  }
 }
 
 /* ============================
@@ -351,6 +334,10 @@
   z-index: 5;
 }
 
+/* ============================
+          🍓 HISTORY
+   ============================ 
+*/
 .strawberry-history .strawberry-text {
   color: var(--muted);
   font-size: 14px;
@@ -359,6 +346,8 @@
 }
 
 .strawberry-grid {
+  width: 100%;
+  max-width: 520px;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
@@ -367,22 +356,29 @@
 
 .strawberry-grid img {
   width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: #111;
 }
 
-/* 🍓 Lightbox (full screen photo) */
+/* =================================
+   🍓 Lightbox (full screen photo)
+   ================================= 
+*/
+
 .strawberry-lightbox {
   position: fixed;
   inset: 0;
-  display: none;             /* включаем через JS */
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 18px;
   background: rgba(0, 0, 0, 0.82);
   backdrop-filter: blur(6px);
   z-index: 99999;
+  touch-action: pan-y;
 }
 
 .strawberry-lightbox.is-open {
@@ -396,12 +392,35 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
   object-fit: contain;
+  
+  opacity: 0;
+  transform: scale(0.985);
+  transition: opacity 160ms ease, transform 160ms ease;
+  user-select: none;
+
+  /* важно для touch */
+  touch-action: none; /* управляем жестами сами */
+  transform-origin: center center;
+
   animation: strawberryZoomIn 0.18s ease;
 }
 
 @keyframes strawberryZoomIn {
   from { transform: scale(0.96); opacity: 0; }
   to   { transform: scale(1); opacity: 1; }
+}
+
+.strawberry-lightbox__img.is-ready {
+  opacity: 1;
+  transform: scale(1); /* ^?^ */
+}
+
+/* когда zoom > 1, курсор */
+.strawberry-lightbox.is-zoomed .strawberry-lightbox__img {
+  cursor: grab;
+}
+.strawberry-lightbox.is-zoomed .strawberry-lightbox__img:active {
+  cursor: grabbing;
 }
 
 .strawberry-lightbox__close {
@@ -425,15 +444,81 @@
   border-color: rgba(255, 59, 107, 0.55);
 }
 
-/* чтобы фотки выглядели кликабельными */
-.strawberry-grid img {
-  cursor: zoom-in;
+.strawberry-lightbox__nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(231, 236, 255, 0.95);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  user-select: none;
 }
 
+.strawberry-lightbox__nav:hover {
+  border-color: rgba(255, 59, 107, 0.55);
+}
+
+.strawberry-lightbox__nav.prev { left: 14px; }
+.strawberry-lightbox__nav.next { right: 14px; }
+
+/* ===== Lightbox HUD ===== */
+.strawberry-lightbox__hud {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 100000;
+}
+
+.strawberry-lightbox__counter {
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.45);
+  color: rgba(231,236,255,0.92);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.strawberry-lightbox__caption {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  max-width: min(92vw, 900px);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.45);
+  color: rgba(231,236,255,0.92);
+  font-size: 13px;
+  text-align: center;
+  z-index: 100000;
+}
+
+/* pinch zoom: контейнер для трансформаций */
+.strawberry-lightbox__stage {
+  position: relative;
+  max-width: min(96vw, 1100px);
+  max-height: 86vh;
+  display: grid;
+  place-items: center;
+}
 
 /* ============================
    🍓 Modal (injected by JS)
-   ============================ */
+   ============================ 
+*/
 
 .modal {
   position: fixed;
@@ -608,4 +693,53 @@
 /* small polish for congrats variant */
 .modal--congrats .subtitle b {
   color: #ffffff;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 860px) {
+
+  .auth-shell {
+    padding-bottom: 150px;
+  }
+    
+  .auth-footer {
+    height: auto;
+    padding: 8px 0;
+  }
+
+  .footer-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .footer-copy {
+    align-items: center;
+  }
+
+  .footer-links {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 560px) {
+  .strawberry-lightbox__nav {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+}
+
+/* кликабельность сетки */
+.strawberry-grid img {
+  cursor: zoom-in;
+}
+
+@media (max-width: 420px) {
+  .strawberry-grid {
+    grid-template-columns: 1fr; /* фотки в 1 колонку */
+  }
 }

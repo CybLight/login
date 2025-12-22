@@ -1,5 +1,344 @@
 const app = document.getElementById("app");
 
+// 🍓 Lightbox
+
+const StrawberryLightbox = (() => {
+  let lb, imgEl, closeBtn, prevBtn, nextBtn, counterEl, captionEl, hudEl, stageEl;
+  let sources = [];
+  let captions = [];
+  let index = 0;
+
+  // swipe
+  let touchStartX = 0, touchStartY = 0;
+  let touchActive = false;
+
+  // pinch-zoom / pan
+  let baseScale = 1;   // сохранённый scale после жеста
+  let scale = 1;       // текущий
+  let baseTx = 0, baseTy = 0;
+  let tx = 0, ty = 0;
+
+  let isPinching = false;
+  let pinchStartDist = 0;
+  let pinchStartScale = 1;
+
+  let isPanning = false;
+  let panStartX = 0, panStartY = 0;
+  let panStartTx = 0, panStartTy = 0;
+
+  function ensure() {
+    lb = document.querySelector(".strawberry-lightbox");
+    if (lb) {
+      imgEl = lb.querySelector(".strawberry-lightbox__img");
+      closeBtn = lb.querySelector(".strawberry-lightbox__close");
+      prevBtn = lb.querySelector(".strawberry-lightbox__nav.prev");
+      nextBtn = lb.querySelector(".strawberry-lightbox__nav.next");
+      counterEl = lb.querySelector(".strawberry-lightbox__counter");
+      captionEl = lb.querySelector(".strawberry-lightbox__caption");
+      hudEl = lb.querySelector(".strawberry-lightbox__hud");
+      stageEl = lb.querySelector(".strawberry-lightbox__stage");
+      return lb;
+    }
+    lb = document.createElement("div");
+    lb.className = "strawberry-lightbox";
+    lb.innerHTML = `
+      <div class="strawberry-lightbox__hud">
+        <div class="strawberry-lightbox__counter">1 / 1</div>
+      </div>
+
+      <button class="strawberry-lightbox__close" type="button" aria-label="Закрыть">✕</button>
+      <button class="strawberry-lightbox__nav prev" type="button" aria-label="Предыдущее">←</button>
+      
+      <div class="strawberry-lightbox__stage">
+      <img class="strawberry-lightbox__img" alt="strawberry photo" draggable="false" />
+      </div>
+
+      <button class="strawberry-lightbox__nav next" type="button" aria-label="Следующее">→</button>
+      <div class="strawberry-lightbox__caption"></div>
+    `;
+    document.body.appendChild(lb);
+
+    imgEl = lb.querySelector(".strawberry-lightbox__img");
+    closeBtn = lb.querySelector(".strawberry-lightbox__close");
+    prevBtn = lb.querySelector(".strawberry-lightbox__nav.prev");
+    nextBtn = lb.querySelector(".strawberry-lightbox__nav.next");
+    counterEl = lb.querySelector(".strawberry-lightbox__counter");
+    captionEl = lb.querySelector(".strawberry-lightbox__caption");
+    hudEl = lb.querySelector(".strawberry-lightbox__hud");
+    stageEl = lb.querySelector(".strawberry-lightbox__stage");
+
+    // закрытие по крестику
+    closeBtn.addEventListener("click", close);
+    prevBtn.addEventListener("click", prev);
+    nextBtn.addEventListener("click", next);
+
+    // закрытие по клику на фон
+    lb.addEventListener("click", (e) => {
+      if (e.target === lb) close();
+    });
+
+    // keyboard
+    window.addEventListener("keydown", (e) => {
+      if (!lb.classList.contains("is-open")) return;
+      if (e.key === "Escape") close();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    });
+
+    // --- touch gestures (swipe + pinch) ---
+    // используем imgEl, чтобы не ломать прокрутку страницы
+    imgEl.addEventListener("touchstart", onTouchStart, { passive: false });
+    imgEl.addEventListener("touchmove", onTouchMove, { passive: false });
+    imgEl.addEventListener("touchend", onTouchEnd, { passive: false });
+
+    // mouse pan (for PC)
+    imgEl.addEventListener("mousedown", onMouseDown);
+
+    return lb;
+  }
+
+  function setItems(list, startIndex = 0) {
+    sources = Array.isArray(list?.sources) ? list.sources : [];
+    captions = Array.isArray(list?.captions) ? list.captions : [];
+    index = Math.max(0, Math.min(startIndex, sources.length - 1));
+  }
+
+  function preloadOne(src) {
+    if (!src) return;
+    const img = new Image();
+    img.decoding = "async";
+    img.loading = "eager";
+    img.src = src;
+  }
+  function preloadNeighbors() {
+    preloadOne(sources[index - 1]);
+    preloadOne(sources[index + 1]);
+  }
+
+  function updateHud() {
+    if (counterEl) counterEl.textContent = `${index + 1} / ${sources.length || 1}`;
+    if (captionEl) captionEl.textContent = captions[index] || "";
+  }
+
+  function resetTransform() {
+    baseScale = scale = 1;
+    baseTx = tx = 0;
+    baseTy = ty = 0;
+    applyTransform();
+    lb?.classList.remove("is-zoomed");
+  }
+
+  function clamp(v, min, max) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function applyTransform() {
+    if (!imgEl) return;
+    // ограничим масштаб
+    scale = clamp(scale, 1, 3.2);
+
+    // если scale == 1 — сбрасываем сдвиги
+    if (scale <= 1.001) {
+      tx = 0; ty = 0;
+      baseTx = 0; baseTy = 0;
+      lb?.classList.remove("is-zoomed");
+    } else {
+      lb?.classList.add("is-zoomed");
+    }
+
+    imgEl.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  }
+
+  function showAt(i) {
+    if (!sources.length) return;
+    index = (i + sources.length) % sources.length;
+
+    ensure();
+    imgEl.classList.remove("is-ready");
+    resetTransform(); // при смене фото сбрасываем zoom/pan
+
+    const src = sources[index];
+    updateHud();
+
+    const tmp = new Image();
+    tmp.decoding = "async";
+    tmp.src = src;
+
+    const apply = () => {
+      imgEl.src = src;
+      requestAnimationFrame(() => imgEl.classList.add("is-ready"));
+      preloadNeighbors();
+    };
+
+    if (tmp.decode) tmp.decode().then(apply).catch(apply);
+    else {
+      tmp.onload = apply;
+      tmp.onerror = apply;
+    }
+  }
+
+  function open(items, startIndex) {
+    ensure();
+    setItems(items, startIndex);
+    lb.classList.add("is-open");
+    showAt(index);
+  }
+
+  function close() {
+    if (!lb) return;
+    lb.classList.remove("is-open");
+    if (imgEl) {
+      imgEl.classList.remove("is-ready");
+      setTimeout(() => { imgEl.src = ""; }, 80);
+    }
+    resetTransform();
+  }
+
+  function prev() {
+    if (!lb || !lb.classList.contains("is-open")) return;
+    showAt(index - 1);
+  }
+  function next() {
+    if (!lb || !lb.classList.contains("is-open")) return;
+    showAt(index + 1);
+  }
+
+  // ---- Touch: swipe + pinch ----
+  function dist2(t1, t2) {
+    const dx = t2.clientX - t1.clientX;
+    const dy = t2.clientY - t1.clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  function onTouchStart(e) {
+    if (!lb?.classList.contains("is-open")) return;
+
+    if (e.touches.length === 2) {
+      // pinch start
+      isPinching = true;
+      isPanning = false;
+      pinchStartDist = dist2(e.touches[0], e.touches[1]);
+      pinchStartScale = scale;
+      e.preventDefault();
+      return;
+    }
+
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+      touchActive = true;
+
+      // если уже зумнули — начинаем pan
+      if (scale > 1.01) {
+        isPanning = true;
+        panStartX = t.clientX;
+        panStartY = t.clientY;
+        panStartTx = tx;
+        panStartTy = ty;
+        e.preventDefault();
+      }
+    }
+  }
+
+  function onTouchMove(e) {
+    if (!lb?.classList.contains("is-open")) return;
+
+    if (isPinching && e.touches.length === 2) {
+      const d = dist2(e.touches[0], e.touches[1]);
+      const ratio = d / (pinchStartDist || d);
+      scale = pinchStartScale * ratio;
+      applyTransform();
+      e.preventDefault();
+      return;
+    }
+
+    if (isPanning && e.touches.length === 1 && scale > 1.01) {
+      const t = e.touches[0];
+      tx = panStartTx + (t.clientX - panStartX);
+      ty = panStartTy + (t.clientY - panStartY);
+      applyTransform();
+      e.preventDefault();
+      return;
+    }
+  }
+
+  function onTouchEnd(e) {
+    if (!lb?.classList.contains("is-open")) return;
+
+    // pinch end
+    if (isPinching && e.touches.length < 2) {
+      isPinching = false;
+      baseScale = scale;
+      baseTx = tx; baseTy = ty;
+      applyTransform();
+      return;
+    }
+
+    // pan end
+    if (isPanning && e.touches.length === 0) {
+      isPanning = false;
+      baseTx = tx; baseTy = ty;
+      applyTransform();
+      return;
+    }
+
+    // swipe logic (только если не зумим)
+    if (touchActive && scale <= 1.01) {
+      touchActive = false;
+
+      const t = (e.changedTouches && e.changedTouches[0]) || null;
+      if (!t) return;
+
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+
+      const absX = Math.abs(dx);
+      const absY = Math.abs(dy);
+
+      if (absX > 55 && absX > absY) {
+        if (dx < 0) next();
+        else prev();
+        return;
+      }
+
+      if (dy > 70 && absY > absX) {
+        close();
+      }
+    }
+  }
+
+  // ---- Mouse pan (desktop) ----
+  function onMouseDown(e) {
+    if (!lb?.classList.contains("is-open")) return;
+    if (scale <= 1.01) return;
+
+    isPanning = true;
+    panStartX = e.clientX;
+    panStartY = e.clientY;
+    panStartTx = tx;
+    panStartTy = ty;
+
+    const onMove = (ev) => {
+      if (!isPanning) return;
+      tx = panStartTx + (ev.clientX - panStartX);
+      ty = panStartTy + (ev.clientY - panStartY);
+      applyTransform();
+    };
+
+    const onUp = () => {
+      isPanning = false;
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
+
+  return { open };
+})();
+
 // Функция рендера по маршруту
 function renderRoute(r) {
   if (r === "username") return viewUsername();
@@ -252,66 +591,24 @@ function viewStrawberryHistory() {
     </section>
   `);
 
-  function ensureLightbox() {
-    let lb = document.querySelector(".strawberry-lightbox");
-    if (lb) return lb;
+  // подключаем лайтбокс к фоткам стенографии + подписи
+const imgs = Array.from(document.querySelectorAll(".strawberry-grid img"));
 
-    lb = document.createElement("div");
-    lb.className = "strawberry-lightbox";
-    lb.innerHTML = `
-      <button class="strawberry-lightbox__close" type="button" aria-label="Закрыть">✕</button>
-      <img class="strawberry-lightbox__img" alt="strawberry photo" />
-    `;
-    document.body.appendChild(lb);
+const sources = imgs.map((x) => x.src);
+const captions = imgs.map((x) => x.alt || "🍓 Strawberry");
 
-    const img = lb.querySelector(".strawberry-lightbox__img");
-    const closeBtn = lb.querySelector(".strawberry-lightbox__close");
-
-    function close() {
-      lb.classList.remove("is-open");
-      if (img) img.src = "";
-    }
-
-    // закрытие по крестику
-    closeBtn.addEventListener("click", close);
-
-    // закрытие по клику на фон (но не на картинку)
-    lb.addEventListener("click", (e) => {
-      if (e.target === lb) close();
-    });
-
-    // ESC
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && lb.classList.contains("is-open")) {
-        close();
-      }
-    });
-
-    // экспортируем close для использования
-    lb.__close = close;
-
-    return lb;
-  }
-
-  function openInLightbox(src) {
-    const lb = ensureLightbox();
-    const img = lb.querySelector(".strawberry-lightbox__img");
-    if (img) img.src = src;
-    lb.classList.add("is-open");
-  }
-
-  // Клик по фото -> открыть full screen
-  document.querySelectorAll(".strawberry-grid img").forEach((img) => {
-    img.addEventListener("click", () => {
-      openInLightbox(img.src);
-    });
+imgs.forEach((img, i) => {
+  img.addEventListener("click", () => {
+    StrawberryLightbox.open({ sources, captions }, i);
   });
+});
 
-  document.getElementById("toUsername").onclick = () => {
-    CybRouter.navigate("username");
-  };
+// кнопка "Продолжить"
+document.getElementById("toUsername").onclick = () => {
+  CybRouter.navigate("username");
+};
+
 }
-
 
 function escapeHtml(s) {
   return (s || "").replace(
@@ -468,20 +765,33 @@ function escapeHtml(s) {
       if (textEl) textEl.textContent = subtitle || "";
 
       // показываем input/cancel
-      if (input) input.style.display = "";
+      if (input) {
+        input.style.display = "";
+        input.value = "";
+        setTimeout(() => input.focus(), 0);
+      }
       if (cancel) cancel.style.display = "";
       if (ok) ok.textContent = "OK";
 
       modal.style.display = "flex";
-      if (input) {
-        input.value = "";
-        setTimeout(() => input.focus(), 0);
+
+      function blockEnter(e) {
+        if (modal.style.display === "flex" && !modal.classList.contains("modal--congrats")) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            e.stopImmediatePropagation(); // <--- ВАЖНЕЙШЕЕ!
+            ok.click();
+          }
+        }
       }
+
+      window.addEventListener("keydown", blockEnter, true);
 
       const cleanup = () => {
         modal.style.display = "none";
         ok.onclick = null;
         cancel.onclick = null;
+        window.removeEventListener("keydown", blockEnter, true);
       };
 
       ok.onclick = () => {
@@ -551,6 +861,19 @@ function escapeHtml(s) {
 
       modal.style.display = "flex";
 
+      // === обработчик ENTER для поздравительной кнопки ===
+    
+      function onEnterCongrats(e) {
+          if (modal.style.display === "flex" && modal.classList.contains("modal--congrats")) {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              ok.click();
+            }
+          }
+        }
+
+      window.addEventListener("keydown", onEnterCongrats);
+
       const cleanup = () => {
         modal.style.display = "none";
         modal.classList.remove("modal--congrats", "modal--strawberry");
@@ -565,6 +888,9 @@ function escapeHtml(s) {
 
         ok.onclick = null;
         cancel.onclick = null;
+
+        // убираем Keydown
+      window.removeEventListener("keydown", onEnterCongrats);
       };
 
         ok.onclick = () => {
