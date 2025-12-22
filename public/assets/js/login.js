@@ -7,6 +7,34 @@ window.onTurnstileOk = (token) => {
   turnstileToken = token;
 };
 
+window.onTurnstileExpired = () => {
+  turnstileToken = '';
+};
+
+window.onTurnstileError = () => {
+  turnstileToken = '';
+};
+
+let tsRendered = false;
+
+function initTurnstile() {
+  const el = document.querySelector('.cf-turnstile');
+  if (!el) return;
+
+  // чтобы не создавать дубликаты при повторном рендере
+  if (tsRendered) return;
+
+  // ждём, пока скрипт Turnstile загрузится
+  if (!window.turnstile) {
+    setTimeout(initTurnstile, 150);
+    return;
+  }
+
+  // render вручную
+  turnstile.render(el);
+  tsRendered = true;
+}
+
 // 🍓 Lightbox
 
 const StrawberryLightbox = (() => {
@@ -496,7 +524,9 @@ function viewPassword() {
         <div class="cf-turnstile"   
              data-sitekey="0x4AAAAAACIMk1fcGPcs3NLf"
              data-theme="dark"
-             data-callback="onTurnstileOk"></div>
+             data-callback="onTurnstileOk"
+             data-expired-callback="onTurnstileExpired"
+             data-error-callback="onTurnstileError"></div>
         </div>
 
         <div class="row">
@@ -520,56 +550,54 @@ function viewPassword() {
     CybRouter.navigate('reset');
   };
 
-  document.getElementById('f').addEventListener('submit', (e) => {
+  turnstileToken = '';
+  tsRendered = false;
+  initTurnstile();
+
+  // TURNSTILE TOKEN
+  document.getElementById('f').addEventListener('submit', async (e) => {
     e.preventDefault();
+
     const pass = document.getElementById('pass').value.trim();
     if (!pass) return alert('Введите пароль');
 
-    // TURNSTILE TOKEN
-    document.getElementById('f').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    if (!turnstileToken) {
+      alert('Подтверди, что ты не робот');
+      return;
+    }
 
-      const pass = document.getElementById('pass').value.trim();
-      if (!pass) return alert('Введите пароль');
+    const login = sessionStorage.getItem('cyb_login');
 
-      if (!turnstileToken) {
-        alert('Подтверди, что ты не робот');
+    try {
+      const res = await fetch('api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          login,
+          password: pass,
+          turnstileToken,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        // ❌ ОШИБКА — сбрасываем капчу
+        if (window.turnstile) turnstile.reset();
+        turnstileToken = '';
+
+        alert(data.error || 'Ошибка входа');
         return;
       }
 
-      const login = sessionStorage.getItem('cyb_login');
+      // ✅ УСПЕХ
+      CybRouter.navigate('done');
+    } catch (err) {
+      // ❌ СЕТЕВАЯ ОШИБКА — тоже сбрасываем
+      if (window.turnstile) turnstile.reset();
+      turnstileToken = '';
 
-      try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            login,
-            password: pass,
-            turnstileToken,
-          }),
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          // ❌ ОШИБКА — сбрасываем капчу
-          turnstile.reset();
-          turnstileToken = '';
-
-          alert(data.error || 'Ошибка входа');
-          return;
-        }
-
-        // ✅ УСПЕХ
-        CybRouter.navigate('done');
-      } catch (err) {
-        // ❌ СЕТЕВАЯ ОШИБКА — тоже сбрасываем
-        turnstile.reset();
-        turnstileToken = '';
-
-        alert('Ошибка сети. Попробуйте ещё раз.');
-      }
-    });
+      alert('Ошибка сети. Попробуйте ещё раз.');
+    }
   });
 }
 
