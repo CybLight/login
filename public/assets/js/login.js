@@ -480,13 +480,7 @@ function viewPassword() {
           <h1>Войти</h1>
         </div>
       </div>
-      <div class="field" style="margin-top:12px;">
-        <div class="cf-turnstile"   
-             data-sitekey="0x4AAAAAACIMk1fcGPcs3NLf"
-             data-theme="dark"
-             data-callback="onTurnstileOk"></div>
-      </div>
-
+      
       <form id="f">
         <div class="field">
           <label class="label">Пользователь</label>
@@ -496,6 +490,13 @@ function viewPassword() {
         <div class="field">
           <label class="label" for="pass">Пароль</label>
           <input class="input" id="pass" type="password" autocomplete="current-password" required />
+        </div>
+
+        <div class="field" style="margin-top:12px;">
+        <div class="cf-turnstile"   
+             data-sitekey="0x4AAAAAACIMk1fcGPcs3NLf"
+             data-theme="dark"
+             data-callback="onTurnstileOk"></div>
         </div>
 
         <div class="row">
