@@ -425,6 +425,9 @@ function viewUsername() {
       <button class="btn-create" type="button" id="createAcc">Регистрируйся!</button>
     </div>
   `);
+  const oldBtn = document.getElementById("scrollTopBtn");
+  if (oldBtn) oldBtn.remove();
+
 
   document.getElementById("forgotUser").onclick = (e) => {
     e.preventDefault();
@@ -481,6 +484,9 @@ function viewPassword() {
       </form>
     </section>
   `);
+  const oldBtn = document.getElementById("scrollTopBtn");
+  if (oldBtn) oldBtn.remove();
+
 
   document.getElementById("back").onclick = (e) => {
     e.preventDefault();
@@ -522,6 +528,8 @@ function viewReset() {
       <button class="btn btn-outline" style="margin-top:16px;" id="back">← Назад</button>
     </section>
   `);
+  const oldBtn = document.getElementById("scrollTopBtn");
+  if (oldBtn) oldBtn.remove();
 
   document.getElementById("back").onclick = () =>
     CybRouter.navigate("username");
@@ -549,6 +557,8 @@ function viewDone() {
       </button>
     </section>
   `);
+  const oldBtn = document.getElementById("scrollTopBtn");
+  if (oldBtn) oldBtn.remove();
 
   document.getElementById("toUser").onclick = () =>
     CybRouter.navigate("username");
@@ -571,7 +581,7 @@ function viewStrawberryHistory() {
 
       <p class="strawberry-text">
         Мы зафиксировали необычную активность.<br>
-        Эти клубнички что-то значат…
+        Этот клубничный дождь не зря тут падает…
       </p>
 
       <div class="strawberry-grid">
@@ -591,22 +601,48 @@ function viewStrawberryHistory() {
     </section>
   `);
 
+  const btn = document.createElement("div");
+  btn.id = "scrollTopBtn";
+  btn.textContent = "⬆";
+  document.body.appendChild(btn);
+
+
   // подключаем лайтбокс к фоткам стенографии + подписи
-const imgs = Array.from(document.querySelectorAll(".strawberry-grid img"));
+  const imgs = Array.from(document.querySelectorAll(".strawberry-grid img"));
 
-const sources = imgs.map((x) => x.src);
-const captions = imgs.map((x) => x.alt || "🍓 Strawberry");
+  const sources = imgs.map((x) => x.src);
+  const captions = imgs.map((x) => x.alt || "🍓 Strawberry");
 
-imgs.forEach((img, i) => {
-  img.addEventListener("click", () => {
-    StrawberryLightbox.open({ sources, captions }, i);
+  imgs.forEach((img, i) => {
+    img.addEventListener("click", () => {
+      StrawberryLightbox.open({ sources, captions }, i);
+    });
   });
-});
 
-// кнопка "Продолжить"
-document.getElementById("toUsername").onclick = () => {
-  CybRouter.navigate("username");
-};
+  // кнопка "Продолжить"
+  document.getElementById("toUsername").onclick = () => {
+    CybRouter.navigate("username");
+  };
+
+  // Логика появления кнопки "вверх"
+  const scrollBtn = document.getElementById("scrollTopBtn");
+
+  function checkScroll() {
+    if (window.scrollY > 300) {
+      scrollBtn.classList.add("show");
+    } else {
+      scrollBtn.classList.remove("show");
+    }
+  }
+
+  window.addEventListener("scroll", checkScroll, { passive: true });
+  checkScroll();
+
+  // При нажатии — плавный скролл вверх
+  scrollBtn.onclick = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
 
 }
 
@@ -751,7 +787,6 @@ function escapeHtml(s) {
       const input = modal.querySelector("#promptInput");
       const ok = modal.querySelector("#confirmBtn");
       const cancel = modal.querySelector("#cancelBtn");
-
       const titleEl = modal.querySelector(".title");
       const textEl = modal.querySelector(".subtitle");
       const emojiEl = modal.querySelector(".emoji");
@@ -765,47 +800,75 @@ function escapeHtml(s) {
       if (textEl) textEl.textContent = subtitle || "";
 
       // показываем input/cancel
-      if (input) {
-        input.style.display = "";
-        input.value = "";
-        setTimeout(() => input.focus(), 0);
-      }
-      if (cancel) cancel.style.display = "";
-      if (ok) ok.textContent = "OK";
+      input.style.display = "";
+      cancel.style.display = "";
+      ok.textContent = "OK";
 
       modal.style.display = "flex";
+      input.value = "";
+      setTimeout(() => input.focus(), 0);
+    
+      // ---- Функция проверки ----
+      function submit() {
+        const val = input.value.trim();
 
-      function blockEnter(e) {
-        if (modal.style.display === "flex" && !modal.classList.contains("modal--congrats")) {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            e.stopImmediatePropagation(); // <--- ВАЖНЕЙШЕЕ!
-            ok.click();
-          }
+        if (!val) {
+          // ❌ Показываем ошибку
+          input.classList.add("input-error");
+          input.style.animation = "shake .25s";
+
+          // убираем shake, чтобы можно снова дергать
+          setTimeout(() => {
+            input.style.animation = "";
+          }, 300);
+
+          return; // Не закрывать!
         }
-      }
 
-      window.addEventListener("keydown", blockEnter, true);
+        input.classList.remove("input-error");
 
-      const cleanup = () => {
-        modal.style.display = "none";
-        ok.onclick = null;
-        cancel.onclick = null;
-        window.removeEventListener("keydown", blockEnter, true);
-      };
-
-      ok.onclick = () => {
-        const val = input ? input.value : "";
         cleanup();
-        resolve((val || "").trim());
-      };
+        resolve(val);
+    }
+
+    // ---- Enter только внутри модалки ----
+    function onKey(e) {
+      if (modal.style.display !== "flex") return;
+      if (modal.classList.contains("modal--congrats")) return;
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submit();
+      }
+    }
+
+     window.addEventListener("keydown", onKey, true);
+
+    // ---- Кнопки ----
+    ok.onclick = submit;
 
       cancel.onclick = () => {
         cleanup();
         resolve("");
       };
-    });
-  }
+      
+      // ---- Очистка ----
+      function cleanup() {
+            modal.style.display = "none";
+      ok.onclick = null;
+      cancel.onclick = null;
+
+      // ВАЖНО: убираем глобальный листенер
+      window.removeEventListener("keydown", onKey, true);
+
+      // возвращаем скрытые элементы к норме
+      input.value = "";
+      input.style.display = "";
+      cancel.style.display = "";
+      ok.textContent = "OK";
+    }
+  });
+}
 
   const _1xAbe = [
     1090,1099,32,1087,1086,1081,1084,1072,1083,32,1077,1105,32,1074,1086,
@@ -839,10 +902,68 @@ function escapeHtml(s) {
       const input = modal.querySelector("#promptInput");
       const ok = modal.querySelector("#confirmBtn");
       const cancel = modal.querySelector("#cancelBtn");
-
       const titleEl = modal.querySelector(".title");
       const textEl = modal.querySelector(".subtitle");
       const emojiEl = modal.querySelector(".emoji");
+      const convex = modal.querySelector(".convariant");
+
+      // --- очищаем ВСЕ старые обработчики Enter ---
+      window.onkeydown = null;
+      window.removeEventListener("keydown", window.__customPromptEnter, true);
+      delete window.__customPromptEnter;
+
+      function baseCleanup () {
+        modal.style.display = "none";
+        modal.classList.remove("modal--congrats", "modal--strawberry");
+
+        // возвращаем состояние
+        if (input) {
+          input.style.display = "";
+          input.value = "";
+        }
+        if (cancel) cancel.style.display = "";
+        if (ok) ok.textContent = "OK";
+
+        ok.onclick = null;
+        cancel.onclick = null;
+
+        emojiEl?.classList.remove("float");
+
+        // убираем Keydown
+        window.removeEventListener("keydown", onEnterCongrats, true);
+      };
+
+      let cleanup = baseCleanup;
+
+      emojiEl.classList.add("float");
+
+      // 3D эффект движения клубнички
+      function tilt(e) {
+        const rect = convex.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+
+        const rotateX = (y / 18).toFixed(2);
+        const rotateY = (-x / 18).toFixed(2);
+
+        emojiEl.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      }
+
+      function resetTilt() {
+        emojiEl.style.transform = "rotateX(0deg) rotateY(0deg)";
+      }
+
+      convex.addEventListener("mousemove", tilt);
+      convex.addEventListener("mouseleave", resetTilt);
+
+      // убрать обработчики при закрытии
+      const oldCleanup = cleanup;
+      cleanup = () => {
+        convex.removeEventListener("mousemove", tilt);
+        convex.removeEventListener("mouseleave", resetTilt);
+        oldCleanup();
+      };
+
 
       // режим поздравления
       modal.classList.add("modal--congrats", "modal--strawberry");
@@ -861,47 +982,51 @@ function escapeHtml(s) {
 
       modal.style.display = "flex";
 
-      // === обработчик ENTER для поздравительной кнопки ===
-    
+      // центр модалки
+      const rect = modal.querySelector(".modal-content").getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      // эффекты
+      spawnStrawberryConfetti(cx, cy);
+      spawnRingWave(cx, cy);
+      flashModal(modal.querySelector(".modal-content"));
+      pulseBackground();
+      launchBigStrawberries(cx, cy);
+      
+
+      
       function onEnterCongrats(e) {
-          if (modal.style.display === "flex" && modal.classList.contains("modal--congrats")) {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              ok.click();
-            }
-          }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          ok.click();
+        }
+      }
+
+      window.addEventListener("keydown", onEnterCongrats, true);
+
+      ok.onclick = () => {
+        // Анимация кнопки
+        ok.classList.add("btn-okay-animate");
+
+        // Вспышка клубнички
+        if (emojiEl) {
+          emojiEl.classList.add("flash");
+
+          setTimeout(() => emojiEl.classList.remove("flash"), 350);
         }
 
-      window.addEventListener("keydown", onEnterCongrats);
-
-      const cleanup = () => {
-        modal.style.display = "none";
-        modal.classList.remove("modal--congrats", "modal--strawberry");
-
-        // возвращаем состояние
-        if (input) {
-          input.style.display = "";
-          input.value = "";
+        // Вибрация на телефонах
+        if (navigator.vibrate) {
+          navigator.vibrate([15, 35, 15]);
         }
-        if (cancel) cancel.style.display = "";
-        if (ok) ok.textContent = "OK";
 
-        ok.onclick = null;
-        cancel.onclick = null;
-
-        // убираем Keydown
-      window.removeEventListener("keydown", onEnterCongrats);
-      };
-
-        ok.onclick = () => {
-        cleanup();
-
-        // Редирект на стенографию
-        if (window.CybRouter && typeof CybRouter.navigate === "function") {
+        // Мини-пауза, чтобы анимация успела сыграть
+        setTimeout(() => {
+          cleanup();
           CybRouter.navigate("strawberry-history");
-        }
-
-        resolve("ok");
+          resolve("ok");
+        }, 300);
       };
 
       cancel.onclick = () => {
@@ -943,6 +1068,126 @@ function escapeHtml(s) {
 
     await showCongratsModal(storedName);
   }
+
+  function spawnStrawberryConfetti(x, y) {
+    const COUNT = 28;
+
+    for (let i = 0; i < COUNT; i++) {
+      const el = document.createElement("div");
+      el.className = "strawberry-confetti";
+      el.textContent = "🍓";
+
+      const angle = i * (Math.PI * 2 / COUNT);
+      let radius = 0;
+
+      const speed = 1.2 + Math.random() * 1.1;
+      const spin = 0.15 + Math.random() * 0.2;
+
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+
+      document.body.appendChild(el);
+
+      let alpha = 1;
+
+      function animate() {
+        radius += speed;
+        const dx = Math.cos(angle + radius * 0.03) * radius;
+        const dy = Math.sin(angle + radius * 0.03) * radius * 0.75;
+
+        alpha -= 0.008;
+
+        el.style.transform =
+          `translate(${dx}px, ${dy}px) rotate(${radius * spin}deg) scale(${alpha})`;
+        el.style.opacity = alpha;
+
+        if (alpha > 0) requestAnimationFrame(animate);
+        else el.remove();
+      }
+
+      requestAnimationFrame(animate);
+    }
+  }
+
+  function spawnRingWave(x, y) {
+    const ring = document.createElement("div");
+    ring.className = "strawberry-ring-wave";
+    ring.style.left = x - 40 + "px";
+    ring.style.top = y - 40 + "px";
+    ring.style.width = "80px";
+    ring.style.height = "80px";
+
+    document.body.appendChild(ring);
+
+    setTimeout(() => ring.remove(), 900);
+  }
+
+  function flashModal(modal) {
+    modal.classList.remove("flash");
+    void modal.offsetWidth; // restart animation
+    modal.classList.add("flash");
+  }
+
+  function pulseBackground() {
+    document.body.classList.remove("body-pulse");
+    void document.body.offsetWidth;
+    document.body.classList.add("body-pulse");
+  }
+
+  function launchBigStrawberries(centerX, centerY) {
+    const COUNT = 4 + Math.floor(Math.random() * 2); // 4–5 крупных клубничек
+
+    for (let i = 0; i < COUNT; i++) {
+      const el = document.createElement("div");
+      el.className = "big-strawberry";
+      el.textContent = "🍓";
+
+      document.body.appendChild(el);
+
+      // Начальная позиция — чуть смещённая в случайную сторону
+      const offsetX = (Math.random() * 60 - 30);
+      const offsetY = (Math.random() * 30 - 15);
+
+      let x = centerX + offsetX;
+      let y = centerY + offsetY;
+
+      // параметры slow-mo движения
+      const driftX = (Math.random() * 80 - 40); // горизонтальный дрейф
+      const rise = 180 + Math.random() * 120;  // высота подъёма
+      const sway = Math.random() * 0.02 + 0.015; // синусоида
+      const rotSpeed = Math.random() * 0.6 - 0.3; // вращение
+
+      let t = 0;
+
+      function animate() {
+        t += 0.015; // скорость SLOW-MO
+
+        // синусоидальный дрейф
+        const dx = Math.sin(t * 3) * 25;
+        const dy = -t * rise;
+
+        // позиция
+        el.style.left = (x + dx + driftX * t) + "px";
+        el.style.top = (y + dy) + "px";
+
+        // вращение + плавное уменьшение
+        el.style.transform =
+          `scale(${1 - t * 0.3}) rotate(${rotSpeed * t * 180}deg)`;
+
+        // плавное исчезновение
+        el.style.opacity = 1 - t * 0.9;
+
+        if (t < 1.0) {
+          requestAnimationFrame(animate);
+        } else {
+          el.remove();
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+  }
+
 
   // ---------- background strawberries ----------
   function initBackground() {
