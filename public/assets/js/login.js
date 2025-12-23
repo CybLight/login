@@ -1,7 +1,9 @@
 const app = document.getElementById('app');
+const API_BASE = 'https://api.cyblight.org';
 
 // ===== Turnstile =====
 let turnstileToken = '';
+let turnstileWidgetId = null;
 
 window.onTurnstileOk = (token) => {
   turnstileToken = token;
@@ -31,8 +33,18 @@ function initTurnstile() {
   }
 
   // render вручную
-  turnstile.render(el);
+  turnstileWidgetId = turnstile.render(el);
   tsRendered = true;
+}
+
+async function checkSession() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
+    const data = await res.json().catch(() => ({}));
+    return res.ok && data.ok;
+  } catch {
+    return false;
+  }
 }
 
 // 🍓 Lightbox
@@ -550,8 +562,15 @@ function viewPassword() {
     CybRouter.navigate('reset');
   };
 
-  turnstileToken = '';
+  if (window.turnstile && turnstileWidgetId !== null) {
+    try {
+      turnstile.remove(turnstileWidgetId);
+    } catch {}
+    turnstileWidgetId = null;
+  }
+
   tsRendered = false;
+  turnstileToken = '';
   initTurnstile();
 
   // TURNSTILE TOKEN
@@ -569,9 +588,10 @@ function viewPassword() {
     const login = sessionStorage.getItem('cyb_login');
 
     try {
-      const res = await fetch('https://api.cyblight.org/auth/login', {
+      const res = await fetch('${API_BASE}/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           login,
           password: pass,
@@ -582,7 +602,9 @@ function viewPassword() {
 
       if (!res.ok) {
         // ❌ ОШИБКА — сбрасываем капчу
-        if (window.turnstile) turnstile.reset();
+        if (window.turnstile && turnstileWidgetId !== null) {
+          turnstile.reset(turnstileWidgetId);
+        }
         turnstileToken = '';
 
         alert(data.error || 'Ошибка входа');
@@ -590,10 +612,20 @@ function viewPassword() {
       }
 
       // ✅ УСПЕХ
+      const okSession = await checkSession();
+      if (!okSession) {
+        alert(
+          'Вход вроде успешный, но сессия не установилась (cookie не сохранилась). Проверь credentials/CORS.'
+        );
+        return;
+      }
+
       CybRouter.navigate('done');
     } catch (err) {
       // ❌ СЕТЕВАЯ ОШИБКА — тоже сбрасываем
-      if (window.turnstile) turnstile.reset();
+      if (window.turnstile && turnstileWidgetId !== null) {
+        turnstile.reset(turnstileWidgetId);
+      }
       turnstileToken = '';
 
       alert('Ошибка сети. Попробуйте ещё раз.');
@@ -627,7 +659,7 @@ function viewReset() {
   document.getElementById('back').onclick = () => CybRouter.navigate('username');
 }
 
-function viewDone() {
+async function viewDone() {
   app.innerHTML = shell(`
     <section class="auth-card">
       <div class="auth-head">
@@ -635,24 +667,35 @@ function viewDone() {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Готово ✅</h1>
+          <h1>Вы вышли 👋</h1>
           
         </div>
       </div>
 
       <p style="margin:0;color:var(--muted);font-size:13px;">
-        Вы вошли (demo). Далее подключим backend.
+        Сессия завершена. Вы успешно вышли из аккаунта.
       </p>
 
       <button class="btn btn-primary" id="toUser" style="margin-top:16px;">
-        В /username
+        Вернуться к входу
       </button>
     </section>
   `);
   const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
-  document.getElementById('toUser').onclick = () => CybRouter.navigate('username');
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+  } catch (e) {
+    console.warn('Logout failed:', e);
+  }
+
+  document.getElementById('toUser').onclick = () => {
+    CybRouter.navigate('username');
+  };
 }
 
 function viewStrawberryHistory() {
