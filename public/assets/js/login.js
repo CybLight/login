@@ -569,7 +569,7 @@ function viewPassword() {
     const login = sessionStorage.getItem('cyb_login');
 
     try {
-      const res = await fetch('api/login', {
+      const res = await fetch('https://api.cyblight.org/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
