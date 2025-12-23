@@ -23,18 +23,32 @@ function initTurnstile() {
   const el = document.querySelector('.cf-turnstile');
   if (!el) return;
 
-  // чтобы не создавать дубликаты при повторном рендере
-  if (tsRendered) return;
-
   // ждём, пока скрипт Turnstile загрузится
   if (!window.turnstile) {
     setTimeout(initTurnstile, 150);
     return;
   }
 
-  // render вручную
-  turnstileWidgetId = turnstile.render(el);
-  tsRendered = true;
+  // если уже был виджет — убираем
+  if (turnstileWidgetId !== null) {
+    try {
+      turnstile.remove(turnstileWidgetId);
+    } catch {}
+    turnstileWidgetId = null;
+  }
+
+  // чистим контейнер (убирает следы прошлого iframe)
+  el.innerHTML = '';
+
+  turnstileWidgetId = turnstile.render(el, {
+    sitekey: '0x4AAAAAACIMk1fcGPcs3NLf',
+    theme: 'dark',
+    callback: onTurnstileOk,
+    'expired-callback': onTurnstileExpired,
+    'error-callback': onTurnstileError,
+  });
+
+  turnstileToken = '';
 }
 
 async function checkSession() {
@@ -536,13 +550,8 @@ function viewPassword() {
         </div>
 
         <div class="field" style="margin-top:12px;">
-        <div class="cf-turnstile"   
-             data-sitekey="0x4AAAAAACIMk1fcGPcs3NLf"
-             data-theme="dark"
-             data-callback="onTurnstileOk"
-             data-expired-callback="onTurnstileExpired"
-             data-error-callback="onTurnstileError"></div>
-        </div>
+
+        <div class="cf-turnstile"></div>
 
         <div class="row">
           <a class="link" href="#" id="back">← Назад</a>
