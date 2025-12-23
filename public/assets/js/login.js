@@ -39,9 +39,12 @@ function initTurnstile() {
 
 async function checkSession() {
   try {
-    const res = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
-    const data = await res.json().catch(() => ({}));
-    return res.ok && data.ok;
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      method: 'GET',
+      credentials: 'include', // ✅ обязательно
+    });
+    const data = await res.json().catch(() => null);
+    return !!(res.ok && data?.ok);
   } catch {
     return false;
   }
@@ -588,10 +591,10 @@ function viewPassword() {
     const login = sessionStorage.getItem('cyb_login');
 
     try {
-      const res = await fetch('${API_BASE}/auth/login', {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           login,
           password: pass,
@@ -693,9 +696,7 @@ async function viewDone() {
     console.warn('Logout failed:', e);
   }
 
-  document.getElementById('toUser').onclick = () => {
-    CybRouter.navigate('username');
-  };
+  document.getElementById('toUser').onclick = () => CybRouter.navigate('username');
 }
 
 function viewStrawberryHistory() {
