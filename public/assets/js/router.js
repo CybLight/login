@@ -1,23 +1,31 @@
 (function () {
-  const routes = new Set(["username", "password", "2fa", "reset", "done", "strawberry-history"]);
+  const routes = new Set([
+    'signup',
+    'username',
+    'password',
+    '2fa',
+    'reset',
+    'done',
+    'strawberry-history',
+  ]);
 
   function getRoute() {
-    const path = location.pathname.replace(/^\/+/, "").replace(/\/+$/, "");
-    return routes.has(path) ? path : "username";
+    const path = location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+    return routes.has(path) ? path : 'username';
   }
 
   function navigate(to) {
-    history.pushState({}, "", "/" + to);
+    history.pushState({}, '', '/' + to);
     render();
   }
 
   window.CybRouter = { getRoute, navigate };
 
-  window.addEventListener("popstate", render);
+  window.addEventListener('popstate', render);
 
   function render() {
     const route = getRoute();
-    window.dispatchEvent(new CustomEvent("cyb:route", { detail: { route } }));
+    window.dispatchEvent(new CustomEvent('cyb:route', { detail: { route } }));
   }
 
   // first render

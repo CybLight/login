@@ -416,6 +416,7 @@ const StrawberryLightbox = (() => {
 
 // Функция рендера по маршруту
 function renderRoute(r) {
+  if (r === 'signup') return viewSignup();
   if (r === 'username') return viewUsername();
   if (r === 'password') return viewPassword();
   if (r === 'reset') return viewReset();
@@ -513,7 +514,7 @@ function viewUsername() {
   };
 
   document.getElementById('createAcc').onclick = () => {
-    alert('Регистрация (demo). Потом сделаем отдельный маршрут /signup.');
+    CybRouter.navigate('signup');
   };
 
   document.getElementById('f').addEventListener('submit', (e) => {
@@ -522,6 +523,122 @@ function viewUsername() {
     if (!login) return alert('Введите имя пользователя');
     sessionStorage.setItem('cyb_login', login);
     CybRouter.navigate('password');
+  });
+}
+
+function viewSignup() {
+  app.innerHTML = shell(`
+    <section class="auth-card">
+      <div class="auth-head">
+        <div class="brand-logo">
+          <img src="/assets/img/logo.svg" alt="CybLight" />
+        </div>
+        <div class="auth-title">
+          <h1>Регистрация</h1>
+        </div>
+      </div>
+
+      <form id="f">
+        <div class="field">
+          <label class="label" for="login">Логин</label>
+          <input class="input" id="login" autocomplete="username" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="pass">Пароль</label>
+          <input class="input" id="pass" type="password" autocomplete="new-password" required />
+        </div>
+
+        <div class="field" style="margin-top:12px;">
+          <div class="cf-turnstile"></div>
+        </div>
+
+        <div class="row">
+          <a class="link" href="#" id="back">← Назад</a>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Создать аккаунт</button>
+      </form>
+    </section>
+  `);
+
+  document.getElementById('back').onclick = (e) => {
+    e.preventDefault();
+    CybRouter.navigate('username');
+  };
+
+  // убрать дубликаты Turnstile
+  if (window.turnstile && turnstileWidgetId !== null) {
+    try {
+      turnstile.remove(turnstileWidgetId);
+    } catch {}
+    turnstileWidgetId = null;
+  }
+  tsRendered = false;
+  turnstileToken = '';
+  initTurnstile();
+
+  document.getElementById('f').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const login = document.getElementById('login').value.trim();
+    const pass = document.getElementById('pass').value.trim();
+
+    if (!login) return alert('Введите логин');
+    if (!pass) return alert('Введите пароль');
+    if (!turnstileToken) {
+      alert('Подтверди, что ты не робот');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          login,
+          password: pass,
+          turnstileToken,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        // ❌ ошибка регистрации
+        if (window.turnstile && turnstileWidgetId !== null) {
+          turnstile.reset(turnstileWidgetId);
+        }
+        turnstileToken = '';
+
+        alert(data.error || 'Ошибка регистрации');
+        return;
+      }
+
+      // ✅ регистрация успешна — проверяем, что cookie реально установилась
+      const okSession = await checkSession();
+      if (!okSession) {
+        alert(
+          'Регистрация прошла, но сессия не установилась (cookie заблокирована). Проверь CORS / credentials.'
+        );
+        return;
+      }
+
+      CybRouter.navigate('done');
+    } catch (err) {
+      // ❌ СЕТЕВАЯ ОШИБКА
+      console.error('Signup failed:', err);
+
+      if (window.turnstile && turnstileWidgetId !== null) {
+        turnstile.reset(turnstileWidgetId);
+      }
+      turnstileToken = '';
+
+      alert('Ошибка сети. Проверьте соединение и попробуйте ещё раз.');
+    }
   });
 }
 
@@ -550,8 +667,8 @@ function viewPassword() {
         </div>
 
         <div class="field" style="margin-top:12px;">
-
-        <div class="cf-turnstile"></div>
+          <div class="cf-turnstile"></div>
+        </div>
 
         <div class="row">
           <a class="link" href="#" id="back">← Назад</a>
