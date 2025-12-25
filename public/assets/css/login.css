@@ -69,6 +69,54 @@
   font-size: 13px;
 }
 
+/* MSG CUSTOM*/
+.msg {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.35;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.msg--ok {
+  border-color: rgba(70, 255, 160, 0.35);
+  background: rgba(70, 255, 160, 0.1);
+}
+
+.msg--warn {
+  border-color: rgba(255, 200, 70, 0.35);
+  background: rgba(255, 200, 70, 0.1);
+}
+
+.msg--error {
+  border-color: rgba(255, 90, 90, 0.35);
+  background: rgba(255, 90, 90, 0.1);
+}
+
+.shake {
+  animation: shake 0.28s;
+}
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 /* Fields */
 .field {
   margin-top: 14px;
@@ -153,7 +201,7 @@
 
 .divider::before,
 .divider::after {
-  content: "";
+  content: '';
   height: 1px;
   background: rgba(255, 255, 255, 0.14);
 }
@@ -319,7 +367,7 @@
 }
 
 .strawberry.special::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: -8px;
   border-radius: 999px;
@@ -392,7 +440,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
   object-fit: contain;
-  
+
   opacity: 0;
   transform: scale(0.985);
   transition: opacity 160ms ease, transform 160ms ease;
@@ -406,8 +454,14 @@
 }
 
 @keyframes strawberryZoomIn {
-  from { transform: scale(0.96); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .strawberry-lightbox__img.is-ready {
@@ -465,8 +519,12 @@
   border-color: rgba(255, 59, 107, 0.55);
 }
 
-.strawberry-lightbox__nav.prev { left: 14px; }
-.strawberry-lightbox__nav.next { right: 14px; }
+.strawberry-lightbox__nav.prev {
+  left: 14px;
+}
+.strawberry-lightbox__nav.next {
+  right: 14px;
+}
 
 /* ===== Lightbox HUD ===== */
 .strawberry-lightbox__hud {
@@ -482,9 +540,9 @@
 .strawberry-lightbox__counter {
   padding: 8px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: rgba(0,0,0,0.45);
-  color: rgba(231,236,255,0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(231, 236, 255, 0.92);
   font-size: 13px;
   line-height: 1;
   white-space: nowrap;
@@ -498,9 +556,9 @@
   max-width: min(92vw, 900px);
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(0,0,0,0.45);
-  color: rgba(231,236,255,0.92);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(231, 236, 255, 0.92);
   font-size: 13px;
   text-align: center;
   z-index: 100000;
@@ -544,9 +602,17 @@
 }
 
 @keyframes modal-pop {
-  0% { transform: scale(0.75) translateY(20px); opacity: 0; }
-  60% { transform: scale(1.03); opacity: 1; }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0.75) translateY(20px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes pop {
@@ -593,17 +659,18 @@
   will-change: transform, filter;
 }
 
-@keyframes emoji-strawberry{
-  0%,100%{
+@keyframes emoji-strawberry {
+  0%,
+  100% {
     transform: translateY(0) rotateZ(0deg) scale(1);
   }
-  25%{
+  25% {
     transform: translateY(-6px) rotateZ(-3deg) scale(1.04);
   }
-  50%{
+  50% {
     transform: translateY(0) rotateZ(-4deg) scale(1.045);
   }
-  75%{
+  75% {
     transform: translateY(-3px) rotateZ(-2deg) scale(1.02);
   }
 }
@@ -614,20 +681,27 @@
 }
 
 @keyframes strawberry-flash {
-  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,0,80,0)); }
-  40% { transform: scale(1.25); filter: drop-shadow(0 0 20px rgba(255,0,80,0.75)); }
-  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,0,80,0)); }
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 0, 80, 0));
+  }
+  40% {
+    transform: scale(1.25);
+    filter: drop-shadow(0 0 20px rgba(255, 0, 80, 0.75));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 0, 80, 0));
+  }
 }
 
 .modal--strawberry .convariant .emoji {
-  text-shadow:
-    0 0 12px rgba(255, 59, 107, 0.9),
-    0 0 28px rgba(255, 59, 107, 0.5),
+  text-shadow: 0 0 12px rgba(255, 59, 107, 0.9), 0 0 28px rgba(255, 59, 107, 0.5),
     0 0 48px rgba(255, 59, 107, 0.25);
 }
 
 .modal--strawberry .convariant::before {
-  content: "";
+  content: '';
   position: absolute;
   inset: -18px;
   border-radius: 50%;
@@ -639,7 +713,7 @@
   );
   animation: strawberry-aura 2.8s ease-in-out infinite;
   filter: blur(6px);
-  pointer-events:none;
+  pointer-events: none;
 }
 
 /* Вспышка клубнички */
@@ -648,20 +722,35 @@
 }
 
 @keyframes strawberry-flash {
-  0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,0,80,0)); }
-  40% { transform: scale(1.25); filter: drop-shadow(0 0 20px rgba(255,0,80,0.75)); }
-  100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,0,80,0)); }
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 0, 80, 0));
+  }
+  40% {
+    transform: scale(1.25);
+    filter: drop-shadow(0 0 20px rgba(255, 0, 80, 0.75));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 0, 80, 0));
+  }
 }
 
 /* Анимация кнопки "Круто!" */
 .modal-content .btn-okay-animate {
-  animation: ok-bounce 0.45s cubic-bezier(.17,.67,.38,1.32);
+  animation: ok-bounce 0.45s cubic-bezier(0.17, 0.67, 0.38, 1.32);
 }
 
 @keyframes ok-bounce {
-  0% { transform: scale(1); }
-  35% { transform: scale(1.12); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Плавающая клубничка */
@@ -670,9 +759,15 @@
 }
 
 @keyframes strawberry-float {
-  0% { transform: translateY(0) rotate(0); }
-  50% { transform: translateY(-10px) rotate(3deg); }
-  100% { transform: translateY(0) rotate(0); }
+  0% {
+    transform: translateY(0) rotate(0);
+  }
+  50% {
+    transform: translateY(-10px) rotate(3deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+  }
 }
 
 /* 3D эффект */
@@ -713,11 +808,21 @@
 }
 
 @keyframes shake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  50% { transform: translateX(4px); }
-  75% { transform: translateX(-4px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .modal--strawberry #promptInput:focus {
@@ -770,9 +875,15 @@
 }
 
 @keyframes modal-flash {
-  0%   { box-shadow: 0 0 0px 0 rgba(255,0,80,0.0); }
-  40%  { box-shadow: 0 0 32px 8px rgba(255,0,100,0.45); }
-  100% { box-shadow: 0 0 0px 0 rgba(255,0,80,0.0); }
+  0% {
+    box-shadow: 0 0 0px 0 rgba(255, 0, 80, 0);
+  }
+  40% {
+    box-shadow: 0 0 32px 8px rgba(255, 0, 100, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0px 0 rgba(255, 0, 80, 0);
+  }
 }
 
 /* 🌸 Кольцевая волна */
@@ -780,15 +891,23 @@
   position: fixed;
   border-radius: 50%;
   pointer-events: none;
-  border: 2px solid rgba(255,80,120,0.45);
+  border: 2px solid rgba(255, 80, 120, 0.45);
   animation: ring-wave 0.8s ease-out forwards;
   z-index: 999999;
 }
 
 @keyframes ring-wave {
-  0%   { transform: scale(0.1); opacity: 0.9; }
-  70%  { opacity: 0.4; }
-  100% { transform: scale(3.6); opacity: 0; }
+  0% {
+    transform: scale(0.1);
+    opacity: 0.9;
+  }
+  70% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(3.6);
+    opacity: 0;
+  }
 }
 
 /* 🍓 Конфетти-воронка */
@@ -798,7 +917,7 @@
   z-index: 999999;
   user-select: none;
   will-change: transform, opacity;
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
 }
 
 /* 🔮 Фоновая мягкая пульсация */
@@ -807,9 +926,15 @@
 }
 
 @keyframes body-pulse {
-  0%   { filter: brightness(1); }
-  50%  { filter: brightness(1.06); }
-  100% { filter: brightness(1); }
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.06);
+  }
+  100% {
+    filter: brightness(1);
+  }
 }
 
 .big-strawberry {
@@ -819,7 +944,7 @@
   z-index: 999999;
   opacity: 1;
   transform-origin: center;
-  filter: drop-shadow(0 3px 5px rgba(0,0,0,0.45));
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.45));
   will-change: transform, opacity;
 }
 
@@ -843,7 +968,7 @@
   pointer-events: none;
   transform: translateY(20px);
   transition: opacity 0.25s ease, transform 0.25s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 #scrollTopBtn.show {
@@ -860,11 +985,10 @@
 
 /* ===== MOBILE ===== */
 @media (max-width: 860px) {
-
   .auth-shell {
     padding-bottom: 150px;
   }
-    
+
   .auth-footer {
     height: auto;
     padding: 8px 0;

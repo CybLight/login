@@ -696,6 +696,8 @@ function viewPassword() {
           <a class="link" href="#" id="forgotPass">Забыли пароль?</a>
         </div>
 
+        <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
+
         <button class="btn btn-primary" type="submit">Войти</button>
       </form>
     </section>
@@ -723,15 +725,46 @@ function viewPassword() {
   turnstileToken = '';
   initTurnstile();
 
+  const msgEl = document.getElementById('msg');
+  const passEl = document.getElementById('pass');
+
+  function clearMsg() {
+    if (!msgEl) return;
+    msgEl.style.display = 'none';
+    msgEl.className = 'msg';
+    msgEl.textContent = '';
+  }
+
+  function showMsg(type, text) {
+    if (!msgEl) return;
+    msgEl.style.display = '';
+    msgEl.className = `msg msg--${type}`;
+    msgEl.textContent = text;
+  }
+
+  function shake(el) {
+    if (!el) return;
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+  }
+
+  passEl?.addEventListener('input', clearMsg);
+
   // TURNSTILE TOKEN
   document.getElementById('f').addEventListener('submit', async (e) => {
     e.preventDefault();
+    clearMsg();
 
     const pass = document.getElementById('pass').value.trim();
-    if (!pass) return alert('🚫 Введите пароль');
+    if (!pass) {
+      showMsg('error', 'Введите пароль.');
+      shake(passEl);
+      return;
+    }
 
     if (!turnstileToken) {
-      alert('🛡️ Подтверди, что ты не робот');
+      showMsg('warn', 'Подтверди, что ты не робот (Turnstile).');
       return;
     }
 
@@ -748,37 +781,64 @@ function viewPassword() {
           turnstileToken,
         }),
       });
-      const data = await res.json();
+
+      const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        // ❌ ОШИБКА — сбрасываем капчу
+        // сброс капчи
         if (window.turnstile && turnstileWidgetId !== null) {
           turnstile.reset(turnstileWidgetId);
         }
         turnstileToken = '';
 
-        alert(data.error || 'Ошибка входа');
-        return;
-      }
+        // красивые сообщения по коду ошибки
+        const err = String(data?.error || '').toLowerCase();
 
-      // ✅ УСПЕХ
-      const okSession = await checkSession();
-      if (!okSession) {
-        alert(
-          'Вход вроде успешный, но сессия не установилась (cookie не сохранилась). Проверь credentials/CORS.'
+        if (res.status === 401 || err.includes('invalid_credentials')) {
+          showMsg('error', 'Неправильный пароль или логин. Попробуй ещё раз.');
+          shake(passEl);
+          passEl?.focus();
+          passEl?.select?.();
+          return;
+        }
+
+        if (res.status === 429 || err.includes('rate') || err.includes('too_many')) {
+          showMsg('warn', 'Слишком много попыток. Подожди немного и попробуй снова.');
+          return;
+        }
+
+        if (err.includes('turnstile')) {
+          showMsg('warn', 'Проверка Turnstile не прошла. Обнови капчу и попробуй снова.');
+          return;
+        }
+
+        showMsg(
+          'error',
+          data?.error ? `Ошибка: ${data.error}` : 'Не удалось войти. Попробуй позже.'
         );
         return;
       }
 
-      CybRouter.navigate('profile');
+      // успех
+      showMsg('ok', 'Успешный вход! Перенаправляю…');
+
+      const okSession = await checkSession();
+      if (!okSession) {
+        showMsg(
+          'warn',
+          'Вход успешный, но сессия не сохранилась (cookie). Проверь CORS/credentials.'
+        );
+        return;
+      }
+
+      CybRouter.navigate('profile'); // ✅ или куда тебе надо
     } catch (err) {
-      // ❌ СЕТЕВАЯ ОШИБКА — тоже сбрасываем
       if (window.turnstile && turnstileWidgetId !== null) {
         turnstile.reset(turnstileWidgetId);
       }
       turnstileToken = '';
 
-      alert('Ошибка сети. Попробуйте ещё раз.');
+      showMsg('error', 'Ошибка сети. Проверь интернет и попробуй ещё раз.');
     }
   });
 }
