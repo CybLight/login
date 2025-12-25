@@ -584,12 +584,15 @@ function viewSignup() {
     const login = document.getElementById('login').value.trim();
     const pass = document.getElementById('pass').value.trim();
 
-    if (!login) return alert('Введите логин');
-    if (!pass) return alert('Введите пароль');
+    if (!login) return alert('🚫 Введите логин');
+    if (!pass) return alert('🚫 Введите пароль');
     if (!turnstileToken) {
-      alert('Подтверди, что ты не робот');
+      alert('🛡️ Подтверди, что ты не робот');
       return;
     }
+
+    console.log('API_BASE=', API_BASE);
+    console.log('REGISTER URL=', `${API_BASE}/auth/register`);
 
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
@@ -707,10 +710,10 @@ function viewPassword() {
     e.preventDefault();
 
     const pass = document.getElementById('pass').value.trim();
-    if (!pass) return alert('Введите пароль');
+    if (!pass) return alert('🚫 Введите пароль');
 
     if (!turnstileToken) {
-      alert('Подтверди, что ты не робот');
+      alert('🛡️ Подтверди, что ты не робот');
       return;
     }
 
