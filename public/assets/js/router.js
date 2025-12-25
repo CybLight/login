@@ -1,6 +1,7 @@
 (function () {
   const routes = new Set([
     'signup',
+    'profile',
     'username',
     'password',
     '2fa',
