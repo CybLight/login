@@ -417,6 +417,7 @@ const StrawberryLightbox = (() => {
 // Функция рендера по маршруту
 function renderRoute(r) {
   if (r === 'signup') return viewSignup();
+  if (r === 'profile') return viewProfile();
   if (r === 'username') return viewUsername();
   if (r === 'password') return viewPassword();
   if (r === 'reset') return viewReset();
@@ -630,7 +631,24 @@ function viewSignup() {
         return;
       }
 
-      CybRouter.navigate('done');
+      // ✅ Регистрация успешна — показываем сообщение и ведём в профиль
+      const form = document.getElementById('f');
+      const btn = form.querySelector('button[type="submit"]');
+      const backLink = document.getElementById('back');
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '✅ Регистрация успешна';
+      }
+      if (backLink) backLink.style.pointerEvents = 'none';
+
+      // сохраним логин на всякий
+      sessionStorage.setItem('cyb_login', login);
+
+      setTimeout(() => {
+        CybRouter.navigate('profile');
+      }, 900);
+      return;
     } catch (err) {
       // ❌ СЕТЕВАЯ ОШИБКА
       console.error('Signup failed:', err);
@@ -752,7 +770,7 @@ function viewPassword() {
         return;
       }
 
-      CybRouter.navigate('done');
+      CybRouter.navigate('profile');
     } catch (err) {
       // ❌ СЕТЕВАЯ ОШИБКА — тоже сбрасываем
       if (window.turnstile && turnstileWidgetId !== null) {
@@ -826,6 +844,91 @@ async function viewDone() {
   }
 
   document.getElementById('toUser').onclick = () => CybRouter.navigate('username');
+}
+
+async function viewProfile() {
+  app.innerHTML = shell(`
+    <section class="auth-card">
+      <div class="auth-head">
+        <div class="brand-logo">
+          <img src="/assets/img/logo.svg" alt="CybLight" />
+        </div>
+        <div class="auth-title">
+          <h1>Профиль</h1>
+          <span class="brand" id="pLogin">...</span>
+        </div>
+      </div>
+
+      <div id="profileBody" style="margin-top:10px;color:var(--muted);font-size:13px;">
+        Загружаю данные…
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+        <button class="btn btn-outline" id="toHistory" type="button">🍓 Стенография</button>
+        <button class="btn btn-primary" id="logoutBtn" type="button">Выйти</button>
+      </div>
+    </section>
+  `);
+
+  const oldBtn = document.getElementById('scrollTopBtn');
+  if (oldBtn) oldBtn.remove();
+
+  // 1) проверяем сессию и получаем me
+  let me = null;
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    me = await res.json().catch(() => null);
+
+    if (!res.ok || !me?.ok) {
+      // нет сессии -> назад на вход
+      CybRouter.navigate('username');
+      return;
+    }
+  } catch {
+    CybRouter.navigate('username');
+    return;
+  }
+
+  // 2) рисуем данные
+  const login =
+    me?.user?.login || me?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
+
+  const pLogin = document.getElementById('pLogin');
+  if (pLogin) pLogin.textContent = login;
+
+  const body = document.getElementById('profileBody');
+  if (body) {
+    const created = me?.user?.created_at
+      ? new Date(me.user.created_at * 1000).toLocaleString()
+      : null;
+
+    body.innerHTML = `
+      <div style="display:grid;gap:8px;">
+        <div><b>Логин:</b> ${escapeHtml(login)}</div>
+        ${me?.user?.id ? `<div><b>ID:</b> ${escapeHtml(me.user.id)}</div>` : ''}
+        ${created ? `<div><b>Создан:</b> ${escapeHtml(created)}</div>` : ''}
+        <div style="opacity:.8">Сессия активна ✅</div>
+      </div>
+    `;
+  }
+
+  // 3) кнопки
+  document.getElementById('toHistory').onclick = () => {
+    CybRouter.navigate('strawberry-history');
+  };
+
+  document.getElementById('logoutBtn').onclick = async () => {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {}
+    CybRouter.navigate('done'); // done у тебя как “вы вышли”
+  };
 }
 
 function viewStrawberryHistory() {
