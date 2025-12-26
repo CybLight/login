@@ -425,6 +425,9 @@ const StrawberryLightbox = (() => {
 
 // Функция рендера по маршруту
 function renderRoute(r) {
+  // 🍓 отключаем фон только на profile
+  document.body.classList.toggle('no-strawberry-bg', r === 'profile');
+
   if (r === 'signup') return viewSignup();
   if (r === 'profile') return viewProfile();
   if (r === 'username') return viewUsername();
@@ -918,45 +921,62 @@ async function viewDone() {
 async function viewProfile() {
   const canSee = hasStrawberryAccess();
 
-  app.innerHTML = shell(`
-    <section class="auth-card">
-      <div class="auth-head">
-        <div class="brand-logo">
-          <img src="/assets/img/logo.svg" alt="CybLight" />
+  app.innerHTML = `
+    <div class="profile-page">
+      <header class="profile-topbar">
+        <div class="profile-brand">
+          <a href="https://cyblight.org/" target="_blank" rel="noopener" aria-label="Главная">
+            <img src="/assets/img/logo.svg" alt="CybLight" />
+          </a>
+          <div class="profile-title">
+            <h1>Профиль <span class="brand" id="pLogin">...</span></h1>
+            <div class="profile-muted" id="pSub">Проверяю сессию…</div>
+          </div>
         </div>
-        <div class="auth-title">
-          <h1>Профиль</h1>
-          <span class="brand" id="pLogin">...</span>
+
+        <div class="profile-actions">
+          <button class="btn btn-outline" id="toLogin" type="button">← Вход</button>
+          <button class="btn btn-primary" id="logoutBtn" type="button">Выйти</button>
         </div>
-      </div>
+      </header>
 
       <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
 
-      <div id="profileBody" style="margin-top:10px;color:var(--muted);font-size:13px;">
-        Загружаю данные…
-      </div>
+      <main class="profile-grid">
+        <section class="profile-card">
+          <h3 style="margin:0 0 10px 0;">Данные аккаунта</h3>
+          <div id="profileBody" class="profile-muted">Загружаю данные…</div>
+        </section>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
-        ${
-          canSee
-            ? `<button class="btn btn-outline" id="toHistory" type="button">🍓 Стенография</button>`
-            : `<button class="btn btn-outline" type="button" disabled style="opacity:.55;cursor:not-allowed;">🔒 Стенография</button>`
-        }
-        <button class="btn btn-outline" id="logoutOthersBtn" type="button">
-          Выйти из других
-        </button>
-        <button class="btn btn-primary" id="logoutBtn" type="button">Выйти</button>
-      </div>
+        <aside class="profile-card">
+          <h3 style="margin:0 0 10px 0;">Действия</h3>
 
-      ${
-        canSee
-          ? ''
-          : `<p style="margin-top:10px;color:var(--muted);font-size:12px;">
-              Стенография откроется, если найдёшь пасхалку 🍓
-            </p>`
-      }
-    </section>
-  `);
+          <div class="profile-actions" style="margin-bottom:10px;">
+            ${
+              canSee
+                ? `<button class="btn btn-outline" id="toHistory" type="button">🍓 Стенография</button>`
+                : `<button class="btn btn-outline" type="button" disabled style="opacity:.55;cursor:not-allowed;">🔒 Стенография</button>`
+            }
+            <button class="btn btn-outline" id="logoutOthersBtn" type="button">Выйти из других</button>
+          </div>
+
+          ${
+            canSee
+              ? ''
+              : `<div class="profile-muted" style="opacity:.9;">
+                  Стенография откроется, если найдёшь пасхалку 🍓
+                </div>`
+          }
+
+          <div style="height:1px;background:rgba(255,255,255,.08);margin:12px 0;"></div>
+
+          <div class="profile-muted" style="opacity:.85;">
+            Подсказка: если видишь “Загружаю…” — смотри Console, там будет ошибка рендера.
+          </div>
+        </aside>
+      </main>
+    </div>
+  `;
 
   const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
@@ -977,118 +997,93 @@ async function viewProfile() {
   }
 
   // ---- кнопки ----
-  if (canSee) {
-    const toHistory = document.getElementById('toHistory');
-    if (toHistory) toHistory.onclick = () => CybRouter.navigate('strawberry-history');
-  }
+  const toLogin = document.getElementById('toLogin');
+  if (toLogin) toLogin.onclick = () => CybRouter.navigate('username');
 
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {
     logoutBtn.onclick = async () => {
       clearMsg();
       try {
-        await fetch(`${API_BASE}/auth/logout`, {
-          method: 'POST',
-          credentials: 'include',
-        });
+        await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
       } catch {}
-      // после выхода — на вход
-      CybRouter.navigate('username'); // или 'done' если тебе так надо
+      CybRouter.navigate('username');
     };
+  }
+
+  if (canSee) {
+    const toHistory = document.getElementById('toHistory');
+    if (toHistory) toHistory.onclick = () => CybRouter.navigate('strawberry-history');
   }
 
   const logoutOthersBtn = document.getElementById('logoutOthersBtn');
-  if (logoutOthersBtn) {
-    logoutOthersBtn.onclick = async () => {
-      clearMsg();
-      logoutOthersBtn.disabled = true;
-      const oldText = logoutOthersBtn.textContent;
-      logoutOthersBtn.textContent = 'Выхожу…';
-
-      try {
-        const res = await fetch(`${API_BASE}/auth/logout_others`, {
-          method: 'POST',
-          credentials: 'include',
-        });
-        const data = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          showMsg(
-            'error',
-            data?.error ? `Ошибка: ${data.error}` : 'Не удалось завершить другие сессии.'
-          );
-        } else {
-          showMsg('ok', `Готово ✅ Завершено сессий: ${data.removed ?? 0}`);
-          // обновим профиль, чтобы sessionsCount пересчитался
-          setTimeout(() => CybRouter.navigate('profile'), 450);
-        }
-      } catch {
-        showMsg('error', 'Ошибка сети. Попробуй ещё раз.');
-      } finally {
-        logoutOthersBtn.disabled = false;
-        logoutOthersBtn.textContent = oldText;
-      }
-    };
-  }
 
   // ---- грузим /auth/me ----
   let me = null;
   try {
-    const res = await fetch(`${API_BASE}/auth/me`, {
-      method: 'GET',
-      credentials: 'include',
-    });
+    const res = await fetch(`${API_BASE}/auth/me`, { method: 'GET', credentials: 'include' });
     me = await res.json().catch(() => null);
 
     if (!res.ok || !me?.ok) {
       CybRouter.navigate('username');
       return;
     }
-  } catch {
+  } catch (e) {
+    console.error('Profile /auth/me failed:', e);
     CybRouter.navigate('username');
     return;
   }
 
-  // ---- рисуем данные ----
+  // ---- рисуем данные (и НЕ даём “Загружаю…” висеть) ----
+  const pLogin = document.getElementById('pLogin');
+  const pSub = document.getElementById('pSub');
+  const body = document.getElementById('profileBody');
+
+  const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
+  if (pLogin) pLogin.textContent = login;
+  if (pSub) pSub.textContent = 'Сессия активна ✅';
+
+  // миллисекунды -> дата
+  function fmtTs(ms) {
+    if (ms == null || ms === '') return '—';
+    const n = Number(ms);
+    if (!Number.isFinite(n) || n <= 0) return '—';
+    const d = new Date(n);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString();
+  }
+
   try {
-    const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
+    const u = me.user || {};
+    const s = me.session || {};
 
-    const pLogin = document.getElementById('pLogin');
-    if (pLogin) pLogin.textContent = login;
-
-    const body = document.getElementById('profileBody');
     if (body) {
-      const u = me.user || {};
-      const s = me.session || {};
-
       body.innerHTML = `
-      <div style="display:grid;gap:8px;">
-        <div><b>Логин:</b> ${escapeHtml(login)}</div>
-        ${u.id ? `<div><b>ID:</b> <span style="opacity:.85">${escapeHtml(u.id)}</span></div>` : ''}
-        <div><b>Дата регистрации:</b> ${escapeHtml(fmtTs(u.createdAt))}</div>
+        <div style="display:grid;gap:8px;">
+          <div><b>Логин:</b> ${escapeHtml(login)}</div>
+          ${
+            u.id ? `<div><b>ID:</b> <span style="opacity:.85">${escapeHtml(u.id)}</span></div>` : ''
+          }
+          <div><b>Дата регистрации:</b> ${escapeHtml(fmtTs(u.createdAt))}</div>
 
-        <div style="height:1px;background:rgba(255,255,255,.08);margin:6px 0;"></div>
+          <div style="height:1px;background:rgba(255,255,255,.08);margin:6px 0;"></div>
 
-        <div><b>Текущая сессия:</b> <span style="opacity:.85">${escapeHtml(
-          s.id || '—'
-        )}</span></div>
-        <div><b>Сессия создана:</b> ${escapeHtml(fmtTs(s.createdAt))}</div>
-        <div><b>Сессия истекает:</b> ${escapeHtml(fmtTs(s.expiresAt))}</div>
-        <div><b>Активных сессий:</b> ${escapeHtml(String(me.sessionsCount ?? '—'))}</div>
-
-        <div style="opacity:.8">Статус: сессия активна ✅</div>
-      </div>
-    `;
+          <div><b>Текущая сессия:</b> <span style="opacity:.85">${escapeHtml(
+            s.id || '—'
+          )}</span></div>
+          <div><b>Сессия создана:</b> ${escapeHtml(fmtTs(s.createdAt))}</div>
+          <div><b>Сессия истекает:</b> ${escapeHtml(fmtTs(s.expiresAt))}</div>
+          <div><b>Активных сессий:</b> ${escapeHtml(String(me.sessionsCount ?? '—'))}</div>
+        </div>
+      `;
     }
   } catch (e) {
     console.error('Profile render error:', e);
-    const body = document.getElementById('profileBody');
-    if (body)
-      body.innerHTML = `<span style="color:#ff8a8a">Ошибка отображения профиля. Открой Console.</span>`;
+    if (body) body.textContent = 'Ошибка отображения профиля (см. Console).';
     showMsg('error', 'Ошибка в профиле (см. Console).');
   }
 
-  // если активная сессия 1 — можно “выйти из других” сделать неактивной
+  // ---- “выйти из других” ----
   if (logoutOthersBtn) {
     const cnt = Number(me.sessionsCount || 0);
     if (cnt <= 1) {
@@ -1096,6 +1091,36 @@ async function viewProfile() {
       logoutOthersBtn.style.opacity = '.55';
       logoutOthersBtn.style.cursor = 'not-allowed';
       logoutOthersBtn.title = 'Других сессий нет';
+    } else {
+      logoutOthersBtn.onclick = async () => {
+        clearMsg();
+        logoutOthersBtn.disabled = true;
+        const oldText = logoutOthersBtn.textContent;
+        logoutOthersBtn.textContent = 'Выхожу…';
+
+        try {
+          const res = await fetch(`${API_BASE}/auth/logout_others`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          const data = await res.json().catch(() => ({}));
+
+          if (!res.ok) {
+            showMsg(
+              'error',
+              data?.error ? `Ошибка: ${data.error}` : 'Не удалось завершить другие сессии.'
+            );
+          } else {
+            showMsg('ok', `Готово ✅ Завершено сессий: ${data.removed ?? 0}`);
+            setTimeout(() => CybRouter.navigate('profile'), 450);
+          }
+        } catch {
+          showMsg('error', 'Ошибка сети. Попробуй ещё раз.');
+        } finally {
+          logoutOthersBtn.disabled = false;
+          logoutOthersBtn.textContent = oldText;
+        }
+      };
     }
   }
 }

@@ -977,10 +977,91 @@
   transform: translateY(0);
 }
 
-@media (min-width: 768px) {
-  #scrollTopBtn {
-    display: none !important;
+/* ===== Profile ===== */
+
+/* === Fullscreen profile layout === */
+.profile-page {
+  min-height: 100vh;
+  padding: 24px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.profile-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.profile-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-brand img {
+  width: 44px;
+  height: 44px;
+}
+
+.profile-title h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.profile-title .brand {
+  display: inline-block;
+  margin-left: 8px;
+  opacity: 0.85;
+  font-size: 13px;
+}
+
+.profile-grid {
+  width: 100%;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 980px) {
+  .profile-grid {
+    grid-template-columns: 1.2fr 0.8fr;
+    align-items: start;
   }
+}
+
+.profile-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+}
+
+.profile-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.profile-muted {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* === Disable strawberry BG on profile === */
+body.no-strawberry-bg .bg-strawberries {
+  display: none !important;
+}
+
+/* на всякий — если где-то остаются эффекты */
+body.no-strawberry-bg .strawberry-confetti,
+body.no-strawberry-bg .big-strawberry,
+body.no-strawberry-bg .strawberry-ring-wave {
+  display: none !important;
 }
 
 /* ===== MOBILE ===== */
@@ -1009,6 +1090,12 @@
     gap: 10px;
     width: 100%;
     text-align: center;
+  }
+}
+
+@media (min-width: 768px) {
+  #scrollTopBtn {
+    display: none !important;
   }
 }
 
