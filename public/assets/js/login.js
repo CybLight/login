@@ -1050,17 +1050,18 @@ async function viewProfile() {
   }
 
   // ---- рисуем данные ----
-  const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
+  try {
+    const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
 
-  const pLogin = document.getElementById('pLogin');
-  if (pLogin) pLogin.textContent = login;
+    const pLogin = document.getElementById('pLogin');
+    if (pLogin) pLogin.textContent = login;
 
-  const body = document.getElementById('profileBody');
-  if (body) {
-    const u = me.user || {};
-    const s = me.session || {};
+    const body = document.getElementById('profileBody');
+    if (body) {
+      const u = me.user || {};
+      const s = me.session || {};
 
-    body.innerHTML = `
+      body.innerHTML = `
       <div style="display:grid;gap:8px;">
         <div><b>Логин:</b> ${escapeHtml(login)}</div>
         ${u.id ? `<div><b>ID:</b> <span style="opacity:.85">${escapeHtml(u.id)}</span></div>` : ''}
@@ -1078,6 +1079,13 @@ async function viewProfile() {
         <div style="opacity:.8">Статус: сессия активна ✅</div>
       </div>
     `;
+    }
+  } catch (e) {
+    console.error('Profile render error:', e);
+    const body = document.getElementById('profileBody');
+    if (body)
+      body.innerHTML = `<span style="color:#ff8a8a">Ошибка отображения профиля. Открой Console.</span>`;
+    showMsg('error', 'Ошибка в профиле (см. Console).');
   }
 
   // если активная сессия 1 — можно “выйти из других” сделать неактивной
@@ -1090,6 +1098,18 @@ async function viewProfile() {
       logoutOthersBtn.title = 'Других сессий нет';
     }
   }
+}
+
+function fmtTs(ms) {
+  if (ms == null || ms === '') return '—';
+
+  const n = Number(ms);
+  if (!Number.isFinite(n) || n <= 0) return '—';
+
+  const d = new Date(n); // ✅ миллисекунды!
+  if (Number.isNaN(d.getTime())) return '—';
+
+  return d.toLocaleString();
 }
 
 function viewStrawberryHistory() {
