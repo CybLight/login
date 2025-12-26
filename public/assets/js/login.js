@@ -10,6 +10,10 @@ function setStrawberryAccess() {
   localStorage.setItem(EASTER_KEY, '1');
 }
 
+function setNoStrawberries(on) {
+  document.body.classList.toggle('no-strawberries', !!on);
+}
+
 // ===== Turnstile =====
 let turnstileToken = '';
 let turnstileWidgetId = null;
@@ -25,8 +29,6 @@ window.onTurnstileExpired = () => {
 window.onTurnstileError = () => {
   turnstileToken = '';
 };
-
-let tsRendered = false;
 
 function initTurnstile() {
   const el = document.querySelector('.cf-turnstile');
@@ -52,9 +54,9 @@ function initTurnstile() {
   turnstileWidgetId = turnstile.render(el, {
     sitekey: '0x4AAAAAACIMk1fcGPcs3NLf',
     theme: 'dark',
-    callback: onTurnstileOk,
-    'expired-callback': onTurnstileExpired,
-    'error-callback': onTurnstileError,
+    callback: window.onTurnstileOk,
+    'expired-callback': window.onTurnstileExpired,
+    'error-callback': window.onTurnstileError,
   });
 
   turnstileToken = '';
@@ -425,11 +427,14 @@ const StrawberryLightbox = (() => {
 
 // Функция рендера по маршруту
 function renderRoute(r) {
-  // 🍓 отключаем фон только на profile
-  document.body.classList.toggle('no-strawberry-bg', r === 'profile');
+  // account pages
+  if (r === 'account-profile') return viewAccount('profile');
+  if (r === 'account-security') return viewAccount('security');
+  if (r === 'account-sessions') return viewAccount('sessions');
+  if (r === 'account-easter-eggs') return viewAccount('easter');
 
+  // LOGIN
   if (r === 'signup') return viewSignup();
-  if (r === 'profile') return viewProfile();
   if (r === 'username') return viewUsername();
   if (r === 'password') return viewPassword();
   if (r === 'reset') return viewReset();
@@ -476,6 +481,8 @@ function shell(contentHtml) {
 }
 
 function viewUsername() {
+  setNoStrawberries(false);
+
   app.innerHTML = shell(`
     <section class="auth-card">
       <div class="auth-head">
@@ -514,6 +521,7 @@ function viewUsername() {
       <button class="btn-create" type="button" id="createAcc">Регистрируйся!</button>
     </div>
   `);
+
   const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
@@ -540,6 +548,8 @@ function viewUsername() {
 }
 
 function viewSignup() {
+  setNoStrawberries(false);
+
   app.innerHTML = shell(`
     <section class="auth-card">
       <div class="auth-head">
@@ -587,7 +597,7 @@ function viewSignup() {
     } catch {}
     turnstileWidgetId = null;
   }
-  tsRendered = false;
+
   turnstileToken = '';
   initTurnstile();
 
@@ -658,7 +668,7 @@ function viewSignup() {
       sessionStorage.setItem('cyb_login', login);
 
       setTimeout(() => {
-        CybRouter.navigate('profile');
+        CybRouter.navigate('account-profile');
       }, 900);
       return;
     } catch (err) {
@@ -677,6 +687,13 @@ function viewSignup() {
 
 function viewPassword() {
   const login = sessionStorage.getItem('cyb_login') || '';
+  if (!login) {
+    CybRouter.navigate('username');
+    return;
+  }
+
+  setNoStrawberries(false);
+
   app.innerHTML = shell(`
     <section class="auth-card">
       <div class="auth-head">
@@ -714,6 +731,7 @@ function viewPassword() {
       </form>
     </section>
   `);
+
   const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
@@ -733,7 +751,6 @@ function viewPassword() {
     turnstileWidgetId = null;
   }
 
-  tsRendered = false;
   turnstileToken = '';
   initTurnstile();
 
@@ -843,7 +860,7 @@ function viewPassword() {
         return;
       }
 
-      CybRouter.navigate('profile'); // ✅ или куда тебе надо
+      CybRouter.navigate('account-profile'); // ✅ или куда тебе надо
     } catch (err) {
       if (window.turnstile && turnstileWidgetId !== null) {
         turnstile.reset(turnstileWidgetId);
@@ -918,223 +935,342 @@ async function viewDone() {
   document.getElementById('toUser').onclick = () => CybRouter.navigate('username');
 }
 
-async function viewProfile() {
-  const canSee = hasStrawberryAccess();
+// ACCOUNT PAGE
 
+function shortId(s, left = 6, right = 6) {
+  s = String(s || '');
+  if (s.length <= left + right + 3) return s;
+  return s.slice(0, left) + '…' + s.slice(-right);
+}
+
+function fmtTs(ms) {
+  if (!ms) return '—';
+  const d = new Date(Number(ms));
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleString();
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // fallback
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+async function fetchMe() {
+  const res = await fetch(`${API_BASE}/auth/me`, { method: 'GET', credentials: 'include' });
+  const data = await res.json().catch(() => null);
+  return { res, data };
+}
+
+async function viewAccount(tab = 'profile') {
+  // ✅ убираем клубничный фон
+  setNoStrawberries(true);
+
+  // UI skeleton
   app.innerHTML = `
-    <div class="profile-page">
-      <header class="profile-topbar">
-        <div class="profile-brand">
-          <a href="https://cyblight.org/" target="_blank" rel="noopener" aria-label="Главная">
+    <div class="account-page">
+      <div class="account-wrap">
+        <aside class="account-sidebar">
+          <div class="account-brand">
             <img src="/assets/img/logo.svg" alt="CybLight" />
-          </a>
-          <div class="profile-title">
-            <h1>Профиль <span class="brand" id="pLogin">...</span></h1>
-            <div class="profile-muted" id="pSub">Проверяю сессию…</div>
-          </div>
-        </div>
-
-        <div class="profile-actions">
-          <button class="btn btn-outline" id="toLogin" type="button">← Вход</button>
-          <button class="btn btn-primary" id="logoutBtn" type="button">Выйти</button>
-        </div>
-      </header>
-
-      <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
-
-      <main class="profile-grid">
-        <section class="profile-card">
-          <h3 style="margin:0 0 10px 0;">Данные аккаунта</h3>
-          <div id="profileBody" class="profile-muted">Загружаю данные…</div>
-        </section>
-
-        <aside class="profile-card">
-          <h3 style="margin:0 0 10px 0;">Действия</h3>
-
-          <div class="profile-actions" style="margin-bottom:10px;">
-            ${
-              canSee
-                ? `<button class="btn btn-outline" id="toHistory" type="button">🍓 Стенография</button>`
-                : `<button class="btn btn-outline" type="button" disabled style="opacity:.55;cursor:not-allowed;">🔒 Стенография</button>`
-            }
-            <button class="btn btn-outline" id="logoutOthersBtn" type="button">Выйти из других</button>
+            <div>
+              <div style="font-weight:800;font-size:16px;line-height:1;">Учётка</div>
+              <div id="accLogin" style="opacity:.75;font-size:13px;margin-top:4px;">…</div>
+            </div>
           </div>
 
-          ${
-            canSee
-              ? ''
-              : `<div class="profile-muted" style="opacity:.9;">
-                  Стенография откроется, если найдёшь пасхалку 🍓
-                </div>`
-          }
+          <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
 
-          <div style="height:1px;background:rgba(255,255,255,.08);margin:12px 0;"></div>
+          <nav class="account-nav">
+            <button data-tab="profile">👤 Профиль</button>
+            <button data-tab="security">🛡️ Безопасность</button>
+            <button data-tab="sessions">🧩 Сессии</button>
+            <button data-tab="easter">🍓 Пасхалки</button>
+          </nav>
+
+          <div style="margin-top:14px;display:grid;gap:10px;">
+            <button class="btn btn-primary" id="logoutBtn" type="button">Выйти</button>
+          </div>
         </aside>
-      </main>
+
+        <main class="account-main">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:22px;font-weight:900;">${tabTitle(tab)}</div>
+              <div style="opacity:.75;font-size:13px;margin-top:4px;">Управление аккаунтом CybLight</div>
+            </div>
+            <div style="opacity:.65;font-size:12px;" id="metaLine"></div>
+          </div>
+
+          <div style="height:1px;background:rgba(255,255,255,.08);margin:14px 0;"></div>
+
+          <div id="accBody" style="color:var(--muted);font-size:13px;">Загружаю…</div>
+        </main>
+      </div>
     </div>
   `;
 
-  const oldBtn = document.getElementById('scrollTopBtn');
-  if (oldBtn) oldBtn.remove();
-
-  // ---- красивое сообщение ----
+  // msg
   const msgEl = document.getElementById('msg');
-  function clearMsg() {
-    if (!msgEl) return;
-    msgEl.style.display = 'none';
-    msgEl.className = 'msg';
-    msgEl.textContent = '';
-  }
-  function showMsg(type, text) {
+  const showMsg = (type, text) => {
     if (!msgEl) return;
     msgEl.style.display = '';
     msgEl.className = `msg msg--${type}`;
     msgEl.textContent = text;
-  }
+  };
+  const clearMsg = () => {
+    if (!msgEl) return;
+    msgEl.style.display = 'none';
+    msgEl.className = 'msg';
+    msgEl.textContent = '';
+  };
 
-  // ---- кнопки ----
-  const toLogin = document.getElementById('toLogin');
-  if (toLogin) toLogin.onclick = () => CybRouter.navigate('username');
-
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.onclick = async () => {
-      clearMsg();
-      try {
-        await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
-      } catch {}
-      CybRouter.navigate('username');
+  // sidebar active
+  document.querySelectorAll('.account-nav button').forEach((b) => {
+    if (b.dataset.tab === tab) b.classList.add('active');
+    b.onclick = () => {
+      const t = b.dataset.tab;
+      if (!t) return;
+      // отдельные роуты под вкладки
+      const map = {
+        profile: 'account-profile',
+        security: 'account-security',
+        sessions: 'account-sessions',
+        easter: 'account-easter-eggs',
+      };
+      CybRouter.navigate(map[t] || 'account-profile');
     };
-  }
+  });
 
-  if (canSee) {
-    const toHistory = document.getElementById('toHistory');
-    if (toHistory) toHistory.onclick = () => CybRouter.navigate('strawberry-history');
-  }
+  // logout
+  document.getElementById('logoutBtn').onclick = async () => {
+    clearMsg();
+    try {
+      await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch {}
+    // ✅ возвращаем “обычный” режим с клубникой
+    setNoStrawberries(false);
+    CybRouter.navigate('username');
+  };
 
-  const logoutOthersBtn = document.getElementById('logoutOthersBtn');
-
-  // ---- грузим /auth/me ----
+  // load me
   let me = null;
   try {
-    const res = await fetch(`${API_BASE}/auth/me`, { method: 'GET', credentials: 'include' });
-    me = await res.json().catch(() => null);
-
-    if (!res.ok || !me?.ok) {
+    const { res, data } = await fetchMe();
+    if (!res.ok || !data?.ok) {
+      setNoStrawberries(false);
       CybRouter.navigate('username');
       return;
     }
-  } catch (e) {
-    console.error('Profile /auth/me failed:', e);
-    CybRouter.navigate('username');
+    me = data;
+  } catch {
+    showMsg('error', 'Не удалось загрузить профиль. Проверь интернет и попробуй ещё раз.');
     return;
   }
 
-  // ---- рисуем данные (и НЕ даём “Загружаю…” висеть) ----
-  const pLogin = document.getElementById('pLogin');
-  const pSub = document.getElementById('pSub');
-  const body = document.getElementById('profileBody');
-
+  // header
   const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
-  if (pLogin) pLogin.textContent = login;
-  if (pSub) pSub.textContent = 'Сессия активна ✅';
+  document.getElementById('accLogin').textContent = login;
 
-  // миллисекунды -> дата
-  function fmtTs(ms) {
-    if (ms == null || ms === '') return '—';
-    const n = Number(ms);
-    if (!Number.isFinite(n) || n <= 0) return '—';
-    const d = new Date(n);
-    if (Number.isNaN(d.getTime())) return '—';
-    return d.toLocaleString();
+  if (me?.meta?.region || me?.meta?.time) {
+    document.getElementById('metaLine').textContent =
+      `${me?.meta?.region ? 'Region: ' + me.meta.region : ''}` +
+      `${me?.meta?.region && me?.meta?.time ? ' • ' : ''}` +
+      `${me?.meta?.time ? new Date(me.meta.time).toLocaleString() : ''}`;
   }
 
-  try {
-    const u = me.user || {};
-    const s = me.session || {};
+  // render tab
+  const body = document.getElementById('accBody');
+  body.innerHTML = renderTabHtml(tab, me);
 
-    if (body) {
-      body.innerHTML = `
-        <div style="display:grid;gap:8px;">
-          <div><b>Логин:</b> ${escapeHtml(login)}</div>
-          ${
-            u.id ? `<div><b>ID:</b> <span style="opacity:.85">${escapeHtml(u.id)}</span></div>` : ''
-          }
-          <div><b>Дата регистрации:</b> ${escapeHtml(fmtTs(u.createdAt))}</div>
+  // attach handlers inside tabs
+  bindTabActions(tab, me, { showMsg, clearMsg });
+}
 
-          <div style="height:1px;background:rgba(255,255,255,.08);margin:6px 0;"></div>
+function tabTitle(tab) {
+  if (tab === 'profile') return 'Профиль';
+  if (tab === 'security') return 'Безопасность';
+  if (tab === 'sessions') return 'Сессии';
+  if (tab === 'easter') return 'Пасхалки';
+  return 'Учётка';
+}
 
-          <div><b>Текущая сессия:</b> <span style="opacity:.85">${escapeHtml(
-            s.id || '—'
-          )}</span></div>
-          <div><b>Сессия создана:</b> ${escapeHtml(fmtTs(s.createdAt))}</div>
-          <div><b>Сессия истекает:</b> ${escapeHtml(fmtTs(s.expiresAt))}</div>
-          <div><b>Активных сессий:</b> ${escapeHtml(String(me.sessionsCount ?? '—'))}</div>
+function renderIdRow(label, value, keyForCopy) {
+  const v = String(value || '—');
+  const short = value ? shortId(v, 10, 10) : '—';
+  return `
+    <div class="k">${label}</div>
+    <div class="v">
+      <span class="mono-pill" title="${escapeHtml(v)}">
+        <span data-full="${escapeHtml(v)}" data-copy="${escapeHtml(keyForCopy || '')}">${escapeHtml(
+    short
+  )}</span>
+        ${
+          value
+            ? `<button class="copy-btn" type="button" data-copybtn="${escapeHtml(v)}">Copy</button>`
+            : ''
+        }
+      </span>
+    </div>
+  `;
+}
+
+function renderTabHtml(tab, me) {
+  const u = me.user || {};
+  const s = me.session || {};
+  const sessionsCount = Number(me.sessionsCount || 0);
+
+  if (tab === 'profile') {
+    return `
+      <div class="kv">
+        <div class="k">Логин</div>
+        <div class="v"><b>${escapeHtml(u.login || '—')}</b></div>
+
+        ${renderIdRow('ID пользователя', u.id, 'userId')}
+
+        <div class="k">Дата регистрации</div>
+        <div class="v">${escapeHtml(fmtTs(u.createdAt))}</div>
+      </div>
+    `;
+  }
+
+  if (tab === 'security') {
+    return `
+      <div style="display:grid;gap:10px;">
+        <div style="opacity:.85;line-height:1.5;">
+          Тут будут настройки безопасности (смена пароля, 2FA, ключи доступа).
         </div>
-      `;
-    }
-  } catch (e) {
-    console.error('Profile render error:', e);
-    if (body) body.textContent = 'Ошибка отображения профиля (см. Console).';
-    showMsg('error', 'Ошибка в профиле (см. Console).');
+        <div style="padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(0,0,0,.12);">
+          <div style="font-weight:800;">Рекомендации</div>
+          <ul style="margin:8px 0 0 18px;opacity:.85;">
+            <li>Длинный пароль (12+ символов)</li>
+            <li>Не использовать один пароль везде</li>
+            <li>Следить за активными сессиями</li>
+          </ul>
+        </div>
+      </div>
+    `;
   }
 
-  // ---- “выйти из других” ----
-  if (logoutOthersBtn) {
-    const cnt = Number(me.sessionsCount || 0);
-    if (cnt <= 1) {
-      logoutOthersBtn.disabled = true;
-      logoutOthersBtn.style.opacity = '.55';
-      logoutOthersBtn.style.cursor = 'not-allowed';
-      logoutOthersBtn.title = 'Других сессий нет';
-    } else {
-      logoutOthersBtn.onclick = async () => {
-        clearMsg();
-        logoutOthersBtn.disabled = true;
-        const oldText = logoutOthersBtn.textContent;
-        logoutOthersBtn.textContent = 'Выхожу…';
+  if (tab === 'sessions') {
+    return `
+      <div class="kv">
+        ${renderIdRow('Текущая сессия', s.id, 'sessionId')}
 
+        <div class="k">Сессия создана</div>
+        <div class="v">${escapeHtml(fmtTs(s.createdAt))}</div>
+
+        <div class="k">Сессия истекает</div>
+        <div class="v">${escapeHtml(fmtTs(s.expiresAt))}</div>
+
+        <div class="k">Активных сессий</div>
+        <div class="v"><b>${escapeHtml(String(sessionsCount))}</b></div>
+      </div>
+
+      <div style="height:1px;background:rgba(255,255,255,.08);margin:14px 0;"></div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button class="btn btn-outline" id="logoutOthersBtn" type="button" ${
+          sessionsCount <= 1
+            ? 'disabled style="opacity:.55;cursor:not-allowed;" title="Других сессий нет"'
+            : ''
+        }>
+          Выйти из других
+        </button>
+      </div>
+    `;
+  }
+
+  if (tab === 'easter') {
+    const canSee = hasStrawberryAccess();
+    return `
+      <div style="display:grid;gap:10px;">
+        <div style="opacity:.85;line-height:1.5;">
+          Пасхалки открываются, когда ты находишь секреты на сайте 🍓
+        </div>
+
+        <button class="btn btn-outline" id="toHistoryBtn" type="button"
+          ${canSee ? '' : 'disabled style="opacity:.55;cursor:not-allowed;"'}>
+          ${canSee ? '🍓 Открыть стенографию' : '🔒 Стенография (закрыто)'}
+        </button>
+
+        ${
+          canSee
+            ? ''
+            : `<div style="opacity:.7;font-size:12px;">Подсказка: ищи особую клубничку 😉</div>`
+        }
+      </div>
+    `;
+  }
+
+  return `—`;
+}
+
+function bindTabActions(tab, me, api) {
+  // Copy buttons
+  document.querySelectorAll('[data-copybtn]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const v = btn.getAttribute('data-copybtn');
+      const ok = await copyText(v);
+      if (ok) api.showMsg('ok', 'Скопировано ✅');
+      else api.showMsg('error', 'Не удалось скопировать');
+      setTimeout(api.clearMsg, 900);
+    });
+  });
+
+  // Sessions tab action
+  if (tab === 'sessions') {
+    const b = document.getElementById('logoutOthersBtn');
+    if (b && !b.disabled) {
+      b.onclick = async () => {
+        api.clearMsg();
+        b.disabled = true;
+        const old = b.textContent;
+        b.textContent = 'Выхожу…';
         try {
           const res = await fetch(`${API_BASE}/auth/logout_others`, {
             method: 'POST',
             credentials: 'include',
           });
           const data = await res.json().catch(() => ({}));
-
-          if (!res.ok) {
-            showMsg(
-              'error',
-              data?.error ? `Ошибка: ${data.error}` : 'Не удалось завершить другие сессии.'
-            );
-          } else {
-            showMsg('ok', `Готово ✅ Завершено сессий: ${data.removed ?? 0}`);
-            setTimeout(() => CybRouter.navigate('profile'), 450);
-          }
+          if (!res.ok) api.showMsg('error', data?.error ? `Ошибка: ${data.error}` : 'Не удалось.');
+          else api.showMsg('ok', `Готово ✅ Завершено сессий: ${data.removed ?? 0}`);
+          setTimeout(() => CybRouter.navigate('account-sessions'), 450);
         } catch {
-          showMsg('error', 'Ошибка сети. Попробуй ещё раз.');
+          api.showMsg('error', 'Ошибка сети. Попробуй ещё раз.');
         } finally {
-          logoutOthersBtn.disabled = false;
-          logoutOthersBtn.textContent = oldText;
+          b.disabled = false;
+          b.textContent = old;
         }
       };
     }
   }
-}
 
-function fmtTs(ms) {
-  if (ms == null || ms === '') return '—';
-
-  const n = Number(ms);
-  if (!Number.isFinite(n) || n <= 0) return '—';
-
-  const d = new Date(n); // ✅ миллисекунды!
-  if (Number.isNaN(d.getTime())) return '—';
-
-  return d.toLocaleString();
+  // Easter tab
+  if (tab === 'easter') {
+    const btn = document.getElementById('toHistoryBtn');
+    if (btn && !btn.disabled) btn.onclick = () => CybRouter.navigate('strawberry-history');
+  }
 }
 
 function viewStrawberryHistory() {
   const login = sessionStorage.getItem('cyb_login') || 'Гость';
+
+  setNoStrawberries(false);
 
   app.innerHTML = shell(`
     <section class="auth-card strawberry-history">
@@ -1171,7 +1307,7 @@ function viewStrawberryHistory() {
   `);
 
   if (!hasStrawberryAccess()) {
-    CybRouter.navigate('profile'); // или 'username'
+    CybRouter.navigate('account-easter-eggs'); // или 'username'
     return;
   }
 

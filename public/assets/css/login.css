@@ -980,87 +980,141 @@
 /* ===== Profile ===== */
 
 /* === Fullscreen profile layout === */
-.profile-page {
+/* ===== Account layout ===== */
+.account-page {
   min-height: 100vh;
   padding: 24px 18px;
+  background: radial-gradient(1200px 700px at 30% 10%, rgba(180, 120, 255, 0.1), transparent 60%),
+    radial-gradient(900px 600px at 70% 20%, rgba(255, 127, 39, 0.1), transparent 55%),
+    var(--bg, #0a0f1f);
+}
+
+.account-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
-  flex-direction: column;
   gap: 18px;
 }
 
-.profile-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.profile-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.profile-brand img {
-  width: 44px;
-  height: 44px;
-}
-
-.profile-title h1 {
-  margin: 0;
-  font-size: 22px;
-}
-
-.profile-title .brand {
-  display: inline-block;
-  margin-left: 8px;
-  opacity: 0.85;
-  font-size: 13px;
-}
-
-.profile-grid {
-  width: 100%;
-  display: grid;
-  gap: 14px;
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 980px) {
-  .profile-grid {
-    grid-template-columns: 1.2fr 0.8fr;
-    align-items: start;
-  }
-}
-
-.profile-card {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.25);
+.account-sidebar {
+  width: 270px;
+  flex: 0 0 270px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 16px;
+  padding: 14px;
   backdrop-filter: blur(10px);
 }
 
-.profile-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+.account-main {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 18px;
+  backdrop-filter: blur(10px);
 }
 
-.profile-muted {
+.account-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 12px;
+}
+
+.account-brand img {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+}
+
+.account-nav {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.account-nav button {
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.12);
+  color: inherit;
+  cursor: pointer;
+}
+
+.account-nav button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.account-nav button.active {
+  background: rgba(255, 127, 39, 0.18);
+  border-color: rgba(255, 127, 39, 0.3);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 10px 14px;
+  margin-top: 12px;
+}
+
+.kv .k {
   color: var(--muted);
   font-size: 13px;
-  line-height: 1.5;
+}
+.kv .v {
+  font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
-/* === Disable strawberry BG on profile === */
-body.no-strawberry-bg .bg-strawberries {
-  display: none !important;
+.mono-pill {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* на всякий — если где-то остаются эффекты */
-body.no-strawberry-bg .strawberry-confetti,
-body.no-strawberry-bg .big-strawberry,
-body.no-strawberry-bg .strawberry-ring-wave {
+.copy-btn {
+  border: 0;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  padding: 4px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* mobile: sidebar becomes top nav */
+@media (max-width: 860px) {
+  .account-wrap {
+    flex-direction: column;
+  }
+  .account-sidebar {
+    width: 100%;
+    flex: 0 0 auto;
+  }
+  .kv {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ✅ полностью прячем клубничный фон на страницах account */
+body.no-strawberries .bg-strawberries,
+body.no-strawberries .strawberry-confetti,
+body.no-strawberries .big-strawberry,
+body.no-strawberries .strawberry-ring-wave {
   display: none !important;
 }
 

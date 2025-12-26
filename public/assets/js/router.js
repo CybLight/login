@@ -1,7 +1,10 @@
 (function () {
   const routes = new Set([
     'signup',
-    'profile',
+    'account-profile',
+    'account-security',
+    'account-sessions',
+    'account-easter-eggs',
     'username',
     'password',
     '2fa',
