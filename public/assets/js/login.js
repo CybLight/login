@@ -1,6 +1,15 @@
 const app = document.getElementById('app');
 const API_BASE = 'https://api.cyblight.org';
 
+const EASTER_KEY = 'cyb_strawberry_unlocked';
+
+function hasStrawberryAccess() {
+  return localStorage.getItem(EASTER_KEY) === '1';
+}
+function setStrawberryAccess() {
+  localStorage.setItem(EASTER_KEY, '1');
+}
+
 // ===== Turnstile =====
 let turnstileToken = '';
 let turnstileWidgetId = null;
@@ -907,6 +916,8 @@ async function viewDone() {
 }
 
 async function viewProfile() {
+  const canSee = hasStrawberryAccess();
+
   app.innerHTML = shell(`
     <section class="auth-card">
       <div class="auth-head">
@@ -919,21 +930,108 @@ async function viewProfile() {
         </div>
       </div>
 
+      <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
+
       <div id="profileBody" style="margin-top:10px;color:var(--muted);font-size:13px;">
         Загружаю данные…
       </div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
-        <button class="btn btn-outline" id="toHistory" type="button">🍓 Стенография</button>
+        ${
+          canSee
+            ? `<button class="btn btn-outline" id="toHistory" type="button">🍓 Стенография</button>`
+            : `<button class="btn btn-outline" type="button" disabled style="opacity:.55;cursor:not-allowed;">🔒 Стенография</button>`
+        }
+        <button class="btn btn-outline" id="logoutOthersBtn" type="button">
+          Выйти из других
+        </button>
         <button class="btn btn-primary" id="logoutBtn" type="button">Выйти</button>
       </div>
+
+      ${
+        canSee
+          ? ''
+          : `<p style="margin-top:10px;color:var(--muted);font-size:12px;">
+              Стенография откроется, если найдёшь пасхалку 🍓
+            </p>`
+      }
     </section>
   `);
 
   const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
-  // 1) проверяем сессию и получаем me
+  // ---- красивое сообщение ----
+  const msgEl = document.getElementById('msg');
+  function clearMsg() {
+    if (!msgEl) return;
+    msgEl.style.display = 'none';
+    msgEl.className = 'msg';
+    msgEl.textContent = '';
+  }
+  function showMsg(type, text) {
+    if (!msgEl) return;
+    msgEl.style.display = '';
+    msgEl.className = `msg msg--${type}`;
+    msgEl.textContent = text;
+  }
+
+  // ---- кнопки ----
+  if (canSee) {
+    const toHistory = document.getElementById('toHistory');
+    if (toHistory) toHistory.onclick = () => CybRouter.navigate('strawberry-history');
+  }
+
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      clearMsg();
+      try {
+        await fetch(`${API_BASE}/auth/logout`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+      } catch {}
+      // после выхода — на вход
+      CybRouter.navigate('username'); // или 'done' если тебе так надо
+    };
+  }
+
+  const logoutOthersBtn = document.getElementById('logoutOthersBtn');
+  if (logoutOthersBtn) {
+    logoutOthersBtn.onclick = async () => {
+      clearMsg();
+      logoutOthersBtn.disabled = true;
+      const oldText = logoutOthersBtn.textContent;
+      logoutOthersBtn.textContent = 'Выхожу…';
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/logout_others`, {
+          method: 'POST',
+          credentials: 'include',
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          showMsg(
+            'error',
+            data?.error ? `Ошибка: ${data.error}` : 'Не удалось завершить другие сессии.'
+          );
+        } else {
+          showMsg('ok', `Готово ✅ Завершено сессий: ${data.removed ?? 0}`);
+          // обновим профиль, чтобы sessionsCount пересчитался
+          setTimeout(() => CybRouter.navigate('profile'), 450);
+        }
+      } catch {
+        showMsg('error', 'Ошибка сети. Попробуй ещё раз.');
+      } finally {
+        logoutOthersBtn.disabled = false;
+        logoutOthersBtn.textContent = oldText;
+      }
+    };
+  }
+
+  // ---- грузим /auth/me ----
   let me = null;
   try {
     const res = await fetch(`${API_BASE}/auth/me`, {
@@ -943,7 +1041,6 @@ async function viewProfile() {
     me = await res.json().catch(() => null);
 
     if (!res.ok || !me?.ok) {
-      // нет сессии -> назад на вход
       CybRouter.navigate('username');
       return;
     }
@@ -952,43 +1049,47 @@ async function viewProfile() {
     return;
   }
 
-  // 2) рисуем данные
-  const login =
-    me?.user?.login || me?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
+  // ---- рисуем данные ----
+  const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
 
   const pLogin = document.getElementById('pLogin');
   if (pLogin) pLogin.textContent = login;
 
   const body = document.getElementById('profileBody');
   if (body) {
-    const created = me?.user?.created_at
-      ? new Date(me.user.created_at * 1000).toLocaleString()
-      : null;
+    const u = me.user || {};
+    const s = me.session || {};
 
     body.innerHTML = `
       <div style="display:grid;gap:8px;">
         <div><b>Логин:</b> ${escapeHtml(login)}</div>
-        ${me?.user?.id ? `<div><b>ID:</b> ${escapeHtml(me.user.id)}</div>` : ''}
-        ${created ? `<div><b>Создан:</b> ${escapeHtml(created)}</div>` : ''}
-        <div style="opacity:.8">Сессия активна ✅</div>
+        ${u.id ? `<div><b>ID:</b> <span style="opacity:.85">${escapeHtml(u.id)}</span></div>` : ''}
+        <div><b>Дата регистрации:</b> ${escapeHtml(fmtTs(u.createdAt))}</div>
+
+        <div style="height:1px;background:rgba(255,255,255,.08);margin:6px 0;"></div>
+
+        <div><b>Текущая сессия:</b> <span style="opacity:.85">${escapeHtml(
+          s.id || '—'
+        )}</span></div>
+        <div><b>Сессия создана:</b> ${escapeHtml(fmtTs(s.createdAt))}</div>
+        <div><b>Сессия истекает:</b> ${escapeHtml(fmtTs(s.expiresAt))}</div>
+        <div><b>Активных сессий:</b> ${escapeHtml(String(me.sessionsCount ?? '—'))}</div>
+
+        <div style="opacity:.8">Статус: сессия активна ✅</div>
       </div>
     `;
   }
 
-  // 3) кнопки
-  document.getElementById('toHistory').onclick = () => {
-    CybRouter.navigate('strawberry-history');
-  };
-
-  document.getElementById('logoutBtn').onclick = async () => {
-    try {
-      await fetch(`${API_BASE}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch {}
-    CybRouter.navigate('done'); // done у тебя как “вы вышли”
-  };
+  // если активная сессия 1 — можно “выйти из других” сделать неактивной
+  if (logoutOthersBtn) {
+    const cnt = Number(me.sessionsCount || 0);
+    if (cnt <= 1) {
+      logoutOthersBtn.disabled = true;
+      logoutOthersBtn.style.opacity = '.55';
+      logoutOthersBtn.style.cursor = 'not-allowed';
+      logoutOthersBtn.title = 'Других сессий нет';
+    }
+  }
 }
 
 function viewStrawberryHistory() {
@@ -1027,6 +1128,11 @@ function viewStrawberryHistory() {
       </button>
     </section>
   `);
+
+  if (!hasStrawberryAccess()) {
+    CybRouter.navigate('profile'); // или 'username'
+    return;
+  }
 
   const btn = document.createElement('div');
   btn.id = 'scrollTopBtn';
@@ -1441,6 +1547,7 @@ function escapeHtml(s) {
 
         // Мини-пауза, чтобы анимация успела сыграть
         setTimeout(() => {
+          setStrawberryAccess(); // ✅ отмечаем, что пасхалка найдена
           cleanup();
           CybRouter.navigate('strawberry-history');
           resolve('ok');
