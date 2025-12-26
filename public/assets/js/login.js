@@ -969,10 +969,6 @@ async function viewProfile() {
           }
 
           <div style="height:1px;background:rgba(255,255,255,.08);margin:12px 0;"></div>
-
-          <div class="profile-muted" style="opacity:.85;">
-            Подсказка: если видишь “Загружаю…” — смотри Console, там будет ошибка рендера.
-          </div>
         </aside>
       </main>
     </div>
