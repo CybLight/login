@@ -14,6 +14,23 @@ function setNoStrawberries(on) {
   document.body.classList.toggle('no-strawberries', !!on);
 }
 
+function parseUA(ua = '') {
+  ua = String(ua);
+  const isAndroid = /Android/i.test(ua);
+  const isWindows = /Windows NT/i.test(ua);
+  const isMac = /Mac OS X/i.test(ua);
+
+  let os = isAndroid ? 'Android' : isWindows ? 'Windows' : isMac ? 'macOS' : 'Unknown';
+
+  let browser = 'Browser';
+  if (/Firefox/i.test(ua)) browser = 'Firefox';
+  else if (/Edg/i.test(ua)) browser = 'Edge';
+  else if (/Chrome/i.test(ua)) browser = 'Chrome';
+  else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+
+  return { os, browser };
+}
+
 // ===== Turnstile =====
 let turnstileToken = '';
 let turnstileWidgetId = null;
@@ -449,7 +466,18 @@ window.addEventListener('cyb:route', (e) => {
 });
 
 // Начальный рендер
-renderRoute(window.CybRouter?.getRoute?.() || 'username');
+(async function boot() {
+  const r = window.CybRouter?.getRoute?.() || 'username';
+
+  // если пользователь уже вошёл — сразу в учётку
+  const ok = await checkSession();
+  if (ok && !String(r).startsWith('account-')) {
+    CybRouter.navigate('account-profile');
+    return;
+  }
+
+  renderRoute(r);
+})();
 
 function shell(contentHtml) {
   return `
@@ -1077,9 +1105,163 @@ async function viewAccount(tab = 'profile') {
       return;
     }
     me = data;
+
+    if (tab === 'sessions') {
+      const body = document.getElementById('accBody');
+      body.innerHTML = `<div style="opacity:.75">Загружаю список устройств…</div>`;
+
+      try {
+        const r = await fetch(`${API_BASE}/auth/sessions`, { credentials: 'include' });
+        const d = await r.json().catch(() => null);
+        if (r.ok && d?.ok) {
+          body.innerHTML = renderSessionsTable(d, me);
+          bindSessionsTable(d, { showMsg, clearMsg });
+        } else {
+          body.innerHTML = renderTabHtml(tab, me);
+          showMsg('error', 'Не удалось получить список сессий.');
+        }
+      } catch {
+        body.innerHTML = renderTabHtml(tab, me);
+        showMsg('error', 'Ошибка сети при загрузке сессий.');
+      }
+
+      return; // важно: чтобы ниже не перетерло body
+    }
   } catch {
     showMsg('error', 'Не удалось загрузить профиль. Проверь интернет и попробуй ещё раз.');
     return;
+  }
+
+  function renderSessionsTable(data, me) {
+    const sessions = Array.isArray(data.sessions) ? data.sessions : [];
+    const current = data.current;
+
+    const rows = sessions
+      .map((s) => {
+        const ua = parseUA(s.user_agent || '');
+        const colo = s.colo ? ` • ${s.colo}` : '';
+        const loc = ([s.city, s.region, s.country].filter(Boolean).join(', ') || '—') + colo;
+        const last = s.last_seen_at || s.created_at;
+        const isCur = s.id === current;
+
+        return `
+        <tr class="${isCur ? 'is-current' : ''}">
+          <td>
+            <div class="dev">
+              <div class="dev-title">${escapeHtml(ua.browser)} ${
+          isCur ? '<span class="pill">Текущая</span>' : ''
+        }</div>
+              <div class="dev-sub mono">${escapeHtml(shortId(s.id, 10, 10))}</div>
+            </div>
+          </td>
+
+          <td>${escapeHtml(ua.os)}</td>
+          <td>${escapeHtml(loc)}</td>
+          <td>${escapeHtml(fmtTs(last))}</td>
+
+          <td style="text-align:right;">
+            <button class="icon-btn" type="button" title="Завершить" data-revoke="${escapeHtml(
+              s.id
+            )}">
+              ⎋
+            </button>
+          </td>
+        </tr>
+      `;
+      })
+      .join('');
+
+    const sessionsCount = Number(me.sessionsCount || sessions.length || 0);
+
+    return `
+    <div class="sessions-head">
+      <div style="opacity:.8">Активных сессий: <b>${sessionsCount}</b></div>
+      <button class="btn btn-outline" id="logoutOthersBtn" type="button" ${
+        sessionsCount <= 1 ? 'disabled style="opacity:.55;cursor:not-allowed;"' : ''
+      }>
+        Выход из всех, кроме текущей
+      </button>
+    </div>
+
+    <div class="sessions-table-wrap">
+      <table class="sessions-table">
+        <thead>
+          <tr>
+            <th>Device</th>
+            <th>OS</th>
+            <th>Location</th>
+            <th>Last Login</th>
+            <th style="text-align:right;">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows || `<tr><td colspan="5" style="opacity:.7;padding:14px;">Нет сессий</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+  }
+
+  function bindSessionsTable(data, api) {
+    // revoke single
+    document.querySelectorAll('[data-revoke]').forEach((b) => {
+      b.onclick = async () => {
+        api.clearMsg();
+        const sid = b.getAttribute('data-revoke');
+        b.disabled = true;
+
+        try {
+          const r = await fetch(`${API_BASE}/auth/sessions/revoke`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: sid }),
+          });
+          const d = await r.json().catch(() => ({}));
+
+          if (!r.ok) {
+            api.showMsg('error', d?.error ? `Ошибка: ${d.error}` : 'Не удалось завершить сессию.');
+          } else {
+            api.showMsg('ok', 'Сессия завершена ✅');
+            // если это была текущая — улетишь на логин
+            if (d.loggedOut) {
+              setNoStrawberries(false);
+              CybRouter.navigate('username');
+              return;
+            }
+            setTimeout(() => CybRouter.navigate('account-sessions'), 300);
+          }
+        } catch {
+          api.showMsg('error', 'Ошибка сети.');
+        } finally {
+          b.disabled = false;
+        }
+      };
+    });
+
+    // logout others (если есть твой старый endpoint)
+    const lo = document.getElementById('logoutOthersBtn');
+    if (lo && !lo.disabled) {
+      lo.onclick = async () => {
+        api.clearMsg();
+        lo.disabled = true;
+
+        try {
+          const r = await fetch(`${API_BASE}/auth/logout_others`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          const d = await r.json().catch(() => ({}));
+          if (!r.ok) api.showMsg('error', d?.error ? `Ошибка: ${d.error}` : 'Не удалось.');
+          else api.showMsg('ok', `Готово ✅ Завершено: ${d.removed ?? 0}`);
+          setTimeout(() => CybRouter.navigate('account-sessions'), 350);
+        } catch {
+          api.showMsg('error', 'Ошибка сети.');
+        } finally {
+          lo.disabled = false;
+        }
+      };
+    }
   }
 
   // header
