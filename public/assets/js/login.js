@@ -1068,7 +1068,10 @@ async function viewAccount(tab = 'profile') {
       <div class="account-wrap">
         <aside class="account-sidebar">
           <div class="account-brand">
+            <a href="https://cyblight.org/" target="_blank" rel="noopener"
+             aria-label="Главная страница" title="Открыть главную страницу">
             <img src="/assets/img/logo.svg" alt="CybLight" />
+            </a>
             <div>
               <div style="font-weight:800;font-size:16px;line-height:1;">Учётка</div>
               <div id="accLogin" style="opacity:.75;font-size:13px;margin-top:4px;">…</div>
@@ -1206,7 +1209,9 @@ async function viewAccount(tab = 'profile') {
           <td data-label="Device">
             <div class="dev">
               <div class="dev-title"> 
-                ${escapeHtml(ua.browser)}${ua.version ? ' ' + escapeHtml(ua.version) : ''} 
+                <span class="dev-name">${escapeHtml(
+                  `${ua.browser} ${ua.version || ''}`.trim()
+                )}</span>
                 ${isCur ? '<span class="pill">Текущая</span>' : ''}
               </div>
               <div class="dev-sub mono">${escapeHtml(ua.device || ua.os || '—')}</div>

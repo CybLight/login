@@ -1031,6 +1031,13 @@
   border-radius: 12px;
 }
 
+.account-brand a {
+  display: inline-flex;
+}
+.account-brand a img {
+  cursor: pointer;
+}
+
 .account-nav {
   display: grid;
   gap: 8px;
@@ -1182,6 +1189,29 @@ body.no-strawberries .strawberry-ring-wave {
 .icon-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* Device-строка всегда слева, pill всегда справа */
+.sessions-table .dev {
+  width: 100%;
+  text-align: left;
+}
+
+.sessions-table .dev-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.sessions-table .dev-title .dev-name {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.sessions-table .dev-title .pill {
+  margin-left: auto;
 }
 
 /* ===== MOBILE ===== */
