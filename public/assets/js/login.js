@@ -690,6 +690,10 @@ function viewSignup() {
     const pass = document.getElementById('pass').value.trim();
 
     if (!login) return alert('🚫 Введите логин');
+    if (!/^[A-Za-z0-9_]{3,24}$/.test(login)) {
+      alert('Логин: только латиница (A–Z), цифры (0–9) и "_" . Длина 3–24.');
+      return;
+    }
     if (!pass) return alert('🚫 Введите пароль');
     if (!turnstileToken) {
       alert('🛡️ Подтверди, что ты не робот');

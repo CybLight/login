@@ -1344,6 +1344,10 @@ body.no-strawberries .strawberry-ring-wave {
     height: 42px;
     border-radius: 12px;
   }
+
+  .sessions-table .dev-title .pill {
+    margin-left: 8px !important;
+  }
 }
 
 /* кликабельность сетки */
