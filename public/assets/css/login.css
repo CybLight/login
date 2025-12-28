@@ -1196,15 +1196,20 @@ body.no-strawberries .strawberry-ring-wave {
 
 .pill {
   display: inline-block;
-  padding: 2px 8px;
   border-radius: 999px;
   font-size: 11px;
   opacity: 0.85;
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+.sessions-table .dev-title .pill {
+  flex: 0 0 auto;
+  margin-left: 0;
+  padding: 2px 8px;
+}
+
 .sessions-table .dev-title .dev-name {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   text-align: left;
 }
