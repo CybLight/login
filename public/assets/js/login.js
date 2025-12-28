@@ -19,16 +19,70 @@ function parseUA(ua = '') {
   const isAndroid = /Android/i.test(ua);
   const isWindows = /Windows NT/i.test(ua);
   const isMac = /Mac OS X/i.test(ua);
+  const isIphone = /iPhone/i.test(ua);
+  const isIpad = /iPad/i.test(ua);
 
-  let os = isAndroid ? 'Android' : isWindows ? 'Windows' : isMac ? 'macOS' : 'Unknown';
+  let os = isAndroid
+    ? 'Android'
+    : isWindows
+    ? 'Windows'
+    : isMac
+    ? 'macOS'
+    : isIphone
+    ? 'iPhone'
+    : isIpad
+    ? 'iPad'
+    : 'Unknown';
 
   let browser = 'Browser';
-  if (/Firefox/i.test(ua)) browser = 'Firefox';
-  else if (/Edg/i.test(ua)) browser = 'Edge';
-  else if (/Chrome/i.test(ua)) browser = 'Chrome';
-  else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+  let version = '';
+  let m = null;
 
-  return { os, browser };
+  if ((m = ua.match(/Firefox\/([\d.]+)/i))) {
+    browser = 'Firefox';
+    version = m[1];
+  } else if ((m = ua.match(/Edg\/([\d.]+)/i))) {
+    browser = 'Edge';
+    version = m[1];
+  } else if ((m = ua.match(/Chrome\/([\d.]+)/i)) && !/Edg\//i.test(ua)) {
+    browser = 'Chrome';
+    version = m[1];
+  } else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) {
+    browser = 'Safari';
+    m = ua.match(/Version\/([\d.]+)/i);
+    version = m ? m[1] : '';
+  }
+
+  // “устройство” (на Android часто есть модель)
+  let device = '';
+  if (isAndroid) {
+    // пример: "Android 14; Pixel 7 Build/..."
+    const dm = ua.match(/Android\s[\d.]+;\s([^;]+?)\sBuild/i);
+    device = dm?.[1]?.trim() || 'Android device';
+  } else if (isIphone) device = 'iPhone';
+  else if (isIpad) device = 'iPad';
+  else if (isWindows) device = 'PC';
+  else if (isMac) device = 'Mac';
+
+  return { os, browser, version, device };
+}
+
+const countryDN =
+  typeof Intl !== 'undefined' && Intl.DisplayNames
+    ? new Intl.DisplayNames(['ru'], { type: 'region' })
+    : null;
+
+function countryFull(code) {
+  const c = String(code || '')
+    .trim()
+    .toUpperCase();
+  if (!c) return null;
+  if (!countryDN) return c; // fallback: оставляем "UA"
+  try {
+    return countryDN.of(c) || c;
+  } catch {
+    return c;
+  }
 }
 
 // ===== Turnstile =====
@@ -1139,27 +1193,32 @@ async function viewAccount(tab = 'profile') {
     const rows = sessions
       .map((s) => {
         const ua = parseUA(s.user_agent || '');
+
         const colo = s.colo ? ` • ${s.colo}` : '';
-        const loc = ([s.city, s.region, s.country].filter(Boolean).join(', ') || '—') + colo;
-        const last = s.last_seen_at || s.created_at;
+        const loc =
+          ([s.city, s.region, countryFull(s.country)].filter(Boolean).join(', ') || '—') + colo;
+        const lastLogin = s.created_at; // когда вошёл (создал сессию)
+        const lastSeen = s.last_seen_at || s.created_at; // когда последний раз был активен
         const isCur = s.id === current;
 
         return `
         <tr class="${isCur ? 'is-current' : ''}">
-          <td>
+          <td data-label="Device">
             <div class="dev">
-              <div class="dev-title">${escapeHtml(ua.browser)} ${
-          isCur ? '<span class="pill">Текущая</span>' : ''
-        }</div>
-              <div class="dev-sub mono">${escapeHtml(shortId(s.id, 10, 10))}</div>
+              <div class="dev-title"> 
+                ${escapeHtml(ua.browser)}${ua.version ? ' ' + escapeHtml(ua.version) : ''} 
+                ${isCur ? '<span class="pill">Текущая</span>' : ''}
+              </div>
+              <div class="dev-sub mono">${escapeHtml(ua.device || ua.os || '—')}</div>
             </div>
           </td>
 
-          <td>${escapeHtml(ua.os)}</td>
-          <td>${escapeHtml(loc)}</td>
-          <td>${escapeHtml(fmtTs(last))}</td>
+          <td data-label="OS">${escapeHtml(ua.os)}</td>
+          <td data-label="Location">${escapeHtml(loc)}</td>
+          <td data-label="Last Login">${escapeHtml(fmtTs(lastLogin))}</td>
+          <td data-label="Last Seen">${escapeHtml(fmtTs(lastSeen))}</td>
 
-          <td style="text-align:right;">
+          <td class="td-action" data-label="Action" style="text-align:right;">
             <button class="icon-btn" type="button" title="Завершить" data-revoke="${escapeHtml(
               s.id
             )}">
@@ -1191,11 +1250,12 @@ async function viewAccount(tab = 'profile') {
             <th>OS</th>
             <th>Location</th>
             <th>Last Login</th>
+            <th>Last Seen</th>
             <th style="text-align:right;">Action</th>
           </tr>
         </thead>
         <tbody>
-          ${rows || `<tr><td colspan="5" style="opacity:.7;padding:14px;">Нет сессий</td></tr>`}
+          ${rows || `<tr><td colspan="6" style="opacity:.7;padding:14px;">Нет сессий</td></tr>`}
         </tbody>
       </table>
     </div>
@@ -1571,20 +1631,6 @@ function escapeHtml(s) {
   // ---------- helpers ----------
   function rand(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
-
-  function escapeHtml(s) {
-    return (s || '').replace(
-      /[&<>"']/g,
-      (c) =>
-        ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;',
-        }[c])
-    );
   }
 
   function getRouteSafe() {

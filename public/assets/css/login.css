@@ -1231,6 +1231,83 @@ body.no-strawberries .strawberry-ring-wave {
   }
 }
 
+@media (max-width: 720px) {
+  .sessions-table-wrap {
+    overflow: visible;
+  }
+
+  .sessions-table thead {
+    display: none;
+  }
+
+  .sessions-table,
+  .sessions-table tbody,
+  .sessions-table tr,
+  .sessions-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .sessions-table tr {
+    position: relative;
+    margin: 10px 0;
+    padding: 12px 12px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.14);
+  }
+
+  .sessions-table td {
+    border: 0 !important;
+    padding: 7px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .sessions-table td::before {
+    content: attr(data-label);
+    opacity: 0.65;
+    font-size: 12px;
+    flex: 0 0 auto;
+    padding-right: 10px;
+  }
+
+  /* Device блок красивее */
+  .sessions-table td[data-label='Device'] {
+    padding-top: 0;
+  }
+
+  .sessions-table td[data-label='Device']::before {
+    content: ''; /* у Device не нужен label */
+    padding-right: 0;
+  }
+
+  .sessions-table .dev-title {
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .sessions-table .dev-sub {
+    opacity: 0.75;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+
+  /* Action как кнопка справа сверху (как в Zoom) */
+  .sessions-table td.td-action {
+    padding: 0;
+  }
+  .sessions-table td.td-action::before {
+    content: '';
+  }
+  .sessions-table td.td-action .icon-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+}
+
 @media (max-width: 560px) {
   .strawberry-lightbox__nav {
     width: 42px;
