@@ -1111,6 +1111,8 @@ body.no-strawberries .strawberry-ring-wave {
   display: none !important;
 }
 
+/* SESSIONS */
+
 .sessions-head {
   display: flex;
   gap: 12px;
@@ -1181,7 +1183,7 @@ body.no-strawberries .strawberry-ring-wave {
   cursor: not-allowed;
 }
 
-/* Device-строка всегда слева, pill всегда справа */
+/* Device-строка всегда слева */
 .sessions-table .dev {
   width: 100%;
   text-align: left;
@@ -1209,7 +1211,6 @@ body.no-strawberries .strawberry-ring-wave {
 }
 
 .sessions-table .dev-title .dev-name {
-  flex: 0 1 auto;
   min-width: 0;
   text-align: left;
 }
