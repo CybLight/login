@@ -1198,11 +1198,16 @@ body.no-strawberries .strawberry-ring-wave {
 
 .sessions-table .dev-top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
 }
 
 .sessions-table .dev-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  margin-top: 0 !important;
   width: 18px;
   height: 18px;
   flex: 0 0 18px;
@@ -1224,8 +1229,10 @@ body.no-strawberries .strawberry-ring-wave {
 
 .sessions-table .dev-name-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  row-gap: 6px;
   min-width: 0;
 }
 
@@ -1245,6 +1252,8 @@ body.no-strawberries .strawberry-ring-wave {
 }
 
 .sessions-table .pill {
+  padding: 3px 8px;
+  line-height: 1.2;
   flex: 0 0 auto;
   margin-left: auto !important;
   white-space: nowrap;
@@ -1303,6 +1312,12 @@ body.no-strawberries .strawberry-ring-wave {
 @media (min-width: 768px) {
   #scrollTopBtn {
     display: none !important;
+  }
+}
+
+@media (min-width: 721px) {
+  .sessions-table .pill {
+    margin-left: auto !important;
   }
 }
 
@@ -1380,6 +1395,22 @@ body.no-strawberries .strawberry-ring-wave {
     position: absolute;
     top: 10px;
     right: 10px;
+  }
+
+  /* mobile: pill не пытается уползти в край (там кнопка) */
+  .sessions-table .pill {
+    margin-left: 0 !important; /* убираем auto */
+    order: 3; /* если перенесётся — будет ниже */
+  }
+
+  /* даём место под кнопку action справа сверху */
+  .sessions-table td[data-label='Device'] {
+    padding-right: 56px; /* чтобы pill/текст не залезали под icon-btn */
+  }
+
+  /* делаем “Device” строкой, а не как остальные td (иначе flex space-between мешает) */
+  .sessions-table td[data-label='Device'] {
+    display: block;
   }
 }
 

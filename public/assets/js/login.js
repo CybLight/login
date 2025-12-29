@@ -1132,7 +1132,7 @@ async function viewAccount(tab = 'profile') {
       <div class="account-wrap">
         <aside class="account-sidebar">
           <div class="account-brand">
-            <a href="https://cyblight.org/" target="_blank" rel="noopener"
+            <a href="https://cyblight.org/"
              aria-label="Главная страница" title="Открыть главную страницу">
             <img src="/assets/img/logo.svg" alt="CybLight" />
             </a>
@@ -1160,7 +1160,11 @@ async function viewAccount(tab = 'profile') {
           <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;">
             <div>
               <div style="font-size:22px;font-weight:900;">${tabTitle(tab)}</div>
-              <div style="opacity:.75;font-size:13px;margin-top:4px;">Управление аккаунтом CybLight</div>
+              ${
+                tab === 'profile' || tab === 'easter'
+                  ? ''
+                  : `<div style="opacity:.75;font-size:13px;margin-top:4px;">Управление аккаунтом</div>`
+              }
             </div>
             <div style="opacity:.65;font-size:12px;" id="metaLine"></div>
           </div>
@@ -1227,6 +1231,11 @@ async function viewAccount(tab = 'profile') {
     }
     me = data;
 
+    // header
+    const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
+    const acc = document.getElementById('accLogin');
+    if (acc) acc.textContent = login;
+
     if (tab === 'sessions') {
       const body = document.getElementById('accBody');
       body.innerHTML = `<div style="opacity:.75">Загружаю список устройств…</div>`;
@@ -1277,9 +1286,7 @@ async function viewAccount(tab = 'profile') {
           line2 = ua.version ? `${ua.browser} ${ua.version}` : '';
         }
 
-        const colo = s.colo ? ` • ${s.colo}` : '';
-        const loc =
-          ([s.city, s.region, countryFull(s.country)].filter(Boolean).join(', ') || '—') + colo;
+        const loc = [s.city, s.region, countryFull(s.country)].filter(Boolean).join(', ') || '—';
         const lastLogin = s.created_at; // когда вошёл (создал сессию)
         const lastSeen = s.last_seen_at || s.created_at; // когда последний раз был активен
 
@@ -1312,7 +1319,7 @@ async function viewAccount(tab = 'profile') {
           </td>
 
           <td data-label="OS">${escapeHtml(ua.os)}</td>
-          <td data-label="Location">${escapeHtml(loc)}</td>
+          <td data-label="Location" title="Edge: ${s.colo || '—'}">${escapeHtml(loc)}</td>
           <td data-label="Last Login">${escapeHtml(fmtTs(lastLogin))}</td>
           <td data-label="Last Seen">${escapeHtml(fmtTs(lastSeen))}</td>
 
@@ -1422,15 +1429,8 @@ async function viewAccount(tab = 'profile') {
     }
   }
 
-  // header
-  const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
-  document.getElementById('accLogin').textContent = login;
-
-  if (me?.meta?.region || me?.meta?.time) {
-    document.getElementById('metaLine').textContent =
-      `${me?.meta?.region ? 'Region: ' + me.meta.region : ''}` +
-      `${me?.meta?.region && me?.meta?.time ? ' • ' : ''}` +
-      `${me?.meta?.time ? new Date(me.meta.time).toLocaleString() : ''}`;
+  if (me?.meta?.time) {
+    document.getElementById('metaLine').textContent = new Date(me.meta.time).toLocaleString();
   }
 
   // render tab
