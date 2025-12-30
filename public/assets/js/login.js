@@ -2,6 +2,7 @@ const app = document.getElementById('app');
 const API_BASE = 'https://api.cyblight.org';
 
 const EASTER_KEY = 'cyb_strawberry_unlocked';
+const HISTORY_FROM_KEY = 'cyb_history_from'; // откуда открыли стенографию
 
 function hasStrawberryAccess() {
   return localStorage.getItem(EASTER_KEY) === '1';
@@ -580,12 +581,20 @@ window.addEventListener('cyb:route', (e) => {
 });
 
 // Начальный рендер
+
 (async function boot() {
   const r = window.CybRouter?.getRoute?.() || 'username';
 
   // если пользователь уже вошёл — сразу в учётку
   const ok = await checkSession();
-  if (ok && !String(r).startsWith('account-')) {
+
+  // ✅ какие роуты разрешены при активной сессии
+  const allowedWhenLoggedIn = new Set([
+    'strawberry-history', // ✅ разрешаем стенографию
+    // (можно добавишь ещё)
+  ]);
+
+  if (ok && !String(r).startsWith('account-') && !allowedWhenLoggedIn.has(String(r))) {
     CybRouter.navigate('account-profile');
     return;
   }
@@ -1231,6 +1240,11 @@ async function viewAccount(tab = 'profile') {
     }
     me = data;
 
+    // ✅ если сервер прислал флаг (будет после доработки API) — сохраняем локально
+    if (me?.user?.easter?.strawberry) {
+      setStrawberryAccess();
+    }
+
     // header
     const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
     const acc = document.getElementById('accLogin');
@@ -1603,11 +1617,22 @@ function bindTabActions(tab, me, api) {
   // Easter tab
   if (tab === 'easter') {
     const btn = document.getElementById('toHistoryBtn');
-    if (btn && !btn.disabled) btn.onclick = () => CybRouter.navigate('strawberry-history');
+    if (btn && !btn.disabled)
+      btn.onclick = () => {
+        sessionStorage.setItem(HISTORY_FROM_KEY, 'account-easter-eggs'); // ✅ пришли из пасхалок
+        CybRouter.navigate('strawberry-history');
+      };
   }
 }
 
 function viewStrawberryHistory() {
+  // ✅ сначала проверяем доступ
+  if (!hasStrawberryAccess()) {
+    CybRouter.navigate('account-easter-eggs'); // или 'username'
+    return;
+  }
+
+  const from = sessionStorage.getItem(HISTORY_FROM_KEY) || '';
   const login = sessionStorage.getItem('cyb_login') || 'Гость';
 
   setNoStrawberries(false);
@@ -1641,20 +1666,20 @@ function viewStrawberryHistory() {
       </div>
 
       <button class="btn btn-primary" id="toUsername">
-        Продолжить
+         ${from === 'account-easter-eggs' ? '← Вернуться назад' : 'Продолжить'}
       </button>
     </section>
   `);
 
-  if (!hasStrawberryAccess()) {
-    CybRouter.navigate('account-easter-eggs'); // или 'username'
-    return;
-  }
+  // scroll top btn (чтобы не плодить)
+  const old = document.getElementById('scrollTopBtn');
+  if (old) old.remove();
 
-  const btn = document.createElement('div');
-  btn.id = 'scrollTopBtn';
-  btn.textContent = '⬆';
-  document.body.appendChild(btn);
+  // Логика появления кнопки "вверх"
+  const scrollBtn = document.createElement('div');
+  scrollBtn.id = 'scrollTopBtn';
+  scrollBtn.textContent = '⬆';
+  document.body.appendChild(scrollBtn);
 
   // подключаем лайтбокс к фоткам стенографии + подписи
   const imgs = Array.from(document.querySelectorAll('.strawberry-grid img'));
@@ -1670,11 +1695,14 @@ function viewStrawberryHistory() {
 
   // кнопка "Продолжить"
   document.getElementById('toUsername').onclick = () => {
-    CybRouter.navigate('username');
+    const from2 = sessionStorage.getItem(HISTORY_FROM_KEY) || '';
+    if (from2 === 'account-easter-eggs') {
+      sessionStorage.removeItem(HISTORY_FROM_KEY);
+      CybRouter.navigate('account-easter-eggs');
+    } else {
+      CybRouter.navigate('username');
+    }
   };
-
-  // Логика появления кнопки "вверх"
-  const scrollBtn = document.getElementById('scrollTopBtn');
 
   function checkScroll() {
     if (window.scrollY > 300) {
@@ -2051,6 +2079,10 @@ function escapeHtml(s) {
         // Мини-пауза, чтобы анимация успела сыграть
         setTimeout(() => {
           setStrawberryAccess(); // ✅ отмечаем, что пасхалка найдена
+          fetch(`${API_BASE}/auth/easter/strawberry`, {
+            method: 'POST',
+            credentials: 'include',
+          }).catch(() => {});
           cleanup();
           CybRouter.navigate('strawberry-history');
           resolve('ok');
