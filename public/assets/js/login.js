@@ -1550,7 +1550,7 @@ function renderTabHtml(tab, me) {
   }
 
   if (tab === 'easter') {
-    const canSee = hasStrawberryAccess();
+    const canSee = hasStrawberryAccess() || !!me?.user?.easter?.strawberry;
     return `
       <div style="display:grid;gap:10px;">
         <div style="opacity:.85;line-height:1.5;">
