@@ -1028,6 +1028,107 @@ function viewPassword() {
 }
 
 function viewReset() {
+  setNoStrawberries(false);
+
+  const q = getQuery();
+  const token = q.get('token') || ''; // если пришли по ссылке из письма на сброс пароля
+
+  // 1) Режим: "установить новый пароль" (есть token)
+  if (token) {
+    app.innerHTML = shell(`
+      <section class="auth-card">
+        <div class="auth-head">
+          <div class="brand-logo">
+            <img src="/assets/img/logo.svg" alt="CybLight" />
+          </div>
+          <div class="auth-title">
+            <h1>Новый пароль</h1>
+          </div>
+        </div>
+
+        <form id="fReset">
+          <div class="field">
+            <label class="label" for="p1">Новый пароль</label>
+            <input class="input" id="p1" type="password" autocomplete="new-password" required />
+          </div>
+
+          <div class="field">
+            <label class="label" for="p2">Повтори пароль</label>
+            <input class="input" id="p2" type="password" autocomplete="new-password" required />
+          </div>
+
+          <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
+
+          <div class="row" style="margin-top:10px;">
+            <a class="link" href="#" id="back">← Назад</a>
+          </div>
+
+          <button class="btn btn-primary" type="submit">Сохранить пароль</button>
+        </form>
+      </section>
+    `);
+
+    const oldBtn = document.getElementById('scrollTopBtn');
+    if (oldBtn) oldBtn.remove();
+
+    document.getElementById('back').onclick = (e) => {
+      e.preventDefault();
+      // убираем токен из адреса (чтобы не застревал)
+      history.replaceState(null, '', '/reset');
+      CybRouter.navigate('username');
+    };
+
+    const msgEl = document.getElementById('msg');
+    const showMsg = (type, text) => {
+      msgEl.style.display = '';
+      msgEl.className = `msg msg--${type}`;
+      msgEl.textContent = text;
+    };
+    const clearMsg = () => {
+      msgEl.style.display = 'none';
+      msgEl.className = 'msg';
+      msgEl.textContent = '';
+    };
+
+    document.getElementById('fReset').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMsg();
+
+      const p1 = document.getElementById('p1').value.trim();
+      const p2 = document.getElementById('p2').value.trim();
+
+      if (p1.length < 8) return showMsg('warn', 'Пароль должен быть минимум 8 символов.');
+      if (p1 !== p2) return showMsg('error', 'Пароли не совпадают.');
+
+      try {
+        const res = await fetch(`${API_BASE}/auth/recovery/finish`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, newPassword: p1 }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          const err = data?.error || 'Не удалось сменить пароль.';
+          showMsg('error', `Ошибка: ${err}`);
+          return;
+        }
+
+        showMsg('ok', 'Пароль обновлён ✅ Теперь можно войти.');
+        // чистим токен в URL
+        setTimeout(() => {
+          history.replaceState(null, '', '/reset');
+          CybRouter.navigate('username');
+        }, 900);
+      } catch {
+        showMsg('error', 'Ошибка сети. Попробуй ещё раз.');
+      }
+    });
+
+    return;
+  }
+  // 2) Режим: "запросить письмо" (нет token) — две вкладки
   app.innerHTML = shell(`
     <section class="auth-card">
       <div class="auth-head">
@@ -1036,21 +1137,159 @@ function viewReset() {
         </div>
         <div class="auth-title">
           <h1>Восстановление</h1>
-  
         </div>
       </div>
 
-      <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.5;">
-        Это демо-страница. Позже добавим восстановление по email/Telegram.
-      </p>
+      <div class="seg" style="display:flex;gap:10px;margin:8px 0 14px;">
+        <button class="btn btn-outline" type="button" id="tabPass" style="flex:1;">Пароль</button>
+        <button class="btn btn-outline" type="button" id="tabUser" style="flex:1;">Логин</button>
+      </div>
 
-      <button class="btn btn-outline" style="margin-top:16px;" id="back">← Назад</button>
+      <form id="fStart">
+        <div class="field">
+          <label class="label" for="email">Email</label>
+          <input class="input" id="email" type="email" autocomplete="email" placeholder="name@example.com" required />
+        </div>
+
+        <div class="field" style="margin-top:12px;">
+          <div class="cf-turnstile"></div>
+        </div>
+
+        <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
+
+        <div class="row" style="margin-top:10px;">
+          <a class="link" href="#" id="back">← Назад</a>
+        </div>
+
+        <button class="btn btn-primary" type="submit" id="sendBtn">Отправить письмо</button>
+      </form>
+
+      <p style="margin:12px 0 0;color:var(--muted);font-size:12px;line-height:1.5;">
+        Мы всегда показываем одинаковый ответ, чтобы не раскрывать, есть ли такой email.
+      </p>
     </section>
   `);
+
   const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
-  document.getElementById('back').onclick = () => CybRouter.navigate('username');
+  const msgEl = document.getElementById('msg');
+  const showMsg = (type, text) => {
+    msgEl.style.display = '';
+    msgEl.className = `msg msg--${type}`;
+    msgEl.textContent = text;
+  };
+  const clearMsg = () => {
+    msgEl.style.display = 'none';
+    msgEl.className = 'msg';
+    msgEl.textContent = '';
+  };
+
+  let mode = 'password'; // 'password' | 'username'
+  const tabPass = document.getElementById('tabPass');
+  const tabUser = document.getElementById('tabUser');
+  const sendBtn = document.getElementById('sendBtn');
+
+  function paintTabs() {
+    if (mode === 'password') {
+      tabPass.classList.add('btn-primary');
+      tabUser.classList.remove('btn-primary');
+      tabPass.classList.remove('btn-outline');
+      tabUser.classList.add('btn-outline');
+      sendBtn.textContent = 'Отправить ссылку для сброса';
+    } else {
+      tabUser.classList.add('btn-primary');
+      tabPass.classList.remove('btn-primary');
+      tabUser.classList.remove('btn-outline');
+      tabPass.classList.add('btn-outline');
+      sendBtn.textContent = 'Отправить логин на email';
+    }
+  }
+
+  tabPass.onclick = () => {
+    mode = 'password';
+    clearMsg();
+    paintTabs();
+    // при смене вкладки — сброс капчи
+    if (window.turnstile && turnstileWidgetId !== null) {
+      try {
+        turnstile.reset(turnstileWidgetId);
+      } catch {}
+    }
+    turnstileToken = '';
+  };
+
+  tabUser.onclick = () => {
+    mode = 'username';
+    clearMsg();
+    paintTabs();
+    if (window.turnstile && turnstileWidgetId !== null) {
+      try {
+        turnstile.reset(turnstileWidgetId);
+      } catch {}
+    }
+    turnstileToken = '';
+  };
+
+  document.getElementById('back').onclick = (e) => {
+    e.preventDefault();
+    CybRouter.navigate('username');
+  };
+
+  // Turnstile (как у тебя в login/signup)
+  if (window.turnstile && turnstileWidgetId !== null) {
+    try {
+      turnstile.remove(turnstileWidgetId);
+    } catch {}
+    turnstileWidgetId = null;
+  }
+  turnstileToken = '';
+  initTurnstile();
+  paintTabs();
+
+  document.getElementById('fStart').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearMsg();
+
+    const email = document.getElementById('email').value.trim();
+
+    if (!email) return showMsg('warn', 'Введите email.');
+    if (!turnstileToken) return showMsg('warn', 'Подтверди, что ты не робот (Turnstile).');
+
+    try {
+      const res = await fetch(`${API_BASE}/auth/recovery/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, mode, turnstileToken }),
+      });
+
+      // ответ всегда ok:true (даже если email не найден)
+      await res.json().catch(() => ({}));
+
+      showMsg(
+        'ok',
+        mode === 'password'
+          ? 'Если email существует — мы отправили ссылку для сброса ✅'
+          : 'Если email существует — мы отправили логин ✅'
+      );
+
+      // сбрасываем капчу, чтобы не переиспользовать
+      if (window.turnstile && turnstileWidgetId !== null) {
+        try {
+          turnstile.reset(turnstileWidgetId);
+        } catch {}
+      }
+      turnstileToken = '';
+    } catch {
+      showMsg('error', 'Ошибка сети. Попробуй ещё раз.');
+      if (window.turnstile && turnstileWidgetId !== null) {
+        try {
+          turnstile.reset(turnstileWidgetId);
+        } catch {}
+      }
+      turnstileToken = '';
+    }
+  });
 }
 
 async function viewDone() {
@@ -1494,6 +1733,28 @@ function renderTabHtml(tab, me) {
         <div class="k">Логин</div>
         <div class="v"><b>${escapeHtml(u.login || '—')}</b></div>
 
+                <div class="k">Email</div>
+        <div class="v">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <input class="input" id="emailInp" type="email"
+              placeholder="name@example.com"
+              value="${escapeHtml(u.email || '')}"
+              style="flex:1;min-width:220px;"
+            />
+            <button class="btn btn-outline" id="saveEmailBtn" type="button">Сохранить</button>
+          </div>
+          <div style="opacity:.65;font-size:12px;margin-top:6px;">
+            ${
+              u.email_verified
+                ? '✅ Email подтверждён'
+                : u.email
+                ? '⚠️ Email не подтверждён'
+                : '— Email не указан'
+            }
+          </div>
+        </div>
+
+
         ${renderIdRow('ID пользователя', u.id, 'userId')}
 
         <div class="k">Дата регистрации</div>
@@ -1623,6 +1884,53 @@ function bindTabActions(tab, me, api) {
         CybRouter.navigate('strawberry-history');
       };
   }
+
+  // PROFILE tab
+
+  if (tab === 'profile') {
+    const btn = document.getElementById('saveEmailBtn');
+    const inp = document.getElementById('emailInp');
+
+    if (btn && inp) {
+      btn.onclick = async () => {
+        api.clearMsg();
+
+        const email = inp.value.trim();
+        if (!email) {
+          api.showMsg('warn', 'Введите email.');
+          return;
+        }
+
+        btn.disabled = true;
+        const old = btn.textContent;
+        btn.textContent = 'Сохраняю…';
+
+        try {
+          const r = await fetch(`${API_BASE}/auth/email/set`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }),
+          });
+
+          const d = await r.json().catch(() => ({}));
+
+          if (!r.ok) {
+            api.showMsg('error', d?.error ? `Ошибка: ${d.error}` : 'Не удалось сохранить email.');
+          } else {
+            api.showMsg('ok', 'Email сохранён ✅');
+            // перезагрузим вкладку, чтобы подтянулся /auth/me
+            setTimeout(() => CybRouter.navigate('account-profile'), 350);
+          }
+        } catch {
+          api.showMsg('error', 'Ошибка сети.');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = old;
+        }
+      };
+    }
+  }
 }
 
 function viewStrawberryHistory() {
@@ -1733,6 +2041,17 @@ function escapeHtml(s) {
         "'": '&#39;',
       }[c])
   );
+}
+
+// -------------- Helper Query --------------
+
+function getQuery() {
+  try {
+    const u = new URL(window.location.href);
+    return u.searchParams;
+  } catch {
+    return new URLSearchParams();
+  }
 }
 
 /* ============================
