@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Node (на будущее, но безопасно)
+node_modules/
+.env
+.env.*
+!.env.example
+.pem
+*.pem
+*-key.pem
+*.key
+*.crt
+*.pfx
+*.p12

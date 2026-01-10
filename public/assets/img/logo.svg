@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="360" viewBox="0 0 360 360">
+  <defs>
+    <!-- Градиент рамки -->
+    <linearGradient id="frameGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd27b"></stop>
+      <stop offset="100%" stop-color="#ff7a00"></stop>
+    </linearGradient>
+
+    <!-- Свечение рамки -->
+    <filter id="frameGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="blur"></feGaussianBlur>
+      <feMerge>
+        <feMergeNode in="blur"></feMergeNode>
+        <feMergeNode in="SourceGraphic"></feMergeNode>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Фон -->
+  <rect x="0" y="0" width="360" height="360" rx="32" fill="#0f0b1f"></rect>
+
+  <!-- Статичная рамка -->
+  <rect x="40" y="40" width="280" height="280" rx="26" fill="none" stroke="url(#frameGradient)" stroke-width="8"></rect>
+
+  <!-- Пульсирующая рамка -->
+  <rect x="40" y="40" width="280" height="280" rx="26" fill="none" stroke="url(#frameGradient)" stroke-width="14" filter="url(#frameGlow)" opacity="0.2">
+    <animate attributeName="opacity" values="0.15;0.8;0.15" dur="2.2s" repeatCount="indefinite"></animate>
+  </rect>
+
+  <!-- Максимально большие буквы, но внутри квадрата -->
+  <!-- Верхняя строка -->
+  <text x="50%" y="150" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="88" font-weight="800" text-anchor="middle" fill="#b46aff">
+    CYB
+  </text>
+
+  <!-- Нижняя строка -->
+  <text x="50%" y="255" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="78" font-weight="800" text-anchor="middle" fill="#31d9ff">
+    LIGHT
+  </text>
+</svg>
