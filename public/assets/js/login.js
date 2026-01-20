@@ -4,11 +4,160 @@ const API_BASE = 'https://api.cyblight.org';
 const EASTER_KEY = 'cyb_strawberry_unlocked';
 const HISTORY_FROM_KEY = 'cyb_history_from'; // откуда открыли стенографию
 
-function hasStrawberryAccess() {
-  return localStorage.getItem(EASTER_KEY) === '1';
+// Глобальный обработчик синхронных ошибок
+const errorCache = new Set();
+const MAX_ERRORS_PER_MINUTE = 10;
+let errorCount = 0;
+
+window.onerror = (message, source, lineno, colno, error) => {
+  // защита от дублей
+  const errorKey = `${message}:${source}:${lineno}`;
+  if (errorCache.has(errorKey)) return false;
+  errorCache.add(errorKey);
+  setTimeout(() => errorCache.delete(errorKey), 60000);
+
+  // рейт-лимит
+  errorCount++;
+  if (errorCount > MAX_ERRORS_PER_MINUTE) return false;
+  setTimeout(() => errorCount--, 60000);
+
+  const stack = error?.stack || '';
+  const ua = parseUA(navigator.userAgent);
+
+  apiCall(`${API_BASE}/error/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'sync-error',
+      message: String(message || 'Unknown error'),
+      stack: stack,
+      url: String(source || window.location.href),
+      line: lineno,
+      column: colno,
+      userAgent: navigator.userAgent,
+      browser: ua.browser,
+      os: ua.os,
+      timestamp: new Date().toISOString(),
+    }),
+  }).catch(() => {});
+
+  return false;
+};
+
+// Глобальный обработчик для незахваченных Promise
+window.onunhandledrejection = (event) => {
+  const error = event.reason || {};
+  const errorKey = `${error?.message}:promise`;
+  if (errorCache.has(errorKey)) return;
+  errorCache.add(errorKey);
+  setTimeout(() => errorCache.delete(errorKey), 60000);
+
+  errorCount++;
+  if (errorCount > MAX_ERRORS_PER_MINUTE) return;
+
+  const ua = parseUA(navigator.userAgent);
+
+  apiCall(`${API_BASE}/error/report`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'promise-rejection',
+      message: String(error?.message || 'Unhandled Promise rejection'),
+      stack: error?.stack || '',
+      url: window.location.href,
+      isPromiseRejection: true,
+      userAgent: navigator.userAgent,
+      browser: ua.browser,
+      os: ua.os,
+      timestamp: new Date().toISOString(),
+    }),
+  }).catch(() => {});
+};
+
+// Простой логгер
+const logger = {
+  log: (level, message, data = {}) => {
+    const timestamp = new Date().toISOString();
+    const logEntry = {
+      timestamp,
+      level,
+      message,
+      url: window.location.href,
+      ...data,
+    };
+
+    // в продакшене отправляй на сервер
+    if (level === 'error' || level === 'warn') {
+      // Отправить на endpoint логирования
+      apiCall(`${API_BASE}/logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(logEntry),
+      }).catch(() => {});
+    }
+
+    console[level](`[${level.toUpperCase()}] ${message}`, data);
+  },
+};
+
+// Использование:
+// logger.log('error', 'Failed to fetch user', { endpoint: '/auth/me' });
+// logger.log('info', 'User logged in', { username: 'john' });
+
+// Безопасное сохранение с проверкой
+function setStorage(key, value, storage = localStorage) {
+  try {
+    storage.setItem(key, String(value));
+    return true;
+  } catch (error) {
+    // localStorage может быть заполнена или отключена
+    console.warn(`Storage error [${key}]:`, error);
+    return false;
+  }
 }
+
+function getStorage(key, defaultValue = null, storage = localStorage) {
+  try {
+    return storage.getItem(key) ?? defaultValue;
+  } catch (error) {
+    console.warn(`Storage error [${key}]:`, error);
+    return defaultValue;
+  }
+}
+
+// Простой кэш для API ответов
+const apiCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 минут
+
+async function cachedApiCall(endpoint, options = {}, cacheKey = endpoint) {
+  // проверка кэша
+  const cached = apiCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+
+  const result = await apiCall(endpoint, options);
+
+  // сохранение в кэш
+  if (result.ok) {
+    apiCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now(),
+    });
+  }
+
+  return result;
+}
+
+// Использование:
+// const user = await cachedApiCall('/auth/me');
+
+function hasStrawberryAccess() {
+  return getStorage(EASTER_KEY) === '1';
+}
+
 function setStrawberryAccess() {
-  localStorage.setItem(EASTER_KEY, '1');
+  setStorage(EASTER_KEY, '1');
 }
 
 function setNoStrawberries(on) {
@@ -49,16 +198,16 @@ function parseUA(ua = '') {
   const os = isAndroid
     ? 'Android'
     : isWindows
-    ? 'Windows'
-    : isIphone
-    ? 'iOS'
-    : isIpad
-    ? 'iPadOS'
-    : isMac
-    ? 'macOS'
-    : isLinux
-    ? 'Linux'
-    : 'Unknown';
+      ? 'Windows'
+      : isIphone
+        ? 'iOS'
+        : isIpad
+          ? 'iPadOS'
+          : isMac
+            ? 'macOS'
+            : isLinux
+              ? 'Linux'
+              : 'Unknown';
 
   // device type
   const isTablet = isIpad || /\bTablet\b/i.test(ua) || (isAndroid && !/\bMobile\b/i.test(ua));
@@ -207,7 +356,7 @@ function initTurnstile() {
 
 async function checkSession() {
   try {
-    const res = await fetch(`${API_BASE}/auth/me`, {
+    const res = await apiCall(`${API_BASE}/auth/me`, {
       method: 'GET',
       credentials: 'include', // ✅ обязательно
     });
@@ -215,6 +364,40 @@ async function checkSession() {
     return !!(res.ok && data?.ok);
   } catch {
     return false;
+  }
+}
+
+// Обновленный apiCall с timeout
+async function apiCall(endpoint, options = {}, timeoutMs = 10000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+    const response = await fetch(url, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.status === 401) {
+      CybRouter.navigate('username');
+      return { ok: false, error: 'Unauthorized' };
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return { ok: response.ok, status: response.status, data };
+  } catch (error) {
+    clearTimeout(timeoutId);
+
+    if (error.name === 'AbortError') {
+      return { ok: false, error: 'Request timeout' };
+    }
+
+    return { ok: false, error: error.message };
   }
 }
 
@@ -584,6 +767,48 @@ const StrawberryLightbox = (() => {
   return { open };
 })();
 
+// Debounce хелпер
+function debounce(func, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+}
+
+// Пример: поиск пользователя с debounce
+const searchUser = debounce(async (query) => {
+  const result = await apiCall(`/search/users?q=${query}`);
+  // обновить результаты
+}, 300);
+
+// Использование в input:
+// searchInput.addEventListener('input', (e) => searchUser(e.target.value));
+
+// Валидаторы
+const validators = {
+  email: (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+
+  password: (pass) => pass && pass.length >= 8,
+
+  username: (user) => /^[a-zA-Z0-9_]{3,20}$/.test(user),
+
+  url: (url) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  },
+};
+
+// Использование в формах:
+// if (!validators.email(emailInput.value)) {
+//   showError('Неверный формат email');
+//   return;
+// }
+
 // Функция рендера по маршруту
 function renderRoute(r) {
   // перед рендером нового роута — снимаем старые listeners
@@ -661,6 +886,12 @@ function shell(contentHtml) {
           <div class="footer-links">
             <a class="footer-brand" href="https://cyblight.org/" aria-label="Главная страница" target="_blank" rel="noopener">
             <img src="/assets/img/logo.svg" class="footer-logo" alt="CybLight" /><span>CybLight.org</span></a>
+
+            <a class="report-btn" href="#" onclick="showReportModal(); return false;">
+              <img src="/assets/img/report.svg" alt="Report" class="report-icon" />
+              Сообщить о проблеме
+            </a>
+
             <a href="#" onclick="return false;">Условия использования</a>
             <a href="https://cyblight.org/privacy/" target="_blank" rel="noopener">Политика конфиденциальности</a>
             <a href="#" onclick="return false;">Настройки конфиденциальности</a>
@@ -670,6 +901,36 @@ function shell(contentHtml) {
     </div>
   `;
 }
+
+// Централизованный менеджер модалей
+const ModalsManager = {
+  openModals: new Set(),
+
+  open(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.classList.add('is-open');
+    this.openModals.add(modalId);
+  },
+
+  close(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    modal.classList.remove('is-open');
+    this.openModals.delete(modalId);
+  },
+
+  closeAll() {
+    this.openModals.forEach((id) => this.close(id));
+  },
+};
+
+// Глобальный обработчик Esc
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    ModalsManager.closeAll();
+  }
+});
 
 function ensureInfoModal() {
   let m = document.getElementById('cybInfoModal');
@@ -724,6 +985,157 @@ function showInfoModal({ title = '', text = '', onOk = null } = {}) {
   m.classList.add('is-open');
 }
 
+function ensureReportModal() {
+  let m = document.getElementById('cybReportModal');
+  if (m) return m;
+
+  m = document.createElement('div');
+  m.id = 'cybReportModal';
+  m.className = 'cyb-report-modal';
+  m.innerHTML = `
+    <div class="cyb-report-modal__backdrop"></div>
+    <div class="cyb-report-modal__card" role="dialog" aria-modal="true">
+      <div class="cyb-report-modal__title">Сообщить о проблеме</div>
+      <form id="reportForm" class="cyb-report-modal__form">
+        <div class="field">
+          <label class="label" for="reportEmail">Email (опционально)</label>
+          <input class="input" id="reportEmail" type="email" placeholder="your@email.com" />
+        </div>
+        <div class="field">
+          <label class="label" for="reportCategory">Категория</label>
+          <select class="input" id="reportCategory" required>
+            <option value="">-- Выберите категорию --</option>
+            <option value="bug">Ошибка/Баг</option>
+            <option value="performance">Проблема с производительностью</option>
+            <option value="security">Проблема безопасности</option>
+            <option value="feature">Предложение функции</option>
+            <option value="other">Прочее</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="label" for="reportMessage">Описание проблемы</label>
+          <textarea class="input" id="reportMessage" rows="5" placeholder="Подробно опишите проблему..." required style="resize: vertical; font-family: inherit;"></textarea>
+        </div>
+        <div class="msg msg--warn" id="reportWarning" style="display: none;"></div>
+        <div class="msg msg--ok" id="reportSuccess" style="display: none;"></div>
+        <div class="cyb-report-modal__actions">
+          <button class="btn btn-outline" type="button" id="reportCancel">Отмена</button>
+          <button class="btn btn-primary" type="submit" id="reportSubmit">Отправить</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(m);
+
+  // закрытие по фону
+  m.querySelector('.cyb-report-modal__backdrop')?.addEventListener('click', () => {
+    m.classList.remove('is-open');
+  });
+
+  // закрытие по Esc
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && m.classList.contains('is-open')) {
+      m.classList.remove('is-open');
+    }
+  });
+
+  // обработка отмены
+  m.querySelector('#reportCancel')?.addEventListener('click', () => {
+    m.classList.remove('is-open');
+  });
+
+  // обработка отправки
+  m.querySelector('#reportForm')?.addEventListener('submit', handleReportSubmit);
+
+  return m;
+}
+
+function showReportModal() {
+  const m = ensureReportModal();
+  const form = m.querySelector('#reportForm');
+  const warning = m.querySelector('#reportWarning');
+  const success = m.querySelector('#reportSuccess');
+
+  // очистка формы и сообщений
+  form.reset();
+  warning.style.display = 'none';
+  success.style.display = 'none';
+
+  m.classList.add('is-open');
+}
+
+async function handleReportSubmit(e) {
+  e.preventDefault();
+
+  const m = document.getElementById('cybReportModal');
+  const form = m.querySelector('#reportForm');
+  const email = form.querySelector('#reportEmail').value.trim();
+  const category = form.querySelector('#reportCategory').value;
+  const message = form.querySelector('#reportMessage').value.trim();
+  const submitBtn = m.querySelector('#reportSubmit');
+  const warning = m.querySelector('#reportWarning');
+  const success = m.querySelector('#reportSuccess');
+
+  // валидация
+  if (!message) {
+    warning.textContent = 'Пожалуйста, опишите проблему';
+    warning.style.display = 'block';
+    return;
+  }
+
+  if (!category) {
+    warning.textContent = 'Пожалуйста, выберите категорию';
+    warning.style.display = 'block';
+    return;
+  }
+
+  // блокируем кнопку
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Отправляю...';
+  warning.style.display = 'none';
+  success.style.display = 'none';
+
+  try {
+    const response = await apiCall(`${API_BASE}/error/report`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email || null,
+        category: category,
+        message: message,
+        userAgent: navigator.userAgent,
+        timestamp: new Date().toISOString(),
+        url: window.location.href,
+      }),
+      credentials: 'include',
+    });
+
+    if (response.ok) {
+      success.textContent = '✓ Спасибо! Ваш отчёт отправлен администраторам.';
+      success.style.display = 'block';
+      form.reset();
+
+      // закрытие через 2 секунды
+      setTimeout(() => {
+        m.classList.remove('is-open');
+      }, 2000);
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      warning.textContent = errorData.message || 'Ошибка при отправке. Попробуйте позже.';
+      warning.style.display = 'block';
+    }
+  } catch (error) {
+    console.error('Report submission error:', error);
+    warning.textContent = 'Ошибка сети. Проверьте подключение и попробуйте ещё раз.';
+    warning.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Отправить';
+  }
+}
+
 function viewUsername() {
   setNoStrawberries(false);
 
@@ -771,7 +1183,7 @@ function viewUsername() {
 
   document.getElementById('forgotUser').onclick = (e) => {
     e.preventDefault();
-    sessionStorage.setItem('cyb_recovery_mode', 'username');
+    setStorage('cyb_recovery_mode', 'username', sessionStorage);
     CybRouter.navigate('reset');
   };
 
@@ -787,7 +1199,7 @@ function viewUsername() {
     e.preventDefault();
     const login = document.getElementById('login').value.trim();
     if (!login) return alert('Введите имя пользователя');
-    sessionStorage.setItem('cyb_login', login);
+    setStorage('cyb_login', login, sessionStorage);
     CybRouter.navigate('password');
   });
 }
@@ -915,7 +1327,7 @@ function viewSignup() {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
+      const res = await apiCall(`${API_BASE}/auth/register`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -959,7 +1371,7 @@ function viewSignup() {
       if (backLink) backLink.style.pointerEvents = 'none';
 
       // сохраним логин на всякий
-      sessionStorage.setItem('cyb_login', login);
+      setStorage('cyb_login', login, sessionStorage);
 
       setTimeout(() => {
         CybRouter.navigate('account-profile');
@@ -979,7 +1391,7 @@ function viewSignup() {
 }
 
 function viewPassword() {
-  const login = sessionStorage.getItem('cyb_login') || '';
+  const login = getStorage('cyb_login', '', sessionStorage) || '';
   if (!login) {
     CybRouter.navigate('username');
     return;
@@ -1040,7 +1452,7 @@ function viewPassword() {
   };
   document.getElementById('forgotPass').onclick = (e) => {
     e.preventDefault();
-    sessionStorage.setItem('cyb_recovery_mode', 'password');
+    setStorage('cyb_recovery_mode', 'password', sessionStorage);
     CybRouter.navigate('reset');
   };
 
@@ -1104,10 +1516,10 @@ function viewPassword() {
     btn.disabled = true;
     btn.textContent = 'Вхожу…';
 
-    const login = sessionStorage.getItem('cyb_login');
+    const login = getStorage('cyb_login', '', sessionStorage);
 
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
+      const res = await apiCall(`${API_BASE}/auth/login`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -1187,7 +1599,7 @@ function viewReset() {
 
   const q = getQuery();
   const token = q.get('token') || ''; // если пришли по ссылке из письма на сброс пароля
-  const forcedMode = sessionStorage.getItem('cyb_recovery_mode') || 'password';
+  const forcedMode = getStorage('cyb_recovery_mode', '', sessionStorage) || 'password';
   // password | username
 
   // 1) Режим: "установить новый пароль" (есть token)
@@ -1277,7 +1689,7 @@ function viewReset() {
       if (p1 !== p2) return showMsg('error', 'Пароли не совпадают.');
 
       try {
-        const res = await fetch(`${API_BASE}/auth/recovery/finish`, {
+        const res = await apiCall(`${API_BASE}/auth/recovery/finish`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, newPassword: p1 }),
@@ -1397,7 +1809,7 @@ function viewReset() {
     if (!turnstileToken) return showMsg('warn', 'Подтверди, что ты не робот (Turnstile).');
 
     try {
-      const res = await fetch(`${API_BASE}/auth/recovery/start`, {
+      const res = await apiCall(`${API_BASE}/auth/recovery/start`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -1499,10 +1911,13 @@ function viewVerifyEmail() {
     btn.textContent = 'Проверяю…';
 
     try {
-      const res = await fetch(`${API_BASE}/auth/email/verify?token=${encodeURIComponent(token)}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const res = await apiCall(
+        `${API_BASE}/auth/email/verify?token=${encodeURIComponent(token)}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+        }
+      );
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
@@ -1522,7 +1937,11 @@ function viewVerifyEmail() {
       );
 
       // ✅ сигнал всем вкладкам, что email подтверждён
-      localStorage.setItem('cyb_email_verified_ping', String(Date.now()));
+      setStorage('cyb_email_verified_ping', Date.now());
+
+      // Использование getStorage для получения значения
+
+      const Verified = getStorage('cyb_email_verified_ping');
 
       // ✅ если пользователь уже залогинен — показываем окошко и ведём в безопасность
       const logged = await checkSession();
@@ -1541,7 +1960,7 @@ function viewVerifyEmail() {
       }
 
       // Если не залогинен, для “редиректа в этой же вкладке”
-      sessionStorage.setItem('cyb_email_just_verified', '1');
+      setStorage('cyb_email_just_verified', '1', sessionStorage);
       // чистим токен из URL
       history.replaceState(null, '', '/verify-email');
 
@@ -1588,7 +2007,7 @@ async function viewDone() {
   if (oldBtn) oldBtn.remove();
 
   try {
-    await fetch(`${API_BASE}/auth/logout`, {
+    await apiCall(`${API_BASE}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -1671,8 +2090,8 @@ function buildBadges(user, opts = {}) {
   const badges = [];
 
   // emailVerified
-  if (user.emailVerified) badges.push({ label: 'Email', cls: 'badge--ok' });
-  else badges.push({ label: 'No Email', cls: 'badge--warn' }); // опционально
+  if (user.emailVerified) badges.push({ label: 'Verified', cls: 'badge--ok' });
+  else badges.push({ label: 'Not verified', cls: 'badge--warn' }); // опционально
 
   // 2FA
   if (user.twoFactorEnabled || flags.has('2fa')) {
@@ -1696,8 +2115,8 @@ function buildBadges(user, opts = {}) {
 
   // role badges (если хочешь дублировать роль бейджом)
   if (includeRoleBadges) {
-    if (user.role === 'admin') badges.push({ label: 'Admin', cls: 'badge--admin' });
-    if (user.role === 'moderator') badges.push({ label: 'Mod', cls: 'badge--mod' });
+    if (user.role === 'admin') badges.push({ label: 'ADMIN', cls: 'badge--admin' });
+    if (user.role === 'moderator') badges.push({ label: 'MODERATOR', cls: 'badge--mod' });
   }
 
   // Custom flags — пример
@@ -1748,8 +2167,13 @@ async function copyText(text) {
 }
 
 async function fetchMe() {
-  const res = await fetch(`${API_BASE}/auth/me`, { method: 'GET', credentials: 'include' });
-  const data = await res.json().catch(() => null);
+  const res = await apiCall(`/auth/me`);
+  if (res.ok) {
+    const data = res.data;
+    // работай с data
+  } else {
+    // обработка ошибки
+  }
   return { res, data };
 }
 
@@ -1873,7 +2297,7 @@ async function viewAccount(tab = 'profile') {
   document.getElementById('logoutBtn').onclick = async () => {
     clearMsg();
     try {
-      await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
+      await apiCall(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
     } catch {}
     // ✅ возвращаем “обычный” режим с клубникой
     setNoStrawberries(false);
@@ -1897,7 +2321,7 @@ async function viewAccount(tab = 'profile') {
     }
 
     // header
-    const login = me?.user?.login || sessionStorage.getItem('cyb_login') || 'Пользователь';
+    const login = me?.user?.login || getStorage('cyb_login', '', sessionStorage) || 'Пользователь';
     const acc = document.getElementById('accLogin');
     if (acc) acc.textContent = login;
 
@@ -1906,7 +2330,7 @@ async function viewAccount(tab = 'profile') {
       body.innerHTML = `<div style="opacity:.75">Загружаю список устройств…</div>`;
 
       try {
-        const r = await fetch(`${API_BASE}/auth/sessions`, { credentials: 'include' });
+        const r = await apiCall(`${API_BASE}/auth/sessions`, { credentials: 'include' });
         const d = await r.json().catch(() => null);
         if (r.ok && d?.ok) {
           body.innerHTML = renderSessionsTable(d, me);
@@ -2041,7 +2465,7 @@ async function viewAccount(tab = 'profile') {
         b.disabled = true;
 
         try {
-          const r = await fetch(`${API_BASE}/auth/sessions/revoke`, {
+          const r = await apiCall(`${API_BASE}/auth/sessions/revoke`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -2077,7 +2501,7 @@ async function viewAccount(tab = 'profile') {
         lo.disabled = true;
 
         try {
-          const r = await fetch(`${API_BASE}/auth/logout_others`, {
+          const r = await apiCall(`${API_BASE}/auth/logout_others`, {
             method: 'POST',
             credentials: 'include',
           });
@@ -2122,8 +2546,8 @@ function renderIdRow(label, value, keyForCopy) {
     <div class="v">
       <span class="mono-pill" title="${escapeHtml(v)}">
         <span data-full="${escapeHtml(v)}" data-copy="${escapeHtml(keyForCopy || '')}">${escapeHtml(
-    short
-  )}</span>
+          short
+        )}</span>
         ${
           value
             ? `<button class="copy-btn" type="button" data-copybtn="${escapeHtml(v)}">Copy</button>`
@@ -2165,8 +2589,9 @@ function renderTabHtml(tab, me) {
             <span class="chip status ${status.main.cls}" title="Статус аккаунта">
               <span class="dot"></span> ${status.main.label}
             </span>
+          </div>
 
-            
+          <div class="profile-hero__subtitle">
             ${
               status.badges?.length
                 ? `
@@ -2185,10 +2610,6 @@ function renderTabHtml(tab, me) {
                 : ''
             }
 
-          </div>
-
-          <div class="profile-hero__subtitle">
-            Информация об аккаунте
           </div>
         </div>
       </div>
@@ -2240,14 +2661,14 @@ function renderTabHtml(tab, me) {
     const badgeHtml = emailVerified
       ? `<span class="sec-badge sec-badge--ok">Подтверждён</span>`
       : u.email
-      ? `<span class="sec-badge sec-badge--warn">Не подтверждён</span>`
-      : `<span class="sec-badge">—</span>`;
+        ? `<span class="sec-badge sec-badge--warn">Не подтверждён</span>`
+        : `<span class="sec-badge">—</span>`;
 
     const emailStatus = emailVerified
       ? '✅ Email подтверждён'
       : u.email
-      ? '⚠️ Email не подтверждён'
-      : 'Email не указан';
+        ? '⚠️ Email не подтверждён'
+        : 'Email не указан';
 
     const passChanged =
       u.password_changed_at || u.passwordChangedAt || u.passChangedAt || u.pass_changed_at || null;
@@ -2630,7 +3051,7 @@ async function bindTabActions(tab, me, api) {
         saveBtn.textContent = 'Сохраняю…';
 
         try {
-          const r = await fetch(`${API_BASE}/auth/email/set`, {
+          const r = await apiCall(`${API_BASE}/auth/email/set`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -2695,7 +3116,7 @@ async function bindTabActions(tab, me, api) {
         resendBtn.textContent = 'Отправляю…';
 
         try {
-          const r = await fetch(`${API_BASE}/auth/email/resend`, {
+          const r = await apiCall(`${API_BASE}/auth/email/resend`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -2746,7 +3167,7 @@ async function bindTabActions(tab, me, api) {
     refreshEmailStatus();
 
     // если только что подтвердили email — подтянем свежие данные сразу
-    if (sessionStorage.getItem('cyb_email_just_verified') === '1') {
+    if (getStorage('cyb_email_just_verified', '', sessionStorage) === '1') {
       sessionStorage.removeItem('cyb_email_just_verified');
 
       // небольшая пауза на всякий (если бекенд обновляет запись асинхронно)
@@ -2877,7 +3298,7 @@ async function bindTabActions(tab, me, api) {
 
         try {
           // ⚠️ эндпоинт должен быть на бэке
-          const r = await fetch(`${API_BASE}/auth/password/change`, {
+          const r = await apiCall(`${API_BASE}/auth/password/change`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -2946,7 +3367,7 @@ async function bindTabActions(tab, me, api) {
         const old = b.textContent;
         b.textContent = 'Выхожу…';
         try {
-          const res = await fetch(`${API_BASE}/auth/logout_others`, {
+          const res = await apiCall(`${API_BASE}/auth/logout_others`, {
             method: 'POST',
             credentials: 'include',
           });
@@ -2969,7 +3390,7 @@ async function bindTabActions(tab, me, api) {
     const btn = document.getElementById('toHistoryBtn');
     if (btn && !btn.disabled)
       btn.onclick = () => {
-        sessionStorage.setItem(HISTORY_FROM_KEY, 'account-easter-eggs'); // ✅ пришли из пасхалок
+        setStorage(HISTORY_FROM_KEY, 'account-easter-eggs', sessionStorage); // ✅ пришли из пасхалок
         CybRouter.navigate('strawberry-history');
       };
   }
@@ -3005,7 +3426,7 @@ async function bindTabActions(tab, me, api) {
         btn.textContent = 'Сохраняю…';
 
         try {
-          const r = await fetch(`${API_BASE}/auth/email/set`, {
+          const r = await apiCall(`${API_BASE}/auth/email/set`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -3045,7 +3466,7 @@ async function bindTabActions(tab, me, api) {
         resend.textContent = 'Отправляю…';
 
         try {
-          const r = await fetch(`${API_BASE}/auth/email/resend`, {
+          const r = await apiCall(`${API_BASE}/auth/email/resend`, {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -3080,7 +3501,7 @@ async function viewStrawberryHistory() {
   // 2) если нет — пробуем спросить сервер /auth/me
   if (!hasStrawberryAccess()) {
     try {
-      const res = await fetch(`${API_BASE}/auth/me`, {
+      const res = await apiCall(`${API_BASE}/auth/me`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -3106,8 +3527,8 @@ async function viewStrawberryHistory() {
     }
   }
 
-  const from = sessionStorage.getItem(HISTORY_FROM_KEY) || '';
-  const login = sessionStorage.getItem('cyb_login') || 'Гость';
+  const from = getStorage(HISTORY_FROM_KEY, sessionStorage) || '';
+  const login = getStorage('cyb_login', '', sessionStorage) || 'Гость';
 
   setNoStrawberries(false);
 
@@ -3192,7 +3613,7 @@ async function viewStrawberryHistory() {
 
   // кнопка "Продолжить"
   document.getElementById('toUsername').onclick = () => {
-    const from2 = sessionStorage.getItem(HISTORY_FROM_KEY) || '';
+    const from2 = getStorage(HISTORY_FROM_KEY, '', sessionStorage) || '';
     if (from2 === 'account-easter-eggs') {
       sessionStorage.removeItem(HISTORY_FROM_KEY);
       CybRouter.navigate('account-easter-eggs');
@@ -3212,7 +3633,7 @@ function escapeHtml(s) {
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;',
-      }[c])
+      })[c]
   );
 }
 
@@ -3644,6 +4065,7 @@ function initPasswordEyes(root = document) {
 
       window.addEventListener('keydown', onEnterCongrats, true);
 
+      // ---- Кнопки ----
       ok.onclick = () => {
         // Анимация кнопки
         ok.classList.add('btn-okay-animate');
@@ -3663,7 +4085,7 @@ function initPasswordEyes(root = document) {
         // Мини-пауза, чтобы анимация успела сыграть
         setTimeout(() => {
           setStrawberryAccess(); // ✅ отмечаем, что пасхалка найдена
-          fetch(`${API_BASE}/auth/easter/strawberry`, {
+          apiCall(`${API_BASE}/auth/easter/strawberry`, {
             method: 'POST',
             credentials: 'include',
           }).catch(() => {});
@@ -3683,12 +4105,13 @@ function initPasswordEyes(root = document) {
   // ---------- Logic-a ----------
   async function triggerAlex() {
     if (AlexUnlocked) return;
-    if (sessionStorage.getItem('alex_done') === '1') return;
+    if (getStorage('alex_done', '', sessionStorage) === '1') return;
 
     AlexUnlocked = true;
-    sessionStorage.setItem('alex_done', '1');
 
-    let storedName = (localStorage.getItem('itemUserName') || '').trim();
+    setStorage('alex_done', '1', sessionStorage);
+
+    let storedName = (getStorage('itemUserName') || '').trim();
 
     while (!storedName) {
       const input = await customPrompt(__al3x, 'Введите ваше имя пользователя:');
@@ -3701,7 +4124,7 @@ function initPasswordEyes(root = document) {
       }
 
       storedName = input.trim();
-      localStorage.setItem('itemUserName', storedName);
+      setStorage('itemUserName', storedName);
     }
 
     sendWorkLog({
