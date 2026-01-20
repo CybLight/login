@@ -251,12 +251,76 @@
   align-items: center;
 
   background: rgba(0, 0, 0, 0.35);
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(6px);
 
   font-size: 14px;
   color: rgba(231, 236, 255, 0.78);
   z-index: 50;
+
+  /* НЕОНОВАЯ РАМКА */
+  border: 1px solid rgba(34, 240, 230, 0.45);
+  overflow: hidden; /* важно */
+
+  /* НЕОНОВОЕ СВЕЧЕНИЕ */
+  box-shadow:
+    0 0 6px rgba(34, 240, 230, 0.45),
+    0 0 14px rgba(34, 240, 230, 0.25),
+    inset 0 0 6px rgba(34, 240, 230, 0.15);
+}
+
+.auth-footer::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    height 0.2s ease;
+}
+
+.auth-footer::before {
+  content: 'DEVELOPER MODE • DEVELOPER MODE • DEVELOPER MODE • ';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+
+  width: max-content;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+
+  padding-left: 100%;
+  white-space: nowrap;
+
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  font-size: 13px;
+  text-transform: uppercase;
+
+  color: var(--neon-orange);
+  text-shadow:
+    0 0 6px rgba(255, 159, 26, 0.9),
+    0 0 14px rgba(255, 159, 26, 0.6),
+    0 0 28px rgba(255, 159, 26, 0.4);
+
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes devModeScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
 }
 
 .footer-row {
@@ -584,7 +648,9 @@
 
   opacity: 0;
   transform: scale(0.985);
-  transition: opacity 160ms ease, transform 160ms ease;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
   user-select: none;
 
   /* важно для touch */
@@ -837,7 +903,9 @@
 }
 
 .modal--strawberry .convariant .emoji {
-  text-shadow: 0 0 12px rgba(255, 59, 107, 0.9), 0 0 28px rgba(255, 59, 107, 0.5),
+  text-shadow:
+    0 0 12px rgba(255, 59, 107, 0.9),
+    0 0 28px rgba(255, 59, 107, 0.5),
     0 0 48px rgba(255, 59, 107, 0.25);
 }
 
@@ -1108,7 +1176,9 @@
   opacity: 0;
   pointer-events: none;
   transform: translateY(20px);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
@@ -1128,7 +1198,8 @@
   width: 100%;
   min-height: 100vh;
   padding: 24px 18px;
-  background: radial-gradient(1200px 700px at 30% 10%, rgba(180, 120, 255, 0.1), transparent 60%),
+  background:
+    radial-gradient(1200px 700px at 30% 10%, rgba(180, 120, 255, 0.1), transparent 60%),
     radial-gradient(900px 600px at 70% 20%, rgba(255, 127, 39, 0.1), transparent 55%),
     var(--bg, #0a0f1f);
 }
@@ -1267,7 +1338,11 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  transition: transform 0.12s ease, background 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  transition:
+    transform 0.12s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
 }
 
@@ -1289,7 +1364,9 @@
 .copy-btn:hover {
   background: rgba(255, 255, 255, 0.14);
   transform: translateY(-1px);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset, 0 10px 22px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+    0 10px 22px rgba(0, 0, 0, 0.25);
 }
 
 .copy-btn:active {
@@ -1354,7 +1431,8 @@ body.no-strawberries .strawberry-ring-wave {
   padding: 14px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: radial-gradient(700px 260px at 0% 0%, rgba(255, 127, 39, 0.14), transparent 55%),
+  background:
+    radial-gradient(700px 260px at 0% 0%, rgba(255, 127, 39, 0.14), transparent 55%),
     radial-gradient(700px 260px at 100% 0%, rgba(180, 120, 255, 0.12), transparent 55%),
     rgba(0, 0, 0, 0.12);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
@@ -1563,7 +1641,10 @@ body.no-strawberries .strawberry-ring-wave {
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(0, 0, 0, 0.12);
-  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+  transition:
+    transform 0.14s ease,
+    border-color 0.14s ease,
+    background 0.14s ease;
 }
 
 .info-card:hover {
@@ -1662,7 +1743,9 @@ body.no-strawberries .strawberry-ring-wave {
   gap: 25px;
   color: #ff9f1a;
   opacity: 0.75;
-  transition: color 0.2s ease, opacity 0.2s ease;
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .sec-item:hover .sec-right {
@@ -1791,8 +1874,9 @@ body.no-strawberries .strawberry-ring-wave {
 }
 
 .mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
-    'Courier New', monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
 }
 
 .icon-btn {
@@ -2183,6 +2267,33 @@ body.no-strawberries .strawberry-ring-wave {
   /* делаем “Device” строкой, а не как остальные td (иначе flex space-between мешает) */
   .sessions-table td[data-label='Device'] {
     display: block;
+  }
+}
+
+/* Активация F12 только для десктопов */
+
+@media (max-height: 700px) and (min-width: 1024px) {
+  .auth-footer::before {
+    opacity: 1;
+    animation: devModeScroll 14s linear infinite;
+  }
+
+  .auth-footer::after {
+    height: 6px;
+
+    background: linear-gradient(
+      180deg,
+      transparent,
+      rgba(34, 240, 230, 0.6),
+      rgba(34, 240, 230, 0.95)
+    );
+
+    box-shadow:
+      0 0 12px rgba(34, 240, 230, 0.9),
+      0 0 28px rgba(34, 240, 230, 0.6),
+      0 0 46px rgba(34, 240, 230, 0.4);
+
+    opacity: 1;
   }
 }
 
