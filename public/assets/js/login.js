@@ -1577,6 +1577,8 @@ function viewPassword() {
       showMsg('ok', 'Успешный вход! Перенаправляю…');
 
       const okSession = await checkSession();
+      console.log('checkSession result:', okSession);
+
       if (!okSession) {
         showMsg(
           'warn',
