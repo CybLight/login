@@ -2509,7 +2509,7 @@ async function viewAccount(tab = 'profile') {
         lo.disabled = true;
 
         try {
-          const r = await apiCall(`${API_BASE}/auth/logout_others`, {
+          const r = await apiCall(`${API_BASE}/auth/logout-others`, {
             method: 'POST',
             credentials: 'include',
           });
@@ -3375,7 +3375,7 @@ async function bindTabActions(tab, me, api) {
         const old = b.textContent;
         b.textContent = 'Выхожу…';
         try {
-          const res = await apiCall(`${API_BASE}/auth/logout_others`, {
+          const res = await apiCall(`${API_BASE}/auth/logout-others`, {
             method: 'POST',
             credentials: 'include',
           });
