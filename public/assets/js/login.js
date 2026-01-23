@@ -1640,6 +1640,12 @@ function viewPassword() {
 
     try {
       console.log('Attempting login for:', login);
+      console.log(
+        'Turnstile token:',
+        turnstileToken ? `${turnstileToken.substring(0, 20)}...` : 'NO TOKEN'
+      );
+      console.log('Password length:', pass.length);
+
       const res = await apiCall('/auth/login', {
         method: 'POST',
         credentials: 'include',
@@ -1655,6 +1661,18 @@ function viewPassword() {
       const data = await res.json().catch(() => ({}));
       console.log('Login data:', data);
       console.log('Cookies after login:', document.cookie);
+
+      // Если ошибка - показываем полный ответ сервера
+      if (!res.ok) {
+        console.error('Login failed! Server response:', {
+          status: res.status,
+          statusText: res.statusText,
+          data: data,
+          error: data?.error,
+          message: data?.message,
+          details: data,
+        });
+      }
 
       if (!res.ok) {
         // сброс капчи
@@ -2482,6 +2500,16 @@ async function viewAccount(tab = 'profile') {
 
   function renderSessionsTable(data, me) {
     console.log('renderSessionsTable called with:', { data, me });
+    console.log(
+      'data.sessions type:',
+      typeof data.sessions,
+      'isArray:',
+      Array.isArray(data.sessions)
+    );
+    console.log('data.sessions value:', data.sessions);
+    console.log('Full data object keys:', Object.keys(data));
+    console.log('Full data:', JSON.stringify(data, null, 2));
+
     const sessions = Array.isArray(data.sessions) ? data.sessions : [];
     const current = data.current;
     console.log('Sessions array:', sessions);
