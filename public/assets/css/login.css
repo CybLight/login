@@ -2118,6 +2118,59 @@ body.no-strawberries .strawberry-ring-wave {
   content: '🙈';
 }
 
+/* ============================
+   Network Status Notification
+   ============================ */
+
+.network-notification {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  animation: slideDown 0.3s ease-out;
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 90%;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.network-notification.offline {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.network-notification.online {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: slideDown 0.3s ease-out;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.notification-content svg {
+  flex-shrink: 0;
+}
+
 /* 
 ========================================  
                MOBILE ADAPTIVE
@@ -2345,5 +2398,11 @@ body.no-strawberries .strawberry-ring-wave {
 
   .cyb-report-modal__actions button {
     max-width: none;
+  }
+
+  .network-notification {
+    top: 10px;
+    font-size: 13px;
+    padding: 10px 16px;
   }
 }

@@ -136,17 +136,17 @@ async function cachedApiCall(endpoint, options = {}, cacheKey = endpoint) {
     return cached.data;
   }
 
-  const result = await apiCall(endpoint, options);
+  const response = await apiCall(endpoint, options);
 
   // сохранение в кэш
-  if (result.ok) {
+  if (response.ok) {
     apiCache.set(cacheKey, {
-      data: result,
+      data: response,
       timestamp: Date.now(),
     });
   }
 
-  return result;
+  return response;
 }
 
 // Использование:
@@ -373,6 +373,19 @@ async function checkSession() {
 
 // Обновленный apiCall с timeout
 async function apiCall(endpoint, options = {}, timeoutMs = 10000) {
+  // Проверка интернет-соединения
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    const errorResponse = {
+      ok: false,
+      status: 0,
+      statusText: 'No internet connection',
+      json: async () => ({ error: 'Нет подключения к интернету. Проверьте соединение.' }),
+      text: async () => '',
+      headers: new Headers(),
+    };
+    return errorResponse;
+  }
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -389,19 +402,36 @@ async function apiCall(endpoint, options = {}, timeoutMs = 10000) {
 
     if (response.status === 401) {
       CybRouter.navigate('username');
-      return { ok: false, error: 'Unauthorized' };
     }
 
-    const data = await response.json().catch(() => ({}));
-    return { ok: response.ok, status: response.status, data };
+    return response;
   } catch (error) {
     clearTimeout(timeoutId);
 
+    // Определяем тип ошибки и создаём понятное сообщение
+    let errorMessage = 'Ошибка сети';
+
     if (error.name === 'AbortError') {
-      return { ok: false, error: 'Request timeout' };
+      errorMessage = 'Превышено время ожидания. Сервер не отвечает.';
+    } else if (error.message.includes('Failed to fetch')) {
+      errorMessage = 'Не удалось подключиться к серверу. Проверьте интернет.';
+    } else if (error.message.includes('NetworkError')) {
+      errorMessage = 'Ошибка сети. Проверьте подключение к интернету.';
+    } else {
+      errorMessage = error.message || 'Неизвестная ошибка сети';
     }
 
-    return { ok: false, error: error.message };
+    // Создаём mock Response для ошибок сети
+    const errorResponse = {
+      ok: false,
+      status: 0,
+      statusText: error.name === 'AbortError' ? 'Request timeout' : error.message,
+      json: async () => ({ error: errorMessage }),
+      text: async () => '',
+      headers: new Headers(),
+    };
+
+    return errorResponse;
   }
 }
 
@@ -846,6 +876,56 @@ function renderRoute(r) {
 // Слушаем роут-события
 window.addEventListener('cyb:route', (e) => {
   renderRoute(e.detail.route);
+});
+
+// Обработчики событий online/offline для индикации состояния сети
+let offlineNotification = null;
+
+window.addEventListener('offline', () => {
+  console.warn('Network connection lost');
+
+  // Показываем уведомление о потере соединения
+  if (!offlineNotification) {
+    offlineNotification = document.createElement('div');
+    offlineNotification.className = 'network-notification offline';
+    offlineNotification.innerHTML = `
+      <div class="notification-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>Нет подключения к интернету</span>
+      </div>
+    `;
+    document.body.appendChild(offlineNotification);
+  }
+});
+
+window.addEventListener('online', () => {
+  console.log('Network connection restored');
+
+  // Убираем уведомление и показываем что соединение восстановлено
+  if (offlineNotification) {
+    offlineNotification.classList.remove('offline');
+    offlineNotification.classList.add('online');
+    offlineNotification.innerHTML = `
+      <div class="notification-content">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        <span>Соединение восстановлено</span>
+      </div>
+    `;
+
+    // Убираем уведомление через 3 секунды
+    setTimeout(() => {
+      if (offlineNotification) {
+        offlineNotification.remove();
+        offlineNotification = null;
+      }
+    }, 3000);
+  }
 });
 
 // Начальный рендер
@@ -1589,12 +1669,20 @@ function viewPassword() {
 
       CybRouter.navigate('account-profile'); // ✅ или куда тебе надо
     } catch (err) {
+      // Эта ошибка может возникнуть только если что-то серьезно сломано
+      console.error('Unexpected error during login:', err);
+
       if (window.turnstile && turnstileWidgetId !== null) {
-        turnstile.reset(turnstileWidgetId);
+        try {
+          turnstile.reset(turnstileWidgetId);
+        } catch (e) {
+          console.warn('Failed to reset turnstile:', e);
+        }
       }
       turnstileToken = '';
 
-      showMsg('error', 'Ошибка сети. Проверь интернет и попробуй ещё раз.');
+      // Показываем полезное сообщение пользователю
+      showMsg('error', 'Непредвиденная ошибка. Попробуйте обновить страницу.');
     } finally {
       btn.disabled = false;
       btn.textContent = oldText;
