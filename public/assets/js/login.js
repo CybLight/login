@@ -364,9 +364,12 @@ async function checkSession() {
       method: 'GET',
       credentials: 'include', // ✅ обязательно
     });
+    console.log('checkSession response:', { ok: res.ok, status: res.status });
     const data = await res.json().catch(() => null);
+    console.log('checkSession data:', data);
     return !!(res.ok && data?.ok);
-  } catch {
+  } catch (e) {
+    console.error('checkSession error:', e);
     return false;
   }
 }
@@ -375,6 +378,7 @@ async function checkSession() {
 async function apiCall(endpoint, options = {}, timeoutMs = 10000) {
   // Проверка интернет-соединения
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    console.warn('apiCall: Navigator is offline');
     const errorResponse = {
       ok: false,
       status: 0,
@@ -391,6 +395,8 @@ async function apiCall(endpoint, options = {}, timeoutMs = 10000) {
 
   try {
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+    console.log('apiCall:', options.method || 'GET', url);
+
     const response = await fetch(url, {
       ...options,
       credentials: options.credentials || 'include',
@@ -402,6 +408,7 @@ async function apiCall(endpoint, options = {}, timeoutMs = 10000) {
     });
 
     clearTimeout(timeoutId);
+    console.log('apiCall response:', { url, ok: response.ok, status: response.status });
 
     if (response.status === 401) {
       CybRouter.navigate('username');
@@ -1416,6 +1423,7 @@ function viewSignup() {
     }
 
     try {
+      console.log('Attempting registration for:', login);
       const res = await apiCall('/auth/register', {
         method: 'POST',
         credentials: 'include',
@@ -1427,7 +1435,9 @@ function viewSignup() {
         }),
       });
 
+      console.log('Registration response:', { ok: res.ok, status: res.status });
       const data = await res.json().catch(() => ({}));
+      console.log('Registration data:', data);
 
       if (!res.ok) {
         // ❌ ошибка регистрации
@@ -1608,6 +1618,7 @@ function viewPassword() {
     const login = getStorage('cyb_login', '', sessionStorage);
 
     try {
+      console.log('Attempting login for:', login);
       const res = await apiCall('/auth/login', {
         method: 'POST',
         credentials: 'include',
@@ -1619,7 +1630,9 @@ function viewPassword() {
         }),
       });
 
+      console.log('Login response:', { ok: res.ok, status: res.status });
       const data = await res.json().catch(() => ({}));
+      console.log('Login data:', data);
 
       if (!res.ok) {
         // сброс капчи
