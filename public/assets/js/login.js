@@ -1444,15 +1444,24 @@ function viewSignup() {
 
     try {
       console.log('Attempting registration for:', login);
+      const payload = {
+        login,
+        password: pass1,
+        turnstileToken,
+      };
+      console.log('Registration payload:', {
+        login: payload.login,
+        passwordLength: payload.password.length,
+        turnstileTokenPreview: payload.turnstileToken
+          ? `${payload.turnstileToken.substring(0, 20)}...`
+          : 'NO TOKEN',
+      });
+
       const res = await apiCall('/auth/register', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          login,
-          password: pass1,
-          turnstileToken,
-        }),
+        body: JSON.stringify(payload),
       });
 
       console.log('Registration response:', { ok: res.ok, status: res.status });
@@ -1461,6 +1470,12 @@ function viewSignup() {
       console.log('Cookies after registration:', document.cookie);
 
       if (!res.ok) {
+        console.error('Registration failed!', {
+          status: res.status,
+          statusText: res.statusText,
+          error: data?.error,
+          data: data,
+        });
         // ❌ ошибка регистрации
         if (window.turnstile && turnstileWidgetId !== null) {
           turnstile.reset(turnstileWidgetId);
