@@ -360,6 +360,7 @@ function initTurnstile() {
 
 async function checkSession() {
   try {
+    console.log('checkSession: checking cookies before request:', document.cookie);
     const res = await apiCall('/auth/me', {
       method: 'GET',
       credentials: 'include', // ✅ обязательно
@@ -410,7 +411,26 @@ async function apiCall(endpoint, options = {}, timeoutMs = 10000) {
     clearTimeout(timeoutId);
     console.log('apiCall response:', { url, ok: response.ok, status: response.status });
 
-    if (response.status === 401) {
+    // Проверяем Set-Cookie header (только для логирования, браузер сам обрабатывает)
+    const setCookie = response.headers.get('set-cookie');
+    if (setCookie) {
+      console.log('Set-Cookie header:', setCookie);
+    } else {
+      console.log('No Set-Cookie header in response');
+    }
+
+    // Выводим все заголовки ответа для диагностики
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+    // Автоматический редирект на 401 только для защищенных страниц
+    // НЕ редиректим если это checkSession или сам login/register
+    if (
+      response.status === 401 &&
+      !endpoint.includes('/auth/me') &&
+      !endpoint.includes('/auth/login') &&
+      !endpoint.includes('/auth/register')
+    ) {
+      console.log('401 detected, redirecting to username');
       CybRouter.navigate('username');
     }
 
@@ -1438,6 +1458,7 @@ function viewSignup() {
       console.log('Registration response:', { ok: res.ok, status: res.status });
       const data = await res.json().catch(() => ({}));
       console.log('Registration data:', data);
+      console.log('Cookies after registration:', document.cookie);
 
       if (!res.ok) {
         // ❌ ошибка регистрации
@@ -1633,6 +1654,7 @@ function viewPassword() {
       console.log('Login response:', { ok: res.ok, status: res.status });
       const data = await res.json().catch(() => ({}));
       console.log('Login data:', data);
+      console.log('Cookies after login:', document.cookie);
 
       if (!res.ok) {
         // сброс капчи
@@ -2459,8 +2481,11 @@ async function viewAccount(tab = 'profile') {
   }
 
   function renderSessionsTable(data, me) {
+    console.log('renderSessionsTable called with:', { data, me });
     const sessions = Array.isArray(data.sessions) ? data.sessions : [];
     const current = data.current;
+    console.log('Sessions array:', sessions);
+    console.log('Current session ID:', current);
 
     const rows = sessions
       .map((s) => {
@@ -2530,6 +2555,9 @@ async function viewAccount(tab = 'profile') {
       `;
       })
       .join('');
+
+    console.log('Generated rows HTML length:', rows.length);
+    console.log('First 500 chars of rows:', rows.substring(0, 500));
 
     const sessionsCount = Number(me.sessionsCount || sessions.length || 0);
 
