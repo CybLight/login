@@ -24,7 +24,7 @@ window.onerror = (message, source, lineno, colno, error) => {
   const stack = error?.stack || '';
   const ua = parseUA(navigator.userAgent);
 
-  apiCall(`${API_BASE}/error/report`, {
+  apiCall('/error/report', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -57,7 +57,7 @@ window.onunhandledrejection = (event) => {
 
   const ua = parseUA(navigator.userAgent);
 
-  apiCall(`${API_BASE}/error/report`, {
+  apiCall('/error/report', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -89,7 +89,7 @@ const logger = {
     // в продакшене отправляй на сервер
     if (level === 'error' || level === 'warn') {
       // Отправить на endpoint логирования
-      apiCall(`${API_BASE}/logs`, {
+      apiCall('/logs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(logEntry),
@@ -360,7 +360,7 @@ function initTurnstile() {
 
 async function checkSession() {
   try {
-    const res = await apiCall(`${API_BASE}/auth/me`, {
+    const res = await apiCall('/auth/me', {
       method: 'GET',
       credentials: 'include', // ✅ обязательно
     });
@@ -392,9 +392,12 @@ async function apiCall(endpoint, options = {}, timeoutMs = 10000) {
   try {
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
     const response = await fetch(url, {
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
       ...options,
+      credentials: options.credentials || 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(options.headers || {}),
+      },
       signal: controller.signal,
     });
 
@@ -1180,7 +1183,7 @@ async function handleReportSubmit(e) {
   success.style.display = 'none';
 
   try {
-    const response = await apiCall(`${API_BASE}/error/report`, {
+    const response = await apiCall('/error/report', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1413,7 +1416,7 @@ function viewSignup() {
     }
 
     try {
-      const res = await apiCall(`${API_BASE}/auth/register`, {
+      const res = await apiCall('/auth/register', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -1605,7 +1608,7 @@ function viewPassword() {
     const login = getStorage('cyb_login', '', sessionStorage);
 
     try {
-      const res = await apiCall(`${API_BASE}/auth/login`, {
+      const res = await apiCall('/auth/login', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -1785,7 +1788,7 @@ function viewReset() {
       if (p1 !== p2) return showMsg('error', 'Пароли не совпадают.');
 
       try {
-        const res = await apiCall(`${API_BASE}/auth/recovery/finish`, {
+        const res = await apiCall('/auth/recovery/finish', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, newPassword: p1 }),
@@ -1905,7 +1908,7 @@ function viewReset() {
     if (!turnstileToken) return showMsg('warn', 'Подтверди, что ты не робот (Turnstile).');
 
     try {
-      const res = await apiCall(`${API_BASE}/auth/recovery/start`, {
+      const res = await apiCall('/auth/recovery/start', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -2103,7 +2106,7 @@ async function viewDone() {
   if (oldBtn) oldBtn.remove();
 
   try {
-    await apiCall(`${API_BASE}/auth/logout`, {
+    await apiCall('/auth/logout', {
       method: 'POST',
       credentials: 'include',
     });
@@ -2263,13 +2266,8 @@ async function copyText(text) {
 }
 
 async function fetchMe() {
-  const res = await apiCall(`/auth/me`);
-  if (res.ok) {
-    const data = res.data;
-    // работай с data
-  } else {
-    // обработка ошибки
-  }
+  const res = await apiCall('/auth/me');
+  const data = await res.json().catch(() => ({}));
   return { res, data };
 }
 
@@ -2393,7 +2391,7 @@ async function viewAccount(tab = 'profile') {
   document.getElementById('logoutBtn').onclick = async () => {
     clearMsg();
     try {
-      await apiCall(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
+      await apiCall('/auth/logout', { method: 'POST', credentials: 'include' });
     } catch {}
     // ✅ возвращаем “обычный” режим с клубникой
     setNoStrawberries(false);
@@ -2426,7 +2424,7 @@ async function viewAccount(tab = 'profile') {
       body.innerHTML = `<div style="opacity:.75">Загружаю список устройств…</div>`;
 
       try {
-        const r = await apiCall(`${API_BASE}/auth/sessions`, { credentials: 'include' });
+        const r = await apiCall('/auth/sessions', { credentials: 'include' });
         const d = await r.json().catch(() => null);
         if (r.ok && d?.ok) {
           body.innerHTML = renderSessionsTable(d, me);
@@ -2561,7 +2559,7 @@ async function viewAccount(tab = 'profile') {
         b.disabled = true;
 
         try {
-          const r = await apiCall(`${API_BASE}/auth/sessions/revoke`, {
+          const r = await apiCall('/auth/sessions/revoke', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -2597,7 +2595,7 @@ async function viewAccount(tab = 'profile') {
         lo.disabled = true;
 
         try {
-          const r = await apiCall(`${API_BASE}/auth/logout-others`, {
+          const r = await apiCall('/auth/logout-others', {
             method: 'POST',
             credentials: 'include',
           });
@@ -3147,7 +3145,7 @@ async function bindTabActions(tab, me, api) {
         saveBtn.textContent = 'Сохраняю…';
 
         try {
-          const r = await apiCall(`${API_BASE}/auth/email/set`, {
+          const r = await apiCall('/auth/email/set', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -3212,7 +3210,7 @@ async function bindTabActions(tab, me, api) {
         resendBtn.textContent = 'Отправляю…';
 
         try {
-          const r = await apiCall(`${API_BASE}/auth/email/resend`, {
+          const r = await apiCall('/auth/email/resend', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -3394,7 +3392,7 @@ async function bindTabActions(tab, me, api) {
 
         try {
           // ⚠️ эндпоинт должен быть на бэке
-          const r = await apiCall(`${API_BASE}/auth/password/change`, {
+          const r = await apiCall('/auth/password/change', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -3463,7 +3461,7 @@ async function bindTabActions(tab, me, api) {
         const old = b.textContent;
         b.textContent = 'Выхожу…';
         try {
-          const res = await apiCall(`${API_BASE}/auth/logout-others`, {
+          const res = await apiCall('/auth/logout-others', {
             method: 'POST',
             credentials: 'include',
           });
@@ -3522,7 +3520,7 @@ async function bindTabActions(tab, me, api) {
         btn.textContent = 'Сохраняю…';
 
         try {
-          const r = await apiCall(`${API_BASE}/auth/email/set`, {
+          const r = await apiCall('/auth/email/set', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -3562,7 +3560,7 @@ async function bindTabActions(tab, me, api) {
         resend.textContent = 'Отправляю…';
 
         try {
-          const r = await apiCall(`${API_BASE}/auth/email/resend`, {
+          const r = await apiCall('/auth/email/resend', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -3597,7 +3595,7 @@ async function viewStrawberryHistory() {
   // 2) если нет — пробуем спросить сервер /auth/me
   if (!hasStrawberryAccess()) {
     try {
-      const res = await apiCall(`${API_BASE}/auth/me`, {
+      const res = await apiCall('/auth/me', {
         method: 'GET',
         credentials: 'include',
       });
@@ -4181,7 +4179,7 @@ function initPasswordEyes(root = document) {
         // Мини-пауза, чтобы анимация успела сыграть
         setTimeout(() => {
           setStrawberryAccess(); // ✅ отмечаем, что пасхалка найдена
-          apiCall(`${API_BASE}/auth/easter/strawberry`, {
+          apiCall('/auth/easter/strawberry', {
             method: 'POST',
             credentials: 'include',
           }).catch(() => {});
