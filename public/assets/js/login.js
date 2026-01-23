@@ -2480,8 +2480,10 @@ async function viewAccount(tab = 'profile') {
         const r = await apiCall('/auth/sessions', { credentials: 'include' });
         const d = await r.json().catch(() => null);
         if (r.ok && d?.ok) {
-          body.innerHTML = renderSessionsTable(d, me);
-          bindSessionsTable(d, { showMsg, clearMsg });
+          // Сервер возвращает { ok: true, data: { current: ..., sessions: [...] } }
+          const sessionsData = d.data || d;
+          body.innerHTML = renderSessionsTable(sessionsData, me);
+          bindSessionsTable(sessionsData, { showMsg, clearMsg });
         } else {
           body.innerHTML = renderTabHtml(tab, me);
           showMsg('error', 'Не удалось получить список сессий.');
@@ -2499,21 +2501,8 @@ async function viewAccount(tab = 'profile') {
   }
 
   function renderSessionsTable(data, me) {
-    console.log('renderSessionsTable called with:', { data, me });
-    console.log(
-      'data.sessions type:',
-      typeof data.sessions,
-      'isArray:',
-      Array.isArray(data.sessions)
-    );
-    console.log('data.sessions value:', data.sessions);
-    console.log('Full data object keys:', Object.keys(data));
-    console.log('Full data:', JSON.stringify(data, null, 2));
-
     const sessions = Array.isArray(data.sessions) ? data.sessions : [];
     const current = data.current;
-    console.log('Sessions array:', sessions);
-    console.log('Current session ID:', current);
 
     const rows = sessions
       .map((s) => {
@@ -2583,9 +2572,6 @@ async function viewAccount(tab = 'profile') {
       `;
       })
       .join('');
-
-    console.log('Generated rows HTML length:', rows.length);
-    console.log('First 500 chars of rows:', rows.substring(0, 500));
 
     const sessionsCount = Number(me.sessionsCount || sessions.length || 0);
 
