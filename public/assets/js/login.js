@@ -2397,7 +2397,7 @@ async function viewAccount(tab = 'profile') {
             <button data-tab="easter">🍓 Пасхалки</button>
           </nav>
 
-          <div style="margin-top:14px;display:grid;gap:10px;">
+          <div style="margin-top:14px;display:grid;gap:10px;" id="accountActions">
             <button class="btn btn-primary" id="logoutBtn" type="button">Выйти</button>
           </div>
         </aside>
@@ -2420,6 +2420,29 @@ async function viewAccount(tab = 'profile') {
           <div id="accBody" style="color:var(--muted);font-size:13px;">Загружаю…</div>
         </main>
       </div>
+
+      <footer class="auth-footer">
+        <div class="footer-row">
+          <div class="footer-copy">
+          <p class="footer-text" dir="ltr" lang="en">
+         © ${new Date().getFullYear()} CybLight
+         </p>
+          </div>
+          <div class="footer-links">
+            <a class="footer-brand" href="https://cyblight.org/" aria-label="Главная страница" target="_blank" rel="noopener">
+            <img src="/assets/img/logo.svg" class="footer-logo" alt="CybLight" /><span>CybLight.org</span></a>
+
+            <a class="report-btn" href="#" onclick="showReportModal(); return false;">
+              <img src="/assets/img/report.svg" alt="Report" class="report-icon" />
+              Сообщить о проблеме
+            </a>
+
+            <a href="#" onclick="return false;">Условия использования</a>
+            <a href="https://cyblight.org/privacy/" target="_blank" rel="noopener">Политика конфиденциальности</a>
+            <a href="#" onclick="return false;">Настройки конфиденциальности</a>
+          </div>
+        </div>
+      </footer>
     </div>
   `;
 
@@ -2486,6 +2509,26 @@ async function viewAccount(tab = 'profile') {
     const login = me?.user?.login || getStorage('cyb_login', '', sessionStorage) || 'Пользователь';
     const acc = document.getElementById('accLogin');
     if (acc) acc.textContent = login;
+
+    // Кнопка администратора (только для админа)
+    const isAdmin = me?.user?.role === 'admin' || me?.user?.flags?.includes('admin');
+    if (isAdmin) {
+      const actionsDiv = document.getElementById('accountActions');
+      if (actionsDiv) {
+        const adminBtn = document.createElement('button');
+        adminBtn.className = 'btn btn-outline';
+        adminBtn.textContent = '⚙️ Панель администратора';
+        adminBtn.type = 'button';
+        adminBtn.onclick = () => {
+          window.open('https://admin.cyblight.org', '_blank', 'noopener,noreferrer');
+        };
+        // Вставляем кнопку перед кнопкой "Выйти"
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          actionsDiv.insertBefore(adminBtn, logoutBtn);
+        }
+      }
+    }
 
     if (tab === 'sessions') {
       const body = document.getElementById('accBody');
