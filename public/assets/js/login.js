@@ -1699,6 +1699,17 @@ function viewPassword() {
         // красивые сообщения по коду ошибки
         const err = String(data?.error || '').toLowerCase();
 
+        // Проверка на бан
+        if (res.status === 403 || err.includes('account_banned') || err.includes('banned')) {
+          const banReason =
+            res.headers.get('X-Ban-Reason') ||
+            data?.reason ||
+            'Ваш аккаунт заблокирован администратором.';
+          showMsg('error', `🚫 Аккаунт заблокирован.\n\nПричина: ${banReason}`);
+          shake(passEl);
+          return;
+        }
+
         if (res.status === 401 || err.includes('invalid_credentials')) {
           showMsg('error', 'Неправильный пароль или логин. Попробуй ещё раз.');
           shake(passEl);
