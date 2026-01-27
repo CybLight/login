@@ -1,3 +1,4 @@
+// @ts-nocheck
 const app = document.getElementById('app');
 const API_BASE = 'https://api.cyblight.org';
 
@@ -1701,7 +1702,8 @@ function viewPassword() {
 
         // Проверка на бан - показываем специальную страницу
         if (res.status === 403 || err.includes('account_banned') || err.includes('banned')) {
-          const banReason = res.headers.get('X-Ban-Reason') || data?.reason || 'Нарушение правил сообщества';
+          const banReason =
+            res.headers.get('X-Ban-Reason') || data?.reason || 'Нарушение правил сообщества';
           viewAccountBanned(banReason, login);
           return;
         }
@@ -1894,7 +1896,7 @@ function viewContactAdmin(username, banContext) {
   const msgEl = document.getElementById('msg');
   const showMsg = (type, text) => {
     msgEl.style.display = '';
-    msgEl.className = \`msg msg--\${type}\`;
+    msgEl.className = `msg msg--${type}`;
     msgEl.textContent = text;
   };
   const clearMsg = () => {
@@ -1982,7 +1984,7 @@ function viewContactAdmin(username, banContext) {
 
       if (!res.ok) {
         const errMsg = data?.error || 'Не удалось отправить сообщение';
-        showMsg('error', \`Ошибка: \${errMsg}\`);
+        showMsg('error', `Ошибка: ${errMsg}`);
         if (window.turnstile && turnstileWidgetId !== null) {
           turnstile.reset(turnstileWidgetId);
         }
@@ -1991,11 +1993,10 @@ function viewContactAdmin(username, banContext) {
       }
 
       showMsg('ok', '✅ Сообщение отправлено! Мы свяжемся с вами по email.');
-      
+
       setTimeout(() => {
         CybRouter.navigate('username');
       }, 2000);
-
     } catch (err) {
       console.error('Contact form error:', err);
       showMsg('error', 'Ошибка сети. Проверьте соединение и попробуйте снова.');
@@ -2095,9 +2096,9 @@ function viewReset() {
         !/[A-Z]/.test(p1) ||
         !/[a-z]/.test(p1) ||
         !/\d/.test(p1) ||
-        !/[!@#$%^&*()_\-+=\[\]{};:'",.<>/?\\|`~]/.test(p1)
+        !/[!@#$%^&*()_\-+=[\]{};:'",.<>/?\\|`~]/.test(p1)
       ) {
-        showMsg('Пароль не соответствует требованиям.');
+        showMsg('error', 'Пароль не соответствует требованиям.');
         return;
       }
 
