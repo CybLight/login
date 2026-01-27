@@ -16,7 +16,7 @@
   align-items: center;
   justify-content: center;
   padding: 48px 16px 24px;
-  padding-bottom: 70px;
+  padding-bottom: 90px; /* Увеличено для футера */
   flex: 1 0 auto;
 }
 
@@ -2413,7 +2413,7 @@ body.no-strawberries .strawberry-ring-wave {
 
 @media (max-width: 768px) {
   .auth-center {
-    padding: 24px 12px 48px;
+    padding: 24px 12px 80px; /* Увеличен отступ для футера */
   }
 
   .auth-card {
@@ -2449,7 +2449,7 @@ body.no-strawberries .strawberry-ring-wave {
 
 @media (max-width: 480px) {
   .auth-center {
-    padding: 16px 8px 40px;
+    padding: 16px 8px 70px; /* Увеличен отступ для футера */
   }
 
   .auth-card {

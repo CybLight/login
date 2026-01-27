@@ -1699,14 +1699,10 @@ function viewPassword() {
         // красивые сообщения по коду ошибки
         const err = String(data?.error || '').toLowerCase();
 
-        // Проверка на бан
+        // Проверка на бан - показываем специальную страницу
         if (res.status === 403 || err.includes('account_banned') || err.includes('banned')) {
-          const banReason =
-            res.headers.get('X-Ban-Reason') ||
-            data?.reason ||
-            'Ваш аккаунт заблокирован администратором.';
-          showMsg('error', `🚫 Аккаунт заблокирован.\n\nПричина: ${banReason}`);
-          shake(passEl);
+          const banReason = res.headers.get('X-Ban-Reason') || data?.reason || 'Нарушение правил сообщества';
+          viewAccountBanned(banReason, login);
           return;
         }
 
@@ -1765,6 +1761,250 @@ function viewPassword() {
 
       // Показываем полезное сообщение пользователю
       showMsg('error', 'Непредвиденная ошибка. Попробуйте обновить страницу.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+  });
+}
+
+// ============================================
+//            ACCOUNT BANNED PAGE
+// ============================================
+function viewAccountBanned(banReason, username) {
+  setNoStrawberries(false);
+
+  app.innerHTML = shell(`
+    <section class="auth-card">
+      <div class="auth-head">
+        <div class="brand-logo" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3);">
+          <img src="/assets/img/logo.svg" alt="CybLight" style="filter: grayscale(1) opacity(0.5);" />
+        </div>
+        <div class="auth-title">
+          <h1 style="color: #ef4444;">Доступ заблокирован</h1>
+        </div>
+      </div>
+
+      <div style="padding: 20px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+          <div style="font-size: 32px; line-height: 1; flex-shrink: 0;">🚫</div>
+          <div style="flex: 1;">
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #ef4444;">Ваш аккаунт заблокирован</div>
+            <div style="font-size: 13px; line-height: 1.5; color: rgba(231, 236, 255, 0.85);">
+              <strong>Причина:</strong> ${escapeHtml(banReason)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin: 16px 0; padding: 14px; background: rgba(255, 255, 255, 0.04); border-radius: 6px; font-size: 13px; line-height: 1.5; color: var(--muted);">
+        <p style="margin: 0 0 8px;">Если вы считаете, что это ошибка, вы можете связаться с администрацией.</p>
+        <p style="margin: 0;">Пользователь: <strong>${escapeHtml(username)}</strong></p>
+      </div>
+
+      <button class="btn btn-primary" id="contactAdminBtn">
+        ✉️ Написать администратору
+      </button>
+
+      <div class="row" style="margin-top: 12px;">
+        <a class="link" href="#" id="back">← Вернуться к входу</a>
+      </div>
+    </section>
+  `);
+
+  const oldBtn = document.getElementById('scrollTopBtn');
+  if (oldBtn) oldBtn.remove();
+
+  document.getElementById('back').onclick = (e) => {
+    e.preventDefault();
+    CybRouter.navigate('username');
+  };
+
+  document.getElementById('contactAdminBtn').onclick = (e) => {
+    e.preventDefault();
+    viewContactAdmin(username, banReason);
+  };
+}
+
+// ============================================
+//         CONTACT ADMIN FORM
+// ============================================
+function viewContactAdmin(username, banContext) {
+  setNoStrawberries(false);
+
+  app.innerHTML = shell(`
+    <section class="auth-card">
+      <div class="auth-head">
+        <div class="brand-logo">
+          <img src="/assets/img/logo.svg" alt="CybLight" />
+        </div>
+        <div class="auth-title">
+          <h1>Обращение к администратору</h1>
+        </div>
+      </div>
+
+      <form id="fContact">
+        <div class="field">
+          <label class="label" for="email">Ваш Email *</label>
+          <input class="input" id="email" type="email" autocomplete="email" 
+            placeholder="name@example.com" required />
+        </div>
+
+        <div class="field">
+          <label class="label" for="name">Ваше имя</label>
+          <input class="input" id="name" type="text" autocomplete="name"
+            placeholder="Как к вам обращаться" value="${escapeHtml(username || '')}" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="subject">Тема обращения *</label>
+          <input class="input" id="subject" type="text" 
+            placeholder="Краткое описание проблемы" required 
+            value="${banContext ? 'Вопрос по блокировке аккаунта' : ''}" />
+        </div>
+
+        <div class="field">
+          <label class="label" for="message">Сообщение *</label>
+          <textarea class="input" id="message" rows="6" required 
+            placeholder="Опишите ситуацию подробно..." style="resize: vertical; min-height: 120px;"></textarea>
+        </div>
+
+        <div class="field" style="margin-top:12px;">
+          <div class="cf-turnstile"></div>
+        </div>
+
+        <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
+
+        <div class="row" style="margin-top: 12px;">
+          <a class="link" href="#" id="back">← Назад</a>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Отправить сообщение</button>
+      </form>
+
+      <p style="margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5;">
+        Администрация рассмотрит ваше обращение и свяжется с вами по указанному email.
+      </p>
+    </section>
+  `);
+
+  const oldBtn = document.getElementById('scrollTopBtn');
+  if (oldBtn) oldBtn.remove();
+
+  const msgEl = document.getElementById('msg');
+  const showMsg = (type, text) => {
+    msgEl.style.display = '';
+    msgEl.className = \`msg msg--\${type}\`;
+    msgEl.textContent = text;
+  };
+  const clearMsg = () => {
+    msgEl.style.display = 'none';
+    msgEl.className = 'msg';
+    msgEl.textContent = '';
+  };
+
+  document.getElementById('back').onclick = (e) => {
+    e.preventDefault();
+    if (banContext) {
+      viewAccountBanned(banContext, username);
+    } else {
+      CybRouter.navigate('username');
+    }
+  };
+
+  // Turnstile
+  if (window.turnstile && turnstileWidgetId !== null) {
+    try {
+      turnstile.remove(turnstileWidgetId);
+    } catch {}
+    turnstileWidgetId = null;
+  }
+  turnstileToken = '';
+  initTurnstile();
+
+  document.getElementById('fContact').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const oldText = btn.textContent;
+
+    btn.disabled = true;
+    btn.textContent = 'Отправляю…';
+
+    clearMsg();
+
+    const email = document.getElementById('email').value.trim();
+    const name = document.getElementById('name').value.trim();
+    const subject = document.getElementById('subject').value.trim();
+    const message = document.getElementById('message').value.trim();
+
+    if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+      showMsg('error', 'Введите корректный email.');
+      btn.disabled = false;
+      btn.textContent = oldText;
+      return;
+    }
+
+    if (!subject || subject.length < 3) {
+      showMsg('error', 'Тема должна быть не менее 3 символов.');
+      btn.disabled = false;
+      btn.textContent = oldText;
+      return;
+    }
+
+    if (!message || message.length < 10) {
+      showMsg('error', 'Сообщение должно быть не менее 10 символов.');
+      btn.disabled = false;
+      btn.textContent = oldText;
+      return;
+    }
+
+    if (!turnstileToken) {
+      showMsg('warn', 'Подтверди, что ты не робот (Turnstile).');
+      btn.disabled = false;
+      btn.textContent = oldText;
+      return;
+    }
+
+    try {
+      const res = await apiCall('/support/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          name: name || username || 'Anonymous',
+          subject,
+          message,
+          turnstileToken,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const errMsg = data?.error || 'Не удалось отправить сообщение';
+        showMsg('error', \`Ошибка: \${errMsg}\`);
+        if (window.turnstile && turnstileWidgetId !== null) {
+          turnstile.reset(turnstileWidgetId);
+        }
+        turnstileToken = '';
+        return;
+      }
+
+      showMsg('ok', '✅ Сообщение отправлено! Мы свяжемся с вами по email.');
+      
+      setTimeout(() => {
+        CybRouter.navigate('username');
+      }, 2000);
+
+    } catch (err) {
+      console.error('Contact form error:', err);
+      showMsg('error', 'Ошибка сети. Проверьте соединение и попробуйте снова.');
+      if (window.turnstile && turnstileWidgetId !== null) {
+        try {
+          turnstile.reset(turnstileWidgetId);
+        } catch (e) {}
+      }
+      turnstileToken = '';
     } finally {
       btn.disabled = false;
       btn.textContent = oldText;
