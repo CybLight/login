@@ -1939,7 +1939,7 @@ function viewContactAdmin(username, banContext) {
     const subject = document.getElementById('subject').value.trim();
     const message = document.getElementById('message').value.trim();
 
-    if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       showMsg('error', 'Введите корректный email.');
       btn.disabled = false;
       btn.textContent = oldText;
