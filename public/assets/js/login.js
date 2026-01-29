@@ -1211,16 +1211,21 @@ async function handleReportSubmit(e) {
   success.style.display = 'none';
 
   try {
+    const ua = parseUA(navigator.userAgent);
+
     const response = await apiCall('/error/report', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        type: category || 'unknown',
         email: email || null,
         category: category,
         message: message,
         userAgent: navigator.userAgent,
+        browser: ua.browser,
+        os: ua.os,
         timestamp: new Date().toISOString(),
         url: window.location.href,
       }),
