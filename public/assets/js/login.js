@@ -161,6 +161,31 @@ function setStrawberryAccess() {
   setStorage(EASTER_KEY, '1');
 }
 
+/**
+ * Очистка auth cookie (для logout или перед новым логином)
+ */
+function clearAuthCookie() {
+  // Получаем домен из текущего URL
+  const hostname = window.location.hostname;
+  const parts = hostname.split('.');
+
+  // Для cyblight.org и поддоменов
+  const domain = parts.length >= 2 ? `.${parts.slice(-2).join('.')}` : hostname;
+
+  // Очищаем cookie для текущего домена и родительского
+  const cookiesToClear = [
+    `cyb_auth=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+    `cyb_auth=; Path=/; Domain=${domain}; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+    `cyb_auth=; Path=/; Domain=${hostname}; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+  ];
+
+  cookiesToClear.forEach((cookie) => {
+    document.cookie = cookie;
+  });
+
+  console.log('Auth cookie cleared');
+}
+
 function setNoStrawberries(on) {
   document.body.classList.toggle('no-strawberries', !!on);
 }
@@ -1695,6 +1720,9 @@ function viewPassword() {
     btn.disabled = true;
     btn.textContent = 'Вхожу…';
 
+    // Очищаем старую cookie перед новым логином
+    clearAuthCookie();
+
     const login = getStorage('cyb_login', '', sessionStorage);
 
     try {
@@ -2981,6 +3009,8 @@ async function viewAccount(tab = 'profile') {
     try {
       await apiCall('/auth/logout', { method: 'POST', credentials: 'include' });
     } catch {}
+    // Очищаем cookie локально
+    clearAuthCookie();
     // ✅ возвращаем “обычный” режим с клубникой
     setNoStrawberries(false);
     CybRouter.navigate('username');
