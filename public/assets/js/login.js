@@ -1802,10 +1802,12 @@ function viewPassword() {
       }
 
       // успех - проверяем требуется ли 2FA
-      if (data.requires2FA && data.userId) {
-        console.log('2FA required for user:', data.userId);
+      // Сервер может вернуть {ok: true, data: {requires2FA, userId}} или напрямую {requires2FA, userId}
+      const loginData = data?.data || data;
+      if (loginData.requires2FA && loginData.userId) {
+        console.log('2FA required for user:', loginData.userId);
         showMsg('ok', 'Требуется код двухфакторной аутентификации');
-        setStorage('cyb_2fa_userId', data.userId, sessionStorage);
+        setStorage('cyb_2fa_userId', loginData.userId, sessionStorage);
         CybRouter.navigate('2fa-verify');
         return;
       }
@@ -1830,8 +1832,8 @@ function viewPassword() {
         if (hasStrawberryLocally && !hasStrawberryOnServer) {
           console.log('🍓 Local strawberry flag found, syncing to server...');
           try {
-            // Ждём 100мс чтобы браузер успел установить cookie из предыдущего ответа
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            // Ждём 200мс чтобы браузер успел установить cookie из предыдущего ответа
+            await new Promise((resolve) => setTimeout(resolve, 200));
 
             const syncRes = await apiCall('/auth/easter/strawberry', {
               method: 'POST',
@@ -3020,7 +3022,7 @@ async function viewAccount(tab = 'profile') {
   let me = null;
   try {
     // Небольшая задержка чтобы дать браузеру время установить cookie после логина
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     const { res, data } = await fetchMe();
     if (!res.ok || !data?.ok) {
