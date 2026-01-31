@@ -1507,8 +1507,17 @@ function viewSignup() {
       try {
         const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
         const meData = await meRes.json().catch(() => null);
-        if (meRes.ok && meData?.ok && meData?.user?.easter?.strawberry) {
+
+        // Проверяем обе возможные структуры ответа
+        const hasStrawberry = !!(
+          meRes.ok &&
+          meData?.ok &&
+          (meData?.user?.easter?.strawberry || meData?.easter?.strawberry)
+        );
+
+        if (hasStrawberry) {
           setStrawberryAccess();
+          console.log('✅ Флаг strawberry синхронизирован после регистрации');
         }
       } catch (e) {
         console.warn('Не удалось синхронизировать флаг strawberry:', e);
@@ -1778,8 +1787,19 @@ function viewPassword() {
       try {
         const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
         const meData = await meRes.json().catch(() => null);
-        if (meRes.ok && meData?.ok && meData?.user?.easter?.strawberry) {
+
+        // Проверяем обе возможные структуры ответа
+        const hasStrawberry = !!(
+          meRes.ok &&
+          meData?.ok &&
+          (meData?.user?.easter?.strawberry || meData?.easter?.strawberry)
+        );
+
+        if (hasStrawberry) {
           setStrawberryAccess();
+          console.log('✅ Флаг strawberry синхронизирован с сервера');
+        } else {
+          console.log('❌ Пасхалка strawberry не найдена на сервере');
         }
       } catch (e) {
         console.warn('Не удалось синхронизировать флаг strawberry:', e);
@@ -2569,8 +2589,17 @@ function view2FAVerify() {
       try {
         const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
         const meData = await meRes.json().catch(() => null);
-        if (meRes.ok && meData?.ok && meData?.user?.easter?.strawberry) {
+
+        // Проверяем обе возможные структуры ответа
+        const hasStrawberry = !!(
+          meRes.ok &&
+          meData?.ok &&
+          (meData?.user?.easter?.strawberry || meData?.easter?.strawberry)
+        );
+
+        if (hasStrawberry) {
           setStrawberryAccess();
+          console.log('✅ Флаг strawberry синхронизирован после 2FA');
         }
       } catch (e) {
         console.warn('Не удалось синхронизировать флаг strawberry:', e);
@@ -4114,8 +4143,10 @@ async function bindTabActions(tab, me, api) {
         });
         const data = await r.json().catch(() => ({}));
 
+        console.log('2FA setup response:', { ok: r.ok, data });
+
         if (!r.ok) {
-          if (data.alreadyEnabled) {
+          if (data.alreadyEnabled || data?.data?.alreadyEnabled) {
             twoFAEnabled = true;
             render2FAContent();
             api.showMsg?.('ok', '2FA уже включена');
@@ -4125,7 +4156,12 @@ async function bindTabActions(tab, me, api) {
           return;
         }
 
-        const qrData = data.uri || data.qrData;
+        // Сервер возвращает {ok: true, data: {secret, uri, qrData}}
+        const setupData = data.data || data;
+        const qrData = setupData.uri || setupData.qrData;
+        const secretKey = setupData.secret || 'Не получен';
+
+        console.log('QR Data:', qrData, 'Secret:', secretKey);
         content2FA.innerHTML = `
           <div class="sec-status">Шаг 1: Отсканируй QR-код</div>
           <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
@@ -4136,7 +4172,7 @@ async function bindTabActions(tab, me, api) {
           </div>
           <div style="margin:10px 0;">
             <p style="font-size:12px;color:rgba(231,236,255,0.6);">Секретный ключ (если не работает QR):</p>
-            <code style="font-size:11px;background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:4px;word-break:break-all;">${data.secret}</code>
+            <code style="font-size:11px;background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:4px;word-break:break-all;">${secretKey}</code>
           </div>
 
           <div class="sec-form-row" style="margin-top:16px;">
@@ -4206,7 +4242,8 @@ async function bindTabActions(tab, me, api) {
             }
 
             // Успех! Показываем резервные коды
-            const backupCodes = d2.backupCodes || [];
+            const enableData = d2.data || d2;
+            const backupCodes = enableData.backupCodes || [];
             content2FA.innerHTML = `
               <div class="sec-status">✅ 2FA успешно активирована!</div>
               <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
@@ -5077,12 +5114,19 @@ function initPasswordEyes(root = document) {
         }
 
         // Мини-пауза, чтобы анимация успела сыграть
-        setTimeout(() => {
+        setTimeout(async () => {
           setStrawberryAccess(); // ✅ отмечаем, что пасхалка найдена
-          apiCall('/auth/easter/strawberry', {
-            method: 'POST',
-            credentials: 'include',
-          }).catch(() => {});
+
+          // Отправляем на сервер и ЖДЕМ ответа
+          try {
+            await apiCall('/auth/easter/strawberry', {
+              method: 'POST',
+              credentials: 'include',
+            });
+          } catch (e) {
+            console.warn('Не удалось сохранить пасхалку на сервере:', e);
+          }
+
           cleanup();
           CybRouter.navigate('strawberry-history');
           resolve('ok');
