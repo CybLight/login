@@ -901,6 +901,7 @@ const validators = {
 
 // Функция рендера по маршруту
 function renderRoute(r) {
+  console.log('renderRoute called with:', r);
   // перед рендером нового роута — снимаем старые listeners
   if (window.__cyb_cleanup?.length) {
     try {
@@ -1808,7 +1809,9 @@ function viewPassword() {
         console.log('2FA required for user:', loginData.userId);
         showMsg('ok', 'Требуется код двухфакторной аутентификации');
         setStorage('cyb_2fa_userId', loginData.userId, sessionStorage);
+        console.log('Calling CybRouter.navigate(2fa-verify)...');
         CybRouter.navigate('2fa-verify');
+        console.log('Navigate call completed');
         return;
       }
 
