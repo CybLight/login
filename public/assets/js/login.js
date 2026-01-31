@@ -2767,6 +2767,30 @@ async function viewAccount(tab = 'profile') {
     const acc = document.getElementById('accLogin');
     if (acc) acc.textContent = login;
 
+    // ⚠️ Проверка на неверифицированный аккаунт и отображение предупреждения
+    const daysUntilDeletion = me?.user?.daysUntilDeletion;
+    if (daysUntilDeletion !== null && daysUntilDeletion !== undefined) {
+      const msgDiv = document.getElementById('msg');
+      if (msgDiv) {
+        let warningClass = 'msg-warn';
+        let warningText = '';
+
+        if (daysUntilDeletion === 0) {
+          warningClass = 'msg-error';
+          warningText = `<strong>⚠️ Внимание!</strong> Ваш аккаунт будет удалён сегодня. Добавьте email в разделе "Профиль" чтобы сохранить доступ!`;
+        } else if (daysUntilDeletion <= 7) {
+          warningClass = 'msg-error';
+          warningText = `<strong>⚠️ Внимание!</strong> До удаления аккаунта осталось <b>${daysUntilDeletion} ${daysUntilDeletion === 1 ? 'день' : daysUntilDeletion <= 4 ? 'дня' : 'дней'}</b>. Добавьте email в разделе "Профиль"!`;
+        } else {
+          warningText = `<strong>ℹ️ Важно:</strong> Добавьте email для подтверждения аккаунта. До удаления: <b>${daysUntilDeletion} ${daysUntilDeletion === 1 ? 'день' : daysUntilDeletion <= 4 ? 'дня' : 'дней'}</b>.`;
+        }
+
+        msgDiv.className = `msg ${warningClass}`;
+        msgDiv.innerHTML = warningText;
+        msgDiv.style.display = 'block';
+      }
+    }
+
     // Кнопка администратора (только для админа)
     const isAdmin = me?.user?.role === 'admin' || me?.user?.flags?.includes('admin');
     if (isAdmin) {
