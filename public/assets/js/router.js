@@ -9,6 +9,7 @@
     'username',
     'password',
     '2fa',
+    '2fa-verify',
     'reset',
     'done',
     'strawberry-history',
