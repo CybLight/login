@@ -1508,14 +1508,29 @@ function viewSignup() {
         const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
         const meData = await meRes.json().catch(() => null);
 
-        // Проверяем обе возможные структуры ответа
-        const hasStrawberry = !!(
+        const hasStrawberryOnServer = !!(
           meRes.ok &&
           meData?.ok &&
           (meData?.user?.easter?.strawberry || meData?.easter?.strawberry)
         );
 
-        if (hasStrawberry) {
+        const hasStrawberryLocally = hasStrawberryAccess();
+
+        // Если есть локально, но нет на сервере - отправляем
+        if (hasStrawberryLocally && !hasStrawberryOnServer) {
+          console.log('🍓 Registration: syncing local strawberry to server...');
+          try {
+            const syncRes = await apiCall('/auth/easter/strawberry', {
+              method: 'POST',
+              credentials: 'include',
+            });
+            if (syncRes.ok) {
+              console.log('✅ Strawberry synced after registration!');
+            }
+          } catch (syncErr) {
+            console.warn('⚠️ Failed to sync strawberry:', syncErr);
+          }
+        } else if (hasStrawberryOnServer) {
           setStrawberryAccess();
           console.log('✅ Флаг strawberry синхронизирован после регистрации');
         }
@@ -1795,17 +1810,37 @@ function viewPassword() {
         });
 
         // Проверяем обе возможные структуры ответа
-        const hasStrawberry = !!(
+        const hasStrawberryOnServer = !!(
           meRes.ok &&
           meData?.ok &&
           (meData?.user?.easter?.strawberry || meData?.easter?.strawberry)
         );
 
-        if (hasStrawberry) {
+        const hasStrawberryLocally = hasStrawberryAccess();
+
+        // Если есть локально, но нет на сервере - отправляем
+        if (hasStrawberryLocally && !hasStrawberryOnServer) {
+          console.log('🍓 Local strawberry flag found, syncing to server...');
+          try {
+            const syncRes = await apiCall('/auth/easter/strawberry', {
+              method: 'POST',
+              credentials: 'include',
+            });
+            const syncData = await syncRes.json().catch(() => ({}));
+            
+            if (syncRes.ok) {
+              console.log('✅ Strawberry flag synced to server successfully!');
+            } else {
+              console.warn('⚠️ Failed to sync strawberry to server:', syncData);
+            }
+          } catch (syncErr) {
+            console.warn('⚠️ Error syncing strawberry to server:', syncErr);
+          }
+        } else if (hasStrawberryOnServer) {
           setStrawberryAccess();
           console.log('✅ Флаг strawberry синхронизирован с сервера');
         } else {
-          console.log('❌ Пасхалка strawberry не найдена на сервере');
+          console.log('❌ Пасхалка strawberry не найдена (ни локально, ни на сервере)');
         }
       } catch (e) {
         console.warn('Не удалось синхронизировать флаг strawberry:', e);
@@ -4297,16 +4332,84 @@ async function bindTabActions(tab, me, api) {
             const backupCodes = enableData.backupCodes || [];
             content2FA.innerHTML = `
               <div class="sec-status">✅ 2FA успешно активирована!</div>
-              <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
+              <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);text-align:center;">
                 Сохрани эти резервные коды в безопасном месте. Каждый можно использовать только один раз.
               </p>
-              <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;margin:10px 0;">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:monospace;font-size:13px;">
-                  ${backupCodes.map((code) => `<div>${code}</div>`).join('')}
+              <div style="background:rgba(255,255,255,0.05);padding:16px;border-radius:8px;margin:16px 0;">
+                <div id="backupCodesGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:monospace;font-size:13px;user-select:all;">
+                  ${backupCodes.map((code) => `<div style="padding:4px;">${code}</div>`).join('')}
                 </div>
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button class="btn btn-outline" id="copyCodesBtn" type="button" style="flex:1;">
+                  📋 Копировать все коды
+                </button>
+                <button class="btn btn-outline" id="downloadCodesBtn" type="button" style="flex:1;">
+                  💾 Скачать
+                </button>
               </div>
               <button class="btn btn-primary" id="done2FABtn" type="button">Готово</button>
             `;
+
+            // Обработчик копирования всех кодов
+            document.getElementById('copyCodesBtn').onclick = () => {
+              const codesText = backupCodes.join('\n');
+              navigator.clipboard
+                .writeText(codesText)
+                .then(() => {
+                  const btn = document.getElementById('copyCodesBtn');
+                  const originalText = btn.textContent;
+                  btn.textContent = '✓ Скопировано!';
+                  btn.style.background = '#22c55e';
+                  setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                  }, 2000);
+                })
+                .catch(() => {
+                  alert('Не удалось скопировать. Выдели коды вручную.');
+                });
+            };
+
+            // Обработчик скачивания файла
+            document.getElementById('downloadCodesBtn').onclick = () => {
+              const login = getStorage('cyb_login', '', sessionStorage) || 'user';
+              const date = new Date().toISOString().split('T')[0];
+              const filename = `CybLight_2FA_BackupCodes_${login}_${date}.txt`;
+
+              const content = `CybLight - Резервные коды двухфакторной аутентификации
+Пользователь: ${login}
+Дата создания: ${new Date().toLocaleString('ru-RU')}
+
+ВАЖНО: Храните эти коды в безопасном месте!
+Каждый код можно использовать только один раз для входа без доступа к приложению аутентификации.
+
+Резервные коды:
+${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
+
+---
+© ${new Date().getFullYear()} CybLight
+`;
+
+              const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = filename;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+
+              const btn = document.getElementById('downloadCodesBtn');
+              const originalText = btn.textContent;
+              btn.textContent = '✓ Скачано!';
+              btn.style.background = '#22c55e';
+              setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '';
+              }, 2000);
+            };
 
             document.getElementById('done2FABtn').onclick = () => {
               twoFAEnabled = true;
@@ -5166,30 +5269,41 @@ function initPasswordEyes(root = document) {
 
         // Мини-пауза, чтобы анимация успела сыграть
         setTimeout(async () => {
-          setStrawberryAccess(); // ✅ отмечаем, что пасхалка найдена
-          console.log('🍓 Saving strawberry flag to server...');
+          setStrawberryAccess(); // ✅ отмечаем, что пасхалка найдена локально
+          console.log('🍓 Strawberry flag set in localStorage');
 
-          // Отправляем на сервер и ЖДЕМ ответа
-          try {
-            const strawberryRes = await apiCall('/auth/easter/strawberry', {
-              method: 'POST',
-              credentials: 'include',
-            });
+          // Проверяем авторизацию перед отправкой на сервер
+          const isLoggedIn = await checkSession();
+          
+          if (isLoggedIn) {
+            console.log('🍓 User is logged in, saving to server...');
+            // Отправляем на сервер и ЖДЕМ ответа
+            try {
+              const strawberryRes = await apiCall('/auth/easter/strawberry', {
+                method: 'POST',
+                credentials: 'include',
+              });
 
-            const strawberryData = await strawberryRes.json().catch(() => ({}));
-            console.log('🍓 Server response:', {
-              ok: strawberryRes.ok,
-              status: strawberryRes.status,
-              data: strawberryData,
-            });
+              const strawberryData = await strawberryRes.json().catch(() => ({}));
+              console.log('🍓 Server response:', {
+                ok: strawberryRes.ok,
+                status: strawberryRes.status,
+                data: strawberryData,
+              });
 
-            if (!strawberryRes.ok) {
-              console.error('❌ Failed to save strawberry:', strawberryData);
-            } else {
-              console.log('✅ Strawberry saved successfully!');
+              if (!strawberryRes.ok) {
+                console.error('❌ Failed to save strawberry on server:', strawberryData);
+                console.warn('⚠️ Strawberry saved locally, will sync after login');
+              } else {
+                console.log('✅ Strawberry saved to server successfully!');
+              }
+            } catch (e) {
+              console.error('❌ Error saving strawberry to server:', e);
+              console.warn('⚠️ Strawberry saved locally, will sync after login');
             }
-          } catch (e) {
-            console.error('❌ Error saving strawberry:', e);
+          } else {
+            console.log('⚠️ User not logged in, strawberry saved locally only');
+            console.log('📌 Will be synced to server automatically after login');
           }
 
           cleanup();
