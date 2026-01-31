@@ -1787,34 +1787,17 @@ function viewPassword() {
 
       showMsg('ok', 'Успешный вход! Перенаправляю…');
 
-      const okSession = await checkSession();
-      console.log('checkSession result:', okSession);
-
-      if (!okSession) {
-        showMsg(
-          'warn',
-          'Вход успешный, но сессия не сохранилась (cookie). Проверь CORS/credentials.'
-        );
-        return;
-      }
-
-      // ✅ Синхронизируем флаг strawberry с сервером
+      // ✅ Синхронизируем флаг strawberry с сервером используя данные из ответа логина
       try {
-        const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
-        const meData = await meRes.json().catch(() => null);
-
-        console.log('Login sync - meData:', meData);
+        console.log('Login sync - data from login response:', data);
         console.log('Login sync - strawberry paths:', {
-          'meData?.user?.easter?.strawberry': meData?.user?.easter?.strawberry,
-          'meData?.easter?.strawberry': meData?.easter?.strawberry,
+          'data?.user?.easter?.strawberry': data?.user?.easter?.strawberry,
+          'data?.data?.user?.easter?.strawberry': data?.data?.user?.easter?.strawberry,
         });
 
         // Проверяем обе возможные структуры ответа
-        const hasStrawberryOnServer = !!(
-          meRes.ok &&
-          meData?.ok &&
-          (meData?.user?.easter?.strawberry || meData?.easter?.strawberry)
-        );
+        const userData = data?.data || data; // Извлекаем вложенный data, если есть
+        const hasStrawberryOnServer = !!userData?.user?.easter?.strawberry;
 
         const hasStrawberryLocally = hasStrawberryAccess();
 
@@ -1827,7 +1810,7 @@ function viewPassword() {
               credentials: 'include',
             });
             const syncData = await syncRes.json().catch(() => ({}));
-            
+
             if (syncRes.ok) {
               console.log('✅ Strawberry flag synced to server successfully!');
             } else {
@@ -5274,7 +5257,7 @@ function initPasswordEyes(root = document) {
 
           // Проверяем авторизацию перед отправкой на сервер
           const isLoggedIn = await checkSession();
-          
+
           if (isLoggedIn) {
             console.log('🍓 User is logged in, saving to server...');
             // Отправляем на сервер и ЖДЕМ ответа
