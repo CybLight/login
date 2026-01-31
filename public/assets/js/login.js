@@ -190,6 +190,54 @@ function setNoStrawberries(on) {
   document.body.classList.toggle('no-strawberries', !!on);
 }
 
+/**
+ * Показать уведомление в верхней части страницы
+ * @param {string} type - Тип уведомления: 'success', 'error', 'warn', 'info'
+ * @param {string} message - Текст сообщения
+ * @param {number} duration - Длительность показа в мс (по умолчанию 5000)
+ */
+function showTopNotification(type = 'info', message = '', duration = 5000) {
+  // Удаляем предыдущие уведомления
+  const existing = document.querySelectorAll('.top-notification');
+  existing.forEach((el) => el.remove());
+
+  // Создаем элемент уведомления
+  const notification = document.createElement('div');
+  notification.className = `top-notification top-notification--${type}`;
+  notification.innerHTML = `
+    <div class="top-notification__content">
+      <span class="top-notification__icon">${getNotificationIcon(type)}</span>
+      <span class="top-notification__message">${message}</span>
+    </div>
+  `;
+
+  // Добавляем на страницу
+  document.body.appendChild(notification);
+
+  // Автоматически удаляем через указанное время
+  setTimeout(() => {
+    notification.style.animation = 'slideDown 0.3s ease-out reverse';
+    setTimeout(() => notification.remove(), 300);
+  }, duration);
+}
+
+/**
+ * Получить иконку для типа уведомления
+ */
+function getNotificationIcon(type) {
+  switch (type) {
+    case 'success':
+      return '✓';
+    case 'error':
+      return '✕';
+    case 'warn':
+      return '⚠';
+    case 'info':
+    default:
+      return 'ℹ';
+  }
+}
+
 function parseUA(ua = '') {
   ua = String(ua);
 
@@ -2675,7 +2723,25 @@ function view2FAVerify() {
           (meData?.user?.easter?.strawberry || meData?.easter?.strawberry)
         );
 
-        if (hasStrawberry) {
+        const hasStrawberryLocally = hasStrawberryAccess();
+
+        // Если есть локально, но нет на сервере - отправляем
+        if (hasStrawberryLocally && !hasStrawberry) {
+          console.log('🍓 2FA: syncing local strawberry to server...');
+          try {
+            const syncRes = await apiCall('/auth/easter/strawberry', {
+              method: 'POST',
+              credentials: 'include',
+            });
+            if (syncRes.ok) {
+              console.log('✅ Strawberry synced to server after 2FA!');
+            } else {
+              console.warn('⚠️ Failed to sync strawberry to server');
+            }
+          } catch (syncErr) {
+            console.warn('⚠️ Error syncing strawberry:', syncErr);
+          }
+        } else if (hasStrawberry) {
           setStrawberryAccess();
           console.log('✅ Флаг strawberry синхронизирован после 2FA');
         }
