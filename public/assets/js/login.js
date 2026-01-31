@@ -893,6 +893,9 @@ function renderRoute(r) {
   // EMAIL VERIFY
   if (r === 'verify-email') return viewVerifyEmail();
 
+  // 2FA VERIFY
+  if (r === '2fa-verify') return view2FAVerify();
+
   // LOGIN
   if (r === 'signup') return viewSignup();
   if (r === 'username') return viewUsername();
@@ -1500,6 +1503,17 @@ function viewSignup() {
         return;
       }
 
+      // ✅ Синхронизируем флаг strawberry с сервером
+      try {
+        const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
+        const meData = await meRes.json().catch(() => null);
+        if (meRes.ok && meData?.ok && meData?.user?.easter?.strawberry) {
+          setStrawberryAccess();
+        }
+      } catch (e) {
+        console.warn('Не удалось синхронизировать флаг strawberry:', e);
+      }
+
       // ✅ Регистрация успешна — показываем сообщение и ведём в профиль
       const form = document.getElementById('f');
       const btn = form.querySelector('button[type="submit"]');
@@ -1738,7 +1752,15 @@ function viewPassword() {
         return;
       }
 
-      // успех
+      // успех - проверяем требуется ли 2FA
+      if (data.requires2FA && data.userId) {
+        console.log('2FA required for user:', data.userId);
+        showMsg('ok', 'Требуется код двухфакторной аутентификации');
+        setStorage('cyb_2fa_userId', data.userId, sessionStorage);
+        CybRouter.navigate('2fa-verify');
+        return;
+      }
+
       showMsg('ok', 'Успешный вход! Перенаправляю…');
 
       const okSession = await checkSession();
@@ -1750,6 +1772,17 @@ function viewPassword() {
           'Вход успешный, но сессия не сохранилась (cookie). Проверь CORS/credentials.'
         );
         return;
+      }
+
+      // ✅ Синхронизируем флаг strawberry с сервером
+      try {
+        const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
+        const meData = await meRes.json().catch(() => null);
+        if (meRes.ok && meData?.ok && meData?.user?.easter?.strawberry) {
+          setStrawberryAccess();
+        }
+      } catch (e) {
+        console.warn('Не удалось синхронизировать флаг strawberry:', e);
       }
 
       CybRouter.navigate('account-profile'); // ✅ или куда тебе надо
@@ -2403,6 +2436,160 @@ function viewVerifyEmail() {
 
   // авто-попытка (приятнее UX)
   btn.click();
+}
+
+function view2FAVerify() {
+  const userId = getStorage('cyb_2fa_userId', '', sessionStorage);
+  if (!userId) {
+    CybRouter.navigate('username');
+    return;
+  }
+
+  setNoStrawberries(false);
+
+  app.innerHTML = shell(`
+    <section class="auth-card">
+      <div class="auth-head">
+        <div class="brand-logo">
+          <img src="/assets/img/logo.svg" alt="CybLight" />
+        </div>
+        <div class="auth-title">
+          <h1>Двухфакторная аутентификация</h1>
+        </div>
+      </div>
+
+      <p style="margin:0 0 16px;color:var(--muted);font-size:13px;text-align:center;">
+        Введите код из приложения аутентификатора или резервный код.
+      </p>
+
+      <form id="f2fa">
+        <div class="field">
+          <label class="label" for="code2fa">Код подтверждения</label>
+          <input class="input" id="code2fa" type="text" inputmode="numeric" 
+                 autocomplete="one-time-code" required 
+                 placeholder="000000" maxlength="20" 
+                 style="text-align:center;font-size:20px;letter-spacing:4px;" />
+        </div>
+
+        <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
+
+        <div class="row" style="margin-top:10px;">
+          <a class="link" href="#" id="back">← Назад</a>
+        </div>
+
+        <button class="btn btn-primary" type="submit">Подтвердить</button>
+      </form>
+    </section>
+  `);
+
+  const oldBtn = document.getElementById('scrollTopBtn');
+  if (oldBtn) oldBtn.remove();
+
+  const msgEl = document.getElementById('msg');
+  const codeEl = document.getElementById('code2fa');
+
+  function showMsg(type, text) {
+    msgEl.style.display = '';
+    msgEl.className = `msg msg--${type}`;
+    msgEl.textContent = text;
+  }
+
+  function clearMsg() {
+    msgEl.style.display = 'none';
+    msgEl.textContent = '';
+  }
+
+  document.getElementById('back').onclick = (e) => {
+    e.preventDefault();
+    sessionStorage.removeItem('cyb_2fa_userId');
+    CybRouter.navigate('username');
+  };
+
+  codeEl?.addEventListener('input', clearMsg);
+
+  document.getElementById('f2fa').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const oldText = btn.textContent;
+
+    clearMsg();
+
+    const code = codeEl.value.trim().replace(/[\\s-]/g, '');
+    if (!code) {
+      showMsg('error', 'Введите код.');
+      codeEl?.focus();
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Проверяю…';
+
+    try {
+      const res = await apiCall('/auth/2fa/verify', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          code,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const err = String(data?.error || '');
+        if (err === 'invalid_code') {
+          showMsg('error', 'Неверный код. Проверьте и попробуйте снова.');
+          codeEl?.select();
+        } else if (err === '2fa_not_enabled') {
+          showMsg('error', '2FA не активирована для этого аккаунта.');
+        } else {
+          showMsg('error', data?.error ? `Ошибка: ${data.error}` : 'Не удалось проверить код.');
+        }
+        return;
+      }
+
+      // Успех
+      sessionStorage.removeItem('cyb_2fa_userId');
+
+      if (data.usedBackupCode) {
+        showMsg('ok', '✅ Вход выполнен с резервным кодом! Перенаправляю…');
+      } else {
+        showMsg('ok', '✅ Код подтверждён! Перенаправляю…');
+      }
+
+      const okSession = await checkSession();
+      if (!okSession) {
+        showMsg('warn', 'Вход успешный, но сессия не сохранилась.');
+        return;
+      }
+
+      // ✅ Синхронизируем флаг strawberry с сервером
+      try {
+        const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
+        const meData = await meRes.json().catch(() => null);
+        if (meRes.ok && meData?.ok && meData?.user?.easter?.strawberry) {
+          setStrawberryAccess();
+        }
+      } catch (e) {
+        console.warn('Не удалось синхронизировать флаг strawberry:', e);
+      }
+
+      setTimeout(() => {
+        CybRouter.navigate('account-security');
+      }, 500);
+    } catch (err) {
+      console.error('2FA verify error:', err);
+      showMsg('error', 'Ошибка сети. Попробуйте снова.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    }
+  });
+
+  // Автофокус на поле кода
+  setTimeout(() => codeEl?.focus(), 100);
 }
 
 async function viewDone() {
@@ -3261,8 +3448,23 @@ function renderTabHtml(tab, me) {
         </div>
       </div>
 
-      <div class="sec-note">
-        Тут будут настройки безопасности (2FA, ключи доступа).
+      <!-- 2FA item -->
+      <button class="sec-item" id="sec2FAItem" type="button">
+        <div class="sec-left">
+          <div class="sec-title">Двухфакторная аутентификация (2FA)</div>
+          <div class="sec-sub" id="sec2FAStatus">Загрузка...</div>
+        </div>
+        <div class="sec-right">
+          <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
+            <g><path fill="currentColor" d="M8.809,23.588l-1.617-1.176L14.764,12L7.191,1.588l1.617-1.176l8,11c0.255,0.351,0.255,0.825,0,1.176 L8.809,23.588z"></path></g>
+          </svg>
+        </div>
+      </button>
+
+      <div class="sec-panel" id="sec2FAPanel" style="display:none;">
+        <div class="sec-panel-inner" id="sec2FAContent">
+          <!-- Динамический контент -->
+        </div>
       </div>
 
     </div>
@@ -3843,6 +4045,310 @@ async function bindTabActions(tab, me, api) {
           passSaveBtn.textContent = old;
         }
       });
+  }
+
+  // --- 2FA handlers (security) ---
+  if (tab === 'security') {
+    const item2FA = document.getElementById('sec2FAItem');
+    const panel2FA = document.getElementById('sec2FAPanel');
+    const content2FA = document.getElementById('sec2FAContent');
+    const status2FA = document.getElementById('sec2FAStatus');
+
+    let twoFAEnabled = false;
+
+    async function load2FAStatus() {
+      try {
+        const r = await apiCall('/auth/me', { credentials: 'include' });
+        const data = await r.json().catch(() => ({}));
+        if (r.ok && data.user) {
+          twoFAEnabled = Boolean(data.user.totpEnabled || data.user.totp_enabled);
+          if (status2FA) {
+            status2FA.textContent = twoFAEnabled ? '✅ Включена' : 'Отключена';
+          }
+          render2FAContent();
+        }
+      } catch {
+        if (status2FA) status2FA.textContent = 'Ошибка загрузки';
+      }
+    }
+
+    function render2FAContent() {
+      if (!content2FA) return;
+
+      if (twoFAEnabled) {
+        content2FA.innerHTML = `
+          <div class="sec-status">✅ Двухфакторная аутентификация активна</div>
+          <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
+            При входе потребуется код из приложения аутентификатора.
+          </p>
+          <button class="btn btn-outline" id="disable2FABtn" type="button">
+            Отключить 2FA
+          </button>
+        `;
+
+        document.getElementById('disable2FABtn').onclick = () => show2FADisableForm();
+      } else {
+        content2FA.innerHTML = `
+          <div class="sec-status">Двухфакторная аутентификация не активна</div>
+          <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
+            Добавь дополнительный уровень защиты для своего аккаунта.
+          </p>
+          <button class="btn btn-primary" id="enable2FABtn" type="button">
+            Включить 2FA
+          </button>
+        `;
+
+        document.getElementById('enable2FABtn').onclick = () => start2FASetup();
+      }
+    }
+
+    async function start2FASetup() {
+      api.clearMsg?.();
+      content2FA.innerHTML = '<div style="text-align:center;padding:20px;">Загрузка...</div>';
+
+      try {
+        const r = await apiCall('/auth/2fa/setup', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await r.json().catch(() => ({}));
+
+        if (!r.ok) {
+          if (data.alreadyEnabled) {
+            twoFAEnabled = true;
+            render2FAContent();
+            api.showMsg?.('ok', '2FA уже включена');
+          } else {
+            content2FA.innerHTML = `<div class="sec-status">Ошибка: ${data.error || 'Неизвестная ошибка'}</div>`;
+          }
+          return;
+        }
+
+        const qrData = data.uri || data.qrData;
+        content2FA.innerHTML = `
+          <div class="sec-status">Шаг 1: Отсканируй QR-код</div>
+          <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
+            Используй приложение Google Authenticator, Microsoft Authenticator или Authy.
+          </p>
+          <div style="background:#fff;padding:16px;border-radius:8px;display:inline-block;margin:10px 0;">
+            <div id="qrcode"></div>
+          </div>
+          <div style="margin:10px 0;">
+            <p style="font-size:12px;color:rgba(231,236,255,0.6);">Секретный ключ (если не работает QR):</p>
+            <code style="font-size:11px;background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:4px;word-break:break-all;">${data.secret}</code>
+          </div>
+
+          <div class="sec-form-row" style="margin-top:16px;">
+            <label class="label">Шаг 2: Введи код из приложения</label>
+            <input class="input" id="confirm2FACode" type="text" inputmode="numeric" 
+                   placeholder="000000" maxlength="6" 
+                   style="text-align:center;font-size:20px;letter-spacing:4px;" />
+          </div>
+
+          <div class="sec-actions" style="margin-top:12px;">
+            <button class="btn btn-outline" id="cancel2FABtn" type="button">Отменить</button>
+            <button class="btn btn-primary" id="confirm2FABtn" type="button">Подтвердить</button>
+          </div>
+
+          <div class="sec-hint" id="hint2FA" style="display:none;"></div>
+        `;
+
+        // Генерируем QR-код используя библиотеку (нужно подключить qrcode.js)
+        if (window.QRCode && qrData) {
+          new window.QRCode(document.getElementById('qrcode'), {
+            text: qrData,
+            width: 200,
+            height: 200,
+          });
+        } else {
+          document.getElementById('qrcode').innerHTML =
+            `<p style="color:#666;font-size:12px;">QR библиотека не загружена. Используй секретный ключ.</p>`;
+        }
+
+        document.getElementById('cancel2FABtn').onclick = () => {
+          render2FAContent();
+        };
+
+        document.getElementById('confirm2FABtn').onclick = async () => {
+          const code = document.getElementById('confirm2FACode').value.trim();
+          const hint = document.getElementById('hint2FA');
+
+          if (!code || code.length !== 6) {
+            hint.style.display = '';
+            hint.className = 'sec-hint sec-hint--warn';
+            hint.textContent = 'Введи 6-значный код';
+            return;
+          }
+
+          const btn = document.getElementById('confirm2FABtn');
+          btn.disabled = true;
+          const oldText = btn.textContent;
+          btn.textContent = 'Проверяю...';
+
+          try {
+            const r2 = await apiCall('/auth/2fa/enable', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code }),
+            });
+            const d2 = await r2.json().catch(() => ({}));
+
+            if (!r2.ok) {
+              hint.style.display = '';
+              hint.className = 'sec-hint sec-hint--error';
+              hint.textContent =
+                d2.error === 'invalid_code' ? 'Неверный код' : `Ошибка: ${d2.error}`;
+              btn.disabled = false;
+              btn.textContent = oldText;
+              return;
+            }
+
+            // Успех! Показываем резервные коды
+            const backupCodes = d2.backupCodes || [];
+            content2FA.innerHTML = `
+              <div class="sec-status">✅ 2FA успешно активирована!</div>
+              <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
+                Сохрани эти резервные коды в безопасном месте. Каждый можно использовать только один раз.
+              </p>
+              <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;margin:10px 0;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:monospace;font-size:13px;">
+                  ${backupCodes.map((code) => `<div>${code}</div>`).join('')}
+                </div>
+              </div>
+              <button class="btn btn-primary" id="done2FABtn" type="button">Готово</button>
+            `;
+
+            document.getElementById('done2FABtn').onclick = () => {
+              twoFAEnabled = true;
+              render2FAContent();
+              close2FAPanel();
+              api.showMsg?.('ok', '2FA включена ✅');
+            };
+          } catch {
+            hint.style.display = '';
+            hint.className = 'sec-hint sec-hint--error';
+            hint.textContent = 'Ошибка сети';
+            btn.disabled = false;
+            btn.textContent = oldText;
+          }
+        };
+      } catch {
+        content2FA.innerHTML = '<div class="sec-status">Ошибка сети</div>';
+      }
+    }
+
+    function show2FADisableForm() {
+      api.clearMsg?.();
+      content2FA.innerHTML = `
+        <div class="sec-status">Отключение 2FA</div>
+        <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
+          Для отключения введи свой пароль и текущий 2FA код.
+        </p>
+
+        <div class="sec-form-row">
+          <label class="label">Пароль</label>
+          <input class="input" id="disable2FAPass" type="password" autocomplete="current-password" />
+        </div>
+
+        <div class="sec-form-row" style="margin-top:10px;">
+          <label class="label">2FA код</label>
+          <input class="input" id="disable2FACode" type="text" inputmode="numeric" 
+                 placeholder="000000" maxlength="6" 
+                 style="text-align:center;font-size:20px;letter-spacing:4px;" />
+        </div>
+
+        <div class="sec-actions" style="margin-top:12px;">
+          <button class="btn btn-outline" id="cancelDisable2FABtn" type="button">Отменить</button>
+          <button class="btn btn-danger" id="confirmDisable2FABtn" type="button">Отключить 2FA</button>
+        </div>
+
+        <div class="sec-hint" id="hintDisable2FA" style="display:none;"></div>
+      `;
+
+      document.getElementById('cancelDisable2FABtn').onclick = () => {
+        render2FAContent();
+      };
+
+      document.getElementById('confirmDisable2FABtn').onclick = async () => {
+        const password = document.getElementById('disable2FAPass').value.trim();
+        const code = document.getElementById('disable2FACode').value.trim();
+        const hint = document.getElementById('hintDisable2FA');
+
+        if (!password) {
+          hint.style.display = '';
+          hint.className = 'sec-hint sec-hint--warn';
+          hint.textContent = 'Введи пароль';
+          return;
+        }
+
+        if (!code || code.length !== 6) {
+          hint.style.display = '';
+          hint.className = 'sec-hint sec-hint--warn';
+          hint.textContent = 'Введи 6-значный код';
+          return;
+        }
+
+        const btn = document.getElementById('confirmDisable2FABtn');
+        btn.disabled = true;
+        const oldText = btn.textContent;
+        btn.textContent = 'Отключаю...';
+
+        try {
+          const r = await apiCall('/auth/2fa/disable', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password, code }),
+          });
+          const d = await r.json().catch(() => ({}));
+
+          if (!r.ok) {
+            hint.style.display = '';
+            hint.className = 'sec-hint sec-hint--error';
+            if (d.error === 'invalid_password') hint.textContent = 'Неверный пароль';
+            else if (d.error === 'invalid_code') hint.textContent = 'Неверный 2FA код';
+            else hint.textContent = `Ошибка: ${d.error}`;
+            btn.disabled = false;
+            btn.textContent = oldText;
+            return;
+          }
+
+          twoFAEnabled = false;
+          render2FAContent();
+          close2FAPanel();
+          api.showMsg?.('ok', '2FA отключена');
+        } catch {
+          hint.style.display = '';
+          hint.className = 'sec-hint sec-hint--error';
+          hint.textContent = 'Ошибка сети';
+          btn.disabled = false;
+          btn.textContent = oldText;
+        }
+      };
+    }
+
+    function open2FAPanel() {
+      if (!panel2FA) return;
+      panel2FA.style.display = '';
+    }
+
+    function close2FAPanel() {
+      if (!panel2FA) return;
+      panel2FA.style.display = 'none';
+    }
+
+    if (item2FA && panel2FA) {
+      item2FA.onclick = () => {
+        const isClosed = panel2FA.style.display === 'none';
+        if (isClosed) open2FAPanel();
+        else close2FAPanel();
+      };
+      panel2FA.style.display = 'none';
+    }
+
+    load2FAStatus();
   }
 
   // Sessions tab action
