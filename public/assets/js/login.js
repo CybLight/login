@@ -1831,8 +1831,8 @@ function viewPassword() {
           console.log('🍓 Local strawberry flag found, syncing to server...');
           try {
             // Ждём 100мс чтобы браузер успел установить cookie из предыдущего ответа
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
             const syncRes = await apiCall('/auth/easter/strawberry', {
               method: 'POST',
               credentials: 'include',
@@ -3019,6 +3019,9 @@ async function viewAccount(tab = 'profile') {
   // load me
   let me = null;
   try {
+    // Небольшая задержка чтобы дать браузеру время установить cookie после логина
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
     const { res, data } = await fetchMe();
     if (!res.ok || !data?.ok) {
       setNoStrawberries(false);
