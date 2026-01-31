@@ -1720,9 +1720,6 @@ function viewPassword() {
     btn.disabled = true;
     btn.textContent = 'Вхожу…';
 
-    // Очищаем старую cookie перед новым логином
-    clearAuthCookie();
-
     const login = getStorage('cyb_login', '', sessionStorage);
 
     try {
@@ -1833,6 +1830,9 @@ function viewPassword() {
         if (hasStrawberryLocally && !hasStrawberryOnServer) {
           console.log('🍓 Local strawberry flag found, syncing to server...');
           try {
+            // Ждём 100мс чтобы браузер успел установить cookie из предыдущего ответа
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             const syncRes = await apiCall('/auth/easter/strawberry', {
               method: 'POST',
               credentials: 'include',
