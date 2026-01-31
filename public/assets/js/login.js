@@ -1732,6 +1732,9 @@ function viewPassword() {
       );
       console.log('Password length:', pass.length);
 
+      // Проверяем наличие сохраненного токена устройства
+      const deviceToken = localStorage.getItem('cyb_device_token') || '';
+
       const res = await apiCall('/auth/login', {
         method: 'POST',
         credentials: 'include',
@@ -1740,6 +1743,7 @@ function viewPassword() {
           login,
           password: pass,
           turnstileToken,
+          deviceToken,
         }),
       });
 
@@ -2549,6 +2553,13 @@ function view2FAVerify() {
                  style="text-align:center;font-size:20px;letter-spacing:4px;" />
         </div>
 
+        <div style="margin:12px 0;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
+            <input type="checkbox" id="rememberDevice" style="cursor:pointer;" />
+            <span>Запомнить устройство на 30 дней</span>
+          </label>
+        </div>
+
         <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
 
         <div class="row" style="margin-top:10px;">
@@ -2599,6 +2610,8 @@ function view2FAVerify() {
       return;
     }
 
+    const rememberDevice = document.getElementById('rememberDevice')?.checked || false;
+
     btn.disabled = true;
     btn.textContent = 'Проверяю…';
 
@@ -2610,6 +2623,7 @@ function view2FAVerify() {
         body: JSON.stringify({
           userId,
           code,
+          rememberDevice,
         }),
       });
 
@@ -2630,6 +2644,12 @@ function view2FAVerify() {
 
       // Успех
       sessionStorage.removeItem('cyb_2fa_userId');
+
+      // Сохраняем токен устройства, если он был возвращен
+      if (data.deviceToken) {
+        localStorage.setItem('cyb_device_token', data.deviceToken);
+        console.log('Device token saved for 30 days');
+      }
 
       if (data.usedBackupCode) {
         showMsg('ok', '✅ Вход выполнен с резервным кодом! Перенаправляю…');
@@ -3019,6 +3039,11 @@ async function viewAccount(tab = 'profile') {
     clearAuthCookie();
     // ✅ возвращаем “обычный” режим с клубникой
     setNoStrawberries(false);
+    // Показываем уведомление об успешном выходе
+    showTopNotification(
+      'success',
+      'Выход из системы завершен. Вы можете продолжить работу в общедоступных разделах сайта.'
+    );
     CybRouter.navigate('username');
   };
 
