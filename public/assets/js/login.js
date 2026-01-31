@@ -3482,25 +3482,6 @@ function renderTabHtml(tab, me) {
           </div>
         </div>
       </div>
-
-      <div class="profile-hero__right">
-        <span class="mono-pill id-pill">
-          <b class="mono">${escapeHtml(pubId)}</b>
-          ${
-            u.publicId
-              ? `<button class="copy-btn copy-btn--icon"
-                    type="button"
-                    data-copybtn="${escapeHtml(pubId)}"
-                    aria-label="Скопировать ID пользователя"
-                    title="Скопировать">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path fill="currentColor" d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z"/>
-                  </svg>
-                </button>`
-              : ''
-          }
-        </span>
-      </div>
     </section>
 
     <section class="card-grid">
@@ -3512,8 +3493,25 @@ function renderTabHtml(tab, me) {
 
       <article class="info-card">
         <div class="info-card__label">ID пользователя</div>
-        <div class="info-card__value mono">${escapeHtml(pubId)}</div>
-        <div class="info-card__hint">Показывай его поддержке</div>
+        <div class="info-card__value">
+          <span class="mono-pill id-pill">
+            <b class="mono">${escapeHtml(pubId)}</b>
+            ${
+              u.publicId
+                ? `<button class="copy-btn copy-btn--icon"
+                      type="button"
+                      data-copybtn="${escapeHtml(pubId)}"
+                      aria-label="Скопировать ID пользователя"
+                      title="Скопировать">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path fill="currentColor" d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z"/>
+                    </svg>
+                  </button>`
+                : ''
+            }
+          </span>
+        </div>
+        <div class="info-card__hint">Отправляй его поддержке</div>
       </article>
 
       <article class="info-card">
