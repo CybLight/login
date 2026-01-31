@@ -4182,7 +4182,7 @@ async function bindTabActions(tab, me, api) {
         content2FA.innerHTML = `
           <div class="sec-status">Шаг 1: Отсканируй QR-код</div>
           <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);text-align:center;">
-            Используй приложение Google Authenticator, Microsoft Authenticator или Authy.
+            Используй приложение Proton , Google , Microsoft Authenticator или Authy.
           </p>
           <div style="text-align:center;margin:20px 0;">
             <div style="background:#fff;padding:16px;border-radius:8px;display:inline-block;">
@@ -5167,15 +5167,29 @@ function initPasswordEyes(root = document) {
         // Мини-пауза, чтобы анимация успела сыграть
         setTimeout(async () => {
           setStrawberryAccess(); // ✅ отмечаем, что пасхалка найдена
+          console.log('🍓 Saving strawberry flag to server...');
 
           // Отправляем на сервер и ЖДЕМ ответа
           try {
-            await apiCall('/auth/easter/strawberry', {
+            const strawberryRes = await apiCall('/auth/easter/strawberry', {
               method: 'POST',
               credentials: 'include',
             });
+
+            const strawberryData = await strawberryRes.json().catch(() => ({}));
+            console.log('🍓 Server response:', {
+              ok: strawberryRes.ok,
+              status: strawberryRes.status,
+              data: strawberryData,
+            });
+
+            if (!strawberryRes.ok) {
+              console.error('❌ Failed to save strawberry:', strawberryData);
+            } else {
+              console.log('✅ Strawberry saved successfully!');
+            }
           } catch (e) {
-            console.warn('Не удалось сохранить пасхалку на сервере:', e);
+            console.error('❌ Error saving strawberry:', e);
           }
 
           cleanup();
