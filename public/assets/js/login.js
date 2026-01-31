@@ -1788,6 +1788,12 @@ function viewPassword() {
         const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
         const meData = await meRes.json().catch(() => null);
 
+        console.log('Login sync - meData:', meData);
+        console.log('Login sync - strawberry paths:', {
+          'meData?.user?.easter?.strawberry': meData?.user?.easter?.strawberry,
+          'meData?.easter?.strawberry': meData?.easter?.strawberry,
+        });
+
         // Проверяем обе возможные структуры ответа
         const hasStrawberry = !!(
           meRes.ok &&
@@ -2974,8 +2980,19 @@ async function viewAccount(tab = 'profile') {
     me = data;
 
     // ✅ если сервер прислал флаг (будет после доработки API) — сохраняем локально
+    console.log('viewAccount - me data:', me);
+    console.log('viewAccount - strawberry check:', {
+      hasUser: !!me?.user,
+      hasEaster: !!me?.user?.easter,
+      strawberry: me?.user?.easter?.strawberry,
+      localStorageHas: hasStrawberryAccess(),
+    });
+
     if (me?.user?.easter?.strawberry) {
       setStrawberryAccess();
+      console.log('✅ Флаг strawberry синхронизирован из viewAccount');
+    } else {
+      console.log('❌ Флаг strawberry не найден в ответе /auth/me');
     }
 
     // header
@@ -4164,15 +4181,25 @@ async function bindTabActions(tab, me, api) {
         console.log('QR Data:', qrData, 'Secret:', secretKey);
         content2FA.innerHTML = `
           <div class="sec-status">Шаг 1: Отсканируй QR-код</div>
-          <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
+          <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);text-align:center;">
             Используй приложение Google Authenticator, Microsoft Authenticator или Authy.
           </p>
-          <div style="background:#fff;padding:16px;border-radius:8px;display:inline-block;margin:10px 0;">
-            <div id="qrcode"></div>
+          <div style="text-align:center;margin:20px 0;">
+            <div style="background:#fff;padding:16px;border-radius:8px;display:inline-block;">
+              <div id="qrcode"></div>
+            </div>
           </div>
-          <div style="margin:10px 0;">
-            <p style="font-size:12px;color:rgba(231,236,255,0.6);">Секретный ключ (если не работает QR):</p>
-            <code style="font-size:11px;background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:4px;word-break:break-all;">${secretKey}</code>
+          <div style="margin:20px 0;text-align:center;">
+            <p style="font-size:12px;color:rgba(231,236,255,0.6);margin-bottom:8px;">Секретный ключ (если не работает QR):</p>
+            <div style="background:rgba(255,255,255,0.1);padding:12px 16px;border-radius:6px;display:inline-block;max-width:100%;">
+              <code id="secretKeyCode" style="font-size:13px;color:#fff;word-break:break-all;cursor:pointer;user-select:all;" 
+                    title="Нажми, чтобы скопировать">${secretKey}</code>
+            </div>
+            <div style="margin-top:8px;">
+              <button class="btn btn-outline" id="copySecretBtn" type="button" style="padding:6px 16px;font-size:12px;">
+                📋 Скопировать ключ
+              </button>
+            </div>
           </div>
 
           <div class="sec-form-row" style="margin-top:16px;">
@@ -4201,6 +4228,30 @@ async function bindTabActions(tab, me, api) {
           document.getElementById('qrcode').innerHTML =
             `<p style="color:#666;font-size:12px;">QR библиотека не загружена. Используй секретный ключ.</p>`;
         }
+
+        // Обработчик копирования секретного ключа
+        const copySecretBtn = document.getElementById('copySecretBtn');
+        const secretKeyCode = document.getElementById('secretKeyCode');
+
+        const copySecret = () => {
+          navigator.clipboard
+            .writeText(secretKey)
+            .then(() => {
+              const originalText = copySecretBtn.textContent;
+              copySecretBtn.textContent = '✓ Скопировано!';
+              copySecretBtn.style.background = '#22c55e';
+              setTimeout(() => {
+                copySecretBtn.textContent = originalText;
+                copySecretBtn.style.background = '';
+              }, 2000);
+            })
+            .catch(() => {
+              alert('Не удалось скопировать. Выдели текст вручную.');
+            });
+        };
+
+        copySecretBtn.onclick = copySecret;
+        secretKeyCode.onclick = copySecret;
 
         document.getElementById('cancel2FABtn').onclick = () => {
           render2FAContent();
