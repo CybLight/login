@@ -1385,8 +1385,131 @@ function viewUsername() {
     CybRouter.navigate('reset');
   };
 
-  document.getElementById('keyLogin').onclick = () => {
-    alert('Ключ доступа (demo). Позже подключим passkey/WebAuthn.');
+  document.getElementById('keyLogin').onclick = async () => {
+    // Проверка поддержки WebAuthn
+    if (!window.PublicKeyCredential) {
+      showTopNotification('error', 'Ваш браузер не поддерживает ключи доступа (passkeys)');
+      return;
+    }
+
+    const login = getStorage('cyb_login', '', sessionStorage) || '';
+
+    try {
+      // Получаем options для аутентификации
+      const r1 = await apiCall('/auth/passkey/login/options', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ login: login || undefined }),
+      });
+      const d1 = await r1.json().catch(() => ({}));
+
+      if (!r1.ok || !d1.ok) {
+        showTopNotification('error', 'Ошибка получения параметров входа');
+        return;
+      }
+
+      const { challengeId, options } = d1;
+
+      // Преобразуем base64url в ArrayBuffer
+      const challenge = Uint8Array.from(
+        atob(options.challenge.replace(/-/g, '+').replace(/_/g, '/')),
+        (c) => c.charCodeAt(0)
+      );
+
+      let allowCredentials;
+      if (options.allowCredentials && options.allowCredentials.length > 0) {
+        allowCredentials = options.allowCredentials.map((c) => ({
+          ...c,
+          id: Uint8Array.from(atob(c.id.replace(/-/g, '+').replace(/_/g, '/')), (ch) =>
+            ch.charCodeAt(0)
+          ),
+        }));
+      }
+
+      const publicKeyOptions = {
+        challenge: challenge,
+        timeout: options.timeout,
+        rpId: options.rpId,
+        allowCredentials: allowCredentials,
+        userVerification: options.userVerification,
+      };
+
+      // Вызываем WebAuthn API
+      const credential = await navigator.credentials.get({
+        publicKey: publicKeyOptions,
+      });
+
+      if (!credential) {
+        showTopNotification('warn', 'Вход через ключ доступа отменён');
+        return;
+      }
+
+      // Преобразуем credential в формат для отправки
+      const credentialData = {
+        id: credential.id,
+        rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId)))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, ''),
+        response: {
+          clientDataJSON: btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))
+          )
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, ''),
+          authenticatorData: btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))
+          )
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, ''),
+          signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature)))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, ''),
+          userHandle: credential.response.userHandle
+            ? btoa(String.fromCharCode(...new Uint8Array(credential.response.userHandle)))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '')
+            : undefined,
+        },
+        type: credential.type,
+      };
+
+      // Отправляем на сервер
+      const r2 = await apiCall('/auth/passkey/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeId: challengeId,
+          credential: credentialData,
+        }),
+      });
+
+      const d2 = await r2.json().catch(() => ({}));
+
+      if (r2.ok && d2.ok) {
+        const userLogin = d2.user?.login || login;
+        if (userLogin) {
+          setStorage('cyb_login', userLogin, sessionStorage);
+        }
+        showTopNotification('success', 'Вход выполнен успешно! ✅');
+        CybRouter.navigate('account-profile');
+      } else {
+        showTopNotification('error', `Ошибка входа: ${d2.error || 'unknown'}`);
+      }
+    } catch (err) {
+      console.error('Passkey login error:', err);
+      if (err.name === 'NotAllowedError') {
+        showTopNotification('warn', 'Вход через ключ доступа отменён');
+      } else {
+        showTopNotification('error', `Ошибка: ${err.message || 'unknown'}`);
+      }
+    }
   };
 
   document.getElementById('createAcc').onclick = () => {
@@ -3659,6 +3782,25 @@ function renderTabHtml(tab, me) {
         </div>
       </div>
 
+      <!-- Passkeys item -->
+      <button class="sec-item" id="secPasskeysItem" type="button">
+        <div class="sec-left">
+          <div class="sec-title">Ключи доступа (Passkeys)</div>
+          <div class="sec-sub" id="secPasskeysStatus">Загрузка...</div>
+        </div>
+        <div class="sec-right">
+          <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
+            <g><path fill="currentColor" d="M8.809,23.588l-1.617-1.176L14.764,12L7.191,1.588l1.617-1.176l8,11c0.255,0.351,0.255,0.825,0,1.176 L8.809,23.588z"></path></g>
+          </svg>
+        </div>
+      </button>
+
+      <div class="sec-panel" id="secPasskeysPanel" style="display:none;">
+        <div class="sec-panel-inner" id="secPasskeysContent">
+          <!-- Динамический контент -->
+        </div>
+      </div>
+
     </div>
   `;
   }
@@ -4652,6 +4794,255 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
 
     load2FAStatus();
   }
+
+  // ==================== PASSKEYS SECTION ====================
+  if (tab === 'security') {
+    const itemPasskeys = document.getElementById('secPasskeysItem');
+    const panelPasskeys = document.getElementById('secPasskeysPanel');
+    const contentPasskeys = document.getElementById('secPasskeysContent');
+    const statusPasskeys = document.getElementById('secPasskeysStatus');
+
+    let passkeys = [];
+
+    async function loadPasskeys() {
+      try {
+        const r = await apiCall('/auth/passkey/list', { credentials: 'include' });
+        const d = await r.json().catch(() => ({}));
+
+        if (r.ok && d.ok) {
+          passkeys = d.passkeys || [];
+          if (statusPasskeys) {
+            statusPasskeys.textContent =
+              passkeys.length > 0
+                ? `Зарегистрировано ключей: ${passkeys.length}`
+                : 'Ключи не добавлены';
+          }
+          renderPasskeysContent();
+        } else {
+          if (statusPasskeys) statusPasskeys.textContent = 'Ошибка загрузки';
+        }
+      } catch {
+        if (statusPasskeys) statusPasskeys.textContent = 'Ошибка загрузки';
+      }
+    }
+
+    function renderPasskeysContent() {
+      if (!contentPasskeys) return;
+
+      if (passkeys.length === 0) {
+        contentPasskeys.innerHTML = `
+          <div class="sec-status">Ключи доступа не добавлены</div>
+          <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
+            Ключи доступа (passkeys) позволяют входить в аккаунт без пароля, используя биометрию или PIN-код устройства.
+          </p>
+          <button class="btn btn-primary" id="addPasskeyBtn" type="button">
+            ➕ Добавить ключ доступа
+          </button>
+        `;
+
+        document.getElementById('addPasskeyBtn').onclick = () => registerPasskey();
+      } else {
+        const listHtml = passkeys
+          .map(
+            (pk) => `
+          <div class="passkey-item" style="background:rgba(255,255,255,0.03);padding:12px;border-radius:8px;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div>
+                <div style="font-weight:600;margin-bottom:4px;">${escapeHtml(pk.name)}</div>
+                <div style="font-size:12px;opacity:0.7;">
+                  Создан: ${escapeHtml(fmtTs(pk.createdAt))}
+                  ${pk.lastUsedAt ? ` • Использован: ${escapeHtml(fmtTs(pk.lastUsedAt))}` : ''}
+                </div>
+              </div>
+              <button class="btn btn-outline" data-delete-passkey="${escapeHtml(pk.id)}" type="button" style="padding:6px 12px;font-size:12px;">
+                Удалить
+              </button>
+            </div>
+          </div>
+        `
+          )
+          .join('');
+
+        contentPasskeys.innerHTML = `
+          <div class="sec-status">Ваши ключи доступа</div>
+          <div style="margin:12px 0;">
+            ${listHtml}
+          </div>
+          <button class="btn btn-primary" id="addPasskeyBtn" type="button">
+            ➕ Добавить ключ доступа
+          </button>
+        `;
+
+        document.getElementById('addPasskeyBtn').onclick = () => registerPasskey();
+
+        document.querySelectorAll('[data-delete-passkey]').forEach((btn) => {
+          btn.onclick = async () => {
+            const passkeyId = btn.getAttribute('data-delete-passkey');
+            if (!passkeyId) return;
+
+            if (!confirm('Удалить этот ключ доступа?')) return;
+
+            try {
+              const r = await apiCall(`/auth/passkey/${passkeyId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+              });
+
+              if (r.ok) {
+                api.showMsg?.('ok', 'Ключ доступа удалён');
+                await loadPasskeys();
+              } else {
+                api.showMsg?.('error', 'Ошибка удаления ключа');
+              }
+            } catch {
+              api.showMsg?.('error', 'Ошибка сети');
+            }
+          };
+        });
+      }
+    }
+
+    async function registerPasskey() {
+      try {
+        // Проверка поддержки WebAuthn
+        if (!window.PublicKeyCredential) {
+          api.showMsg?.('error', 'Ваш браузер не поддерживает ключи доступа');
+          return;
+        }
+
+        // Получаем options для регистрации
+        const r1 = await apiCall('/auth/passkey/register/options', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const d1 = await r1.json().catch(() => ({}));
+
+        if (!r1.ok || !d1.ok) {
+          api.showMsg?.('error', 'Ошибка получения параметров регистрации');
+          return;
+        }
+
+        const options = d1.options;
+
+        // Преобразуем base64url в ArrayBuffer
+        const challenge = Uint8Array.from(
+          atob(options.challenge.replace(/-/g, '+').replace(/_/g, '/')),
+          (c) => c.charCodeAt(0)
+        );
+        const userId = Uint8Array.from(
+          atob(options.user.id.replace(/-/g, '+').replace(/_/g, '/')),
+          (c) => c.charCodeAt(0)
+        );
+
+        const publicKeyOptions = {
+          challenge: challenge,
+          rp: options.rp,
+          user: {
+            id: userId,
+            name: options.user.name,
+            displayName: options.user.displayName,
+          },
+          pubKeyCredParams: options.pubKeyCredParams,
+          timeout: options.timeout,
+          excludeCredentials: (options.excludeCredentials || []).map((c) => ({
+            ...c,
+            id: Uint8Array.from(atob(c.id.replace(/-/g, '+').replace(/_/g, '/')), (ch) =>
+              ch.charCodeAt(0)
+            ),
+          })),
+          authenticatorSelection: options.authenticatorSelection,
+          attestation: options.attestation,
+        };
+
+        // Вызываем WebAuthn API
+        const credential = await navigator.credentials.create({
+          publicKey: publicKeyOptions,
+        });
+
+        if (!credential) {
+          api.showMsg?.('error', 'Регистрация ключа отменена');
+          return;
+        }
+
+        // Преобразуем credential в формат для отправки
+        const credentialData = {
+          id: credential.id,
+          rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId)))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, ''),
+          response: {
+            clientDataJSON: btoa(
+              String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))
+            )
+              .replace(/\+/g, '-')
+              .replace(/\//g, '_')
+              .replace(/=/g, ''),
+            attestationObject: btoa(
+              String.fromCharCode(...new Uint8Array(credential.response.attestationObject))
+            )
+              .replace(/\+/g, '-')
+              .replace(/\//g, '_')
+              .replace(/=/g, ''),
+          },
+          type: credential.type,
+        };
+
+        // Спрашиваем имя для ключа
+        const name =
+          prompt('Введите название для этого ключа доступа:', 'Мой ключ') || 'Ключ доступа';
+
+        // Отправляем на сервер
+        const r2 = await apiCall('/auth/passkey/register', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            credential: credentialData,
+            name: name,
+          }),
+        });
+
+        const d2 = await r2.json().catch(() => ({}));
+
+        if (r2.ok && d2.ok) {
+          api.showMsg?.('ok', 'Ключ доступа успешно добавлен! ✅');
+          await loadPasskeys();
+        } else {
+          api.showMsg?.('error', `Ошибка сохранения ключа: ${d2.error || 'unknown'}`);
+        }
+      } catch (err) {
+        console.error('Passkey registration error:', err);
+        if (err.name === 'NotAllowedError') {
+          api.showMsg?.('warn', 'Регистрация ключа отменена');
+        } else {
+          api.showMsg?.('error', `Ошибка: ${err.message || 'unknown'}`);
+        }
+      }
+    }
+
+    function openPasskeysPanel() {
+      if (!panelPasskeys) return;
+      panelPasskeys.style.display = '';
+      loadPasskeys();
+    }
+
+    function closePasskeysPanel() {
+      if (!panelPasskeys) return;
+      panelPasskeys.style.display = 'none';
+    }
+
+    if (itemPasskeys && panelPasskeys) {
+      itemPasskeys.onclick = () => {
+        const isClosed = panelPasskeys.style.display === 'none';
+        if (isClosed) openPasskeysPanel();
+        else closePasskeysPanel();
+      };
+      panelPasskeys.style.display = 'none';
+    }
+  }
+  // ==================== END PASSKEYS SECTION ====================
 
   // Sessions tab action
   if (tab === 'sessions') {
