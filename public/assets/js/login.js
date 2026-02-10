@@ -1385,131 +1385,8 @@ function viewUsername() {
     CybRouter.navigate('reset');
   };
 
-  document.getElementById('keyLogin').onclick = async () => {
-    // Проверка поддержки WebAuthn
-    if (!window.PublicKeyCredential) {
-      showTopNotification('error', 'Ваш браузер не поддерживает ключи доступа (passkeys)');
-      return;
-    }
-
-    const login = getStorage('cyb_login', '', sessionStorage) || '';
-
-    try {
-      // Получаем options для аутентификации
-      const r1 = await apiCall('/auth/passkey/login/options', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login: login || undefined }),
-      });
-      const d1 = await r1.json().catch(() => ({}));
-
-      if (!r1.ok || !d1.ok) {
-        showTopNotification('error', 'Ошибка получения параметров входа');
-        return;
-      }
-
-      const { challengeId, options } = d1;
-
-      // Преобразуем base64url в ArrayBuffer
-      const challenge = Uint8Array.from(
-        atob(options.challenge.replace(/-/g, '+').replace(/_/g, '/')),
-        (c) => c.charCodeAt(0)
-      );
-
-      let allowCredentials;
-      if (options.allowCredentials && options.allowCredentials.length > 0) {
-        allowCredentials = options.allowCredentials.map((c) => ({
-          ...c,
-          id: Uint8Array.from(atob(c.id.replace(/-/g, '+').replace(/_/g, '/')), (ch) =>
-            ch.charCodeAt(0)
-          ),
-        }));
-      }
-
-      const publicKeyOptions = {
-        challenge: challenge,
-        timeout: options.timeout,
-        rpId: options.rpId,
-        allowCredentials: allowCredentials,
-        userVerification: options.userVerification,
-      };
-
-      // Вызываем WebAuthn API
-      const credential = await navigator.credentials.get({
-        publicKey: publicKeyOptions,
-      });
-
-      if (!credential) {
-        showTopNotification('warn', 'Вход через ключ доступа отменён');
-        return;
-      }
-
-      // Преобразуем credential в формат для отправки
-      const credentialData = {
-        id: credential.id,
-        rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId)))
-          .replace(/\+/g, '-')
-          .replace(/\//g, '_')
-          .replace(/=/g, ''),
-        response: {
-          clientDataJSON: btoa(
-            String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))
-          )
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, ''),
-          authenticatorData: btoa(
-            String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))
-          )
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, ''),
-          signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature)))
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, ''),
-          userHandle: credential.response.userHandle
-            ? btoa(String.fromCharCode(...new Uint8Array(credential.response.userHandle)))
-                .replace(/\+/g, '-')
-                .replace(/\//g, '_')
-                .replace(/=/g, '')
-            : undefined,
-        },
-        type: credential.type,
-      };
-
-      // Отправляем на сервер
-      const r2 = await apiCall('/auth/passkey/login', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          challengeId: challengeId,
-          credential: credentialData,
-        }),
-      });
-
-      const d2 = await r2.json().catch(() => ({}));
-
-      if (r2.ok && d2.ok) {
-        const userLogin = d2.user?.login || login;
-        if (userLogin) {
-          setStorage('cyb_login', userLogin, sessionStorage);
-        }
-        showTopNotification('success', 'Вход выполнен успешно! ✅');
-        CybRouter.navigate('account-profile');
-      } else {
-        showTopNotification('error', `Ошибка входа: ${d2.error || 'unknown'}`);
-      }
-    } catch (err) {
-      console.error('Passkey login error:', err);
-      if (err.name === 'NotAllowedError') {
-        showTopNotification('warn', 'Вход через ключ доступа отменён');
-      } else {
-        showTopNotification('error', `Ошибка: ${err.message || 'unknown'}`);
-      }
-    }
+  document.getElementById('keyLogin').onclick = () => {
+    alert('Ключ доступа (demo). Позже подключим passkey/WebAuthn.');
   };
 
   document.getElementById('createAcc').onclick = () => {
@@ -5041,6 +4918,8 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
       };
       panelPasskeys.style.display = 'none';
     }
+
+    loadPasskeys();
   }
   // ==================== END PASSKEYS SECTION ====================
 
