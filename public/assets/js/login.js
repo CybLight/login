@@ -962,6 +962,7 @@ function renderRoute(r) {
   if (r === 'account-profile') return viewAccount('profile');
   if (r === 'account-security') return viewAccount('security');
   if (r === 'account-sessions') return viewAccount('sessions');
+  if (r === 'account-history') return viewAccount('history');
   if (r === 'account-easter-eggs') return viewAccount('easter');
 
   // EMAIL VERIFY
@@ -3011,6 +3012,7 @@ async function viewAccount(tab = 'profile') {
             <button data-tab="profile">👤 Профиль</button>
             <button data-tab="security">🛡️ Безопасность</button>
             <button data-tab="sessions">🧩 Сессии</button>
+            <button data-tab="history">📜 История</button>
             <button data-tab="easter">🍓 Пасхалки</button>
           </nav>
 
@@ -3089,6 +3091,7 @@ async function viewAccount(tab = 'profile') {
         profile: 'account-profile',
         security: 'account-security',
         sessions: 'account-sessions',
+        history: 'account-history',
         easter: 'account-easter-eggs',
       };
       CybRouter.navigate(map[t] || 'account-profile');
@@ -3403,6 +3406,7 @@ function tabTitle(tab) {
   if (tab === 'profile') return 'Профиль';
   if (tab === 'security') return 'Безопасность';
   if (tab === 'sessions') return 'Сессии';
+  if (tab === 'history') return 'История входов';
   if (tab === 'easter') return 'Пасхалки';
   return 'Учётка';
 }
@@ -3708,6 +3712,15 @@ function renderTabHtml(tab, me) {
           Выйти из других
         </button>
       </div>
+    `;
+  }
+
+  if (tab === 'history') {
+    return `
+      <div style="opacity:.85;line-height:1.5;margin-bottom:14px;">
+        История входов в аккаунт за последнее время
+      </div>
+      <div id="loginHistoryList" style="color:var(--muted);">Загружаю...</div>
     `;
   }
 
@@ -4948,6 +4961,68 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
           b.textContent = old;
         }
       };
+    }
+  }
+
+  // History tab
+  if (tab === 'history') {
+    const listEl = document.getElementById('loginHistoryList');
+    if (listEl) {
+      (async () => {
+        try {
+          const r = await apiCall('/auth/login-history?limit=50', {
+            credentials: 'include',
+          });
+          const d = await r.json().catch(() => ({}));
+
+          if (!r.ok || !d.ok) {
+            listEl.innerHTML = '<div style="color:var(--red);">Ошибка загрузки истории</div>';
+            return;
+          }
+
+          const history = d.history || [];
+          if (history.length === 0) {
+            listEl.innerHTML = '<div style="opacity:.7;">История входов пуста</div>';
+            return;
+          }
+
+          const actionLabels = {
+            login_success: '✅ Успешный вход',
+            login_failed: '❌ Неудачная попытка',
+            login_2fa: '🔐 Вход с 2FA',
+            passkey_login: '🔑 Вход через passkey',
+          };
+
+          const html = history
+            .map((item) => {
+              const date = fmtTs(item.createdAt);
+              const label = actionLabels[item.action] || item.action;
+              const ip = item.ip || '—';
+              const ua = item.userAgent || '—';
+
+              return `
+                <div style="background:rgba(255,255,255,.03);padding:12px;border-radius:8px;margin-bottom:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:200px;">
+                      <div style="font-weight:600;margin-bottom:4px;">${escapeHtml(label)}</div>
+                      <div style="font-size:12px;opacity:0.7;">${escapeHtml(date)}</div>
+                    </div>
+                    <div style="flex:1;min-width:200px;font-size:12px;opacity:0.8;">
+                      <div><b>IP:</b> ${escapeHtml(ip)}</div>
+                      <div style="word-break:break-all;"><b>Устройство:</b> ${escapeHtml(ua)}</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            })
+            .join('');
+
+          listEl.innerHTML = html;
+        } catch (e) {
+          console.error('Error loading login history:', e);
+          listEl.innerHTML = '<div style="color:var(--red);">Ошибка сети</div>';
+        }
+      })();
     }
   }
 
