@@ -1390,7 +1390,9 @@ function viewUsername() {
   document.getElementById('keyLogin').onclick = async () => {
     // Проверка поддержки WebAuthn
     if (!window.PublicKeyCredential) {
-      alert('❌ Ваш браузер не поддерживает ключи доступа (passkeys).\n\nИспользуйте современный браузер: Chrome, Edge, Safari или Firefox.');
+      alert(
+        '❌ Ваш браузер не поддерживает ключи доступа (passkeys).\n\nИспользуйте современный браузер: Chrome, Edge, Safari или Firefox.'
+      );
       return;
     }
 
@@ -1405,6 +1407,7 @@ function viewUsername() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
       });
 
       if (!optionsRes.ok) {
@@ -1427,9 +1430,8 @@ function viewUsername() {
 
       const allowCredentials = (options.allowCredentials || []).map((cred) => ({
         ...cred,
-        id: Uint8Array.from(
-          atob(cred.id.replace(/-/g, '+').replace(/_/g, '/')),
-          (c) => c.charCodeAt(0)
+        id: Uint8Array.from(atob(cred.id.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
+          c.charCodeAt(0)
         ),
       }));
 
@@ -1504,7 +1506,7 @@ function viewUsername() {
 
       // 6. Успешный вход!
       console.log('✅ Passkey login successful');
-      
+
       // Сохраняем токен если есть
       if (loginData.token) {
         setStorage('cyb_token', loginData.token, sessionStorage);
@@ -1514,9 +1516,9 @@ function viewUsername() {
       CybRouter.navigate('account');
     } catch (err) {
       console.error('Passkey login error:', err);
-      
+
       let errorMessage = 'Не удалось войти по ключу доступа';
-      
+
       if (err.name === 'NotAllowedError') {
         errorMessage = '❌ Аутентификация отменена или время ожидания истекло';
       } else if (err.name === 'InvalidStateError') {
@@ -1524,7 +1526,7 @@ function viewUsername() {
       } else if (err.message) {
         errorMessage = `❌ ${err.message}`;
       }
-      
+
       alert(errorMessage);
     } finally {
       keyLoginBtn.disabled = false;
