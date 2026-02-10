@@ -962,6 +962,7 @@ function renderRoute(r) {
   if (r === 'account-profile') return viewAccount('profile');
   if (r === 'account-security') return viewAccount('security');
   if (r === 'account-sessions') return viewAccount('sessions');
+  if (r === 'account-devices') return viewAccount('devices');
   if (r === 'account-history') return viewAccount('history');
   if (r === 'account-easter-eggs') return viewAccount('easter');
 
@@ -1386,8 +1387,149 @@ function viewUsername() {
     CybRouter.navigate('reset');
   };
 
-  document.getElementById('keyLogin').onclick = () => {
-    alert('Ключ доступа (demo). Позже подключим passkey/WebAuthn.');
+  document.getElementById('keyLogin').onclick = async () => {
+    // Проверка поддержки WebAuthn
+    if (!window.PublicKeyCredential) {
+      alert('❌ Ваш браузер не поддерживает ключи доступа (passkeys).\n\nИспользуйте современный браузер: Chrome, Edge, Safari или Firefox.');
+      return;
+    }
+
+    const keyLoginBtn = document.getElementById('keyLogin');
+    const originalText = keyLoginBtn.innerHTML;
+    keyLoginBtn.disabled = true;
+    keyLoginBtn.innerHTML = '🔐 Проверка...';
+
+    try {
+      // 1. Получаем challenge от сервера
+      const optionsRes = await apiCall('/auth/passkey/login/options', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!optionsRes.ok) {
+        const err = await optionsRes.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(err.error || 'Не удалось получить параметры аутентификации');
+      }
+
+      const optionsData = await optionsRes.json();
+      if (!optionsData.ok || !optionsData.options) {
+        throw new Error('Некорректный ответ сервера');
+      }
+
+      const options = optionsData.options;
+
+      // 2. Преобразуем challenge и allowCredentials из base64url в ArrayBuffer
+      const challenge = Uint8Array.from(
+        atob(options.challenge.replace(/-/g, '+').replace(/_/g, '/')),
+        (c) => c.charCodeAt(0)
+      );
+
+      const allowCredentials = (options.allowCredentials || []).map((cred) => ({
+        ...cred,
+        id: Uint8Array.from(
+          atob(cred.id.replace(/-/g, '+').replace(/_/g, '/')),
+          (c) => c.charCodeAt(0)
+        ),
+      }));
+
+      const publicKeyOptions = {
+        challenge: challenge,
+        rpId: options.rpId,
+        allowCredentials: allowCredentials,
+        timeout: options.timeout || 60000,
+        userVerification: options.userVerification || 'preferred',
+      };
+
+      keyLoginBtn.innerHTML = '🔑 Используйте ключ доступа...';
+
+      // 3. Запрашиваем подпись у пользователя через WebAuthn API
+      const credential = await navigator.credentials.get({
+        publicKey: publicKeyOptions,
+      });
+
+      if (!credential) {
+        throw new Error('Аутентификация отменена');
+      }
+
+      // 4. Преобразуем credential в формат для отправки на сервер
+      const credentialData = {
+        id: credential.id,
+        rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId)))
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=/g, ''),
+        response: {
+          clientDataJSON: btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))
+          )
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, ''),
+          authenticatorData: btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))
+          )
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, ''),
+          signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature)))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=/g, ''),
+          userHandle: credential.response.userHandle
+            ? btoa(String.fromCharCode(...new Uint8Array(credential.response.userHandle)))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=/g, '')
+            : null,
+        },
+        type: credential.type,
+      };
+
+      keyLoginBtn.innerHTML = '✅ Вход...';
+
+      // 5. Отправляем credential на сервер для верификации
+      const loginRes = await apiCall('/auth/passkey/login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: credentialData }),
+      });
+
+      const loginData = await loginRes.json().catch(() => ({}));
+
+      if (!loginRes.ok) {
+        throw new Error(loginData.error || 'Ошибка входа');
+      }
+
+      // 6. Успешный вход!
+      console.log('✅ Passkey login successful');
+      
+      // Сохраняем токен если есть
+      if (loginData.token) {
+        setStorage('cyb_token', loginData.token, sessionStorage);
+      }
+
+      // Переход в аккаунт
+      CybRouter.navigate('account');
+    } catch (err) {
+      console.error('Passkey login error:', err);
+      
+      let errorMessage = 'Не удалось войти по ключу доступа';
+      
+      if (err.name === 'NotAllowedError') {
+        errorMessage = '❌ Аутентификация отменена или время ожидания истекло';
+      } else if (err.name === 'InvalidStateError') {
+        errorMessage = '❌ Ключ доступа не найден на этом устройстве';
+      } else if (err.message) {
+        errorMessage = `❌ ${err.message}`;
+      }
+      
+      alert(errorMessage);
+    } finally {
+      keyLoginBtn.disabled = false;
+      keyLoginBtn.innerHTML = originalText;
+    }
   };
 
   document.getElementById('createAcc').onclick = () => {
@@ -3012,6 +3154,7 @@ async function viewAccount(tab = 'profile') {
             <button data-tab="profile">👤 Профиль</button>
             <button data-tab="security">🛡️ Безопасность</button>
             <button data-tab="sessions">🧩 Сессии</button>
+            <button data-tab="devices">📱 Устройства</button>
             <button data-tab="history">📜 История</button>
             <button data-tab="easter">🍓 Пасхалки</button>
           </nav>
@@ -3091,6 +3234,7 @@ async function viewAccount(tab = 'profile') {
         profile: 'account-profile',
         security: 'account-security',
         sessions: 'account-sessions',
+        devices: 'account-devices',
         history: 'account-history',
         easter: 'account-easter-eggs',
       };
@@ -3232,6 +3376,12 @@ async function viewAccount(tab = 'profile') {
         const ua = parseUA(s.user_agent || '');
         const isCur = s.id === current;
 
+        // Используем deviceIcon и browser/os из бэкенда, если доступны
+        const deviceIcon = s.deviceIcon || (ua.isMobile ? '📱' : '💻');
+        const browser = s.browser || ua.browser || 'Browser';
+        const os = s.os || ua.os || 'Unknown OS';
+        const deviceType = s.deviceType || ua.deviceType || 'desktop';
+
         // Cтроки:
         let line1 = ''; // верхняя строка (имя)
         let line2 = ''; // нижняя строка (версия/модель)
@@ -3243,8 +3393,8 @@ async function viewAccount(tab = 'profile') {
           line2 = String(s.model || ua.model || '').trim();
         } else {
           // Обычный браузер
-          line1 = ua.browser || 'Browser';
-          line2 = ua.version ? `${ua.browser} ${ua.version}` : '';
+          line1 = browser;
+          line2 = browser !== os ? `${browser} на ${os}` : '';
         }
 
         const loc = [s.city, s.region, countryFull(s.country)].filter(Boolean).join(', ') || '—';
@@ -3257,8 +3407,8 @@ async function viewAccount(tab = 'profile') {
             <div class="dev">
               <div class="dev-top">
 
-                <span class="dev-ico" aria-hidden="true">
-                ${getDeviceIconSvg(s.user_agent || '', ua)}
+                <span class="dev-ico" aria-hidden="true" style="font-size:24px;">
+                ${deviceIcon}
                 </span>
 
                 <div class="dev-text">
@@ -3279,7 +3429,7 @@ async function viewAccount(tab = 'profile') {
             </div>
           </td>
 
-          <td data-label="OS">${escapeHtml(ua.os)}</td>
+          <td data-label="OS">${escapeHtml(os)}</td>
           <td data-label="Location" title="Edge: ${s.colo || '—'}">${escapeHtml(loc)}</td>
           <td data-label="Last Login">${escapeHtml(fmtTs(lastLogin))}</td>
           <td data-label="Last Seen">${escapeHtml(fmtTs(lastSeen))}</td>
@@ -3406,6 +3556,7 @@ function tabTitle(tab) {
   if (tab === 'profile') return 'Профиль';
   if (tab === 'security') return 'Безопасность';
   if (tab === 'sessions') return 'Сессии';
+  if (tab === 'devices') return 'Доверенные устройства';
   if (tab === 'history') return 'История входов';
   if (tab === 'easter') return 'Пасхалки';
   return 'Учётка';
@@ -3712,6 +3863,15 @@ function renderTabHtml(tab, me) {
           Выйти из других
         </button>
       </div>
+    `;
+  }
+
+  if (tab === 'devices') {
+    return `
+      <div style="opacity:.85;line-height:1.5;margin-bottom:14px;">
+        Доверенные устройства для входа с 2FA. Эти устройства не требуют код при входе.
+      </div>
+      <div id="trustedDevicesList" style="color:var(--muted);">Загружаю...</div>
     `;
   }
 
@@ -4961,6 +5121,91 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
           b.textContent = old;
         }
       };
+    }
+  }
+
+  // Devices tab
+  if (tab === 'devices') {
+    const listEl = document.getElementById('trustedDevicesList');
+    if (listEl) {
+      (async () => {
+        try {
+          const r = await apiCall('/auth/trusted-devices', {
+            credentials: 'include',
+          });
+          const d = await r.json().catch(() => ({}));
+
+          if (!r.ok || !d.ok) {
+            listEl.innerHTML = '<div style="color:var(--red);">Ошибка загрузки устройств</div>';
+            return;
+          }
+
+          const devices = d.devices || [];
+          if (devices.length === 0) {
+            listEl.innerHTML = '<div style="opacity:.7;">Нет доверенных устройств</div>';
+            return;
+          }
+
+          const html = devices
+            .map((device) => {
+              const created = fmtTs(device.createdAt);
+              const lastUsed = device.lastUsedAt ? fmtTs(device.lastUsedAt) : 'Не использовалось';
+              const ip = device.ipAddress || '—';
+              const ua = device.userAgent || '—';
+
+              return `
+                <div style="background:rgba(255,255,255,.03);padding:12px;border-radius:8px;margin-bottom:8px;">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:200px;">
+                      <div style="font-weight:600;margin-bottom:4px;">📱 Доверенное устройство</div>
+                      <div style="font-size:12px;opacity:0.7;">Добавлено: ${escapeHtml(created)}</div>
+                      <div style="font-size:12px;opacity:0.7;">Последний вход: ${escapeHtml(lastUsed)}</div>
+                    </div>
+                    <div style="flex:1;min-width:200px;font-size:12px;opacity:0.8;">
+                      <div><b>IP:</b> ${escapeHtml(ip)}</div>
+                      <div style="word-break:break-all;"><b>Устройство:</b> ${escapeHtml(ua)}</div>
+                      <button class="btn btn-outline" data-remove-device="${escapeHtml(device.id)}" 
+                              style="margin-top:8px;padding:4px 12px;font-size:12px;">
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            })
+            .join('');
+
+          listEl.innerHTML = html;
+
+          // Обработчики удаления
+          document.querySelectorAll('[data-remove-device]').forEach((btn) => {
+            btn.onclick = async () => {
+              const deviceId = btn.getAttribute('data-remove-device');
+              if (!deviceId || !confirm('Удалить это доверенное устройство?')) return;
+
+              try {
+                const r = await apiCall(`/auth/trusted-devices/${deviceId}`, {
+                  method: 'DELETE',
+                  credentials: 'include',
+                });
+
+                if (r.ok) {
+                  api.showMsg?.('ok', 'Устройство удалено');
+                  // Перезагружаем список
+                  setTimeout(() => CybRouter.navigate('account-devices'), 300);
+                } else {
+                  api.showMsg?.('error', 'Ошибка удаления');
+                }
+              } catch {
+                api.showMsg?.('error', 'Ошибка сети');
+              }
+            };
+          });
+        } catch (e) {
+          console.error('Error loading trusted devices:', e);
+          listEl.innerHTML = '<div style="color:var(--red);">Ошибка сети</div>';
+        }
+      })();
     }
   }
 
