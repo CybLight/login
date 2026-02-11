@@ -3142,6 +3142,7 @@ async function viewAccount(tab = 'profile') {
       const scoreText = document.getElementById('securityScoreText');
       const check2FA = document.getElementById('2fa-check');
       const checkPasskey = document.getElementById('passkey-check');
+      const securityHeader = document.querySelector('.sec-list > div:first-child');
 
       console.log('[SECURITY-INDICATOR-v3] Values:', { 
         twoFAEnabled, 
@@ -3183,10 +3184,46 @@ async function viewAccount(tab = 'profile') {
     }
 
     const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
+    const icon = score >= 80 ? '✅' : score >= 50 ? '⚠️' : '❌';
+    const levelText = score >= 80 ? 'Надёжная защита' : score >= 50 ? 'Средняя защита' : 'Требует улучшения';
+    
     progressBar.style.width = `${score}%`;
     progressBar.style.background = color;
     scoreText.textContent = `${score}%`;
     scoreText.style.color = color;
+    
+    // Обновляем иконку и заголовок
+    if (securityHeader) {
+      const iconDiv = securityHeader.querySelector('div > div:first-child');
+      const titleDiv = securityHeader.querySelector('div > div:last-child > div:first-child');
+      if (iconDiv) iconDiv.textContent = icon;
+      if (titleDiv) titleDiv.textContent = levelText;
+    }
+    
+    // Обновляем блок рекомендаций
+    const recommendationBlock = securityHeader?.querySelector('div[style*="margin-top:12px"]');
+    if (recommendationBlock) {
+      if (score >= 100) {
+        recommendationBlock.style.background = 'rgba(34,197,94,.15)';
+        recommendationBlock.style.borderLeft = '3px solid #22c55e';
+        recommendationBlock.innerHTML = `
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🎉 Превосходно!</div>
+          <div style="font-size:12px;opacity:0.9;">Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.</div>
+        `;
+      } else {
+        recommendationBlock.style.background = 'rgba(59,130,246,.15)';
+        recommendationBlock.style.borderLeft = '3px solid #3b82f6';
+        const recommendationText = score < 30
+          ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.'
+          : score < 50
+            ? 'Добавьте еще несколько методов защиты для повышения безопасности.'
+            : 'Отлично! Осталось совсем немного для максимальной защиты.';
+        recommendationBlock.innerHTML = `
+          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">💡 Рекомендация</div>
+          <div style="font-size:12px;opacity:0.9;">${recommendationText}</div>
+        `;
+      }
+    }
     
     console.log('[SECURITY-INDICATOR-v3] DONE - score:', score, 'color:', color);
     } catch (err) {
