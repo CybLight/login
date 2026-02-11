@@ -13,6 +13,8 @@
     'reset',
     'done',
     'strawberry-history',
+    'trusted-devices',
+    'login-history',
   ]);
 
   function getRoute() {
