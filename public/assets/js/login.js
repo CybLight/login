@@ -5042,6 +5042,7 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
         if (r.ok && d.ok) {
           passkeys = d.passkeys || [];
           passkeyCount = passkeys.length;
+          console.log('loadPasskeys: passkeys count =', passkeyCount);
           if (statusPasskeys) {
             statusPasskeys.textContent =
               passkeys.length > 0
@@ -5051,6 +5052,7 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
           renderPasskeysContent();
 
           // Обновляем индикатор безопасности
+          console.log('Calling updateSecurityIndicator from loadPasskeys');
           updateSecurityIndicator();
         } else {
           if (statusPasskeys) statusPasskeys.textContent = 'Ошибка загрузки';
