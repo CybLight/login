@@ -4603,10 +4603,6 @@ async function bindTabActions(tab, me, api) {
       progressBar.style.width = `${score}%`;
       progressBar.style.background = color;
       scoreText.textContent = `${score}%`;
-      const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
-      progressBar.style.width = `${score}%`;
-      progressBar.style.background = color;
-      scoreText.textContent = `${score}%`;
       scoreText.style.color = color;
     }
 
