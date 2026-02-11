@@ -3268,7 +3268,10 @@ async function viewAccount(tab = 'profile') {
     await new Promise((resolve) => setTimeout(resolve, 200));
 
     const { res, data } = await fetchMe();
+    console.log('viewAccount fetchMe result:', { ok: res.ok, status: res.status, data });
+    
     if (!res.ok || !data?.ok) {
+      console.warn('viewAccount: Not authenticated, redirecting to username', { status: res.status, data });
       setNoStrawberries(false);
       CybRouter.navigate('username');
       return;
