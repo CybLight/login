@@ -3699,7 +3699,7 @@ function renderTabHtml(tab, me) {
     // Расчет уровня безопасности (будет обновлен после загрузки 2FA и passkeys)
     let securityScore = 0;
     let securityChecks = [];
-    
+
     if (emailVerified) {
       securityScore += 30;
       securityChecks.push({ done: true, text: 'Email подтвержден', icon: '✅' });
@@ -3708,12 +3708,28 @@ function renderTabHtml(tab, me) {
     }
 
     // Placeholder для 2FA и passkeys (будут обновлены после загрузки)
-    securityChecks.push({ done: false, text: 'Включите двухфакторную аутентификацию', icon: '🔐', id: '2fa-check' });
-    securityChecks.push({ done: false, text: 'Добавьте ключ доступа (Passkey)', icon: '🔑', id: 'passkey-check' });
+    securityChecks.push({
+      done: false,
+      text: 'Включите двухфакторную аутентификацию',
+      icon: '🔐',
+      id: '2fa-check',
+    });
+    securityChecks.push({
+      done: false,
+      text: 'Добавьте ключ доступа (Passkey)',
+      icon: '🔑',
+      id: 'passkey-check',
+    });
 
     const securityLevel = securityScore >= 80 ? 'high' : securityScore >= 50 ? 'medium' : 'low';
-    const securityLevelText = securityScore >= 80 ? 'Надёжная защита' : securityScore >= 50 ? 'Средняя защита' : 'Требует улучшения';
-    const securityColor = securityScore >= 80 ? '#4ade80' : securityScore >= 50 ? '#fbbf24' : '#f87171';
+    const securityLevelText =
+      securityScore >= 80
+        ? 'Надёжная защита'
+        : securityScore >= 50
+          ? 'Средняя защита'
+          : 'Требует улучшения';
+    const securityColor =
+      securityScore >= 80 ? '#4ade80' : securityScore >= 50 ? '#fbbf24' : '#f87171';
 
     return `
     <div class="sec-list">
@@ -3742,30 +3758,42 @@ function renderTabHtml(tab, me) {
 
         <!-- Security Checklist -->
         <div id="securityChecklist" style="display:grid;gap:8px;">
-          ${securityChecks.map(check => `
+          ${securityChecks
+            .map(
+              (check) => `
             <div ${check.id ? `id="${check.id}"` : ''} style="display:flex;align-items:center;gap:10px;padding:8px;background:rgba(255,255,255,.03);border-radius:6px;${check.done ? 'opacity:0.7;' : ''}">
               <div style="font-size:18px;">${check.icon}</div>
               <div style="flex:1;font-size:13px;">${check.text}</div>
               ${check.done ? '<div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>' : ''}
             </div>
-          `).join('')}
+          `
+            )
+            .join('')}
         </div>
 
-        ${securityScore < 100 ? `
+        ${
+          securityScore < 100
+            ? `
           <div style="margin-top:12px;padding:10px;background:rgba(59,130,246,.15);border-radius:6px;border-left:3px solid #3b82f6;">
             <div style="font-size:12px;font-weight:600;margin-bottom:4px;">💡 Рекомендация</div>
             <div style="font-size:12px;opacity:0.9;">
-              ${securityScore < 30 ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.' : 
-                securityScore < 50 ? 'Добавьте еще несколько методов защиты для повышения безопасности.' :
-                'Отлично! Осталось совсем немного для максимальной защиты.'}
+              ${
+                securityScore < 30
+                  ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.'
+                  : securityScore < 50
+                    ? 'Добавьте еще несколько методов защиты для повышения безопасности.'
+                    : 'Отлично! Осталось совсем немного для максимальной защиты.'
+              }
             </div>
           </div>
-        ` : `
+        `
+            : `
           <div style="margin-top:12px;padding:10px;background:rgba(34,197,94,.15);border-radius:6px;border-left:3px solid #22c55e;">
             <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🎉 Превосходно!</div>
             <div style="font-size:12px;opacity:0.9;">Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.</div>
           </div>
-        `}
+        `
+        }
       </div>
 
       <!-- EMAIL item -->
@@ -3977,8 +4005,6 @@ function renderTabHtml(tab, me) {
       </div>
     `;
   }
-
-
 
   if (tab === 'easter') {
     const canSee = hasStrawberryAccess() || !!me?.user?.easter?.strawberry;
@@ -4534,10 +4560,12 @@ async function bindTabActions(tab, me, api) {
     const content2FA = document.getElementById('sec2FAContent');
     const status2FA = document.getElementById('sec2FAStatus');
 
+    // Общие переменные для отслеживания статуса безопасности
     let twoFAEnabled = false;
+    let passkeyCount = 0;
 
     // Функция обновления индикатора безопасности
-    function updateSecurityIndicator(has2FA, hasPasskeys) {
+    function updateSecurityIndicator() {
       const progressBar = document.getElementById('securityProgressBar');
       const scoreText = document.getElementById('securityScoreText');
       const check2FA = document.getElementById('2fa-check');
@@ -4546,8 +4574,8 @@ async function bindTabActions(tab, me, api) {
       if (!progressBar || !scoreText) return;
 
       let score = emailVerified ? 30 : 0;
-      
-      if (has2FA) {
+
+      if (twoFAEnabled) {
         score += 40;
         if (check2FA) {
           check2FA.innerHTML = `
@@ -4559,7 +4587,7 @@ async function bindTabActions(tab, me, api) {
         }
       }
 
-      if (hasPasskeys) {
+      if (passkeyCount > 0) {
         score += 30;
         if (checkPasskey) {
           checkPasskey.innerHTML = `
@@ -4571,6 +4599,10 @@ async function bindTabActions(tab, me, api) {
         }
       }
 
+      const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
+      progressBar.style.width = `${score}%`;
+      progressBar.style.background = color;
+      scoreText.textContent = `${score}%`;
       const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
       progressBar.style.width = `${score}%`;
       progressBar.style.background = color;
@@ -4589,7 +4621,7 @@ async function bindTabActions(tab, me, api) {
           }
           render2FAContent();
           // Обновляем индикатор безопасности
-          updateSecurityIndicator(twoFAEnabled, false); // passkeys будут обновлены позже
+          updateSecurityIndicator();
         }
       } catch {
         if (status2FA) status2FA.textContent = 'Ошибка загрузки';
@@ -4860,8 +4892,7 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
               close2FAPanel();
               api.showMsg?.('ok', '2FA включена ✅');
               // Обновляем индикатор безопасности
-              const hasPasskeys = passkeys?.length > 0 || false;
-              updateSecurityIndicator(true, hasPasskeys);
+              updateSecurityIndicator();
             };
           } catch {
             hint.style.display = '';
@@ -4957,8 +4988,7 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
           close2FAPanel();
           api.showMsg?.('ok', '2FA отключена');
           // Обновляем индикатор безопасности
-          const hasPasskeys = passkeys?.length > 0 || false;
-          updateSecurityIndicator(false, hasPasskeys);
+          updateSecurityIndicator();
         } catch {
           hint.style.display = '';
           hint.className = 'sec-hint sec-hint--error';
@@ -5007,6 +5037,7 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
 
         if (r.ok && d.ok) {
           passkeys = d.passkeys || [];
+          passkeyCount = passkeys.length;
           if (statusPasskeys) {
             statusPasskeys.textContent =
               passkeys.length > 0
@@ -5014,10 +5045,9 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
                 : 'Ключи не добавлены';
           }
           renderPasskeysContent();
-          
+
           // Обновляем индикатор безопасности
-          const has2FA = document.getElementById('sec2FAStatus')?.textContent?.includes('Включена') || false;
-          updateSecurityIndicator(has2FA, passkeys.length > 0);
+          updateSecurityIndicator();
         } else {
           if (statusPasskeys) statusPasskeys.textContent = 'Ошибка загрузки';
         }
@@ -5254,7 +5284,7 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
 
     async function loadDevices() {
       if (!listDevices) return;
-      
+
       try {
         const r = await apiCall('/auth/trusted-devices', {
           credentials: 'include',
