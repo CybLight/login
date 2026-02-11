@@ -3134,7 +3134,7 @@ async function viewAccount(tab = 'profile') {
 
   // Функция обновления индикатора безопасности
   function updateSecurityIndicator() {
-    console.log('🔒 updateSecurityIndicator START');
+    console.log('[SECURITY-INDICATOR-v3] START');
     
     try {
       const progressBar = document.getElementById('securityProgressBar');
@@ -3142,7 +3142,7 @@ async function viewAccount(tab = 'profile') {
       const check2FA = document.getElementById('2fa-check');
       const checkPasskey = document.getElementById('passkey-check');
 
-      console.log('🔒 updateSecurityIndicator called:', { 
+      console.log('[SECURITY-INDICATOR-v3] Values:', { 
         twoFAEnabled, 
         passkeyCount, 
         emailVerified,
@@ -3184,9 +3184,9 @@ async function viewAccount(tab = 'profile') {
     scoreText.textContent = `${score}%`;
     scoreText.style.color = color;
     
-    console.log('🔒 updateSecurityIndicator DONE - score:', score, 'color:', color);
+    console.log('[SECURITY-INDICATOR-v3] DONE - score:', score, 'color:', color);
     } catch (err) {
-      console.error('❌ updateSecurityIndicator ERROR:', err);
+      console.error('[SECURITY-INDICATOR-v3] ERROR:', err);
     }
   }
 
