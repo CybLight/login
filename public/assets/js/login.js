@@ -3131,6 +3131,7 @@ async function viewAccount(tab = 'profile') {
   // Общие переменные для отслеживания статуса безопасности
   let twoFAEnabled = false;
   let passkeyCount = 0;
+  let emailVerified = false;
 
   // Функция обновления индикатора безопасности
   function updateSecurityIndicator() {
@@ -3150,7 +3151,10 @@ async function viewAccount(tab = 'profile') {
         hasScoreText: !!scoreText 
       });
 
-    if (!progressBar || !scoreText) return;
+    if (!progressBar || !scoreText) {
+      console.log('[SECURITY-INDICATOR-v3] DOM elements not found, skipping update');
+      return;
+    }
 
     let score = emailVerified ? 30 : 0;
 
@@ -3611,12 +3615,21 @@ async function viewAccount(tab = 'profile') {
   const body = document.getElementById('accBody');
   body.innerHTML = renderTabHtml(tab, me);
 
+  // Вычисляем emailVerified из данных пользователя
+  const u = me?.user || {};
+  emailVerified = u.emailVerified === true ||
+    u.email_verified === true ||
+    u.email_verified === 1 ||
+    u.email_verified === '1' ||
+    Boolean(u.email_verified_at || u.emailVerifiedAt);
+
   // Создаем объект для управления состоянием безопасности
   const securityState = {
     get twoFAEnabled() { return twoFAEnabled; },
     set twoFAEnabled(val) { twoFAEnabled = val; },
     get passkeyCount() { return passkeyCount; },
     set passkeyCount(val) { passkeyCount = val; },
+    get emailVerified() { return emailVerified; },
     updateIndicator: updateSecurityIndicator
   };
 
