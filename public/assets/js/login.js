@@ -3128,6 +3128,60 @@ function updateEmailUiFromUser(u, refs) {
 }
 
 async function viewAccount(tab = 'profile') {
+  // Общие переменные для отслеживания статуса безопасности
+  let twoFAEnabled = false;
+  let passkeyCount = 0;
+
+  // Функция обновления индикатора безопасности
+  function updateSecurityIndicator() {
+    const progressBar = document.getElementById('securityProgressBar');
+    const scoreText = document.getElementById('securityScoreText');
+    const check2FA = document.getElementById('2fa-check');
+    const checkPasskey = document.getElementById('passkey-check');
+
+    console.log('updateSecurityIndicator called:', { 
+      twoFAEnabled, 
+      passkeyCount, 
+      emailVerified,
+      hasProgressBar: !!progressBar,
+      hasScoreText: !!scoreText 
+    });
+
+    if (!progressBar || !scoreText) return;
+
+    let score = emailVerified ? 30 : 0;
+
+    if (twoFAEnabled) {
+      score += 40;
+      if (check2FA) {
+        check2FA.innerHTML = `
+          <div style="font-size:18px;">✅</div>
+          <div style="flex:1;font-size:13px;">Двухфакторная аутентификация включена</div>
+          <div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>
+        `;
+        check2FA.style.opacity = '0.7';
+      }
+    }
+
+    if (passkeyCount > 0) {
+      score += 30;
+      if (checkPasskey) {
+        checkPasskey.innerHTML = `
+          <div style="font-size:18px;">✅</div>
+          <div style="flex:1;font-size:13px;">Ключ доступа (Passkey) добавлен</div>
+          <div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>
+        `;
+        checkPasskey.style.opacity = '0.7';
+      }
+    }
+
+    const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
+    progressBar.style.width = `${score}%`;
+    progressBar.style.background = color;
+    scoreText.textContent = `${score}%`;
+    scoreText.style.color = color;
+  }
+
   // ✅ убираем клубничный фон
   setNoStrawberries(true);
 
@@ -4559,60 +4613,6 @@ async function bindTabActions(tab, me, api) {
     const panel2FA = document.getElementById('sec2FAPanel');
     const content2FA = document.getElementById('sec2FAContent');
     const status2FA = document.getElementById('sec2FAStatus');
-
-    // Общие переменные для отслеживания статуса безопасности
-    let twoFAEnabled = false;
-    let passkeyCount = 0;
-
-    // Функция обновления индикатора безопасности
-    function updateSecurityIndicator() {
-      const progressBar = document.getElementById('securityProgressBar');
-      const scoreText = document.getElementById('securityScoreText');
-      const check2FA = document.getElementById('2fa-check');
-      const checkPasskey = document.getElementById('passkey-check');
-
-      console.log('updateSecurityIndicator called:', { 
-        twoFAEnabled, 
-        passkeyCount, 
-        emailVerified,
-        hasProgressBar: !!progressBar,
-        hasScoreText: !!scoreText 
-      });
-
-      if (!progressBar || !scoreText) return;
-
-      let score = emailVerified ? 30 : 0;
-
-      if (twoFAEnabled) {
-        score += 40;
-        if (check2FA) {
-          check2FA.innerHTML = `
-            <div style="font-size:18px;">✅</div>
-            <div style="flex:1;font-size:13px;">Двухфакторная аутентификация включена</div>
-            <div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>
-          `;
-          check2FA.style.opacity = '0.7';
-        }
-      }
-
-      if (passkeyCount > 0) {
-        score += 30;
-        if (checkPasskey) {
-          checkPasskey.innerHTML = `
-            <div style="font-size:18px;">✅</div>
-            <div style="flex:1;font-size:13px;">Ключ доступа (Passkey) добавлен</div>
-            <div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>
-          `;
-          checkPasskey.style.opacity = '0.7';
-        }
-      }
-
-      const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
-      progressBar.style.width = `${score}%`;
-      progressBar.style.background = color;
-      scoreText.textContent = `${score}%`;
-      scoreText.style.color = color;
-    }
 
     async function load2FAStatus() {
       try {
