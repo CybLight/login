@@ -4,6 +4,8 @@
     'account-profile',
     'account-security',
     'account-sessions',
+    'account-history',
+    'account-devices',
     'account-easter-eggs',
     'verify-email',
     'username',
@@ -13,8 +15,6 @@
     'reset',
     'done',
     'strawberry-history',
-    'trusted-devices',
-    'login-history',
   ]);
 
   function getRoute() {
