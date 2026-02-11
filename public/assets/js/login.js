@@ -965,8 +965,6 @@ function renderRoute(r) {
   if (r === 'account-profile') return viewAccount('profile');
   if (r === 'account-security') return viewAccount('security');
   if (r === 'account-sessions') return viewAccount('sessions');
-  if (r === 'account-devices') return viewAccount('devices');
-  if (r === 'account-history') return viewAccount('history');
   if (r === 'account-easter-eggs') return viewAccount('easter');
 
   // EMAIL VERIFY
@@ -3155,8 +3153,6 @@ async function viewAccount(tab = 'profile') {
             <button data-tab="profile">👤 Профиль</button>
             <button data-tab="security">🛡️ Безопасность</button>
             <button data-tab="sessions">🧩 Сессии</button>
-            <button data-tab="devices">📱 Устройства</button>
-            <button data-tab="history">📜 История</button>
             <button data-tab="easter">🍓 Пасхалки</button>
           </nav>
 
@@ -3235,8 +3231,6 @@ async function viewAccount(tab = 'profile') {
         profile: 'account-profile',
         security: 'account-security',
         sessions: 'account-sessions',
-        devices: 'account-devices',
-        history: 'account-history',
         easter: 'account-easter-eggs',
       };
       CybRouter.navigate(map[t] || 'account-profile');
@@ -3563,8 +3557,6 @@ function tabTitle(tab) {
   if (tab === 'profile') return 'Профиль';
   if (tab === 'security') return 'Безопасность';
   if (tab === 'sessions') return 'Сессии';
-  if (tab === 'devices') return 'Доверенные устройства';
-  if (tab === 'history') return 'История входов';
   if (tab === 'easter') return 'Пасхалки';
   return 'Учётка';
 }
@@ -3704,8 +3696,77 @@ function renderTabHtml(tab, me) {
 
     const passChangedText = passChanged ? escapeHtml(fmtTs(passChanged)) : '—';
 
+    // Расчет уровня безопасности (будет обновлен после загрузки 2FA и passkeys)
+    let securityScore = 0;
+    let securityChecks = [];
+    
+    if (emailVerified) {
+      securityScore += 30;
+      securityChecks.push({ done: true, text: 'Email подтвержден', icon: '✅' });
+    } else {
+      securityChecks.push({ done: false, text: 'Подтвердите email адрес', icon: '⚠️' });
+    }
+
+    // Placeholder для 2FA и passkeys (будут обновлены после загрузки)
+    securityChecks.push({ done: false, text: 'Включите двухфакторную аутентификацию', icon: '🔐', id: '2fa-check' });
+    securityChecks.push({ done: false, text: 'Добавьте ключ доступа (Passkey)', icon: '🔑', id: 'passkey-check' });
+
+    const securityLevel = securityScore >= 80 ? 'high' : securityScore >= 50 ? 'medium' : 'low';
+    const securityLevelText = securityScore >= 80 ? 'Надёжная защита' : securityScore >= 50 ? 'Средняя защита' : 'Требует улучшения';
+    const securityColor = securityScore >= 80 ? '#4ade80' : securityScore >= 50 ? '#fbbf24' : '#f87171';
+
     return `
     <div class="sec-list">
+
+      <!-- Security Check Card -->
+      <div style="background:rgba(255,255,255,.05);padding:16px;border-radius:12px;margin-bottom:16px;border:1px solid rgba(255,255,255,.1);">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:24px;">
+            ${securityScore >= 80 ? '✅' : securityScore >= 50 ? '⚠️' : '❌'}
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:18px;font-weight:700;margin-bottom:4px;">${securityLevelText}</div>
+            <div style="font-size:13px;opacity:0.7;">Проверка безопасности аккаунта</div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div style="background:rgba(255,255,255,.1);height:8px;border-radius:4px;overflow:hidden;margin-bottom:12px;">
+          <div id="securityProgressBar" style="height:100%;background:${securityColor};width:${securityScore}%;transition:width 0.5s ease, background 0.5s ease;"></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-size:14px;opacity:0.8;">Уровень защиты:</div>
+          <div id="securityScoreText" style="font-size:20px;font-weight:800;color:${securityColor};">${securityScore}%</div>
+        </div>
+
+        <!-- Security Checklist -->
+        <div id="securityChecklist" style="display:grid;gap:8px;">
+          ${securityChecks.map(check => `
+            <div ${check.id ? `id="${check.id}"` : ''} style="display:flex;align-items:center;gap:10px;padding:8px;background:rgba(255,255,255,.03);border-radius:6px;${check.done ? 'opacity:0.7;' : ''}">
+              <div style="font-size:18px;">${check.icon}</div>
+              <div style="flex:1;font-size:13px;">${check.text}</div>
+              ${check.done ? '<div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>' : ''}
+            </div>
+          `).join('')}
+        </div>
+
+        ${securityScore < 100 ? `
+          <div style="margin-top:12px;padding:10px;background:rgba(59,130,246,.15);border-radius:6px;border-left:3px solid #3b82f6;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;">💡 Рекомендация</div>
+            <div style="font-size:12px;opacity:0.9;">
+              ${securityScore < 30 ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.' : 
+                securityScore < 50 ? 'Добавьте еще несколько методов защиты для повышения безопасности.' :
+                'Отлично! Осталось совсем немного для максимальной защиты.'}
+            </div>
+          </div>
+        ` : `
+          <div style="margin-top:12px;padding:10px;background:rgba(34,197,94,.15);border-radius:6px;border-left:3px solid #22c55e;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🎉 Превосходно!</div>
+            <div style="font-size:12px;opacity:0.9;">Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.</div>
+          </div>
+        `}
+      </div>
 
       <!-- EMAIL item -->
       <button class="sec-item" id="secEmailItem" type="button">
@@ -3840,6 +3901,50 @@ function renderTabHtml(tab, me) {
         </div>
       </div>
 
+      <!-- Trusted Devices item -->
+      <button class="sec-item" id="secDevicesItem" type="button">
+        <div class="sec-left">
+          <div class="sec-title">Доверенные устройства</div>
+          <div class="sec-sub">Управление устройствами для входа с 2FA</div>
+        </div>
+        <div class="sec-right">
+          <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
+            <g><path fill="currentColor" d="M8.809,23.588l-1.617-1.176L14.764,12L7.191,1.588l1.617-1.176l8,11c0.255,0.351,0.255,0.825,0,1.176 L8.809,23.588z"></path></g>
+          </svg>
+        </div>
+      </button>
+
+      <div class="sec-panel" id="secDevicesPanel" style="display:none;">
+        <div class="sec-panel-inner">
+          <div class="sec-status" style="opacity:.85;line-height:1.5;margin-bottom:14px;">
+            Доверенные устройства для входа с 2FA. Эти устройства не требуют код при входе.
+          </div>
+          <div id="trustedDevicesList" style="color:var(--muted);">Загружаю...</div>
+        </div>
+      </div>
+
+      <!-- Login History item -->
+      <button class="sec-item" id="secHistoryItem" type="button">
+        <div class="sec-left">
+          <div class="sec-title">История входов</div>
+          <div class="sec-sub">Просмотр активности аккаунта</div>
+        </div>
+        <div class="sec-right">
+          <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
+            <g><path fill="currentColor" d="M8.809,23.588l-1.617-1.176L14.764,12L7.191,1.588l1.617-1.176l8,11c0.255,0.351,0.255,0.825,0,1.176 L8.809,23.588z"></path></g>
+          </svg>
+        </div>
+      </button>
+
+      <div class="sec-panel" id="secHistoryPanel" style="display:none;">
+        <div class="sec-panel-inner">
+          <div class="sec-status" style="opacity:.85;line-height:1.5;margin-bottom:14px;">
+            История входов в аккаунт за последнее время
+          </div>
+          <div id="loginHistoryList" style="color:var(--muted);">Загружаю...</div>
+        </div>
+      </div>
+
     </div>
   `;
   }
@@ -3873,23 +3978,7 @@ function renderTabHtml(tab, me) {
     `;
   }
 
-  if (tab === 'devices') {
-    return `
-      <div style="opacity:.85;line-height:1.5;margin-bottom:14px;">
-        Доверенные устройства для входа с 2FA. Эти устройства не требуют код при входе.
-      </div>
-      <div id="trustedDevicesList" style="color:var(--muted);">Загружаю...</div>
-    `;
-  }
 
-  if (tab === 'history') {
-    return `
-      <div style="opacity:.85;line-height:1.5;margin-bottom:14px;">
-        История входов в аккаунт за последнее время
-      </div>
-      <div id="loginHistoryList" style="color:var(--muted);">Загружаю...</div>
-    `;
-  }
 
   if (tab === 'easter') {
     const canSee = hasStrawberryAccess() || !!me?.user?.easter?.strawberry;
@@ -4447,6 +4536,48 @@ async function bindTabActions(tab, me, api) {
 
     let twoFAEnabled = false;
 
+    // Функция обновления индикатора безопасности
+    function updateSecurityIndicator(has2FA, hasPasskeys) {
+      const progressBar = document.getElementById('securityProgressBar');
+      const scoreText = document.getElementById('securityScoreText');
+      const check2FA = document.getElementById('2fa-check');
+      const checkPasskey = document.getElementById('passkey-check');
+
+      if (!progressBar || !scoreText) return;
+
+      let score = emailVerified ? 30 : 0;
+      
+      if (has2FA) {
+        score += 40;
+        if (check2FA) {
+          check2FA.innerHTML = `
+            <div style="font-size:18px;">✅</div>
+            <div style="flex:1;font-size:13px;">Двухфакторная аутентификация включена</div>
+            <div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>
+          `;
+          check2FA.style.opacity = '0.7';
+        }
+      }
+
+      if (hasPasskeys) {
+        score += 30;
+        if (checkPasskey) {
+          checkPasskey.innerHTML = `
+            <div style="font-size:18px;">✅</div>
+            <div style="flex:1;font-size:13px;">Ключ доступа (Passkey) добавлен</div>
+            <div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>
+          `;
+          checkPasskey.style.opacity = '0.7';
+        }
+      }
+
+      const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
+      progressBar.style.width = `${score}%`;
+      progressBar.style.background = color;
+      scoreText.textContent = `${score}%`;
+      scoreText.style.color = color;
+    }
+
     async function load2FAStatus() {
       try {
         const r = await apiCall('/auth/me', { credentials: 'include' });
@@ -4457,6 +4588,8 @@ async function bindTabActions(tab, me, api) {
             status2FA.textContent = twoFAEnabled ? '✅ Включена' : 'Отключена';
           }
           render2FAContent();
+          // Обновляем индикатор безопасности
+          updateSecurityIndicator(twoFAEnabled, false); // passkeys будут обновлены позже
         }
       } catch {
         if (status2FA) status2FA.textContent = 'Ошибка загрузки';
@@ -4726,6 +4859,9 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
               render2FAContent();
               close2FAPanel();
               api.showMsg?.('ok', '2FA включена ✅');
+              // Обновляем индикатор безопасности
+              const hasPasskeys = passkeys?.length > 0 || false;
+              updateSecurityIndicator(true, hasPasskeys);
             };
           } catch {
             hint.style.display = '';
@@ -4820,6 +4956,9 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
           render2FAContent();
           close2FAPanel();
           api.showMsg?.('ok', '2FA отключена');
+          // Обновляем индикатор безопасности
+          const hasPasskeys = passkeys?.length > 0 || false;
+          updateSecurityIndicator(false, hasPasskeys);
         } catch {
           hint.style.display = '';
           hint.className = 'sec-hint sec-hint--error';
@@ -4875,6 +5014,10 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
                 : 'Ключи не добавлены';
           }
           renderPasskeysContent();
+          
+          // Обновляем индикатор безопасности
+          const has2FA = document.getElementById('sec2FAStatus')?.textContent?.includes('Включена') || false;
+          updateSecurityIndicator(has2FA, passkeys.length > 0);
         } else {
           if (statusPasskeys) statusPasskeys.textContent = 'Ошибка загрузки';
         }
@@ -5103,6 +5246,186 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
   }
   // ==================== END PASSKEYS SECTION ====================
 
+  // ==================== TRUSTED DEVICES SECTION ====================
+  if (tab === 'security') {
+    const itemDevices = document.getElementById('secDevicesItem');
+    const panelDevices = document.getElementById('secDevicesPanel');
+    const listDevices = document.getElementById('trustedDevicesList');
+
+    async function loadDevices() {
+      if (!listDevices) return;
+      
+      try {
+        const r = await apiCall('/auth/trusted-devices', {
+          credentials: 'include',
+        });
+        const d = await r.json().catch(() => ({}));
+
+        if (!r.ok || !d.ok) {
+          listDevices.innerHTML = '<div style="color:var(--red);">Ошибка загрузки устройств</div>';
+          return;
+        }
+
+        const devices = d.devices || [];
+        if (devices.length === 0) {
+          listDevices.innerHTML = '<div style="opacity:.7;">Нет доверенных устройств</div>';
+          return;
+        }
+
+        const html = devices
+          .map((device) => {
+            const created = fmtTs(device.createdAt);
+            const lastUsed = device.lastUsedAt ? fmtTs(device.lastUsedAt) : 'Не использовалось';
+            const ip = device.ipAddress || '—';
+            const ua = device.userAgent || '—';
+
+            return `
+              <div style="background:rgba(255,255,255,.03);padding:12px;border-radius:8px;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:200px;">
+                    <div style="font-weight:600;margin-bottom:4px;">📱 Доверенное устройство</div>
+                    <div style="font-size:12px;opacity:0.7;">Добавлено: ${escapeHtml(created)}</div>
+                    <div style="font-size:12px;opacity:0.7;">Последний вход: ${escapeHtml(lastUsed)}</div>
+                  </div>
+                  <div style="flex:1;min-width:200px;font-size:12px;opacity:0.8;">
+                    <div><b>IP:</b> ${escapeHtml(ip)}</div>
+                    <div style="word-break:break-all;"><b>Устройство:</b> ${escapeHtml(ua)}</div>
+                    <button class="btn btn-outline" data-remove-device="${escapeHtml(device.id)}" 
+                            style="margin-top:8px;padding:4px 12px;font-size:12px;">
+                      Удалить
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+
+        listDevices.innerHTML = html;
+
+        // Обработчики удаления
+        document.querySelectorAll('[data-remove-device]').forEach((btn) => {
+          btn.onclick = async () => {
+            const deviceId = btn.getAttribute('data-remove-device');
+            if (!deviceId || !confirm('Удалить это доверенное устройство?')) return;
+
+            try {
+              const r = await apiCall(`/auth/trusted-devices/${deviceId}`, {
+                method: 'DELETE',
+                credentials: 'include',
+              });
+
+              if (r.ok) {
+                api.showMsg?.('ok', 'Устройство удалено');
+                loadDevices(); // Перезагружаем список
+              } else {
+                api.showMsg?.('error', 'Ошибка удаления');
+              }
+            } catch {
+              api.showMsg?.('error', 'Ошибка сети');
+            }
+          };
+        });
+      } catch (e) {
+        console.error('Error loading trusted devices:', e);
+        listDevices.innerHTML = '<div style="color:var(--red);">Ошибка сети</div>';
+      }
+    }
+
+    if (itemDevices && panelDevices) {
+      itemDevices.onclick = () => {
+        const isClosed = panelDevices.style.display === 'none';
+        if (isClosed) {
+          panelDevices.style.display = '';
+          loadDevices();
+        } else {
+          panelDevices.style.display = 'none';
+        }
+      };
+      panelDevices.style.display = 'none';
+    }
+  }
+  // ==================== END TRUSTED DEVICES SECTION ====================
+
+  // ==================== LOGIN HISTORY SECTION ====================
+  if (tab === 'security') {
+    const itemHistory = document.getElementById('secHistoryItem');
+    const panelHistory = document.getElementById('secHistoryPanel');
+    const listHistory = document.getElementById('loginHistoryList');
+
+    async function loadHistory() {
+      if (!listHistory) return;
+
+      try {
+        const r = await apiCall('/auth/login-history?limit=50', {
+          credentials: 'include',
+        });
+        const d = await r.json().catch(() => ({}));
+
+        if (!r.ok || !d.ok) {
+          listHistory.innerHTML = '<div style="color:var(--red);">Ошибка загрузки истории</div>';
+          return;
+        }
+
+        const history = d.history || [];
+        if (history.length === 0) {
+          listHistory.innerHTML = '<div style="opacity:.7;">История входов пуста</div>';
+          return;
+        }
+
+        const actionLabels = {
+          login_success: '✅ Успешный вход',
+          login_failed: '❌ Неудачная попытка',
+          login_2fa: '🔐 Вход с 2FA',
+          passkey_login: '🔑 Вход через passkey',
+        };
+
+        const html = history
+          .map((item) => {
+            const date = fmtTs(item.createdAt);
+            const label = actionLabels[item.action] || item.action;
+            const ip = item.ip || '—';
+            const ua = item.userAgent || '—';
+
+            return `
+              <div style="background:rgba(255,255,255,.03);padding:12px;border-radius:8px;margin-bottom:8px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+                  <div style="flex:1;min-width:200px;">
+                    <div style="font-weight:600;margin-bottom:4px;">${escapeHtml(label)}</div>
+                    <div style="font-size:12px;opacity:0.7;">${escapeHtml(date)}</div>
+                  </div>
+                  <div style="flex:1;min-width:200px;font-size:12px;opacity:0.8;">
+                    <div><b>IP:</b> ${escapeHtml(ip)}</div>
+                    <div style="word-break:break-all;"><b>Устройство:</b> ${escapeHtml(ua)}</div>
+                  </div>
+                </div>
+              </div>
+            `;
+          })
+          .join('');
+
+        listHistory.innerHTML = html;
+      } catch (e) {
+        console.error('Error loading login history:', e);
+        listHistory.innerHTML = '<div style="color:var(--red);">Ошибка сети</div>';
+      }
+    }
+
+    if (itemHistory && panelHistory) {
+      itemHistory.onclick = () => {
+        const isClosed = panelHistory.style.display === 'none';
+        if (isClosed) {
+          panelHistory.style.display = '';
+          loadHistory();
+        } else {
+          panelHistory.style.display = 'none';
+        }
+      };
+      panelHistory.style.display = 'none';
+    }
+  }
+  // ==================== END LOGIN HISTORY SECTION ====================
+
   // Sessions tab action
   if (tab === 'sessions') {
     const b = document.getElementById('logoutOthersBtn');
@@ -5128,153 +5451,6 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
           b.textContent = old;
         }
       };
-    }
-  }
-
-  // Devices tab
-  if (tab === 'devices') {
-    const listEl = document.getElementById('trustedDevicesList');
-    if (listEl) {
-      (async () => {
-        try {
-          const r = await apiCall('/auth/trusted-devices', {
-            credentials: 'include',
-          });
-          const d = await r.json().catch(() => ({}));
-
-          if (!r.ok || !d.ok) {
-            listEl.innerHTML = '<div style="color:var(--red);">Ошибка загрузки устройств</div>';
-            return;
-          }
-
-          const devices = d.devices || [];
-          if (devices.length === 0) {
-            listEl.innerHTML = '<div style="opacity:.7;">Нет доверенных устройств</div>';
-            return;
-          }
-
-          const html = devices
-            .map((device) => {
-              const created = fmtTs(device.createdAt);
-              const lastUsed = device.lastUsedAt ? fmtTs(device.lastUsedAt) : 'Не использовалось';
-              const ip = device.ipAddress || '—';
-              const ua = device.userAgent || '—';
-
-              return `
-                <div style="background:rgba(255,255,255,.03);padding:12px;border-radius:8px;margin-bottom:8px;">
-                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
-                    <div style="flex:1;min-width:200px;">
-                      <div style="font-weight:600;margin-bottom:4px;">📱 Доверенное устройство</div>
-                      <div style="font-size:12px;opacity:0.7;">Добавлено: ${escapeHtml(created)}</div>
-                      <div style="font-size:12px;opacity:0.7;">Последний вход: ${escapeHtml(lastUsed)}</div>
-                    </div>
-                    <div style="flex:1;min-width:200px;font-size:12px;opacity:0.8;">
-                      <div><b>IP:</b> ${escapeHtml(ip)}</div>
-                      <div style="word-break:break-all;"><b>Устройство:</b> ${escapeHtml(ua)}</div>
-                      <button class="btn btn-outline" data-remove-device="${escapeHtml(device.id)}" 
-                              style="margin-top:8px;padding:4px 12px;font-size:12px;">
-                        Удалить
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              `;
-            })
-            .join('');
-
-          listEl.innerHTML = html;
-
-          // Обработчики удаления
-          document.querySelectorAll('[data-remove-device]').forEach((btn) => {
-            btn.onclick = async () => {
-              const deviceId = btn.getAttribute('data-remove-device');
-              if (!deviceId || !confirm('Удалить это доверенное устройство?')) return;
-
-              try {
-                const r = await apiCall(`/auth/trusted-devices/${deviceId}`, {
-                  method: 'DELETE',
-                  credentials: 'include',
-                });
-
-                if (r.ok) {
-                  api.showMsg?.('ok', 'Устройство удалено');
-                  // Перезагружаем список
-                  setTimeout(() => CybRouter.navigate('account-devices'), 300);
-                } else {
-                  api.showMsg?.('error', 'Ошибка удаления');
-                }
-              } catch {
-                api.showMsg?.('error', 'Ошибка сети');
-              }
-            };
-          });
-        } catch (e) {
-          console.error('Error loading trusted devices:', e);
-          listEl.innerHTML = '<div style="color:var(--red);">Ошибка сети</div>';
-        }
-      })();
-    }
-  }
-
-  // History tab
-  if (tab === 'history') {
-    const listEl = document.getElementById('loginHistoryList');
-    if (listEl) {
-      (async () => {
-        try {
-          const r = await apiCall('/auth/login-history?limit=50', {
-            credentials: 'include',
-          });
-          const d = await r.json().catch(() => ({}));
-
-          if (!r.ok || !d.ok) {
-            listEl.innerHTML = '<div style="color:var(--red);">Ошибка загрузки истории</div>';
-            return;
-          }
-
-          const history = d.history || [];
-          if (history.length === 0) {
-            listEl.innerHTML = '<div style="opacity:.7;">История входов пуста</div>';
-            return;
-          }
-
-          const actionLabels = {
-            login_success: '✅ Успешный вход',
-            login_failed: '❌ Неудачная попытка',
-            login_2fa: '🔐 Вход с 2FA',
-            passkey_login: '🔑 Вход через passkey',
-          };
-
-          const html = history
-            .map((item) => {
-              const date = fmtTs(item.createdAt);
-              const label = actionLabels[item.action] || item.action;
-              const ip = item.ip || '—';
-              const ua = item.userAgent || '—';
-
-              return `
-                <div style="background:rgba(255,255,255,.03);padding:12px;border-radius:8px;margin-bottom:8px;">
-                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
-                    <div style="flex:1;min-width:200px;">
-                      <div style="font-weight:600;margin-bottom:4px;">${escapeHtml(label)}</div>
-                      <div style="font-size:12px;opacity:0.7;">${escapeHtml(date)}</div>
-                    </div>
-                    <div style="flex:1;min-width:200px;font-size:12px;opacity:0.8;">
-                      <div><b>IP:</b> ${escapeHtml(ip)}</div>
-                      <div style="word-break:break-all;"><b>Устройство:</b> ${escapeHtml(ua)}</div>
-                    </div>
-                  </div>
-                </div>
-              `;
-            })
-            .join('');
-
-          listEl.innerHTML = html;
-        } catch (e) {
-          console.error('Error loading login history:', e);
-          listEl.innerHTML = '<div style="color:var(--red);">Ошибка сети</div>';
-        }
-      })();
     }
   }
 
