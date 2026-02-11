@@ -498,11 +498,14 @@ async function apiCall(endpoint, options = {}, timeoutMs = 10000) {
 
     // Автоматический редирект на 401 только для защищенных страниц
     // НЕ редиректим если это checkSession или сам login/register
+    // Также не редиректим для истории и устройств - они сами обрабатывают ошибки
     if (
       response.status === 401 &&
       !endpoint.includes('/auth/me') &&
       !endpoint.includes('/auth/login') &&
-      !endpoint.includes('/auth/register')
+      !endpoint.includes('/auth/register') &&
+      !endpoint.includes('/auth/login-history') &&
+      !endpoint.includes('/auth/trusted-devices')
     ) {
       console.log('401 detected, redirecting to username');
       CybRouter.navigate('username');
@@ -1507,14 +1510,10 @@ function viewUsername() {
 
       // 6. Успешный вход!
       console.log('✅ Passkey login successful');
+      showMsg('ok', 'Вход выполнен! Перенаправляю…');
 
-      // Сохраняем токен если есть
-      if (loginData.token) {
-        setStorage('cyb_token', loginData.token, sessionStorage);
-      }
-
-      // Переход в аккаунт
-      CybRouter.navigate('account');
+      // Переход в аккаунт (используем правильный роут)
+      CybRouter.navigate('account-profile');
     } catch (err) {
       console.error('Passkey login error:', err);
 
