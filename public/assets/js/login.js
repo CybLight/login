@@ -1416,11 +1416,12 @@ function viewUsername() {
       }
 
       const optionsData = await optionsRes.json();
-      if (!optionsData.ok || !optionsData.options) {
+      if (!optionsData.ok || !optionsData.options || !optionsData.challengeId) {
         throw new Error('Некорректный ответ сервера');
       }
 
       const options = optionsData.options;
+      const challengeId = optionsData.challengeId;
 
       // 2. Преобразуем challenge и allowCredentials из base64url в ArrayBuffer
       const challenge = Uint8Array.from(
@@ -1495,7 +1496,7 @@ function viewUsername() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ credential: credentialData }),
+        body: JSON.stringify({ challengeId, credential: credentialData }),
       });
 
       const loginData = await loginRes.json().catch(() => ({}));
