@@ -1510,7 +1510,6 @@ function viewUsername() {
 
       // 6. Успешный вход!
       console.log('✅ Passkey login successful');
-      showMsg('ok', 'Вход выполнен! Перенаправляю…');
 
       // Переход в аккаунт (используем правильный роут)
       CybRouter.navigate('account-profile');
