@@ -3134,18 +3134,21 @@ async function viewAccount(tab = 'profile') {
 
   // Функция обновления индикатора безопасности
   function updateSecurityIndicator() {
-    const progressBar = document.getElementById('securityProgressBar');
-    const scoreText = document.getElementById('securityScoreText');
-    const check2FA = document.getElementById('2fa-check');
-    const checkPasskey = document.getElementById('passkey-check');
+    console.log('🔒 updateSecurityIndicator START');
+    
+    try {
+      const progressBar = document.getElementById('securityProgressBar');
+      const scoreText = document.getElementById('securityScoreText');
+      const check2FA = document.getElementById('2fa-check');
+      const checkPasskey = document.getElementById('passkey-check');
 
-    console.log('updateSecurityIndicator called:', { 
-      twoFAEnabled, 
-      passkeyCount, 
-      emailVerified,
-      hasProgressBar: !!progressBar,
-      hasScoreText: !!scoreText 
-    });
+      console.log('🔒 updateSecurityIndicator called:', { 
+        twoFAEnabled, 
+        passkeyCount, 
+        emailVerified,
+        hasProgressBar: !!progressBar,
+        hasScoreText: !!scoreText 
+      });
 
     if (!progressBar || !scoreText) return;
 
@@ -3180,6 +3183,11 @@ async function viewAccount(tab = 'profile') {
     progressBar.style.background = color;
     scoreText.textContent = `${score}%`;
     scoreText.style.color = color;
+    
+    console.log('🔒 updateSecurityIndicator DONE - score:', score, 'color:', color);
+    } catch (err) {
+      console.error('❌ updateSecurityIndicator ERROR:', err);
+    }
   }
 
   // ✅ убираем клубничный фон
