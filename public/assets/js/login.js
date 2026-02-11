@@ -4571,6 +4571,14 @@ async function bindTabActions(tab, me, api) {
       const check2FA = document.getElementById('2fa-check');
       const checkPasskey = document.getElementById('passkey-check');
 
+      console.log('updateSecurityIndicator called:', { 
+        twoFAEnabled, 
+        passkeyCount, 
+        emailVerified,
+        hasProgressBar: !!progressBar,
+        hasScoreText: !!scoreText 
+      });
+
       if (!progressBar || !scoreText) return;
 
       let score = emailVerified ? 30 : 0;
@@ -4610,8 +4618,10 @@ async function bindTabActions(tab, me, api) {
       try {
         const r = await apiCall('/auth/me', { credentials: 'include' });
         const data = await r.json().catch(() => ({}));
+        console.log('load2FAStatus response:', { ok: r.ok, user: data.user });
         if (r.ok && data.user) {
           twoFAEnabled = Boolean(data.user.totpEnabled || data.user.totp_enabled);
+          console.log('2FA status loaded:', twoFAEnabled);
           if (status2FA) {
             status2FA.textContent = twoFAEnabled ? '✅ Включена' : 'Отключена';
           }
