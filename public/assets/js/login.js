@@ -3611,8 +3611,17 @@ async function viewAccount(tab = 'profile') {
   const body = document.getElementById('accBody');
   body.innerHTML = renderTabHtml(tab, me);
 
+  // Создаем объект для управления состоянием безопасности
+  const securityState = {
+    get twoFAEnabled() { return twoFAEnabled; },
+    set twoFAEnabled(val) { twoFAEnabled = val; },
+    get passkeyCount() { return passkeyCount; },
+    set passkeyCount(val) { passkeyCount = val; },
+    updateIndicator: updateSecurityIndicator
+  };
+
   // attach handlers inside tabs
-  bindTabActions(tab, me, { showMsg, clearMsg });
+  bindTabActions(tab, me, { showMsg, clearMsg, securityState });
 }
 
 function tabTitle(tab) {
@@ -4628,14 +4637,19 @@ async function bindTabActions(tab, me, api) {
         const data = await r.json().catch(() => ({}));
         console.log('load2FAStatus response:', { ok: r.ok, user: data.user });
         if (r.ok && data.user) {
-          twoFAEnabled = Boolean(data.user.totpEnabled || data.user.totp_enabled);
-          console.log('2FA status loaded:', twoFAEnabled);
+          const enabled = Boolean(data.user.totpEnabled || data.user.totp_enabled);
+          if (api.securityState) {
+            api.securityState.twoFAEnabled = enabled;
+          }
+          console.log('2FA status loaded:', enabled);
           if (status2FA) {
-            status2FA.textContent = twoFAEnabled ? '✅ Включена' : 'Отключена';
+            status2FA.textContent = enabled ? '✅ Включена' : 'Отключена';
           }
           render2FAContent();
           // Обновляем индикатор безопасности
-          updateSecurityIndicator();
+          if (api.securityState?.updateIndicator) {
+            api.securityState.updateIndicator();
+          }
         }
       } catch {
         if (status2FA) status2FA.textContent = 'Ошибка загрузки';
@@ -4645,7 +4659,9 @@ async function bindTabActions(tab, me, api) {
     function render2FAContent() {
       if (!content2FA) return;
 
-      if (twoFAEnabled) {
+      const enabled = api.securityState?.twoFAEnabled || false;
+
+      if (enabled) {
         content2FA.innerHTML = `
           <div class="sec-status">✅ Двухфакторная аутентификация активна</div>
           <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
@@ -4901,12 +4917,16 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
             };
 
             document.getElementById('done2FABtn').onclick = () => {
-              twoFAEnabled = true;
+              if (api.securityState) {
+                api.securityState.twoFAEnabled = true;
+              }
               render2FAContent();
               close2FAPanel();
               api.showMsg?.('ok', '2FA включена ✅');
               // Обновляем индикатор безопасности
-              updateSecurityIndicator();
+              if (api.securityState?.updateIndicator) {
+                api.securityState.updateIndicator();
+              }
             };
           } catch {
             hint.style.display = '';
@@ -4997,12 +5017,16 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
             return;
           }
 
-          twoFAEnabled = false;
+          if (api.securityState) {
+            api.securityState.twoFAEnabled = false;
+          }
           render2FAContent();
           close2FAPanel();
           api.showMsg?.('ok', '2FA отключена');
           // Обновляем индикатор безопасности
-          updateSecurityIndicator();
+          if (api.securityState?.updateIndicator) {
+            api.securityState.updateIndicator();
+          }
         } catch {
           hint.style.display = '';
           hint.className = 'sec-hint sec-hint--error';
@@ -5049,8 +5073,11 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
 
         if (r.ok && d.ok) {
           passkeys = d.passkeys || [];
-          passkeyCount = passkeys.length;
-          console.log('loadPasskeys: passkeys count =', passkeyCount);
+          const count = passkeys.length;
+          if (api.securityState) {
+            api.securityState.passkeyCount = count;
+          }
+          console.log('loadPasskeys: passkeys count =', count);
           if (statusPasskeys) {
             statusPasskeys.textContent =
               passkeys.length > 0
@@ -5061,7 +5088,9 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
 
           // Обновляем индикатор безопасности
           console.log('Calling updateSecurityIndicator from loadPasskeys');
-          updateSecurityIndicator();
+          if (api.securityState?.updateIndicator) {
+            api.securityState.updateIndicator();
+          }
         } else {
           if (statusPasskeys) statusPasskeys.textContent = 'Ошибка загрузки';
         }
