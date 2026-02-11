@@ -5015,10 +5015,8 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
     }
 
     load2FAStatus();
-  }
 
   // ==================== PASSKEYS SECTION ====================
-  if (tab === 'security') {
     const itemPasskeys = document.getElementById('secPasskeysItem');
     const panelPasskeys = document.getElementById('secPasskeysPanel');
     const contentPasskeys = document.getElementById('secPasskeysContent');
@@ -5269,11 +5267,9 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
     }
 
     loadPasskeys();
-  }
   // ==================== END PASSKEYS SECTION ====================
 
   // ==================== TRUSTED DEVICES SECTION ====================
-  if (tab === 'security') {
     const itemDevices = document.getElementById('secDevicesItem');
     const panelDevices = document.getElementById('secDevicesPanel');
     const listDevices = document.getElementById('trustedDevicesList');
@@ -5370,11 +5366,9 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
       };
       panelDevices.style.display = 'none';
     }
-  }
   // ==================== END TRUSTED DEVICES SECTION ====================
 
   // ==================== LOGIN HISTORY SECTION ====================
-  if (tab === 'security') {
     const itemHistory = document.getElementById('secHistoryItem');
     const panelHistory = document.getElementById('secHistoryPanel');
     const listHistory = document.getElementById('loginHistoryList');
@@ -5451,6 +5445,7 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
     }
   }
   // ==================== END LOGIN HISTORY SECTION ====================
+  // ==================== END SECURITY TAB ====================
 
   // Sessions tab action
   if (tab === 'sessions') {
