@@ -1272,6 +1272,17 @@
   background: rgba(0, 0, 0, 0.12);
   color: inherit;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-icon {
+  font-size: 32px;
+  line-height: 1;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .account-nav button:hover {
@@ -2286,6 +2297,16 @@ body.no-strawberries .strawberry-ring-wave {
     width: 100%;
     flex: 0 0 auto;
   }
+  .account-nav button {
+    font-size: 14px;
+    padding: 8px 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .nav-icon {
+    font-size: 24px;
+  }
   .kv {
     grid-template-columns: 1fr;
   }
@@ -2617,33 +2638,49 @@ body.no-strawberries .strawberry-ring-wave {
 /* Планшеты: увеличиваем отступ от контента до футера */
 @media (min-width: 481px) and (max-width: 1024px) {
   .account-page {
-    padding-bottom: 200px; /* Отступ для футера + 30px */
+    padding-bottom: 250px; /* Отступ для футера + 30px */
   }
 
   .auth-center {
-    padding-bottom: 200px; /* Отступ для футера + 30px */
+    padding-bottom: 250px; /* Отступ для футера + 30px */
   }
 }
 
 /* Экраны 360px-480px: увеличиваем отступ */
 @media (max-width: 480px) {
   .account-page {
-    padding-bottom: 240px; /* Отступ для высокого футера + 30px */
+    padding-bottom: 280px; /* Отступ для высокого футера + 30px */
   }
 
   .auth-center {
-    padding-bottom: 240px; /* Отступ для высокого футера + 30px */
+    padding-bottom: 280px; /* Отступ для высокого футера + 30px */
+  }
+
+  .account-nav button {
+    font-size: 13px;
+    padding: 7px 8px;
+  }
+  .nav-icon {
+    font-size: 20px;
   }
 }
 
 /* Очень узкие экраны (360px и меньше): максимальный отступ */
 @media (max-width: 360px) {
   .account-page {
-    padding-bottom: 260px; /* Максимальный отступ для узких экранов */
+    padding-bottom: 300px; /* Максимальный отступ для узких экранов */
   }
 
   .auth-center {
-    padding-bottom: 260px; /* Максимальный отступ для узких экранов */
+    padding-bottom: 300px; /* Максимальный отступ для узких экранов */
+  }
+
+  .account-nav button {
+    font-size: 12px;
+    padding: 6px 7px;
+  }
+  .nav-icon {
+    font-size: 18px;
   }
 
   .auth-footer {
