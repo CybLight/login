@@ -3136,96 +3136,122 @@ async function viewAccount(tab = 'profile') {
   // Функция обновления индикатора безопасности
   function updateSecurityIndicator() {
     console.log('[SECURITY-INDICATOR-v3] START');
-    
+
     try {
       const progressBar = document.getElementById('securityProgressBar');
       const scoreText = document.getElementById('securityScoreText');
       const check2FA = document.getElementById('2fa-check');
       const checkPasskey = document.getElementById('passkey-check');
-      const securityHeader = document.querySelector('.sec-list > div:first-child');
+      const itemSecurityCheck = document.getElementById('secSecurityCheckItem');
+      const panelSecurityCheck = document.getElementById('secSecurityCheckPanel');
+      const securityStatusBadge = document.getElementById('securityStatusBadge');
+      const securityRecommendations = document.getElementById('securityRecommendations');
 
-      console.log('[SECURITY-INDICATOR-v3] Values:', { 
-        twoFAEnabled, 
-        passkeyCount, 
+      console.log('[SECURITY-INDICATOR-v3] Values:', {
+        twoFAEnabled,
+        passkeyCount,
         emailVerified,
         hasProgressBar: !!progressBar,
-        hasScoreText: !!scoreText 
+        hasScoreText: !!scoreText,
       });
 
-    if (!progressBar || !scoreText) {
-      console.log('[SECURITY-INDICATOR-v3] DOM elements not found, skipping update');
-      return;
-    }
+      if (!progressBar || !scoreText) {
+        console.log('[SECURITY-INDICATOR-v3] DOM elements not found, skipping update');
+        return;
+      }
 
-    let score = emailVerified ? 30 : 0;
+      let score = emailVerified ? 30 : 0;
 
-    if (twoFAEnabled) {
-      score += 40;
-      if (check2FA) {
-        check2FA.innerHTML = `
+      if (twoFAEnabled) {
+        score += 40;
+        if (check2FA) {
+          check2FA.innerHTML = `
           <div style="font-size:18px;">✅</div>
           <div style="flex:1;font-size:13px;">Двухфакторная аутентификация включена</div>
           <div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>
         `;
-        check2FA.style.opacity = '0.7';
+          check2FA.style.opacity = '0.7';
+        }
       }
-    }
 
-    if (passkeyCount > 0) {
-      score += 30;
-      if (checkPasskey) {
-        checkPasskey.innerHTML = `
+      if (passkeyCount > 0) {
+        score += 30;
+        if (checkPasskey) {
+          checkPasskey.innerHTML = `
           <div style="font-size:18px;">✅</div>
           <div style="flex:1;font-size:13px;">Ключ доступа (Passkey) добавлен</div>
           <div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>
         `;
-        checkPasskey.style.opacity = '0.7';
+          checkPasskey.style.opacity = '0.7';
+        }
       }
-    }
 
-    const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
-    const icon = score >= 80 ? '✅' : score >= 50 ? '⚠️' : '❌';
-    const levelText = score >= 80 ? 'Надёжная защита' : score >= 50 ? 'Средняя защита' : 'Требует улучшения';
-    
-    progressBar.style.width = `${score}%`;
-    progressBar.style.background = color;
-    scoreText.textContent = `${score}%`;
-    scoreText.style.color = color;
-    
-    // Обновляем иконку и заголовок
-    if (securityHeader) {
-      const iconDiv = securityHeader.querySelector('div > div:first-child');
-      const titleDiv = securityHeader.querySelector('div > div:last-child > div:first-child');
-      if (iconDiv) iconDiv.textContent = icon;
-      if (titleDiv) titleDiv.textContent = levelText;
-    }
-    
-    // Обновляем блок рекомендаций
-    const recommendationBlock = securityHeader?.querySelector('div[style*="margin-top:12px"]');
-    if (recommendationBlock) {
-      if (score >= 100) {
-        recommendationBlock.style.background = 'rgba(34,197,94,.15)';
-        recommendationBlock.style.borderLeft = '3px solid #22c55e';
-        recommendationBlock.innerHTML = `
-          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🎉 Превосходно!</div>
-          <div style="font-size:12px;opacity:0.9;">Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.</div>
-        `;
-      } else {
-        recommendationBlock.style.background = 'rgba(59,130,246,.15)';
-        recommendationBlock.style.borderLeft = '3px solid #3b82f6';
-        const recommendationText = score < 30
-          ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.'
-          : score < 50
-            ? 'Добавьте еще несколько методов защиты для повышения безопасности.'
-            : 'Отлично! Осталось совсем немного для максимальной защиты.';
-        recommendationBlock.innerHTML = `
-          <div style="font-size:12px;font-weight:600;margin-bottom:4px;">💡 Рекомендация</div>
-          <div style="font-size:12px;opacity:0.9;">${recommendationText}</div>
-        `;
+      const color = score >= 80 ? '#4ade80' : score >= 50 ? '#fbbf24' : '#f87171';
+      const shieldColor = score >= 100 ? '#22c55e' : score >= 50 ? '#fbbf24' : '#ef4444';
+      const badgeText = score >= 100 ? '✓ Защищён' : score >= 50 ? '⚠ Средняя' : '⚠ Низкая';
+      const itemTitle = score >= 100 ? 'Ваш аккаунт под защитой' : 'Проверка безопасности';
+      const itemSubtitle =
+        score >= 100
+          ? 'Ваш аккаунт прошёл Проверку безопасности. Рекомендуемых действий не найдено.'
+          : 'Обнаружены рекомендации по защите';
+
+      // Обновляем прогресс-бар и процент
+      progressBar.style.width = `${score}%`;
+      progressBar.style.background = color;
+      scoreText.textContent = `${score}%`;
+      scoreText.style.color = color;
+
+      // Обновляем заголовок и подзаголовок секции
+      if (itemSecurityCheck) {
+        const titleElem = itemSecurityCheck.querySelector('.sec-title');
+        const subtitleElem = itemSecurityCheck.querySelector('.sec-sub');
+        const shieldSvg = itemSecurityCheck.querySelector('svg path');
+
+        if (titleElem) titleElem.textContent = itemTitle;
+        if (subtitleElem) subtitleElem.textContent = itemSubtitle;
+        if (shieldSvg) shieldSvg.setAttribute('fill', shieldColor);
       }
-    }
-    
-    console.log('[SECURITY-INDICATOR-v3] DONE - score:', score, 'color:', color);
+
+      // Обновляем бейдж статуса
+      if (securityStatusBadge) {
+        securityStatusBadge.textContent = badgeText;
+        securityStatusBadge.style.color = shieldColor;
+      }
+
+      // Обновляем блок рекомендаций
+      if (securityRecommendations) {
+        if (score >= 100) {
+          securityRecommendations.innerHTML = `
+          <div style="padding:10px;background:rgba(34,197,94,.15);border-radius:6px;border-left:3px solid #22c55e;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🎉 Превосходно!</div>
+            <div style="font-size:12px;opacity:0.9;">Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.</div>
+          </div>
+        `;
+        } else {
+          const recommendationText =
+            score < 30
+              ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.'
+              : score < 50
+                ? 'Добавьте еще несколько методов защиты для повышения безопасности.'
+                : 'Отлично! Осталось совсем немного для максимальной защиты.';
+          securityRecommendations.innerHTML = `
+          <div style="padding:10px;background:rgba(59,130,246,.15);border-radius:6px;border-left:3px solid #3b82f6;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:4px;">💡 Рекомендация</div>
+            <div style="font-size:12px;opacity:0.9;">${recommendationText}</div>
+          </div>
+        `;
+        }
+      }
+
+      // Автоматически открываем панель если есть рекомендации (score < 100)
+      if (panelSecurityCheck) {
+        // Открываем только если панель закрыта и score < 100
+        if (score < 100 && panelSecurityCheck.style.display === 'none') {
+          panelSecurityCheck.style.display = 'block';
+        }
+      }
+
+      console.log('[SECURITY-INDICATOR-v3] DONE - score:', score, 'color:', color);
     } catch (err) {
       console.error('[SECURITY-INDICATOR-v3] ERROR:', err);
     }
@@ -3654,7 +3680,8 @@ async function viewAccount(tab = 'profile') {
 
   // Вычисляем emailVerified из данных пользователя
   const u = me?.user || {};
-  emailVerified = u.emailVerified === true ||
+  emailVerified =
+    u.emailVerified === true ||
     u.email_verified === true ||
     u.email_verified === 1 ||
     u.email_verified === '1' ||
@@ -3662,12 +3689,22 @@ async function viewAccount(tab = 'profile') {
 
   // Создаем объект для управления состоянием безопасности
   const securityState = {
-    get twoFAEnabled() { return twoFAEnabled; },
-    set twoFAEnabled(val) { twoFAEnabled = val; },
-    get passkeyCount() { return passkeyCount; },
-    set passkeyCount(val) { passkeyCount = val; },
-    get emailVerified() { return emailVerified; },
-    updateIndicator: updateSecurityIndicator
+    get twoFAEnabled() {
+      return twoFAEnabled;
+    },
+    set twoFAEnabled(val) {
+      twoFAEnabled = val;
+    },
+    get passkeyCount() {
+      return passkeyCount;
+    },
+    set passkeyCount(val) {
+      passkeyCount = val;
+    },
+    get emailVerified() {
+      return emailVerified;
+    },
+    updateIndicator: updateSecurityIndicator,
   };
 
   // attach handlers inside tabs
@@ -3852,69 +3889,93 @@ function renderTabHtml(tab, me) {
     const securityColor =
       securityScore >= 80 ? '#4ade80' : securityScore >= 50 ? '#fbbf24' : '#f87171';
 
+    const securityItemTitle =
+      securityScore >= 100 ? 'Ваш аккаунт под защитой' : 'Проверка безопасности';
+    const securityItemSubtitle =
+      securityScore >= 100
+        ? 'Ваш аккаунт прошёл Проверку безопасности. Рекомендуемых действий не найдено.'
+        : 'Обнаружены рекомендации по защите';
+
     return `
     <div class="sec-list">
 
-      <!-- Security Check Card -->
-      <div style="background:rgba(255,255,255,.05);padding:16px;border-radius:12px;margin-bottom:16px;border:1px solid rgba(255,255,255,.1);">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:24px;">
-            ${securityScore >= 80 ? '✅' : securityScore >= 50 ? '⚠️' : '❌'}
+      <!-- Security Check Item -->
+      <button class="sec-item" id="secSecurityCheckItem" type="button">
+        <div class="sec-left">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L4 6V11C4 16.55 7.84 21.74 13 23C18.16 21.74 22 16.55 22 11V6L12 2Z" fill="${securityScore >= 100 ? '#22c55e' : securityScore >= 50 ? '#fbbf24' : '#ef4444'}" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="sec-title">${securityItemTitle}</div>
           </div>
-          <div style="flex:1;">
-            <div style="font-size:18px;font-weight:700;margin-bottom:4px;">${securityLevelText}</div>
-            <div style="font-size:13px;opacity:0.7;">Проверка безопасности аккаунта</div>
+          <div class="sec-sub">${securityItemSubtitle}</div>
+        </div>
+        <div class="sec-right">
+          <div id="securityStatusBadge" style="font-size:13px;font-weight:600;color:${securityScore >= 100 ? '#22c55e' : securityScore >= 50 ? '#fbbf24' : '#ef4444'};">
+            ${securityScore >= 100 ? '✓ Защищён' : securityScore >= 50 ? '⚠ Средняя' : '⚠ Низкая'}
           </div>
+          <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
+            <g><path fill="currentColor" d="M8.809,23.588l-1.617-1.176L14.764,12L7.191,1.588l1.617-1.176l8,11c0.255,0.351,0.255,0.825,0,1.176 L8.809,23.588z"></path></g>
+          </svg>
         </div>
+      </button>
 
-        <!-- Progress Bar -->
-        <div style="background:rgba(255,255,255,.1);height:8px;border-radius:4px;overflow:hidden;margin-bottom:12px;">
-          <div id="securityProgressBar" style="height:100%;background:${securityColor};width:${securityScore}%;transition:width 0.5s ease, background 0.5s ease;"></div>
-        </div>
+      <div class="sec-panel" id="secSecurityCheckPanel" style="display:${securityScore < 100 ? 'block' : 'none'};">
+        <div class="sec-panel-inner">
+          <!-- Progress Bar -->
+          <div style="background:rgba(255,255,255,.1);height:8px;border-radius:4px;overflow:hidden;margin-bottom:12px;">
+            <div id="securityProgressBar" style="height:100%;background:${securityColor};width:${securityScore}%;transition:width 0.5s ease, background 0.5s ease;"></div>
+          </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <div style="font-size:14px;opacity:0.8;">Уровень защиты:</div>
-          <div id="securityScoreText" style="font-size:20px;font-weight:800;color:${securityColor};">${securityScore}%</div>
-        </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="font-size:14px;opacity:0.8;">Уровень защиты:</div>
+            <div id="securityScoreText" style="font-size:20px;font-weight:800;color:${securityColor};">${securityScore}%</div>
+          </div>
 
-        <!-- Security Checklist -->
-        <div id="securityChecklist" style="display:grid;gap:8px;">
-          ${securityChecks
-            .map(
-              (check) => `
-            <div ${check.id ? `id="${check.id}"` : ''} style="display:flex;align-items:center;gap:10px;padding:8px;background:rgba(255,255,255,.03);border-radius:6px;${check.done ? 'opacity:0.7;' : ''}">
-              <div style="font-size:18px;">${check.icon}</div>
-              <div style="flex:1;font-size:13px;">${check.text}</div>
-              ${check.done ? '<div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>' : ''}
+          <!-- Security Checklist -->
+          <div id="securityChecklist" style="display:grid;gap:8px;margin-bottom:12px;">
+            ${securityChecks
+              .map(
+                (check) => `
+              <div ${check.id ? `id="${check.id}"` : ''} style="display:flex;align-items:center;gap:10px;padding:8px;background:rgba(255,255,255,.03);border-radius:6px;${check.done ? 'opacity:0.7;' : ''}">
+                <div style="font-size:18px;">${check.icon}</div>
+                <div style="flex:1;font-size:13px;">${check.text}</div>
+                ${check.done ? '<div style="font-size:12px;color:#4ade80;font-weight:600;">Выполнено</div>' : ''}
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+
+          <!-- Recommendations -->
+          <div id="securityRecommendations">
+            ${
+              securityScore < 100
+                ? `
+            <div style="padding:10px;background:rgba(59,130,246,.15);border-radius:6px;border-left:3px solid #3b82f6;">
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px;">💡 Рекомендация</div>
+              <div style="font-size:12px;opacity:0.9;">
+                ${
+                  securityScore < 30
+                    ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.'
+                    : securityScore < 50
+                      ? 'Добавьте еще несколько методов защиты для повышения безопасности.'
+                      : 'Отлично! Осталось совсем немного для максимальной защиты.'
+                }
+              </div>
             </div>
           `
-            )
-            .join('')}
-        </div>
-
-        ${
-          securityScore < 100
-            ? `
-          <div style="margin-top:12px;padding:10px;background:rgba(59,130,246,.15);border-radius:6px;border-left:3px solid #3b82f6;">
-            <div style="font-size:12px;font-weight:600;margin-bottom:4px;">💡 Рекомендация</div>
-            <div style="font-size:12px;opacity:0.9;">
-              ${
-                securityScore < 30
-                  ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.'
-                  : securityScore < 50
-                    ? 'Добавьте еще несколько методов защиты для повышения безопасности.'
-                    : 'Отлично! Осталось совсем немного для максимальной защиты.'
-              }
+                : `
+            <div style="padding:10px;background:rgba(34,197,94,.15);border-radius:6px;border-left:3px solid #22c55e;">
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🎉 Превосходно!</div>
+              <div style="font-size:12px;opacity:0.9;">Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.</div>
             </div>
+          `
+            }
           </div>
-        `
-            : `
-          <div style="margin-top:12px;padding:10px;background:rgba(34,197,94,.15);border-radius:6px;border-left:3px solid #22c55e;">
-            <div style="font-size:12px;font-weight:600;margin-bottom:4px;">🎉 Превосходно!</div>
-            <div style="font-size:12px;opacity:0.9;">Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.</div>
-          </div>
-        `
-        }
+        </div>
       </div>
 
       <!-- EMAIL item -->
@@ -4676,6 +4737,18 @@ async function bindTabActions(tab, me, api) {
 
   // --- 2FA handlers (security) ---
   if (tab === 'security') {
+    // ==================== SECURITY CHECK SECTION ====================
+    const itemSecurityCheck = document.getElementById('secSecurityCheckItem');
+    const panelSecurityCheck = document.getElementById('secSecurityCheckPanel');
+
+    if (itemSecurityCheck && panelSecurityCheck) {
+      itemSecurityCheck.onclick = () => {
+        const isClosed = panelSecurityCheck.style.display === 'none';
+        panelSecurityCheck.style.display = isClosed ? 'block' : 'none';
+      };
+    }
+
+    // ==================== 2FA SECTION ====================
     const item2FA = document.getElementById('sec2FAItem');
     const panel2FA = document.getElementById('sec2FAPanel');
     const content2FA = document.getElementById('sec2FAContent');
@@ -5108,7 +5181,7 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
 
     load2FAStatus();
 
-  // ==================== PASSKEYS SECTION ====================
+    // ==================== PASSKEYS SECTION ====================
     const itemPasskeys = document.getElementById('secPasskeysItem');
     const panelPasskeys = document.getElementById('secPasskeysPanel');
     const contentPasskeys = document.getElementById('secPasskeysContent');
@@ -5366,9 +5439,9 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
     }
 
     loadPasskeys();
-  // ==================== END PASSKEYS SECTION ====================
+    // ==================== END PASSKEYS SECTION ====================
 
-  // ==================== TRUSTED DEVICES SECTION ====================
+    // ==================== TRUSTED DEVICES SECTION ====================
     const itemDevices = document.getElementById('secDevicesItem');
     const panelDevices = document.getElementById('secDevicesPanel');
     const listDevices = document.getElementById('trustedDevicesList');
@@ -5465,9 +5538,9 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
       };
       panelDevices.style.display = 'none';
     }
-  // ==================== END TRUSTED DEVICES SECTION ====================
+    // ==================== END TRUSTED DEVICES SECTION ====================
 
-  // ==================== LOGIN HISTORY SECTION ====================
+    // ==================== LOGIN HISTORY SECTION ====================
     const itemHistory = document.getElementById('secHistoryItem');
     const panelHistory = document.getElementById('secHistoryPanel');
     const listHistory = document.getElementById('loginHistoryList');
