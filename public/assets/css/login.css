@@ -2248,7 +2248,11 @@ body.no-strawberries .strawberry-ring-wave {
 
 @media (max-width: 860px) {
   .auth-shell {
-    padding-bottom: 150px;
+    padding-bottom: 200px;
+  }
+
+  .account-page {
+    padding-bottom: 200px;
   }
 
   .auth-footer {
@@ -2613,33 +2617,33 @@ body.no-strawberries .strawberry-ring-wave {
 /* Планшеты: увеличиваем отступ от контента до футера */
 @media (min-width: 481px) and (max-width: 1024px) {
   .account-page {
-    padding-bottom: 120px; /* Отступ для футера + 30px */
+    padding-bottom: 200px; /* Отступ для футера + 30px */
   }
 
   .auth-center {
-    padding-bottom: 120px; /* Отступ для футера + 30px */
+    padding-bottom: 200px; /* Отступ для футера + 30px */
   }
 }
 
 /* Экраны 360px-480px: увеличиваем отступ */
 @media (max-width: 480px) {
   .account-page {
-    padding-bottom: 140px; /* Отступ для высокого футера + 30px */
+    padding-bottom: 240px; /* Отступ для высокого футера + 30px */
   }
 
   .auth-center {
-    padding-bottom: 140px; /* Отступ для высокого футера + 30px */
+    padding-bottom: 240px; /* Отступ для высокого футера + 30px */
   }
 }
 
 /* Очень узкие экраны (360px и меньше): максимальный отступ */
 @media (max-width: 360px) {
   .account-page {
-    padding-bottom: 160px; /* Максимальный отступ для узких экранов */
+    padding-bottom: 260px; /* Максимальный отступ для узких экранов */
   }
 
   .auth-center {
-    padding-bottom: 160px; /* Максимальный отступ для узких экранов */
+    padding-bottom: 260px; /* Максимальный отступ для узких экранов */
   }
 
   .auth-footer {
