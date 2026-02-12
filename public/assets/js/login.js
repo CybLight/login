@@ -3205,15 +3205,22 @@ async function viewAccount(tab = 'profile') {
       if (itemSecurityCheck) {
         const titleElem = itemSecurityCheck.querySelector('.sec-title');
         const subtitleElem = itemSecurityCheck.querySelector('.sec-sub');
-        const shieldSvg = itemSecurityCheck.querySelector('svg path');
+        const iconContainer = itemSecurityCheck.querySelector('.sec-left > div > div');
 
         if (titleElem) titleElem.textContent = itemTitle;
         if (subtitleElem) subtitleElem.textContent = itemSubtitle;
-        if (shieldSvg) shieldSvg.setAttribute('fill', shieldColor);
-      }
 
-      // Обновляем бейдж статуса
-      if (securityStatusBadge) {
+        // Обновляем иконку (PNG при 100%, SVG щит при меньше)
+        if (iconContainer) {
+          if (score >= 100) {
+            iconContainer.innerHTML = `<img src="/assets/img/security/okey_64.png" width="20" height="20" alt="Защищён" style="display:block;" />`;
+          } else {
+            const svgColor = score >= 50 ? '#fbbf24' : '#ef4444';
+            iconContainer.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L4 6V11C4 16.55 7.84 21.74 13 23C18.16 21.74 22 16.55 22 11V6L12 2Z" fill="${svgColor}" opacity="0.9"/>
+          </svg>`;
+          }
+        }
         securityStatusBadge.textContent = badgeText;
         securityStatusBadge.style.color = shieldColor;
       }
@@ -3906,9 +3913,13 @@ function renderTabHtml(tab, me) {
         <div class="sec-left">
           <div style="display:flex;align-items:center;gap:8px;">
             <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L4 6V11C4 16.55 7.84 21.74 13 23C18.16 21.74 22 16.55 22 11V6L12 2Z" fill="${securityScore >= 100 ? '#22c55e' : securityScore >= 50 ? '#fbbf24' : '#ef4444'}" opacity="0.9"/>
-              </svg>
+              ${
+                securityScore >= 100
+                  ? `<img src="/assets/img/security/okey_64.png" width="20" height="20" alt="Защищён" style="display:block;" />`
+                  : `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L4 6V11C4 16.55 7.84 21.74 13 23C18.16 21.74 22 16.55 22 11V6L12 2Z" fill="${securityScore >= 50 ? '#fbbf24' : '#ef4444'}" opacity="0.9"/>
+              </svg>`
+              }
             </div>
             <div class="sec-title">${securityItemTitle}</div>
           </div>
