@@ -3243,11 +3243,13 @@ async function viewAccount(tab = 'profile') {
         }
       }
 
-      // Автоматически открываем панель если есть рекомендации (score < 100)
+      // Автоматически управляем видимостью панели
       if (panelSecurityCheck) {
-        // Открываем только если панель закрыта и score < 100
-        if (score < 100 && panelSecurityCheck.style.display === 'none') {
+        // Открываем если score < 100, закрываем если score >= 100
+        if (score < 100) {
           panelSecurityCheck.style.display = 'block';
+        } else {
+          panelSecurityCheck.style.display = 'none';
         }
       }
 
@@ -3922,7 +3924,7 @@ function renderTabHtml(tab, me) {
         </div>
       </button>
 
-      <div class="sec-panel" id="secSecurityCheckPanel" style="display:${securityScore < 100 ? 'block' : 'none'};">
+      <div class="sec-panel" id="secSecurityCheckPanel" style="display:none;">
         <div class="sec-panel-inner">
           <!-- Progress Bar -->
           <div style="background:rgba(255,255,255,.1);height:8px;border-radius:4px;overflow:hidden;margin-bottom:12px;">
@@ -3981,7 +3983,14 @@ function renderTabHtml(tab, me) {
       <!-- EMAIL item -->
       <button class="sec-item" id="secEmailItem" type="button">
         <div class="sec-left">
-          <div class="sec-title">Адрес электронной почты</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="#3b82f6" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="sec-title">Адрес электронной почты</div>
+          </div>
           <div class="sec-sub">${emailText}</div>
         </div>
         <div class="sec-right">
@@ -4025,7 +4034,14 @@ function renderTabHtml(tab, me) {
       <!-- PASSWORD item -->
       <button class="sec-item" id="secPassItem" type="button">
         <div class="sec-left">
-          <div class="sec-title">Сменить пароль</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8H17V6C17 3.24 14.76 1 12 1C9.24 1 7 3.24 7 6V8H6C4.9 8 4 8.9 4 10V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V10C20 8.9 19.1 8 18 8ZM12 17C10.9 17 10 16.1 10 15C10 13.9 10.9 13 12 13C13.1 13 14 13.9 14 15C14 16.1 13.1 17 12 17ZM15.1 8H8.9V6C8.9 4.29 10.29 2.9 12 2.9C13.71 2.9 15.1 4.29 15.1 6V8Z" fill="#8b5cf6" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="sec-title">Сменить пароль</div>
+          </div>
           <div class="sec-sub">Последний раз был изменён: ${passChangedText}</div>
         </div>
         <div class="sec-right">
@@ -4076,7 +4092,14 @@ function renderTabHtml(tab, me) {
       <!-- 2FA item -->
       <button class="sec-item" id="sec2FAItem" type="button">
         <div class="sec-left">
-          <div class="sec-title">Двухфакторная аутентификация (2FA)</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 1H7C5.9 1 5 1.9 5 3V21C5 22.1 5.9 23 7 23H17C18.1 23 19 22.1 19 21V3C19 1.9 18.1 1 17 1ZM17 19H7V5H17V19ZM12 17C13.1 17 14 16.1 14 15C14 13.9 13.1 13 12 13C10.9 13 10 13.9 10 15C10 16.1 10.9 17 12 17Z" fill="#10b981" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="sec-title">Двухфакторная аутентификация (2FA)</div>
+          </div>
           <div class="sec-sub" id="sec2FAStatus">Загрузка...</div>
         </div>
         <div class="sec-right">
@@ -4095,7 +4118,14 @@ function renderTabHtml(tab, me) {
       <!-- Passkeys item -->
       <button class="sec-item" id="secPasskeysItem" type="button">
         <div class="sec-left">
-          <div class="sec-title">Ключи доступа (Passkeys)</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.65 10C11.7 7.31 8.9 5.5 5.77 6.12C3.48 6.58 1.62 8.41 1.14 10.7C0.32 14.57 3.26 18 7 18C9.61 18 11.83 16.33 12.65 14H17V18H21V14H23V10H12.65ZM7 14C5.9 14 5 13.1 5 12C5 10.9 5.9 10 7 10C8.1 10 9 10.9 9 12C9 13.1 8.1 14 7 14Z" fill="#f59e0b" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="sec-title">Ключи доступа (Passkeys)</div>
+          </div>
           <div class="sec-sub" id="secPasskeysStatus">Загрузка...</div>
         </div>
         <div class="sec-right">
@@ -4114,7 +4144,14 @@ function renderTabHtml(tab, me) {
       <!-- Trusted Devices item -->
       <button class="sec-item" id="secDevicesItem" type="button">
         <div class="sec-left">
-          <div class="sec-title">Доверенные устройства</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 18C21.1 18 21.99 17.1 21.99 16L22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V16C2 17.1 2.9 18 4 18H0V20H24V18H20ZM4 6H20V16H4V6Z" fill="#06b6d4" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="sec-title">Доверенные устройства</div>
+          </div>
           <div class="sec-sub">Управление устройствами для входа с 2FA</div>
         </div>
         <div class="sec-right">
@@ -4136,7 +4173,14 @@ function renderTabHtml(tab, me) {
       <!-- Login History item -->
       <button class="sec-item" id="secHistoryItem" type="button">
         <div class="sec-left">
-          <div class="sec-title">История входов</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 3C8.03 3 4 7.03 4 12H1L4.89 15.89L4.96 16.03L9 12H6C6 8.13 9.13 5 13 5C16.87 5 20 8.13 20 12C20 15.87 16.87 19 13 19C11.07 19 9.32 18.21 8.06 16.94L6.64 18.36C8.27 19.99 10.51 21 13 21C17.97 21 22 16.97 22 12C22 7.03 17.97 3 13 3ZM12 8V13L16.25 15.52L17.02 14.24L13.5 12.15V8H12Z" fill="#64748b" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="sec-title">История входов</div>
+          </div>
           <div class="sec-sub">Просмотр активности аккаунта</div>
         </div>
         <div class="sec-right">
