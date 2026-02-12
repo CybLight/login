@@ -1198,6 +1198,7 @@
   width: 100%;
   min-height: 100vh;
   padding: 24px 18px;
+  padding-bottom: 90px; /* Отступ от контента до футера */
   background:
     radial-gradient(1200px 700px at 30% 10%, rgba(180, 120, 255, 0.1), transparent 60%),
     radial-gradient(900px 600px at 70% 20%, rgba(255, 127, 39, 0.1), transparent 55%),
@@ -2602,5 +2603,54 @@ body.no-strawberries .strawberry-ring-wave {
 
   .footer-links a {
     font-size: 11px;
+  }
+}
+
+/* ============================================
+   ДОПОЛНИТЕЛЬНАЯ АДАПТИВНОСТЬ ДЛЯ ФУТЕРА
+   ============================================ */
+
+/* Планшеты: увеличиваем отступ от контента до футера */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .account-page {
+    padding-bottom: 120px; /* Отступ для футера + 30px */
+  }
+
+  .auth-center {
+    padding-bottom: 120px; /* Отступ для футера + 30px */
+  }
+}
+
+/* Экраны 360px-480px: увеличиваем отступ */
+@media (max-width: 480px) {
+  .account-page {
+    padding-bottom: 140px; /* Отступ для высокого футера + 30px */
+  }
+
+  .auth-center {
+    padding-bottom: 140px; /* Отступ для высокого футера + 30px */
+  }
+}
+
+/* Очень узкие экраны (360px и меньше): максимальный отступ */
+@media (max-width: 360px) {
+  .account-page {
+    padding-bottom: 160px; /* Максимальный отступ для узких экранов */
+  }
+
+  .auth-center {
+    padding-bottom: 160px; /* Максимальный отступ для узких экранов */
+  }
+
+  .auth-footer {
+    font-size: 11px;
+  }
+
+  .footer-text {
+    font-size: 10px;
+  }
+
+  .footer-links a {
+    font-size: 10px;
   }
 }

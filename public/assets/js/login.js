@@ -3288,10 +3288,10 @@ async function viewAccount(tab = 'profile') {
           <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
 
           <nav class="account-nav">
-            <button data-tab="profile">👤 Профиль</button>
-            <button data-tab="security">🛡️ Безопасность</button>
-            <button data-tab="sessions">🧩 Сессии</button>
-            <button data-tab="easter">🍓 Пасхалки</button>
+            <button data-tab="profile"><span style="font-size:32px;line-height:1;display:inline-block;vertical-align:middle;">👤</span> Профиль</button>
+            <button data-tab="security"><span style="font-size:32px;line-height:1;display:inline-block;vertical-align:middle;">🛡️</span> Безопасность</button>
+            <button data-tab="sessions"><span style="font-size:32px;line-height:1;display:inline-block;vertical-align:middle;">🧩</span> Сессии</button>
+            <button data-tab="easter"><span style="font-size:32px;line-height:1;display:inline-block;vertical-align:middle;">🍓</span> Пасхалки</button>
           </nav>
 
           <div style="margin-top:14px;display:grid;gap:10px;" id="accountActions">
