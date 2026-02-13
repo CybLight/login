@@ -4112,6 +4112,7 @@ function renderTabHtml(tab, me) {
             <div class="sec-title">Двухфакторная аутентификация (2FA)</div>
           </div>
           <div class="sec-sub" id="sec2FAStatus">Загрузка...</div>
+          <div class="sec-sub" id="sec2FADate" style="display:none;"></div>
         </div>
         <div class="sec-right">
           <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
@@ -4808,6 +4809,7 @@ async function bindTabActions(tab, me, api) {
     const panel2FA = document.getElementById('sec2FAPanel');
     const content2FA = document.getElementById('sec2FAContent');
     const status2FA = document.getElementById('sec2FAStatus');
+    const date2FA = document.getElementById('sec2FADate');
 
     async function load2FAStatus() {
       try {
@@ -4816,12 +4818,23 @@ async function bindTabActions(tab, me, api) {
         console.log('load2FAStatus response:', { ok: r.ok, user: data.user });
         if (r.ok && data.user) {
           const enabled = Boolean(data.user.totpEnabled || data.user.totp_enabled);
+          const totpEnabledAt = data.user.totp_enabled_at || data.user.totpEnabledAt || null;
+          
           if (api.securityState) {
             api.securityState.twoFAEnabled = enabled;
+            api.securityState.totpEnabledAt = totpEnabledAt;
           }
-          console.log('2FA status loaded:', enabled);
+          console.log('2FA status loaded:', enabled, 'enabled at:', totpEnabledAt);
           if (status2FA) {
             status2FA.textContent = enabled ? '✅ Включена' : 'Отключена';
+          }
+          if (date2FA) {
+            if (enabled && totpEnabledAt) {
+              date2FA.textContent = `Включена: ${fmtTs(totpEnabledAt)}`;
+              date2FA.style.display = 'block';
+            } else {
+              date2FA.style.display = 'none';
+            }
           }
           render2FAContent();
           // Обновляем индикатор безопасности
@@ -4838,10 +4851,16 @@ async function bindTabActions(tab, me, api) {
       if (!content2FA) return;
 
       const enabled = api.securityState?.twoFAEnabled || false;
+      const totpEnabledAt = api.securityState?.totpEnabledAt || null;
 
       if (enabled) {
+        const enabledAtText = totpEnabledAt ? escapeHtml(fmtTs(totpEnabledAt)) : '—';
+        
         content2FA.innerHTML = `
           <div class="sec-status">✅ Двухфакторная аутентификация активна</div>
+          <div style="margin:8px 0;font-size:13px;color:rgba(231,236,255,0.6);">
+            Включена: ${enabledAtText}
+          </div>
           <p style="margin:10px 0;font-size:13px;color:rgba(231,236,255,0.7);">
             При входе потребуется код из приложения аутентификатора.
           </p>
