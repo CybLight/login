@@ -2649,11 +2649,11 @@ body.no-strawberries .strawberry-ring-wave {
 /* Экраны 360px-480px: увеличиваем отступ */
 @media (max-width: 480px) {
   .account-page {
-    padding-bottom: 280px; /* Отступ для высокого футера + 30px */
+    padding-bottom: 420px; /* Отступ для высокого футера (колоночный layout) + 30px */
   }
 
   .auth-center {
-    padding-bottom: 280px; /* Отступ для высокого футера + 30px */
+    padding-bottom: 420px; /* Отступ для высокого футера (колоночный layout) + 30px */
   }
 
   .account-nav button {
@@ -2668,11 +2668,11 @@ body.no-strawberries .strawberry-ring-wave {
 /* Очень узкие экраны (360px и меньше): максимальный отступ */
 @media (max-width: 360px) {
   .account-page {
-    padding-bottom: 300px; /* Максимальный отступ для узких экранов */
+    padding-bottom: 450px; /* Максимальный отступ для узких экранов (футер очень высокий) */
   }
 
   .auth-center {
-    padding-bottom: 300px; /* Максимальный отступ для узких экранов */
+    padding-bottom: 450px; /* Максимальный отступ для узких экранов (футер очень высокий) */
   }
 
   .account-nav button {
