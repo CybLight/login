@@ -3192,7 +3192,7 @@ async function viewAccount(tab = 'profile') {
       const itemTitle = score >= 100 ? 'Ваш аккаунт под защитой' : 'Проверка безопасности';
       const itemSubtitle =
         score >= 100
-          ? 'Ваш аккаунт прошёл Проверку безопасности. Рекомендуемых действий не найдено.'
+          ? 'Ваш аккаунт прошёл Проверку безопасности.'
           : 'Обнаружены рекомендации по защите';
 
       // Обновляем прогресс-бар и процент
@@ -4819,7 +4819,7 @@ async function bindTabActions(tab, me, api) {
         if (r.ok && data.user) {
           const enabled = Boolean(data.user.totpEnabled || data.user.totp_enabled);
           const totpEnabledAt = data.user.totp_enabled_at || data.user.totpEnabledAt || null;
-          
+
           if (api.securityState) {
             api.securityState.twoFAEnabled = enabled;
             api.securityState.totpEnabledAt = totpEnabledAt;
@@ -4855,7 +4855,7 @@ async function bindTabActions(tab, me, api) {
 
       if (enabled) {
         const enabledAtText = totpEnabledAt ? escapeHtml(fmtTs(totpEnabledAt)) : '—';
-        
+
         content2FA.innerHTML = `
           <div class="sec-status">✅ Двухфакторная аутентификация активна</div>
           <div style="margin:8px 0;font-size:13px;color:rgba(231,236,255,0.6);">
