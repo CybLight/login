@@ -3059,7 +3059,11 @@ function fmtTs(ms) {
   const n = Number(ms);
   if (!Number.isFinite(n)) return '—';
 
-  const d = new Date(n);
+  // Автоматически определяем формат timestamp (секунды или миллисекунды)
+  // Если timestamp больше 10 миллиардов, то это миллисекунды
+  const timestamp = n > 10000000000 ? n : n * 1000;
+
+  const d = new Date(timestamp);
   if (Number.isNaN(d.getTime())) return '—';
 
   // красивый RU формат + без секунд
