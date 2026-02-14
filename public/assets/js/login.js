@@ -4382,34 +4382,142 @@ function renderTabHtml(tab, me) {
     const canSeeDarkTrigger = hasDarkTriggerAccess() || !!me?.user?.easter?.darkTrigger;
     
     return `
-      <div style="display:grid;gap:10px;">
-        <div style="opacity:.85;line-height:1.5;">
-          Пасхалки открываются, когда ты находишь секреты на сайте 🍓
+      <style>
+        .easter-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 16px;
+          margin-top: 16px;
+        }
+        .easter-card {
+          border: 1px solid rgba(255,255,255,.12);
+          border-radius: 12px;
+          padding: 20px;
+          background: linear-gradient(135deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.01) 100%);
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+        .easter-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: radial-gradient(circle at top-right, rgba(255,255,255,.08) 0%, transparent 70%);
+          pointer-events: none;
+        }
+        .easter-card:hover {
+          border-color: rgba(255,255,255,.25);
+          background: linear-gradient(135deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.03) 100%);
+          transform: translateY(-2px);
+        }
+        .easter-card.locked {
+          opacity: 0.7;
+        }
+        .easter-card-icon {
+          font-size: 48px;
+          margin-bottom: 12px;
+          display: block;
+        }
+        .easter-card-title {
+          font-weight: 700;
+          font-size: 16px;
+          margin-bottom: 8px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .easter-card-desc {
+          font-size: 13px;
+          opacity: 0.75;
+          line-height: 1.5;
+          margin-bottom: 12px;
+        }
+        .easter-card-badge {
+          display: inline-block;
+          padding: 4px 12px;
+          background: rgba(34, 197, 94, 0.15);
+          color: #22c55e;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .easter-card-badge.locked {
+          background: rgba(107, 114, 128, 0.15);
+          color: #9ca3af;
+        }
+        .easter-intro {
+          opacity: 0.85;
+          line-height: 1.6;
+          margin-bottom: 16px;
+          padding: 12px;
+          background: rgba(255,255,255,.03);
+          border-left: 3px solid rgba(59, 130, 246, 0.5);
+          border-radius: 4px;
+        }
+        .easter-steno-btn {
+          width: 100%;
+          margin-top: 12px;
+        }
+      </style>
+
+      <div>
+        <div class="easter-intro">
+          🎯 Пасхалки открываются, когда ты находишь секреты на сайте
         </div>
 
-        <button class="btn btn-outline" id="toHistoryBtn" type="button"
-          ${canSeeStrawberry ? '' : 'disabled style="opacity:.55;cursor:not-allowed;"'}>
-          ${canSeeStrawberry ? '🍓 Открыть стенографию' : '🔒 Стенография (закрыто)'}
-        </button>
+        <div class="easter-grid">
+          <!-- Strawberry Card -->
+          <div class="easter-card ${canSeeStrawberry ? '' : 'locked'}">
+            <span class="easter-card-icon">🍓</span>
+            <div class="easter-card-title">
+              Strawberry Hunt
+              ${canSeeStrawberry ? '<span style="opacity:.6;font-size:11px;">✓</span>' : ''}
+            </div>
+            <div class="easter-card-desc">
+              ${canSeeStrawberry 
+                ? 'Ты нашел особую клубничку на сайте! Отличная работа 🎉'
+                : 'Найди спрятанную клубничку где-то на основном сайте'}
+            </div>
+            ${canSeeStrawberry 
+              ? '<span class="easter-card-badge">✓ Найдено</span>'
+              : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
+            }
+            ${canSeeStrawberry 
+              ? `<button class="btn btn-outline easter-steno-btn" id="toHistoryBtn" type="button">
+                  📖 Открыть стенографию
+                </button>`
+              : '<div style="opacity:.6;font-size:12px;margin-top:12px;">💡 Подсказка: исследуй темные уголки...</div>'
+            }
+          </div>
 
-        ${
-          canSeeStrawberry
-            ? ''
-            : `<div style="opacity:.7;font-size:12px;">Подсказка: ищи особую клубничку 😉</div>`
-        }
-
-        <div style="height:1px;background:rgba(255,255,255,.08);margin:8px 0;"></div>
-
-        <div style="opacity:.85;line-height:1.5;display:flex;align-items:center;gap:8px;">
-          ${canSeeDarkTrigger ? '🌑 Dark Trigger' : '🔒 Темный триггер'}
-          ${canSeeDarkTrigger ? '<span style="opacity:.6;font-size:12px;">(найдено)</span>' : ''}
+          <!-- Dark Trigger Card -->
+          <div class="easter-card ${canSeeDarkTrigger ? '' : 'locked'}">
+            <span class="easter-card-icon">🌑</span>
+            <div class="easter-card-title">
+              Dark Trigger
+              ${canSeeDarkTrigger ? '<span style="opacity:.6;font-size:11px;">✓</span>' : ''}
+            </div>
+            <div class="easter-card-desc">
+              ${canSeeDarkTrigger 
+                ? 'Ты заметил тёмный триггер в полной темноте! Редкое достижение 🌟'
+                : 'Разгадай загадку тьмы, припрятанную где-то на сайте'}
+            </div>
+            ${canSeeDarkTrigger 
+              ? '<span class="easter-card-badge">✓ Найдено</span>'
+              : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
+            }
+            <div style="opacity:.6;font-size:12px;margin-top:12px;">
+              ${canSeeDarkTrigger 
+                ? '🎊 Конгратулейшн, ты настоящий детектив!'
+                : '💡 Подсказка: посмотри в тёмную папку на сайте...'}
+            </div>
+          </div>
         </div>
-
-        ${
-          canSeeDarkTrigger
-            ? '<div style="opacity:.7;font-size:12px;">Ты нашел секретную пасхалку в темноте! 🎉</div>'
-            : '<div style="opacity:.7;font-size:12px;">Подсказка: исследуй тёмные уголки сайта... 🌑</div>'
-        }
       </div>
     `;
   }
