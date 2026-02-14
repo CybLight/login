@@ -984,10 +984,14 @@ function renderRoute(r) {
 
   // PROFILE
   if (r === 'profile') {
+    console.log('[ROUTER] Profile route detected');
     const username = window.CybRouter.getRouteParam('username');
+    console.log('[ROUTER] Profile username:', username);
     if (username) {
+      console.log('[ROUTER] Calling profileModule.renderProfile with:', username);
       profileModule.renderProfile(username);
     } else {
+      console.log('[ROUTER] No username, falling back to viewUsername');
       viewUsername();
     }
     return;

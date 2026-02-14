@@ -1,20 +1,22 @@
 // ===== PROFILE RENDERING =====
 
 const profileModule = (() => {
-  const API_BASE = 'https://api.cyblight.org';
-
   async function loadProfile(username) {
     try {
+      console.log('[PROFILE] loadProfile: fetching', `${API_BASE}/api/profile/${encodeURIComponent(username)}`);
       const response = await fetch(`${API_BASE}/api/profile/${encodeURIComponent(username)}`);
+      
+      console.log('[PROFILE] loadProfile: response status', response.status, response.ok);
       
       if (!response.ok) {
         return null;
       }
       
       const data = await response.json();
+      console.log('[PROFILE] loadProfile: data', data);
       return data.ok ? data.profile : null;
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('[PROFILE] Error loading profile:', error);
       return null;
     }
   }
@@ -118,6 +120,7 @@ const profileModule = (() => {
   }
 
   async function renderProfile(username) {
+    console.log('[PROFILE] renderProfile called with username:', username);
     const app = document.getElementById('app');
     
     // Показываем загрузку
