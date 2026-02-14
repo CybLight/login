@@ -1073,9 +1073,10 @@ window.addEventListener('online', () => {
 
   // ✅ какие роуты разрешены при активной сессии
   const allowedWhenLoggedIn = new Set([
-    'strawberry-history', // ✅ разрешаем стенографию
+    'profile',                // ✅ разрешаем смотреть профили других пользователей
+    'strawberry-history',     // ✅ разрешаем стенографию
     'verify-email',
-    '2fa-verify', // ✅ разрешаем 2FA верификацию без сессии
+    '2fa-verify',             // ✅ разрешаем 2FA верификацию без сессии
     // (можно добавишь ещё)
   ]);
 

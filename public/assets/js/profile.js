@@ -3,15 +3,18 @@
 const profileModule = (() => {
   async function loadProfile(username) {
     try {
-      console.log('[PROFILE] loadProfile: fetching', `${API_BASE}/api/profile/${encodeURIComponent(username)}`);
+      console.log(
+        '[PROFILE] loadProfile: fetching',
+        `${API_BASE}/api/profile/${encodeURIComponent(username)}`
+      );
       const response = await fetch(`${API_BASE}/api/profile/${encodeURIComponent(username)}`);
-      
+
       console.log('[PROFILE] loadProfile: response status', response.status, response.ok);
-      
+
       if (!response.ok) {
         return null;
       }
-      
+
       const data = await response.json();
       console.log('[PROFILE] loadProfile: data', data);
       return data.ok ? data.profile : null;
@@ -23,76 +26,95 @@ const profileModule = (() => {
 
   async function getCurrentUser() {
     try {
-      const response = await fetch(`${API_BASE}/auth/me`);
-      
+      console.log('[PROFILE] getCurrentUser: fetching', `${API_BASE}/auth/me`);
+      const response = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
+
+      console.log('[PROFILE] getCurrentUser: response status', response.status, response.ok);
+
       if (!response.ok) {
+        console.log('[PROFILE] getCurrentUser: not authorized, returning null');
         return null;
       }
-      
+
       const data = await response.json();
+      console.log('[PROFILE] getCurrentUser: data', data);
       return data.ok ? data.user : null;
     } catch (error) {
-      console.error('Error loading current user:', error);
+      console.error('[PROFILE] Error loading current user:', error);
       return null;
     }
   }
 
   async function getFriendshipStatus(friendId) {
     try {
-      const response = await fetch(`${API_BASE}/api/friends/status/${friendId}`);
-      
+      console.log('[PROFILE] getFriendshipStatus: fetching for', friendId);
+      const response = await fetch(`${API_BASE}/api/friends/status/${friendId}`, {
+        credentials: 'include',
+      });
+
       if (!response.ok) {
+        console.log('[PROFILE] getFriendshipStatus: not authorized or not found');
         return null;
       }
-      
+
       const data = await response.json();
+      console.log('[PROFILE] getFriendshipStatus: data', data);
       return data.ok ? data.status : null;
     } catch (error) {
-      console.error('Error getting friendship status:', error);
+      console.error('[PROFILE] Error getting friendship status:', error);
       return null;
     }
   }
 
   async function addFriend(friendUsername) {
     try {
+      console.log('[PROFILE] addFriend: adding', friendUsername);
       const response = await fetch(`${API_BASE}/api/friends/add`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ friendUsername }),
       });
-      
+
       const data = await response.json();
+      console.log('[PROFILE] addFriend: response', data);
       return data.ok;
     } catch (error) {
-      console.error('Error adding friend:', error);
+      console.error('[PROFILE] Error adding friend:', error);
       return false;
     }
   }
 
   async function removeFriend(friendId) {
     try {
+      console.log('[PROFILE] removeFriend: removing', friendId);
       const response = await fetch(`${API_BASE}/api/friends/remove`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ friendId }),
       });
-      
+
       const data = await response.json();
+      console.log('[PROFILE] removeFriend: response', data);
       return data.ok;
     } catch (error) {
-      console.error('Error removing friend:', error);
+      console.error('[PROFILE] Error removing friend:', error);
       return false;
     }
   }
 
   function shareProfile(username) {
     const url = `${window.location.origin}/${username}`;
-    navigator.clipboard.writeText(url).then(() => {
-      showNotification('Профиль скопирован в буфер обмена');
-    }).catch(() => {
-      // Fallback: показываем URL
-      const text = prompt('Копируйте ссылку:', url);
-    });
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        showNotification('Профиль скопирован в буфер обмена');
+      })
+      .catch(() => {
+        // Fallback: показываем URL
+        const text = prompt('Копируйте ссылку:', url);
+      });
   }
 
   function showNotification(message) {
@@ -110,9 +132,9 @@ const profileModule = (() => {
       z-index: 10000;
       animation: slideIn 0.3s ease-out;
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
       notification.style.opacity = '0';
       setTimeout(() => notification.remove(), 300);
@@ -121,8 +143,11 @@ const profileModule = (() => {
 
   async function renderProfile(username) {
     console.log('[PROFILE] renderProfile called with username:', username);
-    const app = document.getElementById('app');
+    // Отключаем клубничный фон при просмотре профиля
+    setNoStrawberries(true);
     
+    const app = document.getElementById('app');
+
     // Показываем загрузку
     app.innerHTML = `
       <div class="profile-loading">
@@ -132,7 +157,10 @@ const profileModule = (() => {
     `;
 
     const profile = await loadProfile(username);
+    console.log('[PROFILE] Profile loaded:', profile);
+
     const currentUser = await getCurrentUser();
+    console.log('[PROFILE] Current user:', currentUser);
 
     if (!profile) {
       app.innerHTML = `
@@ -149,10 +177,13 @@ const profileModule = (() => {
     let isSelf = false;
 
     if (currentUser) {
+      console.log('[PROFILE] User is logged in');
       isSelf = currentUser.id === profile.id;
       if (!isSelf) {
         friendStatus = await getFriendshipStatus(profile.id);
       }
+    } else {
+      console.log('[PROFILE] User is not logged in (anonymous)');
     }
 
     const formattedDate = new Date(profile.createdAt).toLocaleDateString('ru-RU', {
@@ -466,13 +497,13 @@ const profileModule = (() => {
 
   return {
     renderProfile,
-    addFriendAction: async function(username) {
+    addFriendAction: async function (username) {
       const button = event.target;
       button.disabled = true;
       button.textContent = 'Добавление...';
-      
+
       const success = await addFriend(username);
-      
+
       if (success) {
         button.textContent = '⏳ Запрос на добавление отправлен';
         showNotification('Запрос на добавление отправлен');
@@ -482,18 +513,18 @@ const profileModule = (() => {
         showNotification('Ошибка при добавлении в друзья');
       }
     },
-    removeFriendAction: async function(friendId) {
+    removeFriendAction: async function (friendId) {
       if (!confirm('Вы уверены?')) return;
-      
+
       const success = await removeFriend(friendId);
-      
+
       if (success) {
         location.reload();
       } else {
         showNotification('Ошибка при удалении из друзей');
       }
     },
-    sendMessage: function(friendId, username) {
+    sendMessage: function (friendId, username) {
       showNotification('Функция сообщений скоро будет доступна');
       // TODO: Реализовать функцию отправки сообщений
     },
