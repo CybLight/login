@@ -3989,6 +3989,25 @@ function renderTabHtml(tab, me) {
         <div class="info-card__value">${escapeHtml(reg)}</div>
         <div class="info-card__hint">Создано в системе</div>
       </article>
+
+      <article class="info-card">
+        <div class="info-card__label">Публичный профиль</div>
+        <div class="info-card__value">
+          <a href="https://login.cyblight.org/${encodeURIComponent(login)}" 
+             target="_blank" 
+             class="profile-link-btn"
+             style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s;"
+             onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)';"
+             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Посмотреть профиль
+          </a>
+        </div>
+        <div class="info-card__hint">Ваша публичная страница</div>
+      </article>
     </section>
   `;
   }
