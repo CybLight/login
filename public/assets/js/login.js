@@ -4834,7 +4834,7 @@ async function bindTabActions(tab, me, api) {
           }
           if (date2FA) {
             if (enabled && totpEnabledAt) {
-              date2FA.textContent = `Включена: ${fmtTs(totpEnabledAt)}`;
+              date2FA.textContent = `${fmtTs(totpEnabledAt)}`;
               date2FA.style.display = 'block';
             } else {
               date2FA.style.display = 'none';
