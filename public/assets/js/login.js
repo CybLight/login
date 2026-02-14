@@ -1073,10 +1073,10 @@ window.addEventListener('online', () => {
 
   // ✅ какие роуты разрешены при активной сессии
   const allowedWhenLoggedIn = new Set([
-    'profile',                // ✅ разрешаем смотреть профили других пользователей
-    'strawberry-history',     // ✅ разрешаем стенографию
+    'profile', // ✅ разрешаем смотреть профили других пользователей
+    'strawberry-history', // ✅ разрешаем стенографию
     'verify-email',
-    '2fa-verify',             // ✅ разрешаем 2FA верификацию без сессии
+    '2fa-verify', // ✅ разрешаем 2FA верификацию без сессии
     // (можно добавишь ещё)
   ]);
 
@@ -3431,6 +3431,8 @@ async function viewAccount(tab = 'profile') {
 
           <nav class="account-nav">
             <button data-tab="profile"><span class="nav-icon">👤</span> Профиль</button>
+            <button data-tab="friends"><span class="nav-icon">👥</span> Друзья</button>
+            <button data-tab="messages"><span class="nav-icon">💬</span> Сообщения</button>
             <button data-tab="security"><span class="nav-icon">🛡️</span> Безопасность</button>
             <button data-tab="sessions"><span class="nav-icon">🧩</span> Сессии</button>
             <button data-tab="easter"><span class="nav-icon">🍓</span> Пасхалки</button>
@@ -3871,6 +3873,8 @@ async function viewAccount(tab = 'profile') {
 
 function tabTitle(tab) {
   if (tab === 'profile') return 'Профиль';
+  if (tab === 'friends') return 'Друзья';
+  if (tab === 'messages') return 'Сообщения';
   if (tab === 'security') return 'Безопасность';
   if (tab === 'sessions') return 'Сессии';
   if (tab === 'easter') return 'Пасхалки';
@@ -4415,7 +4419,7 @@ function renderTabHtml(tab, me) {
   if (tab === 'easter') {
     const canSeeStrawberry = hasStrawberryAccess() || !!me?.user?.easter?.strawberry;
     const canSeeDarkTrigger = hasDarkTriggerAccess() || !!me?.user?.easter?.darkTrigger;
-    
+
     return `
       <style>
         .easter-grid {
@@ -4514,19 +4518,23 @@ function renderTabHtml(tab, me) {
               ${canSeeStrawberry ? '<span style="opacity:.6;font-size:11px;">✓</span>' : ''}
             </div>
             <div class="easter-card-desc">
-              ${canSeeStrawberry 
-                ? 'Ты нашел особую клубничку на сайте! Отличная работа 🎉'
-                : 'Найди спрятанную клубничку где-то на основном сайте'}
+              ${
+                canSeeStrawberry
+                  ? 'Ты нашел особую клубничку на сайте! Отличная работа 🎉'
+                  : 'Найди спрятанную клубничку где-то на основном сайте'
+              }
             </div>
-            ${canSeeStrawberry 
-              ? '<span class="easter-card-badge">✓ Найдено</span>'
-              : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
+            ${
+              canSeeStrawberry
+                ? '<span class="easter-card-badge">✓ Найдено</span>'
+                : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
             }
-            ${canSeeStrawberry 
-              ? `<button class="btn btn-outline easter-steno-btn" id="toHistoryBtn" type="button">
+            ${
+              canSeeStrawberry
+                ? `<button class="btn btn-outline easter-steno-btn" id="toHistoryBtn" type="button">
                   📖 Открыть стенографию
                 </button>`
-              : '<div style="opacity:.6;font-size:12px;margin-top:12px;">💡 Подсказка: исследуй темные уголки...</div>'
+                : '<div style="opacity:.6;font-size:12px;margin-top:12px;">💡 Подсказка: исследуй темные уголки...</div>'
             }
           </div>
 
@@ -4538,18 +4546,23 @@ function renderTabHtml(tab, me) {
               ${canSeeDarkTrigger ? '<span style="opacity:.6;font-size:11px;">✓</span>' : ''}
             </div>
             <div class="easter-card-desc">
-              ${canSeeDarkTrigger 
-                ? 'Ты заметил тёмный триггер в полной темноте! Редкое достижение 🌟'
-                : 'Разгадай загадку тьмы, припрятанную где-то на сайте'}
+              ${
+                canSeeDarkTrigger
+                  ? 'Ты заметил тёмный триггер в полной темноте! Редкое достижение 🌟'
+                  : 'Разгадай загадку тьмы, припрятанную где-то на сайте'
+              }
             </div>
-            ${canSeeDarkTrigger 
-              ? '<span class="easter-card-badge">✓ Найдено</span>'
-              : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
+            ${
+              canSeeDarkTrigger
+                ? '<span class="easter-card-badge">✓ Найдено</span>'
+                : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
             }
             <div style="opacity:.6;font-size:12px;margin-top:12px;">
-              ${canSeeDarkTrigger 
-                ? '🎊 Конгратулейшн, ты настоящий детектив!'
-                : '💡 Подсказка: посмотри в тёмную папку на сайте...'}
+              ${
+                canSeeDarkTrigger
+                  ? '🎊 Конгратулейшн, ты настоящий детектив!'
+                  : '💡 Подсказка: посмотри в тёмную папку на сайте...'
+              }
             </div>
           </div>
         </div>
@@ -4557,7 +4570,327 @@ function renderTabHtml(tab, me) {
     `;
   }
 
+  // ============ FRIENDS TAB ============
+  if (tab === 'friends') {
+    return `
+      <div id="friendsContent">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Загрузка...</p>
+        </div>
+      </div>
+    `;
+  }
+
+  // ============ MESSAGES TAB ============
+  if (tab === 'messages') {
+    return `
+      <div id="messagesContent">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Загрузка...</p>
+        </div>
+      </div>
+    `;
+  }
+
   return `—`;
+}
+
+// ============ FRIENDS & MESSAGES FUNCTIONS ============
+
+async function loadFriendsTab(api) {
+  const container = document.getElementById('friendsContent');
+  if (!container) return;
+
+  try {
+    // Загружаем список друзей
+    const friendsRes = await apiCall('/api/friends/list', { credentials: 'include' });
+    const friendsData = await friendsRes.json();
+
+    if (!friendsData.ok) {
+      container.innerHTML = `<div class="error-message">Не удалось загрузить друзей</div>`;
+      return;
+    }
+
+    const friends = friendsData.friends || [];
+
+    // Пока нет отдельного endpoint для запросов, мы покажем только список друзей
+    // TODO: Добавить endpoint на backend для получения входящих запросов
+
+    container.innerHTML = `
+      <style>
+        .friends-section {
+          margin-bottom: 32px;
+        }
+        .friends-section-title {
+          font-size: 18px;
+          font-weight: 700;
+          margin-bottom: 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .friends-list {
+          display: grid;
+          gap: 12px;
+        }
+        .friend-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          background: rgba(255,255,255,.04);
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 12px;
+          transition: all 0.2s;
+        }
+        .friend-card:hover {
+          background: rgba(255,255,255,.07);
+          border-color: rgba(255,255,255,.2);
+        }
+        .friend-avatar {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          flex-shrink: 0;
+        }
+        .friend-info {
+          flex: 1;
+        }
+        .friend-username {
+          font-weight: 600;
+          font-size: 15px;
+        }
+        .friend-actions {
+          display: flex;
+          gap: 8px;
+        }
+        .btn-friend {
+          padding: 8px 16px;
+          border-radius: 8px;
+          border: none;
+          font-size: 13px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .btn-friend-message {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+        }
+        .btn-friend-message:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-friend-profile {
+          background: rgba(255,255,255,.1);
+          color: white;
+        }
+        .btn-friend-profile:hover {
+          background: rgba(255,255,255,.15);
+        }
+        .empty-state {
+          text-align: center;
+          padding: 48px 24px;
+          opacity: 0.7;
+        }
+        .empty-state-icon {
+          font-size: 48px;
+          margin-bottom: 16px;
+        }
+      </style>
+
+      <div class="friends-section">
+        <div class="friends-section-title">
+          <span>👥</span>
+          <span>Мои друзья (${friends.length})</span>
+        </div>
+        ${
+          friends.length > 0
+            ? `
+          <div class="friends-list">
+            ${friends
+              .map(
+                (friend) => `
+              <div class="friend-card">
+                <div class="friend-avatar">
+                  ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="">` : '👤'}
+                </div>
+                <div class="friend-info">
+                  <div class="friend-username">${escapeHtml(friend.username)}</div>
+                </div>
+                <div class="friend-actions">
+                  <button class="btn-friend btn-friend-message" onclick="openChat('${escapeHtml(friend.id)}', '${escapeHtml(friend.username)}')">
+                    💬 Написать
+                  </button>
+                  <button class="btn-friend btn-friend-profile" onclick="CybRouter.navigate('${escapeHtml(friend.username)}')">
+                    👤 Профиль
+                  </button>
+                </div>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `
+            : `
+          <div class="empty-state">
+            <div class="empty-state-icon">👥</div>
+            <p>У вас пока нет друзей</p>
+            <p style="font-size: 14px; opacity: 0.7; margin-top: 8px;">
+              Найдите пользователей и добавьте их в друзья
+            </p>
+          </div>
+        `
+        }
+      </div>
+
+      <div class="friends-section">
+        <div class="friends-section-title">
+          <span>📬</span>
+          <span>Входящие запросы</span>
+        </div>
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <p>Нет новых запросов</p>
+          <p style="font-size: 14px; opacity: 0.7; margin-top: 8px;">
+            Когда кто-то захочет добавить вас в друзья, запрос появится здесь
+          </p>
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    console.error('Error loading friends:', error);
+    container.innerHTML = `<div class="error-message">Ошибка загрузки. Попробуйте обновить страницу.</div>`;
+  }
+}
+
+async function loadMessagesTab(api) {
+  const container = document.getElementById('messagesContent');
+  if (!container) return;
+
+  try {
+    // Загружаем список друзей для отображения чатов
+    const friendsRes = await apiCall('/api/friends/list', { credentials: 'include' });
+    const friendsData = await friendsRes.json();
+
+    if (!friendsData.ok) {
+      container.innerHTML = `<div class="error-message">Не удалось загрузить сообщения</div>`;
+      return;
+    }
+
+    const friends = friendsData.friends || [];
+
+    container.innerHTML = `
+      <style>
+        .messages-info {
+          padding: 16px;
+          background: rgba(59, 130, 246, 0.1);
+          border: 1px solid rgba(59, 130, 246, 0.3);
+          border-radius: 12px;
+          margin-bottom: 24px;
+        }
+        .chat-list {
+          display: grid;
+          gap: 12px;
+        }
+        .chat-card {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px;
+          background: rgba(255,255,255,.04);
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .chat-card:hover {
+          background: rgba(255,255,255,.07);
+          border-color: rgba(255,255,255,.2);
+          transform: translateX(4px);
+        }
+        .chat-avatar {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          flex-shrink: 0;
+        }
+        .chat-info {
+          flex: 1;
+        }
+        .chat-username {
+          font-weight: 600;
+          font-size: 15px;
+          margin-bottom: 4px;
+        }
+        .chat-preview {
+          font-size: 13px;
+          opacity: 0.7;
+        }
+      </style>
+
+      <div class="messages-info">
+        <strong>💬 Сообщения</strong>
+        <p style="margin-top: 8px; font-size: 14px; opacity: 0.9;">
+          Выберите друга, чтобы начать переписку
+        </p>
+      </div>
+
+      ${
+        friends.length > 0
+          ? `
+        <div class="chat-list">
+          ${friends
+            .map(
+              (friend) => `
+            <div class="chat-card" onclick="openChat('${escapeHtml(friend.id)}', '${escapeHtml(friend.username)}')">
+              <div class="chat-avatar">
+                ${friend.avatar ? `<img src="${escapeHtml(friend.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="">` : '👤'}
+              </div>
+              <div class="chat-info">
+                <div class="chat-username">${escapeHtml(friend.username)}</div>
+                <div class="chat-preview">Нажмите, чтобы открыть чат</div>
+              </div>
+            </div>
+          `
+            )
+            .join('')}
+        </div>
+      `
+          : `
+        <div class="empty-state">
+          <div class="empty-state-icon">💬</div>
+          <p>Нет доступных чатов</p>
+          <p style="font-size: 14px; opacity: 0.7; margin-top: 8px;">
+            Добавьте друзей, чтобы начать общение
+          </p>
+        </div>
+      `
+      }
+    `;
+  } catch (error) {
+    console.error('Error loading messages:', error);
+    container.innerHTML = `<div class="error-message">Ошибка загрузки. Попробуйте обновить страницу.</div>`;
+  }
+}
+
+function openChat(friendId, friendUsername) {
+  // TODO: Реализовать открытие чата
+  alert(
+    `Открытие чата с ${friendUsername}...\n\nФункционал чата будет добавлен в следующем обновлении.`
+  );
 }
 
 async function bindTabActions(tab, me, api) {
@@ -6020,6 +6353,16 @@ ${backupCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}
         setStorage(HISTORY_FROM_KEY, 'account-easter-eggs', sessionStorage); // ✅ пришли из пасхалок
         CybRouter.navigate('strawberry-history');
       };
+  }
+
+  // ==================== FRIENDS TAB ====================
+  if (tab === 'friends') {
+    loadFriendsTab(api);
+  }
+
+  // ==================== MESSAGES TAB ====================
+  if (tab === 'messages') {
+    loadMessagesTab(api);
   }
 
   // PROFILE tab
