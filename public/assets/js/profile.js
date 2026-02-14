@@ -1,0 +1,499 @@
+// ===== PROFILE RENDERING =====
+
+const profileModule = (() => {
+  const API_BASE = 'https://api.cyblight.org';
+
+  async function loadProfile(username) {
+    try {
+      const response = await fetch(`${API_BASE}/api/profile/${encodeURIComponent(username)}`);
+      
+      if (!response.ok) {
+        return null;
+      }
+      
+      const data = await response.json();
+      return data.ok ? data.profile : null;
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      return null;
+    }
+  }
+
+  async function getCurrentUser() {
+    try {
+      const response = await fetch(`${API_BASE}/auth/me`);
+      
+      if (!response.ok) {
+        return null;
+      }
+      
+      const data = await response.json();
+      return data.ok ? data.user : null;
+    } catch (error) {
+      console.error('Error loading current user:', error);
+      return null;
+    }
+  }
+
+  async function getFriendshipStatus(friendId) {
+    try {
+      const response = await fetch(`${API_BASE}/api/friends/status/${friendId}`);
+      
+      if (!response.ok) {
+        return null;
+      }
+      
+      const data = await response.json();
+      return data.ok ? data.status : null;
+    } catch (error) {
+      console.error('Error getting friendship status:', error);
+      return null;
+    }
+  }
+
+  async function addFriend(friendUsername) {
+    try {
+      const response = await fetch(`${API_BASE}/api/friends/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ friendUsername }),
+      });
+      
+      const data = await response.json();
+      return data.ok;
+    } catch (error) {
+      console.error('Error adding friend:', error);
+      return false;
+    }
+  }
+
+  async function removeFriend(friendId) {
+    try {
+      const response = await fetch(`${API_BASE}/api/friends/remove`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ friendId }),
+      });
+      
+      const data = await response.json();
+      return data.ok;
+    } catch (error) {
+      console.error('Error removing friend:', error);
+      return false;
+    }
+  }
+
+  function shareProfile(username) {
+    const url = `${window.location.origin}/${username}`;
+    navigator.clipboard.writeText(url).then(() => {
+      showNotification('Профиль скопирован в буфер обмена');
+    }).catch(() => {
+      // Fallback: показываем URL
+      const text = prompt('Копируйте ссылку:', url);
+    });
+  }
+
+  function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 4px;
+      z-index: 10000;
+      animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      setTimeout(() => notification.remove(), 300);
+    }, 2000);
+  }
+
+  async function renderProfile(username) {
+    const app = document.getElementById('app');
+    
+    // Показываем загрузку
+    app.innerHTML = `
+      <div class="profile-loading">
+        <div class="spinner"></div>
+        <p>Загрузка профиля...</p>
+      </div>
+    `;
+
+    const profile = await loadProfile(username);
+    const currentUser = await getCurrentUser();
+
+    if (!profile) {
+      app.innerHTML = `
+        <div class="profile-notfound">
+          <h1>Профиль не найден</h1>
+          <p>Пользователь <strong>${escapeHtml(username)}</strong> не существует</p>
+          <button onclick="CybRouter.navigate('username')">Вернуться</button>
+        </div>
+      `;
+      return;
+    }
+
+    let friendStatus = null;
+    let isSelf = false;
+
+    if (currentUser) {
+      isSelf = currentUser.id === profile.id;
+      if (!isSelf) {
+        friendStatus = await getFriendshipStatus(profile.id);
+      }
+    }
+
+    const formattedDate = new Date(profile.createdAt).toLocaleDateString('ru-RU', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
+    let actionButtons = '';
+
+    if (isSelf) {
+      actionButtons = `
+        <div class="profile-actions">
+          <button class="btn btn-primary" onclick="CybRouter.navigate('account-profile')">
+            Редактировать профиль
+          </button>
+        </div>
+      `;
+    } else if (currentUser) {
+      if (friendStatus === 'accepted') {
+        actionButtons = `
+          <div class="profile-actions">
+            <button class="btn btn-primary" onclick="profileModule.sendMessage('${profile.id}', '${escapeHtml(profile.username)}')">
+              💬 Написать сообщение
+            </button>
+            <button class="btn btn-secondary" onclick="profileModule.removeFriendAction('${profile.id}')">
+              ✕ Удалить из друзей
+            </button>
+          </div>
+        `;
+      } else if (friendStatus === 'pending') {
+        actionButtons = `
+          <div class="profile-actions">
+            <button class="btn btn-secondary" disabled>
+              ⏳ Запрос на добавление отправлен
+            </button>
+          </div>
+        `;
+      } else {
+        actionButtons = `
+          <div class="profile-actions">
+            <button class="btn btn-primary" onclick="profileModule.addFriendAction('${profile.username}')">
+              ➕ Добавить в друзья
+            </button>
+          </div>
+        `;
+      }
+    } else {
+      actionButtons = `
+        <div class="profile-actions">
+          <p style="color: #999; font-size: 0.9em;">Войдите, чтобы добавить в друзья</p>
+        </div>
+      `;
+    }
+
+    app.innerHTML = `
+      <div class="profile-container">
+        <div class="profile-header">
+          <div class="profile-info">
+            ${profile.avatar ? `<img src="${escapeHtml(profile.avatar)}" alt="Avatar" class="profile-avatar">` : '<div class="profile-avatar-placeholder">👤</div>'}
+            <div class="profile-details">
+              <h1>${escapeHtml(profile.username)}</h1>
+              <p class="profile-joined">На CybLight с ${formattedDate}</p>
+              ${profile.bio ? `<p class="profile-bio">${escapeHtml(profile.bio)}</p>` : ''}
+              <div class="profile-stats">
+                <div class="stat">
+                  <span class="stat-value">${profile.friendsCount}</span>
+                  <span class="stat-label">друзей</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="profile-share">
+            <button class="btn btn-icon" onclick="profileModule.shareProfile('${escapeHtml(profile.username)}')" title="Поделиться профилем">
+              🔗
+            </button>
+          </div>
+        </div>
+
+        ${actionButtons}
+
+        <div class="profile-content">
+          <p>Это профиль пользователя. Дополнительная информация скоро будет доступна.</p>
+        </div>
+      </div>
+    `;
+
+    // Добавляем стили
+    addProfileStyles();
+  }
+
+  function addProfileStyles() {
+    let style = document.getElementById('profile-styles');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'profile-styles';
+      style.textContent = `
+        .profile-container {
+          max-width: 800px;
+          margin: 30px auto;
+          padding: 20px;
+        }
+
+        .profile-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 30px;
+          padding: 20px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .profile-info {
+          display: flex;
+          gap: 20px;
+          flex: 1;
+        }
+
+        .profile-avatar,
+        .profile-avatar-placeholder {
+          width: 120px;
+          height: 120px;
+          border-radius: 50%;
+          object-fit: cover;
+          flex-shrink: 0;
+          background: rgba(255, 255, 255, 0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 48px;
+        }
+
+        .profile-details {
+          flex: 1;
+        }
+
+        .profile-details h1 {
+          margin: 0 0 8px 0;
+          font-size: 28px;
+          font-weight: 600;
+        }
+
+        .profile-joined {
+          color: #999;
+          font-size: 14px;
+          margin: 5px 0;
+        }
+
+        .profile-bio {
+          margin: 10px 0 0 0;
+          color: #ccc;
+          line-height: 1.5;
+        }
+
+        .profile-stats {
+          display: flex;
+          gap: 30px;
+          margin-top: 15px;
+        }
+
+        .stat {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        .stat-value {
+          font-size: 20px;
+          font-weight: 600;
+          color: #fff;
+        }
+
+        .stat-label {
+          font-size: 12px;
+          color: #999;
+          margin-top: 2px;
+        }
+
+        .profile-share {
+          margin-top: 10px;
+        }
+
+        .profile-actions {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 30px;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+
+        .btn {
+          padding: 10px 20px;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+
+        .btn-primary {
+          background: #4CAF50;
+          color: white;
+        }
+
+        .btn-primary:hover {
+          background: #45a049;
+        }
+
+        .btn-primary:disabled {
+          background: #666;
+          cursor: not-allowed;
+        }
+
+        .btn-secondary {
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+          background: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-icon {
+          padding: 8px 12px;
+          background: rgba(255, 255, 255, 0.1);
+          color: white;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          font-size: 16px;
+        }
+
+        .btn-icon:hover {
+          background: rgba(255, 255, 255, 0.15);
+        }
+
+        .profile-loading,
+        .profile-notfound {
+          text-align: center;
+          padding: 60px 20px;
+        }
+
+        .spinner {
+          width: 40px;
+          height: 40px;
+          margin: 0 auto 20px;
+          border: 4px solid rgba(255, 255, 255, 0.1);
+          border-top-color: #4CAF50;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        @keyframes slideIn {
+          from {
+            transform: translateX(400px);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+
+        .notification {
+          transition: opacity 0.3s ease-out;
+        }
+
+        .profile-content {
+          padding: 20px;
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #ccc;
+        }
+
+        @media (max-width: 600px) {
+          .profile-header {
+            flex-direction: column;
+          }
+
+          .profile-avatar,
+          .profile-avatar-placeholder {
+            width: 100px;
+            height: 100px;
+          }
+
+          .profile-details h1 {
+            font-size: 22px;
+          }
+
+          .profile-actions {
+            flex-direction: column;
+          }
+
+          .btn {
+            width: 100%;
+            text-align: center;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  return {
+    renderProfile,
+    addFriendAction: async function(username) {
+      const button = event.target;
+      button.disabled = true;
+      button.textContent = 'Добавление...';
+      
+      const success = await addFriend(username);
+      
+      if (success) {
+        button.textContent = '⏳ Запрос на добавление отправлен';
+        showNotification('Запрос на добавление отправлен');
+      } else {
+        button.disabled = false;
+        button.textContent = '➕ Добавить в друзья';
+        showNotification('Ошибка при добавлении в друзья');
+      }
+    },
+    removeFriendAction: async function(friendId) {
+      if (!confirm('Вы уверены?')) return;
+      
+      const success = await removeFriend(friendId);
+      
+      if (success) {
+        location.reload();
+      } else {
+        showNotification('Ошибка при удалении из друзей');
+      }
+    },
+    sendMessage: function(friendId, username) {
+      showNotification('Функция сообщений скоро будет доступна');
+      // TODO: Реализовать функцию отправки сообщений
+    },
+    shareProfile,
+  };
+})();

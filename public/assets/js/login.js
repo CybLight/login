@@ -982,6 +982,17 @@ function renderRoute(r) {
   // 2FA VERIFY
   if (r === '2fa-verify') return view2FAVerify();
 
+  // PROFILE
+  if (r === 'profile') {
+    const username = window.CybRouter.getRouteParam('username');
+    if (username) {
+      profileModule.renderProfile(username);
+    } else {
+      viewUsername();
+    }
+    return;
+  }
+
   // LOGIN
   if (r === 'signup') return viewSignup();
   if (r === 'username') return viewUsername();

@@ -17,7 +17,28 @@
 
   function getRoute() {
     const path = location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
-    return routes.has(path) ? path : 'username';
+    
+    // Проверяем есть ли этот путь в списке
+    if (routes.has(path)) {
+      return path;
+    }
+    
+    // Если нет и путь не пустой, это может быть профиль пользователя
+    if (path && !path.includes('/')) {
+      return 'profile';
+    }
+    
+    return 'username';
+  }
+
+  function getRouteParam(paramName) {
+    const path = location.pathname.replace(/^\/+/, '').replace(/\/+$/, '');
+    
+    if (path && !path.includes('/') && paramName === 'username') {
+      return path;
+    }
+    
+    return null;
   }
 
   function navigate(to) {
@@ -25,7 +46,7 @@
     render();
   }
 
-  window.CybRouter = { getRoute, navigate };
+  window.CybRouter = { getRoute, getRouteParam, navigate };
 
   window.addEventListener('popstate', render);
 
