@@ -3,6 +3,7 @@ const app = document.getElementById('app');
 const API_BASE = 'https://api.cyblight.org';
 
 const EASTER_KEY = 'cyb_strawberry_unlocked';
+const DARK_TRIGGER_KEY = 'cyb_dark_trigger_unlocked';
 const HISTORY_FROM_KEY = 'cyb_history_from'; // откуда открыли стенографию
 
 // Глобальный обработчик синхронных ошибок
@@ -157,8 +158,16 @@ function hasStrawberryAccess() {
   return getStorage(EASTER_KEY) === '1';
 }
 
+function hasDarkTriggerAccess() {
+  return getStorage(DARK_TRIGGER_KEY) === '1';
+}
+
 function setStrawberryAccess() {
   setStorage(EASTER_KEY, '1');
+}
+
+function setDarkTriggerAccess() {
+  setStorage(DARK_TRIGGER_KEY, '1');
 }
 
 /**
@@ -1755,6 +1764,41 @@ function viewSignup() {
         console.warn('Не удалось синхронизировать флаг strawberry:', e);
       }
 
+      // ✅ Синхронизируем флаг dark_trigger с сервером
+      try {
+        const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
+        const meData = await meRes.json().catch(() => null);
+
+        const hasDarkTriggerOnServer = !!(
+          meRes.ok &&
+          meData?.ok &&
+          (meData?.user?.easter?.darkTrigger || meData?.easter?.darkTrigger)
+        );
+
+        const hasDarkTriggerLocally = hasDarkTriggerAccess();
+
+        // Если есть локально, но нет на сервере - отправляем
+        if (hasDarkTriggerLocally && !hasDarkTriggerOnServer) {
+          console.log('🌑 Registration: syncing local dark trigger to server...');
+          try {
+            const syncRes = await apiCall('/auth/easter/dark-trigger', {
+              method: 'POST',
+              credentials: 'include',
+            });
+            if (syncRes.ok) {
+              console.log('✅ Dark trigger synced after registration!');
+            }
+          } catch (syncErr) {
+            console.warn('⚠️ Failed to sync dark trigger:', syncErr);
+          }
+        } else if (hasDarkTriggerOnServer) {
+          setDarkTriggerAccess();
+          console.log('✅ Флаг dark trigger синхронизирован после регистрации');
+        }
+      } catch (e) {
+        console.warn('Не удалось синхронизировать флаг dark trigger:', e);
+      }
+
       // ✅ Регистрация успешна — показываем сообщение и ведём в профиль
       const form = document.getElementById('f');
       const btn = form.querySelector('button[type="submit"]');
@@ -2055,6 +2099,47 @@ function viewPassword() {
         }
       } catch (e) {
         console.warn('Не удалось синхронизировать флаг strawberry:', e);
+      }
+
+      // ✅ Синхронизируем флаг dark_trigger с сервером используя данные из ответа логина
+      try {
+        console.log('Login sync - data from login response (dark trigger):', data);
+
+        // Проверяем обе возможные структуры ответа
+        const userData = data?.data || data;
+        const hasDarkTriggerOnServer = !!userData?.user?.easter?.darkTrigger;
+
+        const hasDarkTriggerLocally = hasDarkTriggerAccess();
+
+        // Если есть локально, но нет на сервере - отправляем
+        if (hasDarkTriggerLocally && !hasDarkTriggerOnServer) {
+          console.log('🌑 Local dark trigger flag found, syncing to server...');
+          try {
+            // Ждём 200мс чтобы браузер успел установить cookie из предыдущего ответа
+            await new Promise((resolve) => setTimeout(resolve, 200));
+
+            const syncRes = await apiCall('/auth/easter/dark-trigger', {
+              method: 'POST',
+              credentials: 'include',
+            });
+            const syncData = await syncRes.json().catch(() => ({}));
+
+            if (syncRes.ok) {
+              console.log('✅ Dark trigger flag synced to server successfully!');
+            } else {
+              console.warn('⚠️ Failed to sync dark trigger to server:', syncData);
+            }
+          } catch (syncErr) {
+            console.warn('⚠️ Error syncing dark trigger to server:', syncErr);
+          }
+        } else if (hasDarkTriggerOnServer) {
+          setDarkTriggerAccess();
+          console.log('✅ Флаг dark trigger синхронизирован с сервера');
+        } else {
+          console.log('❌ Пасхалка dark trigger не найдена (ни локально, ни на сервере)');
+        }
+      } catch (e) {
+        console.warn('Не удалось синхронизировать флаг dark trigger:', e);
       }
 
       CybRouter.navigate('account-profile'); // ✅ или куда тебе надо
@@ -2891,6 +2976,43 @@ function view2FAVerify() {
         console.warn('Не удалось синхронизировать флаг strawberry:', e);
       }
 
+      // ✅ Синхронизируем флаг dark_trigger с сервером
+      try {
+        const meRes = await apiCall('/auth/me', { method: 'GET', credentials: 'include' });
+        const meData = await meRes.json().catch(() => null);
+
+        const hasDarkTrigger = !!(
+          meRes.ok &&
+          meData?.ok &&
+          (meData?.user?.easter?.darkTrigger || meData?.easter?.darkTrigger)
+        );
+
+        const hasDarkTriggerLocally = hasDarkTriggerAccess();
+
+        // Если есть локально, но нет на сервере - отправляем
+        if (hasDarkTriggerLocally && !hasDarkTrigger) {
+          console.log('🌑 2FA: syncing local dark trigger to server...');
+          try {
+            const syncRes = await apiCall('/auth/easter/dark-trigger', {
+              method: 'POST',
+              credentials: 'include',
+            });
+            if (syncRes.ok) {
+              console.log('✅ Dark trigger synced to server after 2FA!');
+            } else {
+              console.warn('⚠️ Failed to sync dark trigger to server');
+            }
+          } catch (syncErr) {
+            console.warn('⚠️ Error syncing dark trigger:', syncErr);
+          }
+        } else if (hasDarkTrigger) {
+          setDarkTriggerAccess();
+          console.log('✅ Флаг dark trigger синхронизирован после 2FA');
+        }
+      } catch (e) {
+        console.warn('Не удалось синхронизировать флаг dark trigger:', e);
+      }
+
       setTimeout(() => {
         CybRouter.navigate('account-security');
       }, 500);
@@ -3431,6 +3553,13 @@ async function viewAccount(tab = 'profile') {
       console.log('✅ Флаг strawberry синхронизирован из viewAccount');
     } else {
       console.log('❌ Флаг strawberry не найден в ответе /auth/me');
+    }
+
+    if (me?.user?.easter?.darkTrigger) {
+      setDarkTriggerAccess();
+      console.log('✅ Флаг dark trigger синхронизирован из viewAccount');
+    } else {
+      console.log('❌ Флаг dark trigger не найден в ответе /auth/me');
     }
 
     // header
@@ -4249,7 +4378,9 @@ function renderTabHtml(tab, me) {
   }
 
   if (tab === 'easter') {
-    const canSee = hasStrawberryAccess() || !!me?.user?.easter?.strawberry;
+    const canSeeStrawberry = hasStrawberryAccess() || !!me?.user?.easter?.strawberry;
+    const canSeeDarkTrigger = hasDarkTriggerAccess() || !!me?.user?.easter?.darkTrigger;
+    
     return `
       <div style="display:grid;gap:10px;">
         <div style="opacity:.85;line-height:1.5;">
@@ -4257,14 +4388,27 @@ function renderTabHtml(tab, me) {
         </div>
 
         <button class="btn btn-outline" id="toHistoryBtn" type="button"
-          ${canSee ? '' : 'disabled style="opacity:.55;cursor:not-allowed;"'}>
-          ${canSee ? '🍓 Открыть стенографию' : '🔒 Стенография (закрыто)'}
+          ${canSeeStrawberry ? '' : 'disabled style="opacity:.55;cursor:not-allowed;"'}>
+          ${canSeeStrawberry ? '🍓 Открыть стенографию' : '🔒 Стенография (закрыто)'}
         </button>
 
         ${
-          canSee
+          canSeeStrawberry
             ? ''
             : `<div style="opacity:.7;font-size:12px;">Подсказка: ищи особую клубничку 😉</div>`
+        }
+
+        <div style="height:1px;background:rgba(255,255,255,.08);margin:8px 0;"></div>
+
+        <div style="opacity:.85;line-height:1.5;display:flex;align-items:center;gap:8px;">
+          ${canSeeDarkTrigger ? '🌑 Dark Trigger' : '🔒 Темный триггер'}
+          ${canSeeDarkTrigger ? '<span style="opacity:.6;font-size:12px;">(найдено)</span>' : ''}
+        </div>
+
+        ${
+          canSeeDarkTrigger
+            ? '<div style="opacity:.7;font-size:12px;">Ты нашел секретную пасхалку в темноте! 🎉</div>'
+            : '<div style="opacity:.7;font-size:12px;">Подсказка: исследуй тёмные уголки сайта... 🌑</div>'
         }
       </div>
     `;
