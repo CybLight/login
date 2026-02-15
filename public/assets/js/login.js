@@ -5009,19 +5009,64 @@ async function searchFriendsAndAdd(event) {
   const query = searchInput.value.trim();
 
   try {
-    // TODO: Добавить endpoint поиска пользователей /api/search/users на backend
-    // Пока показываем сообщение об ошибке
+    // Вызываем API поиска пользователей
+    const res = await apiCall(`/api/search/users?q=${encodeURIComponent(query)}`, {
+      credentials: 'include',
+    });
+    
+    const data = await res.json();
+
     if (searchResults) {
       searchResults.classList.add('active');
+      
+      if (!data.ok || !data.users || data.users.length === 0) {
+        searchResults.innerHTML = `
+          <div style="text-align: center; color: rgba(255,255,255,0.7); padding: 16px;">
+            🔍 Пользователи не найдены<br>
+            <small style="opacity: 0.7;">Попробуйте изменить запрос</small>
+          </div>
+        `;
+        return;
+      }
+
+      // Отображаем результаты поиска
       searchResults.innerHTML = `
-        <div style="text-align: center; color: rgba(255,255,255,0.7);">
-          ⚠️ Поиск пока не реализован на сервере.<br>
-          <small>Необходим endpoint: GET /api/search/users?q=query</small>
-        </div>
+        <div style="margin-bottom: 12px; font-weight: 600;">📋 Найдено: ${data.users.length}</div>
+        ${data.users
+          .map(
+            (user) => `
+          <div class="search-result-item">
+            <div class="search-result-avatar">
+              ${user.avatar ? `<img src="${escapeHtml(user.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="">` : '👤'}
+            </div>
+            <div class="search-result-info">
+              <div class="search-result-username">${escapeHtml(user.username)}</div>
+            </div>
+            <div class="search-result-actions">
+              <button class="btn-friend btn-friend-add" onclick="addFriendFromSearch('${escapeHtml(user.username)}')">
+                ➕ Добавить
+              </button>
+              <button class="btn-friend btn-friend-profile" onclick="CybRouter.navigate('${escapeHtml(user.username)}')">
+                👤 Профиль
+              </button>
+            </div>
+          </div>
+        `
+          )
+          .join('')}
       `;
     }
   } catch (err) {
     console.error('Search error:', err);
+    if (searchResults) {
+      searchResults.classList.add('active');
+      searchResults.innerHTML = `
+        <div style="text-align: center; color: rgba(255,67,54,0.9); padding: 16px;">
+          ⚠️ Ошибка при поиске<br>
+          <small>${escapeHtml(err.message || 'Неизвестная ошибка')}</small>
+        </div>
+      `;
+    }
   }
 }
 
@@ -5107,6 +5152,35 @@ async function cancelFriendRequest(friendshipId) {
     }
   } catch (err) {
     console.error('Error canceling request:', err);
+    showTopNotification('error', 'Ошибка сети');
+  }
+}
+
+async function addFriendFromSearch(friendUsername) {
+  try {
+    const res = await apiCall('/api/friends/add', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friendUsername }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.ok) {
+      showTopNotification('success', `✅ Запрос отправлен пользователю ${friendUsername}!`);
+      // Очищаем поле поиска и результаты
+      const searchInput = document.getElementById('friendSearchInput');
+      const searchResults = document.getElementById('searchResults');
+      if (searchInput) searchInput.value = '';
+      if (searchResults) searchResults.classList.remove('active');
+      // Обновляем вкладку друзей
+      loadFriendsTab();
+    } else {
+      showTopNotification('error', data.error || 'Ошибка при отправке запроса');
+    }
+  } catch (err) {
+    console.error('Error adding friend:', err);
     showTopNotification('error', 'Ошибка сети');
   }
 }
