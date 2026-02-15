@@ -4612,18 +4612,105 @@ async function loadFriendsTab(api) {
     const friendsRes = await apiCall('/api/friends/list', { credentials: 'include' });
     const friendsData = await friendsRes.json();
 
+    // Загружаем входящие запросы
+    const pendingRes = await apiCall('/api/friends/pending', { credentials: 'include' });
+    const pendingData = await pendingRes.json();
+
+    // Загружаем отправленные запросы
+    const sentRes = await apiCall('/api/friends/sent', { credentials: 'include' });
+    const sentData = await sentRes.json();
+
     if (!friendsData.ok) {
       container.innerHTML = `<div class="error-message">Не удалось загрузить друзей</div>`;
       return;
     }
 
     const friends = friendsData.friends || [];
-
-    // Пока нет отдельного endpoint для запросов, мы покажем только список друзей
-    // TODO: Добавить endpoint на backend для получения входящих запросов
+    const pendingRequests = pendingData.pendingRequests || [];
+    const sentRequests = sentData.sentRequests || [];
 
     container.innerHTML = `
       <style>
+        .friends-search {
+          margin-bottom: 24px;
+          display: flex;
+          gap: 8px;
+        }
+        .friends-search input {
+          flex: 1;
+          background: rgba(255,255,255,.05);
+          border: 1px solid rgba(255,255,255,.1);
+          color: white;
+          padding: 12px 16px;
+          border-radius: 8px;
+          font-size: 14px;
+        }
+        .friends-search input::placeholder {
+          color: rgba(255,255,255,.5);
+        }
+        .friends-search input:focus {
+          outline: none;
+          border-color: rgba(102,126,234,0.5);
+          background: rgba(255,255,255,.08);
+        }
+        .friends-search button {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border: none;
+          color: white;
+          padding: 12px 24px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 500;
+          transition: all 0.2s;
+        }
+        .friends-search button:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        #searchResults {
+          display: none;
+          margin-bottom: 24px;
+          padding: 16px;
+          background: rgba(102, 126, 234, 0.1);
+          border: 1px solid rgba(102, 126, 234, 0.3);
+          border-radius: 12px;
+        }
+        #searchResults.active {
+          display: block;
+        }
+        .search-result-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
+          background: rgba(255,255,255,.03);
+          border-radius: 8px;
+          margin-bottom: 8px;
+        }
+        .search-result-item:last-child {
+          margin-bottom: 0;
+        }
+        .search-result-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .search-result-info {
+          flex: 1;
+        }
+        .search-result-username {
+          font-weight: 600;
+          font-size: 14px;
+        }
+        .search-result-actions {
+          display: flex;
+          gap: 8px;
+        }
         .friends-section {
           margin-bottom: 32px;
         }
@@ -4699,6 +4786,34 @@ async function loadFriendsTab(api) {
         .btn-friend-profile:hover {
           background: rgba(255,255,255,.15);
         }
+        .btn-friend-remove {
+          background: rgba(255, 67, 54, 0.2);
+          color: #ff4336;
+        }
+        .btn-friend-remove:hover {
+          background: rgba(255, 67, 54, 0.3);
+        }
+        .btn-friend-add {
+          background: rgba(76, 175, 80, 0.2);
+          color: #4caf50;
+        }
+        .btn-friend-add:hover {
+          background: rgba(76, 175, 80, 0.3);
+        }
+        .btn-friend-accept {
+          background: rgba(76, 175, 80, 0.2);
+          color: #4caf50;
+        }
+        .btn-friend-accept:hover {
+          background: rgba(76, 175, 80, 0.3);
+        }
+        .btn-friend-reject, .btn-friend-cancel {
+          background: rgba(255, 193, 7, 0.2);
+          color: #ffc107;
+        }
+        .btn-friend-reject:hover, .btn-friend-cancel:hover {
+          background: rgba(255, 193, 7, 0.3);
+        }
         .empty-state {
           text-align: center;
           padding: 48px 24px;
@@ -4708,7 +4823,19 @@ async function loadFriendsTab(api) {
           font-size: 48px;
           margin-bottom: 16px;
         }
+        .friend-meta {
+          font-size: 12px;
+          opacity: 0.7;
+          margin-top: 4px;
+        }
       </style>
+
+      <div class="friends-search">
+        <input type="text" id="friendSearchInput" placeholder="🔍 Поиск пользователей...">
+        <button onclick="searchFriendsAndAdd(event)">Добавить</button>
+      </div>
+
+      <div id="searchResults"></div>
 
       <div class="friends-section">
         <div class="friends-section-title">
@@ -4736,6 +4863,9 @@ async function loadFriendsTab(api) {
                   <button class="btn-friend btn-friend-profile" onclick="CybRouter.navigate('${escapeHtml(friend.username)}')">
                     👤 Профиль
                   </button>
+                  <button class="btn-friend btn-friend-remove" onclick="removeFriend('${escapeHtml(friend.id)}', '${escapeHtml(friend.username)}')">
+                    ❌ Удалить
+                  </button>
                 </div>
               </div>
             `
@@ -4757,21 +4887,227 @@ async function loadFriendsTab(api) {
 
       <div class="friends-section">
         <div class="friends-section-title">
-          <span>📬</span>
-          <span>Входящие запросы</span>
+          <span>📥</span>
+          <span>Входящие запросы (${pendingRequests.length})</span>
         </div>
-        <div class="empty-state">
-          <div class="empty-state-icon">📭</div>
-          <p>Нет новых запросов</p>
-          <p style="font-size: 14px; opacity: 0.7; margin-top: 8px;">
-            Когда кто-то захочет добавить вас в друзья, запрос появится здесь
-          </p>
+        ${
+          pendingRequests.length > 0
+            ? `
+          <div class="friends-list">
+            ${pendingRequests
+              .map(
+                (request) => `
+              <div class="friend-card">
+                <div class="friend-avatar">
+                  ${request.avatar ? `<img src="${escapeHtml(request.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="">` : '👤'}
+                </div>
+                <div class="friend-info">
+                  <div class="friend-username">${escapeHtml(request.username)}</div>
+                  <div class="friend-meta">📬 Запрос в друзья ${new Date(request.createdAt).toLocaleDateString('ru-RU')}</div>
+                </div>
+                <div class="friend-actions">
+                  <button class="btn-friend btn-friend-accept" onclick="acceptFriend('${escapeHtml(request.id)}', '${escapeHtml(request.username)}')">
+                    ✅ Принять
+                  </button>
+                  <button class="btn-friend btn-friend-reject" onclick="rejectFriend('${escapeHtml(request.id)}', '${escapeHtml(request.username)}')">
+                    ❌ Отклонить
+                  </button>
+                </div>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `
+            : `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>Нет новых запросов</p>
+            <p style="font-size: 14px; opacity: 0.7; margin-top: 8px;">
+              Когда кто-то захочет добавить вас в друзья, запрос появится здесь
+            </p>
+          </div>
+        `
+        }
+      </div>
+
+      <div class="friends-section">
+        <div class="friends-section-title">
+          <span>📤</span>
+          <span>Отправленные запросы (${sentRequests.length})</span>
         </div>
+        ${
+          sentRequests.length > 0
+            ? `
+          <div class="friends-list">
+            ${sentRequests
+              .map(
+                (request) => `
+              <div class="friend-card">
+                <div class="friend-avatar">
+                  ${request.avatar ? `<img src="${escapeHtml(request.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="">` : '👤'}
+                </div>
+                <div class="friend-info">
+                  <div class="friend-username">${escapeHtml(request.username)}</div>
+                  <div class="friend-meta">⏳ Ожидание ответа ${new Date(request.createdAt).toLocaleDateString('ru-RU')}</div>
+                </div>
+                <div class="friend-actions">
+                  <button class="btn-friend btn-friend-profile" onclick="CybRouter.navigate('${escapeHtml(request.username)}')">
+                    👤 Профиль
+                  </button>
+                  <button class="btn-friend btn-friend-cancel" onclick="cancelFriendRequest('${escapeHtml(request.id)}')">
+                    ❌ Отменить
+                  </button>
+                </div>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        `
+            : `
+          <div class="empty-state">
+            <div class="empty-state-icon">📨</div>
+            <p>Нет отправленных запросов</p>
+            <p style="font-size: 14px; opacity: 0.7; margin-top: 8px;">
+              Найдите пользователей и отправьте им запрос в друзья
+            </p>
+          </div>
+        `
+        }
       </div>
     `;
+
+    // Привязываем обработчик поиска при вводе
+    const searchInput = document.getElementById('friendSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          searchFriendsAndAdd(e);
+        }
+      });
+    }
   } catch (error) {
     console.error('Error loading friends:', error);
     container.innerHTML = `<div class="error-message">Ошибка загрузки. Попробуйте обновить страницу.</div>`;
+  }
+}
+
+async function searchFriendsAndAdd(event) {
+  event?.preventDefault();
+  
+  const searchInput = document.getElementById('friendSearchInput');
+  const searchResults = document.getElementById('searchResults');
+  
+  if (!searchInput || !searchInput.value.trim()) {
+    if (searchResults) {
+      searchResults.classList.remove('active');
+    }
+    return;
+  }
+
+  const query = searchInput.value.trim();
+
+  try {
+    // TODO: Добавить endpoint поиска пользователей /api/search/users на backend
+    // Пока показываем сообщение об ошибке
+    if (searchResults) {
+      searchResults.classList.add('active');
+      searchResults.innerHTML = `
+        <div style="text-align: center; color: rgba(255,255,255,0.7);">
+          ⚠️ Поиск пока не реализован на сервере.<br>
+          <small>Необходим endpoint: GET /api/search/users?q=query</small>
+        </div>
+      `;
+    }
+  } catch (err) {
+    console.error('Search error:', err);
+  }
+}
+
+async function acceptFriend(friendId, friendUsername) {
+  try {
+    const res = await apiCall('/api/friends/accept', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friendId }),
+    });
+
+    if (res.ok) {
+      showTopNotification('success', `✅ ${friendUsername} добавлен в друзья!`);
+      loadFriendsTab();
+    } else {
+      showTopNotification('error', 'Ошибка при принятии запроса');
+    }
+  } catch (err) {
+    console.error('Error accepting friend:', err);
+    showTopNotification('error', 'Ошибка сети');
+  }
+}
+
+async function rejectFriend(friendId, friendUsername) {
+  try {
+    const res = await apiCall('/api/friends/reject', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friendId }),
+    });
+
+    if (res.ok) {
+      showTopNotification('success', `❌ Запрос от ${friendUsername} отклонен`);
+      loadFriendsTab();
+    } else {
+      showTopNotification('error', 'Ошибка при отклонении запроса');
+    }
+  } catch (err) {
+    console.error('Error rejecting friend:', err);
+    showTopNotification('error', 'Ошибка сети');
+  }
+}
+
+async function removeFriend(friendId, friendUsername) {
+  if (!confirm(`Вы уверены, что хотите удалить ${friendUsername}?`)) return;
+
+  try {
+    const res = await apiCall('/api/friends/remove', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friendId }),
+    });
+
+    if (res.ok) {
+      showTopNotification('success', `${friendUsername} удален из друзей`);
+      loadFriendsTab();
+    } else {
+      showTopNotification('error', 'Ошибка при удалении друга');
+    }
+  } catch (err) {
+    console.error('Error removing friend:', err);
+    showTopNotification('error', 'Ошибка сети');
+  }
+}
+
+async function cancelFriendRequest(friendshipId) {
+  try {
+    const res = await apiCall(`/api/friends/remove`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ friendId: friendshipId }),
+    });
+
+    if (res.ok) {
+      showTopNotification('success', 'Запрос отменен');
+      loadFriendsTab();
+    } else {
+      showTopNotification('error', 'Ошибка при отмене запроса');
+    }
+  } catch (err) {
+    console.error('Error canceling request:', err);
+    showTopNotification('error', 'Ошибка сети');
   }
 }
 
@@ -4890,11 +5226,375 @@ async function loadMessagesTab(api) {
   }
 }
 
+// ============ EMOJI SELECTOR ============
+const EMOJI_LIST = ['😀', '😂', '🥰', '👍', '🔥', '✨', '⭐', '💯', '🎉', '😍', '👏', '🙏', '💪', '🤔', '😅'];
+
+function createEmojiReactionPicker(messageId) {
+  const picker = document.createElement('div');
+  picker.className = 'emoji-picker';
+  picker.innerHTML = EMOJI_LIST.map(emoji => `
+    <button class="emoji-btn" data-emoji="${emoji}" onclick="addReactionToMessage('${messageId}', '${emoji}')" title="${emoji}">
+      ${emoji}
+    </button>
+  `).join('');
+  return picker;
+}
+
+async function addReactionToMessage(messageId, emoji) {
+  try {
+    const res = await apiCall(`/api/messages/${messageId}/react`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emoji }),
+    });
+
+    if (res.ok) {
+      // Перезагружаем чат для отображения реакции
+      const friendId = document.getElementById('chatFriendId')?.value;
+      if (friendId) loadChatMessages(friendId);
+    }
+  } catch (err) {
+    console.error('Error adding reaction:', err);
+  }
+}
+
+async function deleteMessage(messageId) {
+  if (!confirm('Удалить это сообщение?')) return;
+
+  try {
+    const res = await apiCall(`/api/messages/${messageId}`, {
+      method: 'DELETE',
+      credentials: 'include',
+    });
+
+    if (res.ok) {
+      const friendId = document.getElementById('chatFriendId')?.value;
+      if (friendId) loadChatMessages(friendId);
+    }
+  } catch (err) {
+    console.error('Error deleting message:', err);
+  }
+}
+
+async function loadChatMessages(friendId) {
+  const messagesContainer = document.getElementById('chatMessages');
+  if (!messagesContainer) return;
+
+  try {
+    const res = await apiCall(`/api/messages/${friendId}`, {
+      credentials: 'include',
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) return;
+
+    const messages = data.messages || [];
+
+    messagesContainer.innerHTML = messages.map(msg => {
+      const isSentByMe = msg.senderId === document.getElementById('currentUserId')?.value;
+      const reactions = msg.reactions || [];
+
+      return `
+        <div class="message ${isSentByMe ? 'sent' : 'received'}">
+          <div class="message-content">
+            ${msg.content}
+            ${msg.editedAt ? '<span class="edited">(отредактировано)</span>' : ''}
+          </div>
+          ${reactions.length > 0 ? `
+            <div class="reactions">
+              ${reactions.map(r => `
+                <span class="reaction" title="${r.count} реакций">${r.emoji}</span>
+              `).join('')}
+            </div>
+          ` : ''}
+          <div class="message-time">${new Date(msg.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+          ${isSentByMe ? `
+            <div class="message-actions">
+              <button class="msg-btn" onclick="deleteMessage('${msg.id}')">🗑️</button>
+              <button class="msg-btn emoji-toggle" onclick="toggleEmojiPicker('${msg.id}')">😀</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  } catch (err) {
+    console.error('Error loading messages:', err);
+  }
+}
+
+function toggleEmojiPicker(messageId) {
+  const existing = document.getElementById(`picker-${messageId}`);
+  if (existing) {
+    existing.remove();
+    return;
+  }
+
+  const message = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!message) return;
+
+  const picker = createEmojiReactionPicker(messageId);
+  picker.id = `picker-${messageId}`;
+  message.appendChild(picker);
+}
+
+async function sendChatMessage(friendId) {
+  const input = document.getElementById('messageInput');
+  if (!input || !input.value.trim()) return;
+
+  const content = input.value.trim();
+  input.value = '';
+
+  try {
+    const res = await apiCall('/api/messages/send', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipientId: friendId, content }),
+    });
+
+    if (res.ok) {
+      loadChatMessages(friendId);
+    } else {
+      showTopNotification('error', 'Не удалось отправить сообщение');
+    }
+  } catch (err) {
+    console.error('Error sending message:', err);
+    showTopNotification('error', 'Ошибка при отправке');
+  }
+}
+
 function openChat(friendId, friendUsername) {
-  // TODO: Реализовать открытие чата
-  alert(
-    `Открытие чата с ${friendUsername}...\n\nФункционал чата будет добавлен в следующем обновлении.`
-  );
+  const container = document.getElementById('messagesContent');
+  if (!container) return;
+
+  // Полноценный интерфейс чата
+  container.innerHTML = `
+    <style>
+      .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 600px;
+        border: 1px solid rgba(255,255,255,.1);
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(0,0,0,.3);
+      }
+      .chat-header {
+        padding: 16px;
+        border-bottom: 1px solid rgba(255,255,255,.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .chat-header-title {
+        font-weight: 600;
+        font-size: 16px;
+      }
+      .chat-close-btn {
+        background: rgba(255,255,255,.1);
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .chat-close-btn:hover {
+        background: rgba(255,255,255,.15);
+      }
+      #chatMessages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .message {
+        display: flex;
+        flex-direction: column;
+        max-width: 70%;
+        gap: 4px;
+      }
+      .message.sent {
+        align-self: flex-end;
+        align-items: flex-end;
+      }
+      .message.received {
+        align-self: flex-start;
+        align-items: flex-start;
+      }
+      .message-content {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 12px 16px;
+        border-radius: 12px;
+        word-wrap: break-word;
+        font-size: 14px;
+      }
+      .message.received .message-content {
+        background: rgba(255,255,255,.1);
+      }
+      .edited {
+        font-size: 11px;
+        opacity: 0.7;
+        margin-left: 4px;
+      }
+      .reactions {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+      }
+      .reaction {
+        background: rgba(255,255,255,.1);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .reaction:hover {
+        background: rgba(255,255,255,.2);
+      }
+      .message-time {
+        font-size: 11px;
+        opacity: 0.6;
+        margin-top: 2px;
+      }
+      .message-actions {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .message.sent:hover .message-actions {
+        opacity: 1;
+      }
+      .msg-btn {
+        background: rgba(255,255,255,.1);
+        border: none;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      .msg-btn:hover {
+        background: rgba(255,255,255,.2);
+      }
+      .emoji-picker {
+        display: flex;
+        gap: 4px;
+        margin-top: 4px;
+        flex-wrap: wrap;
+        background: rgba(0,0,0,.3);
+        padding: 8px;
+        border-radius: 8px;
+      }
+      .emoji-btn {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,.2);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s;
+      }
+      .emoji-btn:hover {
+        background: rgba(255,255,255,.1);
+        border-color: rgba(255,255,255,.3);
+      }
+      .chat-footer {
+        padding: 16px;
+        border-top: 1px solid rgba(255,255,255,.1);
+        display: flex;
+        gap: 8px;
+      }
+      .chat-footer input {
+        flex: 1;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.1);
+        color: white;
+        padding: 12px;
+        border-radius: 8px;
+        font-size: 14px;
+      }
+      .chat-footer input::placeholder {
+        color: rgba(255,255,255,.5);
+      }
+      .chat-footer input:focus {
+        outline: none;
+        border-color: rgba(102,126,234,0.5);
+        background: rgba(255,255,255,.08);
+      }
+      .chat-send-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      .chat-send-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+      .chat-send-btn:active {
+        transform: translateY(0);
+      }
+    </style>
+
+    <div class="chat-container">
+      <div class="chat-header">
+        <div class="chat-header-title">💬 ${escapeHtml(friendUsername)}</div>
+        <button class="chat-close-btn" onclick="loadMessagesTab()">Закрыть</button>
+      </div>
+      <div id="chatMessages"></div>
+      <input type="hidden" id="chatFriendId" value="${escapeHtml(friendId)}">
+      <input type="hidden" id="currentUserId" value="">
+      <div class="chat-footer">
+        <input type="text" id="messageInput" placeholder="Напишите сообщение..." />
+        <button class="chat-send-btn" onclick="sendChatMessage('${escapeHtml(friendId)}')">Отправить</button>
+      </div>
+    </div>
+  `;
+
+  // Получаем текущего пользователя
+  apiCall('/auth/me', { credentials: 'include' })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok && data.user) {
+        document.getElementById('currentUserId').value = data.user.id;
+      }
+    })
+    .catch(() => {});
+
+  // Загружаем сообщения
+  loadChatMessages(friendId);
+
+  // Позволяем отправлять по Enter
+  document.getElementById('messageInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendChatMessage(friendId);
+    }
+  });
+
+  // Обновляем сообщения каждые 3 секунды
+  const updateInterval = setInterval(() => {
+    if (!document.getElementById('chatMessages')) {
+      clearInterval(updateInterval);
+    } else {
+      loadChatMessages(friendId);
+    }
+  }, 3000);
 }
 
 async function bindTabActions(tab, me, api) {
