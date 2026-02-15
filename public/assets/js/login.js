@@ -1023,9 +1023,32 @@ async function viewEditProfile() {
   
   try {
     // Загружаем текущий профиль
+    // Сначала пробуем новый эндпоинт, если не работает - используем старый
     console.log('[EDIT-PROFILE] Fetching profile data from:', `${API_BASE}/api/profile/me`);
-    const response = await fetch(`${API_BASE}/api/profile/me`, { credentials: 'include' });
+    let response = await fetch(`${API_BASE}/api/profile/me`, { credentials: 'include' });
     console.log('[EDIT-PROFILE] Response status:', response.status, response.ok);
+    
+    // Если эндпоинт не найден (404) - используем альтернативный метод
+    if (response.status === 404) {
+      console.log('[EDIT-PROFILE] Endpoint not found, using fallback method');
+      
+      // Получаем username из /auth/me
+      const meResponse = await fetch(`${API_BASE}/auth/me`, { credentials: 'include' });
+      if (!meResponse.ok) {
+        throw new Error('Not authenticated');
+      }
+      const meData = await meResponse.json();
+      if (!meData.ok || !meData.user?.login) {
+        throw new Error('Failed to get user data');
+      }
+      
+      const username = meData.user.login;
+      console.log('[EDIT-PROFILE] Got username from /auth/me:', username);
+      
+      // Получаем профиль по username
+      response = await fetch(`${API_BASE}/api/profile/${username}`, { credentials: 'include' });
+      console.log('[EDIT-PROFILE] Fallback response status:', response.status);
+    }
     
     const data = await response.json();
     console.log('[EDIT-PROFILE] Response data:', data);
@@ -1037,7 +1060,7 @@ async function viewEditProfile() {
           <h1>Ошибка загрузки</h1>
           <p>Не удалось загрузить профиль для редактирования</p>
           <p style="color: #999; font-size: 14px;">
-            ${data.error || 'Статус: ' + response.status}
+            ${data?.error || 'Статус: ' + response.status}
           </p>
           <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
             <button class="btn btn-primary" onclick="location.reload()">Обновить страницу</button>
@@ -1049,6 +1072,21 @@ async function viewEditProfile() {
     }
     
     const profile = data.profile;
+    
+    // Обеспечиваем наличие всех необходимых полей для редактирования
+    if (!profile.canChangeUsername) profile.canChangeUsername = true;
+    if (!profile.usernameChangedAt) profile.usernameChangedAt = null;
+    if (!profile.role) profile.role = 'user';
+    if (!profile.flags) profile.flags = [];
+    if (!profile.privacy) {
+      profile.privacy = {
+        gender: 'friends',
+        dob: 'friends',
+        about: 'everyone',
+        avatar: 'everyone',
+        bio: 'everyone'
+      };
+    }
     
     app.innerHTML = `
       <div class="edit-profile-container">
