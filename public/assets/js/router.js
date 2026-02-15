@@ -15,6 +15,7 @@
     'reset',
     'done',
     'strawberry-history',
+    'edit-profile',
   ]);
 
   function getRoute() {

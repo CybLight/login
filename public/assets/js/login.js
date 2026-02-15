@@ -959,6 +959,498 @@ const validators = {
 //   return;
 // }
 
+// Стандартные аватары
+const AVAILABLE_AVATARS = [
+  { id: 'avatar-cat', emoji: '🐱', name: 'Кот' },
+  { id: 'avatar-dog', emoji: '🐶', name: 'Собака' },
+  { id: 'avatar-fox', emoji: '🦊', name: 'Лиса' },
+  { id: 'avatar-bear', emoji: '🐻', name: 'Медведь' },
+  { id: 'avatar-panda', emoji: '🐼', name: 'Панда' },
+  { id: 'avatar-rabbit', emoji: '🐰', name: 'Кролик' },
+  { id: 'avatar-owl', emoji: '🦉', name: 'Сова' },
+  { id: 'avatar-penguin', emoji: '🐧', name: 'Пингвин' },
+  { id: 'avatar-koala', emoji: '🐨', name: 'Коала' },
+  { id: 'avatar-tiger', emoji: '🐯', name: 'Тигр' },
+];
+
+// Эксклюзивные аватары для специальных ролей
+const EXCLUSIVE_AVATARS = [
+  { id: 'avatar-crown', emoji: '👑', name: 'Корона', roles: ['admin'] },
+  { id: 'avatar-shield', emoji: '🛡️', name: 'Щит', roles: ['moderator'] },
+  { id: 'avatar-code', emoji: '💻', name: 'Код', roles: ['developer'] },
+  { id: 'avatar-verified', emoji: '✔️', name: 'Галочка', roles: ['verified', 'admin', 'moderator'] },
+  { id: 'avatar-fire', emoji: '🔥', name: 'Огонь', roles: ['vip', 'admin'] },
+  { id: 'avatar-star', emoji: '⭐', name: 'Звезда', roles: ['vip', 'verified'] },
+  { id: 'avatar-robot', emoji: '🤖', name: 'Робот', roles: ['bot', 'developer'] },
+  { id: 'avatar-diamond', emoji: '💎', name: 'Алмаз', roles: ['premium', 'vip'] },
+];
+
+// Получить emoji аватара по ID
+function getAvatarEmoji(avatarId) {
+  const avatar = AVAILABLE_AVATARS.find(a => a.id === avatarId);
+  if (avatar) return avatar.emoji;
+  
+  const exclusive = EXCLUSIVE_AVATARS.find(a => a.id === avatarId);
+  return exclusive ? exclusive.emoji : '👤';
+}
+
+// Проверить доступ к эксклюзивному аватару
+function canUseAvatar(avatarId, userRole) {
+  const avatar = AVAILABLE_AVATARS.find(a => a.id === avatarId);
+  if (avatar) return true; // Стандартные аватары доступны всем
+  
+  const exclusive = EXCLUSIVE_AVATARS.find(a => a.id === avatarId);
+  if (exclusive) {
+    return exclusive.roles.includes(userRole);
+  }
+  
+  return false;
+}
+
+// Функция редактирования профиля
+async function viewEditProfile() {
+  setNoStrawberries(true);
+  
+  const app = document.getElementById('app');
+  
+  // Показываем загрузку
+  app.innerHTML = `
+    <div class="profile-loading">
+      <div class="spinner"></div>
+      <p>Загрузка...</p>
+    </div>
+  `;
+  
+  try {
+    // Загружаем текущий профиль
+    const response = await fetch(`${API_BASE}/api/profile/me`, { credentials: 'include' });
+    const data = await response.json();
+    
+    if (!response.ok || !data.ok) {
+      CybRouter.navigate('username');
+      return;
+    }
+    
+    const profile = data.profile;
+    
+    app.innerHTML = `
+      <div class="edit-profile-container">
+        <div class="edit-profile-header">
+          <button class="btn-back" onclick="history.back()">← Назад</button>
+          <h1>Редактирование профиля</h1>
+        </div>
+        
+        <div class="edit-profile-content">
+          <div id="editProfileMsg" class="msg" style="display:none;"></div>
+          
+          <!-- Username -->
+          <section class="edit-section">
+            <h2>Имя пользователя</h2>
+            <div class="edit-field">
+              <input type="text" id="usernameInput" class="input" value="${escapeHtml(profile.username)}" ${profile.canChangeUsername ? '' : 'disabled'}>
+              <button id="checkUsernameBtn" class="btn btn-secondary" ${profile.canChangeUsername ? '' : 'disabled'}>
+                Проверить доступность
+              </button>
+            </div>
+            <div id="usernameHint" class="field-hint">
+              ${profile.canChangeUsername ? '3-20 символов: буквы, цифры, _ или -' : `Можно изменить через ${Math.ceil((30 * 24 * 60 * 60 * 1000 - (Date.now() - profile.usernameChangedAt)) / (24 * 60 * 60 * 1000))} дней`}
+            </div>
+          </section>
+          
+          <!-- Avatar -->
+          <section class="edit-section">
+            <h2>Аватар</h2>
+            <div class="avatar-grid">
+              ${AVAILABLE_AVATARS.map(av => `
+                <div class="avatar-option ${profile.avatar === av.id ? 'selected' : ''}" data-avatar="${av.id}">
+                  <div class="avatar-emoji">${av.emoji}</div>
+                  <div class="avatar-name">${av.name}</div>
+                </div>
+              `).join('')}
+              ${EXCLUSIVE_AVATARS.filter(av => canUseAvatar(av.id, profile.role)).map(av => `
+                <div class="avatar-option exclusive ${profile.avatar === av.id ? 'selected' : ''}" data-avatar="${av.id}">
+                  <div class="avatar-emoji">${av.emoji}</div>
+                  <div class="avatar-name">${av.name}</div>
+                  <div class="avatar-badge">🌟</div>
+                </div>
+              `).join('')}
+            </div>
+            <div class="privacy-setting">
+              <label>Кому видно:</label>
+              <select id="privacyAvatar" class="input">
+                <option value="everyone" ${profile.privacy.avatar === 'everyone' ? 'selected' : ''}>Всем</option>
+                <option value="friends" ${profile.privacy.avatar === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                <option value="nobody" ${profile.privacy.avatar === 'nobody' ? 'selected' : ''}>Никому</option>
+              </select>
+            </div>
+          </section>
+          
+          <!-- Bio -->
+          <section class="edit-section">
+            <h2>О себе (кратко)</h2>
+            <textarea id="bioInput" class="input" maxlength="500" rows="3" placeholder="Расскажите о себе кратко...">${profile.bio || ''}</textarea>
+            <div class="field-hint">До 500 символов</div>
+            <div class="privacy-setting">
+              <label>Кому видно:</label>
+              <select id="privacyBio" class="input">
+                <option value="everyone" ${profile.privacy.bio === 'everyone' ? 'selected' : ''}>Всем</option>
+                <option value="friends" ${profile.privacy.bio === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                <option value="nobody" ${profile.privacy.bio === 'nobody' ? 'selected' : ''}>Никому</option>
+              </select>
+            </div>
+          </section>
+          
+          <!-- About Me -->
+          <section class="edit-section">
+            <h2>О себе (подробно)</h2>
+            <textarea id="aboutMeInput" class="input" maxlength="1000" rows="5" placeholder="Расскажите о себе подробнее...">${profile.aboutMe || ''}</textarea>
+            <div class="field-hint">До 1000 символов</div>
+            <div class="privacy-setting">
+              <label>Кому видно:</label>
+              <select id="privacyAbout" class="input">
+                <option value="everyone" ${profile.privacy.about === 'everyone' ? 'selected' : ''}>Всем</option>
+                <option value="friends" ${profile.privacy.about === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                <option value="nobody" ${profile.privacy.about === 'nobody' ? 'selected' : ''}>Никому</option>
+              </select>
+            </div>
+          </section>
+          
+          <!-- Gender -->
+          <section class="edit-section">
+            <h2>Пол</h2>
+            <select id="genderInput" class="input">
+              <option value="not_specified" ${profile.gender === 'not_specified' ? 'selected' : ''}>Не указано</option>
+              <option value="male" ${profile.gender === 'male' ? 'selected' : ''}>Мужской</option>
+              <option value="female" ${profile.gender === 'female' ? 'selected' : ''}>Женский</option>
+            </select>
+            <div class="privacy-setting">
+              <label>Кому видно:</label>
+              <select id="privacyGender" class="input">
+                <option value="everyone" ${profile.privacy.gender === 'everyone' ? 'selected' : ''}>Всем</option>
+                <option value="friends" ${profile.privacy.gender === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                <option value="nobody" ${profile.privacy.gender === 'nobody' ? 'selected' : ''}>Никому</option>
+              </select>
+            </div>
+          </section>
+          
+          <!-- Date of Birth -->
+          <section class="edit-section">
+            <h2>Дата рождения</h2>
+            <input type="date" id="dobInput" class="input" value="${profile.dateOfBirth || ''}">
+            <div class="privacy-setting">
+              <label>Кому видно:</label>
+              <select id="privacyDob" class="input">
+                <option value="everyone" ${profile.privacy.dob === 'everyone' ? 'selected' : ''}>Всем</option>
+                <option value="friends" ${profile.privacy.dob === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                <option value="nobody" ${profile.privacy.dob === 'nobody' ? 'selected' : ''}>Никому</option>
+              </select>
+            </div>
+          </section>
+          
+          <div class="edit-actions">
+            <button id="saveProfileBtn" class="btn btn-primary">Сохранить изменения</button>
+            <button class="btn btn-secondary" onclick="history.back()">Отмена</button>
+          </div>
+        </div>
+      </div>
+      
+      <style>
+        .edit-profile-container {
+          max-width: 800px;
+          margin: 30px auto;
+          padding: 20px;
+        }
+        
+        .edit-profile-header {
+          margin-bottom: 30px;
+        }
+        
+        .btn-back {
+          background: none;
+          border: none;
+          color: #3b82f6;
+          cursor: pointer;
+          font-size: 14px;
+          padding: 8px 0;
+          margin-bottom: 10px;
+        }
+        
+        .edit-profile-header h1 {
+          margin: 0;
+          font-size: 28px;
+        }
+        
+        .edit-section {
+          background: rgba(255, 255, 255, 0.05);
+          padding: 20px;
+          border-radius: 12px;
+          margin-bottom: 20px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .edit-section h2 {
+          margin: 0 0 15px 0;
+          font-size: 18px;
+        }
+        
+        .edit-field {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 8px;
+        }
+        
+        .edit-field .input {
+          flex: 1;
+        }
+        
+        .field-hint {
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.6);
+          margin-top: 5px;
+        }
+        
+        .avatar-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+          gap: 15px;
+          margin-bottom: 15px;
+        }
+        
+        .avatar-option {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 15px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 2px solid transparent;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .avatar-option:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(59, 130, 246, 0.5);
+        }
+        
+        .avatar-option.selected {
+          background: rgba(59, 130, 246, 0.2);
+          border-color: #3b82f6;
+        }
+        
+        .avatar-option.exclusive {
+          position: relative;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+          border-color: rgba(139, 92, 246, 0.3);
+        }
+        
+        .avatar-option.exclusive:hover {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+          border-color: rgba(139, 92, 246, 0.6);
+        }
+        
+        .avatar-option.exclusive.selected {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
+          border-color: #8b5cf6;
+          box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        }
+        
+        .avatar-badge {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          font-size: 12px;
+        }
+        
+        .avatar-emoji {
+          font-size: 40px;
+          margin-bottom: 8px;
+        }
+        
+        .avatar-name {
+          font-size: 12px;
+          text-align: center;
+        }
+        
+        .privacy-setting {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-top: 10px;
+        }
+        
+        .privacy-setting label {
+          font-size: 14px;
+          min-width: 100px;
+        }
+        
+        .privacy-setting select {
+          flex: 1;
+          max-width: 200px;
+        }
+        
+        .edit-actions {
+          display: flex;
+          gap: 15px;
+          margin-top: 30px;
+        }
+        
+        .msg {
+          padding: 15px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+        }
+        
+        .msg-success {
+          background: rgba(34, 197, 94, 0.2);
+          border: 1px solid #22c55e;
+          color: #86efac;
+        }
+        
+        .msg-error {
+          background: rgba(239, 68, 68, 0.2);
+          border: 1px solid #ef4444;
+          color: #fca5a5;
+        }
+        
+        .msg-info {
+          background: rgba(59, 130, 246, 0.2);
+          border: 1px solid #3b82f6;
+          color: #93c5fd;
+        }
+      </style>
+    `;
+    
+    // Avatar selection
+    let selectedAvatar = profile.avatar;
+    document.querySelectorAll('.avatar-option').forEach(option => {
+      option.addEventListener('click', () => {
+        document.querySelectorAll('.avatar-option').forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedAvatar = option.dataset.avatar;
+      });
+    });
+    
+    // Check username availability
+    const usernameInput = document.getElementById('usernameInput');
+    const checkUsernameBtn = document.getElementById('checkUsernameBtn');
+    const usernameHint = document.getElementById('usernameHint');
+    
+    if (checkUsernameBtn && profile.canChangeUsername) {
+      checkUsernameBtn.addEventListener('click', async () => {
+        const username = usernameInput.value.trim();
+        
+        if (!username || username === profile.username) {
+          usernameHint.textContent = '3-20 символов: буквы, цифры, _ или -';
+          usernameHint.style.color = '';
+          return;
+        }
+        
+        if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
+          usernameHint.textContent = '❌ Неверный формат. Используйте 3-20 символов: буквы, цифры, _ или -';
+          usernameHint.style.color = '#ef4444';
+          return;
+        }
+        
+        try {
+          const response = await fetch(`${API_BASE}/api/profile/check-username/${encodeURIComponent(username)}`, {
+            credentials: 'include'
+          });
+          const data = await response.json();
+          
+          if (data.ok && data.available) {
+            usernameHint.textContent = '✅ Имя доступно!';
+            usernameHint.style.color = '#22c55e';
+          } else {
+            usernameHint.textContent = `❌ ${data.reason || 'Имя недоступно'}`;
+            usernameHint.style.color = '#ef4444';
+          }
+        } catch (error) {
+          usernameHint.textContent = '❌ Ошибка проверки';
+          usernameHint.style.color = '#ef4444';
+        }
+      });
+    }
+    
+    // Save profile
+    const saveBtn = document.getElementById('saveProfileBtn');
+    const msgEl = document.getElementById('editProfileMsg');
+    
+    saveBtn.addEventListener('click', async () => {
+      const showMsg = (type, text) => {
+        msgEl.className = `msg msg-${type}`;
+        msgEl.textContent = text;
+        msgEl.style.display = 'block';
+      };
+      
+      try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Сохранение...';
+        
+        const username = usernameInput.value.trim();
+        const bio = document.getElementById('bioInput').value.trim();
+        const aboutMe = document.getElementById('aboutMeInput').value.trim();
+        const gender = document.getElementById('genderInput').value;
+        const dateOfBirth = document.getElementById('dobInput').value;
+        
+        const privacy = {
+          avatar: document.getElementById('privacyAvatar').value,
+          bio: document.getElementById('privacyBio').value,
+          about: document.getElementById('privacyAbout').value,
+          gender: document.getElementById('privacyGender').value,
+          dob: document.getElementById('privacyDob').value,
+        };
+        
+        const updateData = {
+          avatar: selectedAvatar,
+          bio: bio || null,
+          aboutMe: aboutMe || null,
+          gender,
+          dateOfBirth: dateOfBirth || null,
+          privacy,
+        };
+        
+        // Добавляем username только если он изменился и можно менять
+        if (profile.canChangeUsername && username !== profile.username) {
+          updateData.username = username;
+        }
+        
+        const response = await fetch(`${API_BASE}/api/profile/update`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updateData),
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.ok) {
+          showMsg('success', '✅ Профиль успешно обновлен!');
+          setTimeout(() => {
+            CybRouter.navigate(updateData.username || profile.username);
+          }, 1500);
+        } else {
+          showMsg('error', data.error || 'Ошибка при сохранении профиля');
+        }
+      } catch (error) {
+        showMsg('error', 'Ошибка сети. Попробуйте еще раз.');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Сохранить изменения';
+      }
+    });
+    
+  } catch (error) {
+    app.innerHTML = `
+      <div class="profile-notfound">
+        <h1>Ошибка</h1>
+        <p>Не удалось загрузить профиль</p>
+        <button onclick="CybRouter.navigate('username')">Вернуться</button>
+      </div>
+    `;
+  }
+}
+
 // Функция рендера по маршруту
 function renderRoute(r) {
   console.log('renderRoute called with:', r);
@@ -977,6 +1469,9 @@ function renderRoute(r) {
   if (r === 'account-easter-eggs') return viewAccount('easter');
   if (r === 'account-friends') return viewAccount('friends');
   if (r === 'account-messages') return viewAccount('messages');
+
+  // EDIT PROFILE
+  if (r === 'edit-profile') return viewEditProfile();
 
   // EMAIL VERIFY
   if (r === 'verify-email') return viewVerifyEmail();
@@ -3156,8 +3651,15 @@ function buildBadges(user, opts = {}) {
   const badges = [];
 
   // emailVerified
-  if (user.emailVerified) badges.push({ label: 'Verified', cls: 'badge--ok' });
-  else badges.push({ label: 'Not verified', cls: 'badge--warn' }); // опционально
+  if (user.emailVerified) {
+    badges.push({ 
+      label: '<svg class="verified-icon-inline" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#3b82f6"/><path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>', 
+      cls: 'badge--verified',
+      title: 'Verified'
+    });
+  } else {
+    badges.push({ label: 'Not verified', cls: 'badge--warn' }); // опционально
+  }
 
   // 2FA
   if (user.twoFactorEnabled || flags.has('2fa')) {
@@ -4832,7 +5334,7 @@ async function loadFriendsTab(api) {
 
       <div class="friends-search">
         <input type="text" id="friendSearchInput" placeholder="🔍 Поиск пользователей...">
-        <button onclick="searchFriendsAndAdd(event)">Добавить</button>
+        <button onclick="searchFriendsAndAdd(event)">🔍</button>
       </div>
 
       <div id="searchResults"></div>
@@ -4995,10 +5497,10 @@ async function loadFriendsTab(api) {
 
 async function searchFriendsAndAdd(event) {
   event?.preventDefault();
-  
+
   const searchInput = document.getElementById('friendSearchInput');
   const searchResults = document.getElementById('searchResults');
-  
+
   if (!searchInput || !searchInput.value.trim()) {
     if (searchResults) {
       searchResults.classList.remove('active');
@@ -5013,12 +5515,12 @@ async function searchFriendsAndAdd(event) {
     const res = await apiCall(`/api/search/users?q=${encodeURIComponent(query)}`, {
       credentials: 'include',
     });
-    
+
     const data = await res.json();
 
     if (searchResults) {
       searchResults.classList.add('active');
-      
+
       if (!data.ok || !data.users || data.users.length === 0) {
         searchResults.innerHTML = `
           <div style="text-align: center; color: rgba(255,255,255,0.7); padding: 16px;">
@@ -5320,32 +5822,146 @@ const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏
 const EDIT_TIME_LIMIT = 15 * 60 * 1000; // 15 минут в миллисекундах
 // Расширенный набор эмодзи
 const EMOJI_LIST = [
-  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
-  '🙂', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘',
-  '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓',
-  '😎', '🥳', '😏', '😒', '😞', '😔', '😟', '😕',
-  '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢',
-  '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵',
-  '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔',
-  '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄',
-  '👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌',
-  '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '🤟', '🤘',
-  '🤙', '👌', '🤏', '👈', '👉', '👆', '👇', '☝️',
-  '✋', '🤚', '🖐', '🖖', '👋', '🤙', '💪', '🦾',
-  '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
-  '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖',
-  '🔥', '✨', '⭐', '🌟', '💫', '💥', '💯', '🎉',
-  '🎊', '🎈', '🎁', '🏆', '🥇', '🥈', '🥉', '🏅'
+  '😀',
+  '😃',
+  '😄',
+  '😁',
+  '😆',
+  '😅',
+  '🤣',
+  '😂',
+  '🙂',
+  '😉',
+  '😊',
+  '😇',
+  '🥰',
+  '😍',
+  '🤩',
+  '😘',
+  '😋',
+  '😛',
+  '😝',
+  '😜',
+  '🤪',
+  '🤨',
+  '🧐',
+  '🤓',
+  '😎',
+  '🥳',
+  '😏',
+  '😒',
+  '😞',
+  '😔',
+  '😟',
+  '😕',
+  '🙁',
+  '☹️',
+  '😣',
+  '😖',
+  '😫',
+  '😩',
+  '🥺',
+  '😢',
+  '😭',
+  '😤',
+  '😠',
+  '😡',
+  '🤬',
+  '🤯',
+  '😳',
+  '🥵',
+  '🥶',
+  '😱',
+  '😨',
+  '😰',
+  '😥',
+  '😓',
+  '🤗',
+  '🤔',
+  '🤭',
+  '🤫',
+  '🤥',
+  '😶',
+  '😐',
+  '😑',
+  '😬',
+  '🙄',
+  '👍',
+  '👎',
+  '👊',
+  '✊',
+  '🤛',
+  '🤜',
+  '👏',
+  '🙌',
+  '👐',
+  '🤲',
+  '🤝',
+  '🙏',
+  '✌️',
+  '🤞',
+  '🤟',
+  '🤘',
+  '🤙',
+  '👌',
+  '🤏',
+  '👈',
+  '👉',
+  '👆',
+  '👇',
+  '☝️',
+  '✋',
+  '🤚',
+  '🖐',
+  '🖖',
+  '👋',
+  '🤙',
+  '💪',
+  '🦾',
+  '❤️',
+  '🧡',
+  '💛',
+  '💚',
+  '💙',
+  '💜',
+  '🖤',
+  '🤍',
+  '🤎',
+  '💔',
+  '❣️',
+  '💕',
+  '💞',
+  '💓',
+  '💗',
+  '💖',
+  '🔥',
+  '✨',
+  '⭐',
+  '🌟',
+  '💫',
+  '💥',
+  '💯',
+  '🎉',
+  '🎊',
+  '🎈',
+  '🎁',
+  '🏆',
+  '🥇',
+  '🥈',
+  '🥉',
+  '🏅',
 ];
 
 function createEmojiReactionPicker(messageId) {
   const picker = document.createElement('div');
   picker.className = 'emoji-picker';
-  picker.innerHTML = EMOJI_LIST.map(emoji => `
+  picker.innerHTML = EMOJI_LIST.map(
+    (emoji) => `
     <button class="emoji-btn" data-emoji="${emoji}" onclick="addReactionToMessage('${messageId}', '${emoji}')" title="${emoji}">
       ${emoji}
     </button>
-  `).join('');
+  `
+  ).join('');
   return picker;
 }
 
@@ -5401,46 +6017,66 @@ async function loadChatMessages(friendId) {
 
     const messages = data.messages || [];
 
-    messagesContainer.innerHTML = messages.map(msg => {
-      const isSentByMe = msg.senderId === document.getElementById('currentUserId')?.value;
-      const reactions = msg.reactions || [];
-      const timeSinceCreation = Date.now() - msg.createdAt;
-      const canEdit = isSentByMe && timeSinceCreation < EDIT_TIME_LIMIT;
-      const editTimeLeft = canEdit ? Math.ceil((EDIT_TIME_LIMIT - timeSinceCreation) / 60000) : 0;
+    messagesContainer.innerHTML = messages
+      .map((msg) => {
+        const isSentByMe = msg.senderId === document.getElementById('currentUserId')?.value;
+        const reactions = msg.reactions || [];
+        const timeSinceCreation = Date.now() - msg.createdAt;
+        const canEdit = isSentByMe && timeSinceCreation < EDIT_TIME_LIMIT;
+        const editTimeLeft = canEdit ? Math.ceil((EDIT_TIME_LIMIT - timeSinceCreation) / 60000) : 0;
 
-      return `
+        return `
         <div class="message ${isSentByMe ? 'sent' : 'received'}" data-message-id="${msg.id}">
           <div class="message-content">
             ${parseFormattedText(msg.content)}
             ${msg.editedAt ? '<span class="edited">(отредактировано)</span>' : ''}
           </div>
-          ${reactions.length > 0 ? `
+          ${
+            reactions.length > 0
+              ? `
             <div class="reactions">
-              ${reactions.map(r => `
+              ${reactions
+                .map(
+                  (r) => `
                 <span class="reaction" title="${r.count} реакций">${r.emoji}</span>
-              `).join('')}
+              `
+                )
+                .join('')}
             </div>
-          ` : ''}
+          `
+              : ''
+          }
           <div class="message-time">${new Date(msg.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
           <div class="quick-reactions">
-            ${QUICK_REACTIONS.map(emoji => `
+            ${QUICK_REACTIONS.map(
+              (emoji) => `
               <button class="quick-reaction-btn" onclick="addReactionToMessage('${msg.id}', '${emoji}')" title="${emoji}">${emoji}</button>
-            `).join('')}
+            `
+            ).join('')}
             <button class="quick-reaction-btn" onclick="toggleEmojiPicker('${msg.id}')" title="Ещё реакции">➕</button>
           </div>
-          ${isSentByMe ? `
+          ${
+            isSentByMe
+              ? `
             <div class="message-actions">
               <button class="msg-btn" onclick="deleteMessage('${msg.id}')">🗑️ Удалить</button>
-              ${canEdit ? `
+              ${
+                canEdit
+                  ? `
                 <button class="msg-btn" onclick="editMessage('${msg.id}', '${escapeHtml(msg.content).replace(/'/g, "\\'")}')" title="Осталось ${editTimeLeft} мин">✏️ Изменить</button>
-              ` : `
+              `
+                  : `
                 <button class="msg-btn" disabled style="opacity: 0.5; cursor: not-allowed;" title="Время редактирования истекло (доступно 15 мин)">⏱️ Время истекло</button>
-              `}
+              `
+              }
             </div>
-          ` : ''}
+          `
+              : ''
+          }
         </div>
       `;
-    }).join('');
+      })
+      .join('');
 
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   } catch (err) {
@@ -5472,7 +6108,7 @@ async function sendChatMessage(friendId) {
 
   try {
     let res;
-    
+
     if (editingMessageId) {
       // Редактирование существующего сообщения
       res = await apiCall(`/api/messages/${editingMessageId}`, {
@@ -5481,9 +6117,9 @@ async function sendChatMessage(friendId) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       });
-      
+
       const data = await res.json().catch(() => ({ ok: false }));
-      
+
       if (res.ok && data.ok) {
         showTopNotification('success', 'Сообщение отредактировано');
         cancelEdit();
@@ -5852,8 +6488,8 @@ function openChat(friendId, friendUsername) {
 
   // Получаем текущего пользователя
   apiCall('/auth/me', { credentials: 'include' })
-    .then(r => r.json())
-    .then(data => {
+    .then((r) => r.json())
+    .then((data) => {
       if (data.ok && data.user) {
         document.getElementById('currentUserId').value = data.user.id;
       }
@@ -5865,9 +6501,9 @@ function openChat(friendId, friendUsername) {
 
   // Настройка textarea
   const messageInput = document.getElementById('messageInput');
-  
+
   // Автоматическое изменение высоты
-  messageInput.addEventListener('input', function() {
+  messageInput.addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 150) + 'px';
   });
@@ -5890,7 +6526,7 @@ function openChat(friendId, friendUsername) {
         cancelEdit();
       }
     }
-    
+
     if (e.ctrlKey || e.metaKey) {
       if (e.key === 'b') {
         e.preventDefault();
@@ -5977,7 +6613,10 @@ function insertCode() {
   input.value = newText;
 
   if (!selectedText) {
-    input.setSelectionRange(selStart + 3 + language.length + 1, selStart + 3 + language.length + 1 + 10);
+    input.setSelectionRange(
+      selStart + 3 + language.length + 1,
+      selStart + 3 + language.length + 1 + 10
+    );
   }
 
   input.focus();
@@ -5986,35 +6625,44 @@ function insertCode() {
 // Парсинг форматированного текста
 function parseFormattedText(text) {
   if (!text) return '';
-  
+
   let html = escapeHtml(text);
-  
+
   // Блоки кода ```lang\ncode\n```
   html = html.replace(/```(\w*)\n([\s\S]*?)\n```/g, (match, lang, code) => {
     return `<pre><code class="language-${lang}">${code}</code></pre>`;
   });
-  
+
   // Инлайн код `code`
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-  
+
   // Жирный **text**
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  
+
   // Курсив _text_
   html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
-  
+
   // Зачёркнутый ~~text~~
   html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-  
+
   // Спойлер ||text||
-  html = html.replace(/\|\|([^|]+)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
-  
+  html = html.replace(
+    /\|\|([^|]+)\|\|/g,
+    '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>'
+  );
+
   // Ссылки [text](url)
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  
+  html = html.replace(
+    /\[([^\]]+)\]\(([^)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+
   // Автоматические ссылки
-  html = html.replace(/(?<!href="|">)(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-  
+  html = html.replace(
+    /(?<!href="|">)(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+
   return html;
 }
 
@@ -6026,17 +6674,17 @@ async function editMessage(messageId, currentContent) {
   // Устанавливаем текущий контент для редактирования
   input.value = currentContent;
   input.focus();
-  
+
   // Сохраняем ID редактируемого сообщения
   document.getElementById('editingMessageId').value = messageId;
-  
+
   // Меняем кнопку отправки и добавляем кнопку отмены
   const sendBtn = document.querySelector('.chat-send-btn');
   if (sendBtn) {
     sendBtn.textContent = '💾 Сохранить';
     sendBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
   }
-  
+
   // Добавляем индикатор редактирования
   const inputWrapper = document.querySelector('.chat-input-wrapper');
   if (inputWrapper && !document.getElementById('editingIndicator')) {
@@ -6059,7 +6707,7 @@ async function editMessage(messageId, currentContent) {
     `;
     inputWrapper.parentElement.insertBefore(indicator, inputWrapper);
   }
-  
+
   showTopNotification('info', 'Редактирование сообщения. ESC для отмены');
 }
 
@@ -6068,19 +6716,19 @@ function cancelEdit() {
   const input = document.getElementById('messageInput');
   const sendBtn = document.querySelector('.chat-send-btn');
   const indicator = document.getElementById('editingIndicator');
-  
+
   if (input) {
     input.value = '';
     input.style.height = 'auto';
   }
-  
+
   document.getElementById('editingMessageId').value = '';
-  
+
   if (sendBtn) {
     sendBtn.textContent = 'Отправить';
     sendBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
   }
-  
+
   if (indicator) {
     indicator.remove();
   }

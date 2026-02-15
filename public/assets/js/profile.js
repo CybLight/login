@@ -1,5 +1,32 @@
 // ===== PROFILE RENDERING =====
 
+// Стандартные аватары
+const AVATAR_EMOJI_MAP = {
+  'avatar-cat': '🐱',
+  'avatar-dog': '🐶',
+  'avatar-fox': '🦊',
+  'avatar-bear': '🐻',
+  'avatar-panda': '🐼',
+  'avatar-rabbit': '🐰',
+  'avatar-owl': '🦉',
+  'avatar-penguin': '🐧',
+  'avatar-koala': '🐨',
+  'avatar-tiger': '🐯',
+  // Эксклюзивные аватары
+  'avatar-crown': '👑',
+  'avatar-shield': '🛡️',
+  'avatar-code': '💻',
+  'avatar-verified': '✔️',
+  'avatar-fire': '🔥',
+  'avatar-star': '⭐',
+  'avatar-robot': '🤖',
+  'avatar-diamond': '💎',
+};
+
+function getAvatarEmoji(avatarId) {
+  return AVATAR_EMOJI_MAP[avatarId] || '👤';
+}
+
 const profileModule = (() => {
   async function loadProfile(username) {
     try {
@@ -195,13 +222,8 @@ const profileModule = (() => {
     let actionButtons = '';
 
     if (isSelf) {
-      actionButtons = `
-        <div class="profile-actions">
-          <button class="btn btn-primary" onclick="CybRouter.navigate('account-profile')">
-            Редактировать профиль
-          </button>
-        </div>
-      `;
+      // Для своего профиля не показываем кнопки действий в этом блоке
+      actionButtons = '';
     } else if (currentUser) {
       if (friendStatus === 'accepted') {
         actionButtons = `
@@ -243,11 +265,17 @@ const profileModule = (() => {
       <div class="profile-container">
         <div class="profile-header">
           <div class="profile-info">
-            ${profile.avatar ? `<img src="${escapeHtml(profile.avatar)}" alt="Avatar" class="profile-avatar">` : '<div class="profile-avatar-placeholder">👤</div>'}
+            <div class="profile-avatar">${profile.avatar ? getAvatarEmoji(profile.avatar) : '👤'}</div>
             <div class="profile-details">
-              <h1>${escapeHtml(profile.username)}</h1>
+              <h1>
+                ${escapeHtml(profile.username)}
+                ${profile.verified ? '<span class="verified-badge" title="Verified"><svg class="verified-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#3b82f6"/><path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : ''}
+              </h1>
               <p class="profile-joined">На CybLight с ${formattedDate}</p>
               ${profile.bio ? `<p class="profile-bio">${escapeHtml(profile.bio)}</p>` : ''}
+              ${profile.aboutMe ? `<p class="profile-about">${escapeHtml(profile.aboutMe)}</p>` : ''}
+              ${profile.gender && profile.gender !== 'not_specified' ? `<p class="profile-gender">Пол: ${profile.gender === 'male' ? 'Мужской' : 'Женский'}</p>` : ''}
+              ${profile.dateOfBirth ? `<p class="profile-dob">Дата рождения: ${new Date(profile.dateOfBirth).toLocaleDateString('ru-RU')}</p>` : ''}
               <div class="profile-stats">
                 <div class="stat">
                   <span class="stat-value">${profile.friendsCount}</span>
@@ -258,6 +286,15 @@ const profileModule = (() => {
           </div>
           
           <div class="profile-share">
+            ${
+              isSelf
+                ? `
+            <button class="btn btn-icon" onclick="CybRouter.navigate('edit-profile')" title="Редактирование профиля">
+              ✏️
+            </button>
+            `
+                : ''
+            }
             <button class="btn btn-icon" onclick="profileModule.shareProfile('${escapeHtml(profile.username)}')" title="Поделиться профилем">
               🔗
             </button>
@@ -327,6 +364,35 @@ const profileModule = (() => {
           margin: 0 0 8px 0;
           font-size: 28px;
           font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .verified-badge {
+          display: inline-flex;
+          align-items: center;
+          animation: verifiedPulse 2s ease-in-out infinite;
+        }
+
+        .verified-icon {
+          width: 24px;
+          height: 24px;
+          filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
+          animation: verifiedRotate 3s ease-in-out infinite;
+        }
+
+        @keyframes verifiedPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+
+        @keyframes verifiedRotate {
+          0% { transform: rotate(0deg); }
+          10% { transform: rotate(-10deg); }
+          20% { transform: rotate(10deg); }
+          30% { transform: rotate(0deg); }
+          100% { transform: rotate(0deg); }
         }
 
         .profile-joined {
@@ -339,6 +405,20 @@ const profileModule = (() => {
           margin: 10px 0 0 0;
           color: #ccc;
           line-height: 1.5;
+        }
+
+        .profile-about {
+          margin: 10px 0 0 0;
+          color: #aaa;
+          line-height: 1.6;
+          font-size: 14px;
+        }
+
+        .profile-gender,
+        .profile-dob {
+          margin: 8px 0 0 0;
+          color: #999;
+          font-size: 13px;
         }
 
         .profile-stats {
