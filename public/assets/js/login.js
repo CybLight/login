@@ -975,6 +975,8 @@ function renderRoute(r) {
   if (r === 'account-security') return viewAccount('security');
   if (r === 'account-sessions') return viewAccount('sessions');
   if (r === 'account-easter-eggs') return viewAccount('easter');
+  if (r === 'account-friends') return viewAccount('friends');
+  if (r === 'account-messages') return viewAccount('messages');
 
   // EMAIL VERIFY
   if (r === 'verify-email') return viewVerifyEmail();
