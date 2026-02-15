@@ -3514,6 +3514,8 @@ async function viewAccount(tab = 'profile') {
         security: 'account-security',
         sessions: 'account-sessions',
         easter: 'account-easter-eggs',
+        friends: 'account-friends',
+        messages: 'account-messages',
       };
       CybRouter.navigate(map[t] || 'account-profile');
     };

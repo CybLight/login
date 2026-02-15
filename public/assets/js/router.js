@@ -5,6 +5,8 @@
     'account-security',
     'account-sessions',
     'account-easter-eggs',
+    'account-friends',
+    'account-messages',
     'verify-email',
     'username',
     'password',
