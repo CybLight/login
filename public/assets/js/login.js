@@ -5314,7 +5314,27 @@ async function loadMessagesTab(api) {
 }
 
 // ============ EMOJI SELECTOR ============
-const EMOJI_LIST = ['😀', '😂', '🥰', '👍', '🔥', '✨', '⭐', '💯', '🎉', '😍', '👏', '🙏', '💪', '🤔', '😅'];
+// Быстрые реакции как в Telegram
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏'];
+// Расширенный набор эмодзи
+const EMOJI_LIST = [
+  '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
+  '🙂', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘',
+  '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓',
+  '😎', '🥳', '😏', '😒', '😞', '😔', '😟', '😕',
+  '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢',
+  '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵',
+  '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔',
+  '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄',
+  '👍', '👎', '👊', '✊', '🤛', '🤜', '👏', '🙌',
+  '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '🤟', '🤘',
+  '🤙', '👌', '🤏', '👈', '👉', '👆', '👇', '☝️',
+  '✋', '🤚', '🖐', '🖖', '👋', '🤙', '💪', '🦾',
+  '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
+  '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖',
+  '🔥', '✨', '⭐', '🌟', '💫', '💥', '💯', '🎉',
+  '🎊', '🎈', '🎁', '🏆', '🥇', '🥈', '🥉', '🏅'
+];
 
 function createEmojiReactionPicker(messageId) {
   const picker = document.createElement('div');
@@ -5384,9 +5404,9 @@ async function loadChatMessages(friendId) {
       const reactions = msg.reactions || [];
 
       return `
-        <div class="message ${isSentByMe ? 'sent' : 'received'}">
+        <div class="message ${isSentByMe ? 'sent' : 'received'}" data-message-id="${msg.id}">
           <div class="message-content">
-            ${msg.content}
+            ${parseFormattedText(msg.content)}
             ${msg.editedAt ? '<span class="edited">(отредактировано)</span>' : ''}
           </div>
           ${reactions.length > 0 ? `
@@ -5397,10 +5417,16 @@ async function loadChatMessages(friendId) {
             </div>
           ` : ''}
           <div class="message-time">${new Date(msg.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+          <div class="quick-reactions">
+            ${QUICK_REACTIONS.map(emoji => `
+              <button class="quick-reaction-btn" onclick="addReactionToMessage('${msg.id}', '${emoji}')" title="${emoji}">${emoji}</button>
+            `).join('')}
+            <button class="quick-reaction-btn" onclick="toggleEmojiPicker('${msg.id}')" title="Ещё реакции">➕</button>
+          </div>
           ${isSentByMe ? `
             <div class="message-actions">
-              <button class="msg-btn" onclick="deleteMessage('${msg.id}')">🗑️</button>
-              <button class="msg-btn emoji-toggle" onclick="toggleEmojiPicker('${msg.id}')">😀</button>
+              <button class="msg-btn" onclick="deleteMessage('${msg.id}')">🗑️ Удалить</button>
+              <button class="msg-btn" onclick="editMessage('${msg.id}', '${escapeHtml(msg.content).replace(/'/g, "\\'")}')">✏️ Изменить</button>
             </div>
           ` : ''}
         </div>
@@ -5433,20 +5459,46 @@ async function sendChatMessage(friendId) {
   if (!input || !input.value.trim()) return;
 
   const content = input.value.trim();
-  input.value = '';
+  const editingMessageId = document.getElementById('editingMessageId')?.value;
 
   try {
-    const res = await apiCall('/api/messages/send', {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipientId: friendId, content }),
-    });
+    let res;
+    
+    if (editingMessageId) {
+      // Редактирование существующего сообщения
+      res = await apiCall(`/api/messages/${editingMessageId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      
+      if (res.ok) {
+        showTopNotification('success', 'Сообщение отредактировано');
+        cancelEdit();
+      } else {
+        showTopNotification('error', 'Не удалось отредактировать сообщение');
+      }
+    } else {
+      // Отправка нового сообщения
+      res = await apiCall('/api/messages/send', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipientId: friendId, content }),
+      });
+
+      if (res.ok) {
+        input.value = '';
+        // Сбрасываем высоту textarea
+        input.style.height = 'auto';
+      } else {
+        showTopNotification('error', 'Не удалось отправить сообщение');
+      }
+    }
 
     if (res.ok) {
       loadChatMessages(friendId);
-    } else {
-      showTopNotification('error', 'Не удалось отправить сообщение');
     }
   } catch (err) {
     console.error('Error sending message:', err);
@@ -5521,9 +5573,60 @@ function openChat(friendId, friendUsername) {
         border-radius: 12px;
         word-wrap: break-word;
         font-size: 14px;
+        line-height: 1.5;
       }
       .message.received .message-content {
         background: rgba(255,255,255,.1);
+      }
+      /* Форматирование текста */
+      .message-content code {
+        background: rgba(0,0,0,.3);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+      }
+      .message-content pre {
+        background: rgba(0,0,0,.4);
+        padding: 12px;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 8px 0;
+      }
+      .message-content pre code {
+        background: transparent;
+        padding: 0;
+      }
+      .message-content strong {
+        font-weight: 700;
+      }
+      .message-content em {
+        font-style: italic;
+      }
+      .message-content del {
+        text-decoration: line-through;
+        opacity: 0.7;
+      }
+      .message-content a {
+        color: #88ccff;
+        text-decoration: underline;
+        transition: color 0.2s;
+      }
+      .message-content a:hover {
+        color: #aaddff;
+      }
+      .message-content .spoiler {
+        background: rgba(0,0,0,.5);
+        color: transparent;
+        user-select: none;
+        cursor: pointer;
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+      .message-content .spoiler.revealed {
+        background: transparent;
+        color: inherit;
       }
       .edited {
         font-size: 11px;
@@ -5558,8 +5661,35 @@ function openChat(friendId, friendUsername) {
         opacity: 0;
         transition: opacity 0.2s;
       }
-      .message.sent:hover .message-actions {
+      .message:hover .message-actions {
         opacity: 1;
+      }
+      .quick-reactions {
+        display: none;
+        gap: 4px;
+        margin-top: 6px;
+        padding: 6px;
+        background: rgba(0,0,0,.3);
+        border-radius: 8px;
+        flex-wrap: wrap;
+      }
+      .message:hover .quick-reactions {
+        display: flex;
+      }
+      .quick-reaction-btn {
+        background: transparent;
+        border: 1px solid rgba(255,255,255,.2);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .quick-reaction-btn:hover {
+        background: rgba(255,255,255,.15);
+        border-color: rgba(255,255,255,.3);
+        transform: scale(1.1);
       }
       .msg-btn {
         background: rgba(255,255,255,.1);
@@ -5596,13 +5726,49 @@ function openChat(friendId, friendUsername) {
         background: rgba(255,255,255,.1);
         border-color: rgba(255,255,255,.3);
       }
+      .formatting-toolbar {
+        display: flex;
+        gap: 4px;
+        padding: 8px;
+        border-bottom: 1px solid rgba(255,255,255,.1);
+        background: rgba(0,0,0,.2);
+        flex-wrap: wrap;
+      }
+      .format-btn {
+        background: rgba(255,255,255,.1);
+        border: 1px solid rgba(255,255,255,.15);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+        font-family: monospace;
+      }
+      .format-btn:hover {
+        background: rgba(255,255,255,.2);
+        border-color: rgba(255,255,255,.3);
+      }
+      .format-btn.bold {
+        font-weight: bold;
+      }
+      .format-btn.italic {
+        font-style: italic;
+      }
+      .format-btn.mono {
+        font-family: 'Courier New', monospace;
+      }
       .chat-footer {
-        padding: 16px;
+        display: flex;
+        flex-direction: column;
         border-top: 1px solid rgba(255,255,255,.1);
+      }
+      .chat-input-wrapper {
         display: flex;
         gap: 8px;
+        padding: 16px;
       }
-      .chat-footer input {
+      .chat-footer textarea {
         flex: 1;
         background: rgba(255,255,255,.05);
         border: 1px solid rgba(255,255,255,.1);
@@ -5610,11 +5776,15 @@ function openChat(friendId, friendUsername) {
         padding: 12px;
         border-radius: 8px;
         font-size: 14px;
+        font-family: inherit;
+        resize: none;
+        min-height: 44px;
+        max-height: 150px;
       }
-      .chat-footer input::placeholder {
+      .chat-footer textarea::placeholder {
         color: rgba(255,255,255,.5);
       }
-      .chat-footer input:focus {
+      .chat-footer textarea:focus {
         outline: none;
         border-color: rgba(102,126,234,0.5);
         background: rgba(255,255,255,.08);
@@ -5646,9 +5816,21 @@ function openChat(friendId, friendUsername) {
       <div id="chatMessages"></div>
       <input type="hidden" id="chatFriendId" value="${escapeHtml(friendId)}">
       <input type="hidden" id="currentUserId" value="">
+      <input type="hidden" id="editingMessageId" value="">
       <div class="chat-footer">
-        <input type="text" id="messageInput" placeholder="Напишите сообщение..." />
-        <button class="chat-send-btn" onclick="sendChatMessage('${escapeHtml(friendId)}')">Отправить</button>
+        <div class="formatting-toolbar">
+          <button class="format-btn bold" onclick="insertFormatting('**', '**')" title="Жирный (Ctrl+B)"><b>B</b></button>
+          <button class="format-btn italic" onclick="insertFormatting('_', '_')" title="Курсив (Ctrl+I)"><i>I</i></button>
+          <button class="format-btn mono" onclick="insertFormatting('\`', '\`')" title="Моноширинный"><code>M</code></button>
+          <button class="format-btn" onclick="insertFormatting('~~', '~~')" title="Зачёркнутый"><s>S</s></button>
+          <button class="format-btn" onclick="insertLink()" title="Вставить ссылку">🔗</button>
+          <button class="format-btn" onclick="insertFormatting('||', '||')" title="Спойлер">||</button>
+          <button class="format-btn" onclick="insertCode()" title="Блок кода">{ }</button>
+        </div>
+        <div class="chat-input-wrapper">
+          <textarea id="messageInput" placeholder="Напишите сообщение..." rows="1"></textarea>
+          <button class="chat-send-btn" onclick="sendChatMessage('${escapeHtml(friendId)}')">Отправить</button>
+        </div>
       </div>
     </div>
   `;
@@ -5666,11 +5848,36 @@ function openChat(friendId, friendUsername) {
   // Загружаем сообщения
   loadChatMessages(friendId);
 
-  // Позволяем отправлять по Enter
-  document.getElementById('messageInput').addEventListener('keypress', (e) => {
+  // Настройка textarea
+  const messageInput = document.getElementById('messageInput');
+  
+  // Автоматическое изменение высоты
+  messageInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+  });
+
+  // Позволяем отправлять по Enter (но Shift+Enter - новая строка)
+  messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendChatMessage(friendId);
+    }
+  });
+
+  // Горячие клавиши для форматирования
+  messageInput.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'b') {
+        e.preventDefault();
+        insertFormatting('**', '**');
+      } else if (e.key === 'i') {
+        e.preventDefault();
+        insertFormatting('_', '_');
+      } else if (e.key === 'k') {
+        e.preventDefault();
+        insertLink();
+      }
     }
   });
 
@@ -5682,6 +5889,145 @@ function openChat(friendId, friendUsername) {
       loadChatMessages(friendId);
     }
   }, 3000);
+}
+
+// ============ TEXT FORMATTING FUNCTIONS ============
+
+function insertFormatting(start, end) {
+  const input = document.getElementById('messageInput');
+  if (!input) return;
+
+  const selStart = input.selectionStart;
+  const selEnd = input.selectionEnd;
+  const text = input.value;
+  const selectedText = text.substring(selStart, selEnd);
+
+  const newText = text.substring(0, selStart) + start + selectedText + end + text.substring(selEnd);
+  input.value = newText;
+
+  // Устанавливаем курсор
+  if (selectedText) {
+    input.setSelectionRange(selStart + start.length, selEnd + start.length);
+  } else {
+    input.setSelectionRange(selStart + start.length, selStart + start.length);
+  }
+
+  input.focus();
+}
+
+function insertLink() {
+  const input = document.getElementById('messageInput');
+  if (!input) return;
+
+  const selStart = input.selectionStart;
+  const selEnd = input.selectionEnd;
+  const text = input.value;
+  const selectedText = text.substring(selStart, selEnd);
+
+  const url = prompt('Введите URL:', 'https://');
+  if (!url) return;
+
+  const linkText = selectedText || prompt('Текст ссылки:', url) || url;
+  const markdown = `[${linkText}](${url})`;
+
+  const newText = text.substring(0, selStart) + markdown + text.substring(selEnd);
+  input.value = newText;
+
+  input.setSelectionRange(selStart + markdown.length, selStart + markdown.length);
+  input.focus();
+}
+
+function insertCode() {
+  const input = document.getElementById('messageInput');
+  if (!input) return;
+
+  const selStart = input.selectionStart;
+  const selEnd = input.selectionEnd;
+  const text = input.value;
+  const selectedText = text.substring(selStart, selEnd);
+
+  const language = prompt('Язык программирования (необязательно):', '') || '';
+  const formatted = `\`\`\`${language}\n${selectedText || 'код здесь'}\n\`\`\``;
+
+  const newText = text.substring(0, selStart) + formatted + text.substring(selEnd);
+  input.value = newText;
+
+  if (!selectedText) {
+    input.setSelectionRange(selStart + 3 + language.length + 1, selStart + 3 + language.length + 1 + 10);
+  }
+
+  input.focus();
+}
+
+// Парсинг форматированного текста
+function parseFormattedText(text) {
+  if (!text) return '';
+  
+  let html = escapeHtml(text);
+  
+  // Блоки кода ```lang\ncode\n```
+  html = html.replace(/```(\w*)\n([\s\S]*?)\n```/g, (match, lang, code) => {
+    return `<pre><code class="language-${lang}">${code}</code></pre>`;
+  });
+  
+  // Инлайн код `code`
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  
+  // Жирный **text**
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  
+  // Курсив _text_
+  html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+  
+  // Зачёркнутый ~~text~~
+  html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  
+  // Спойлер ||text||
+  html = html.replace(/\|\|([^|]+)\|\|/g, '<span class="spoiler" onclick="this.classList.toggle(\'revealed\')">$1</span>');
+  
+  // Ссылки [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  
+  // Автоматические ссылки
+  html = html.replace(/(?<!href="|">)(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  
+  return html;
+}
+
+// Редактирование сообщения
+async function editMessage(messageId, currentContent) {
+  const input = document.getElementById('messageInput');
+  if (!input) return;
+
+  // Устанавливаем текущий контент для редактирования
+  input.value = currentContent;
+  input.focus();
+  
+  // Сохраняем ID редактируемого сообщения
+  document.getElementById('editingMessageId').value = messageId;
+  
+  // Меняем кнопку отправки
+  const sendBtn = document.querySelector('.chat-send-btn');
+  if (sendBtn) {
+    sendBtn.textContent = 'Сохранить';
+    sendBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+  }
+  
+  showTopNotification('info', 'Редактирование сообщения. Нажмите Enter или "Сохранить"');
+}
+
+// Отмена редактирования
+function cancelEdit() {
+  const input = document.getElementById('messageInput');
+  const sendBtn = document.querySelector('.chat-send-btn');
+  
+  if (input) input.value = '';
+  document.getElementById('editingMessageId').value = '';
+  
+  if (sendBtn) {
+    sendBtn.textContent = 'Отправить';
+    sendBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+  }
 }
 
 async function bindTabActions(tab, me, api) {
