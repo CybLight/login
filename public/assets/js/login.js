@@ -1023,11 +1023,28 @@ async function viewEditProfile() {
   
   try {
     // Загружаем текущий профиль
+    console.log('[EDIT-PROFILE] Fetching profile data from:', `${API_BASE}/api/profile/me`);
     const response = await fetch(`${API_BASE}/api/profile/me`, { credentials: 'include' });
+    console.log('[EDIT-PROFILE] Response status:', response.status, response.ok);
+    
     const data = await response.json();
+    console.log('[EDIT-PROFILE] Response data:', data);
     
     if (!response.ok || !data.ok) {
-      CybRouter.navigate('username');
+      console.error('[EDIT-PROFILE] Failed to load profile:', { status: response.status, data });
+      app.innerHTML = `
+        <div class="profile-notfound">
+          <h1>Ошибка загрузки</h1>
+          <p>Не удалось загрузить профиль для редактирования</p>
+          <p style="color: #999; font-size: 14px;">
+            ${data.error || 'Статус: ' + response.status}
+          </p>
+          <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+            <button class="btn btn-primary" onclick="location.reload()">Обновить страницу</button>
+            <button class="btn btn-secondary" onclick="CybRouter.navigate('account-profile')">Вернуться в профиль</button>
+          </div>
+        </div>
+      `;
       return;
     }
     
@@ -4503,18 +4520,32 @@ function renderTabHtml(tab, me) {
       <article class="info-card">
         <div class="info-card__label">Публичный профиль</div>
         <div class="info-card__value">
-          <a href="https://login.cyblight.org/${encodeURIComponent(login)}" 
-             target="_blank" 
-             class="profile-link-btn"
-             style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s;"
-             onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)';"
-             onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            Посмотреть профиль
-          </a>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="https://login.cyblight.org/${encodeURIComponent(login)}" 
+               target="_blank" 
+               class="profile-link-btn"
+               style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s;"
+               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(102, 126, 234, 0.4)';"
+               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              Посмотреть профиль
+            </a>
+            <button onclick="CybRouter.navigate('edit-profile')" 
+                    class="profile-edit-btn"
+                    style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;"
+                    onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(59, 130, 246, 0.4)';"
+                    onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';"
+                    title="Редактировать профиль">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Редактировать
+            </button>
+          </div>
         </div>
         <div class="info-card__hint">Ваша публичная страница</div>
       </article>
