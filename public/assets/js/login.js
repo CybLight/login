@@ -5316,6 +5316,8 @@ async function loadMessagesTab(api) {
 // ============ EMOJI SELECTOR ============
 // Быстрые реакции как в Telegram
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏'];
+// Время, в течение которого можно редактировать сообщения (15 минут как в Telegram)
+const EDIT_TIME_LIMIT = 15 * 60 * 1000; // 15 минут в миллисекундах
 // Расширенный набор эмодзи
 const EMOJI_LIST = [
   '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
@@ -5402,6 +5404,9 @@ async function loadChatMessages(friendId) {
     messagesContainer.innerHTML = messages.map(msg => {
       const isSentByMe = msg.senderId === document.getElementById('currentUserId')?.value;
       const reactions = msg.reactions || [];
+      const timeSinceCreation = Date.now() - msg.createdAt;
+      const canEdit = isSentByMe && timeSinceCreation < EDIT_TIME_LIMIT;
+      const editTimeLeft = canEdit ? Math.ceil((EDIT_TIME_LIMIT - timeSinceCreation) / 60000) : 0;
 
       return `
         <div class="message ${isSentByMe ? 'sent' : 'received'}" data-message-id="${msg.id}">
@@ -5426,7 +5431,11 @@ async function loadChatMessages(friendId) {
           ${isSentByMe ? `
             <div class="message-actions">
               <button class="msg-btn" onclick="deleteMessage('${msg.id}')">🗑️ Удалить</button>
-              <button class="msg-btn" onclick="editMessage('${msg.id}', '${escapeHtml(msg.content).replace(/'/g, "\\'")}')">✏️ Изменить</button>
+              ${canEdit ? `
+                <button class="msg-btn" onclick="editMessage('${msg.id}', '${escapeHtml(msg.content).replace(/'/g, "\\'")}')" title="Осталось ${editTimeLeft} мин">✏️ Изменить</button>
+              ` : `
+                <button class="msg-btn" disabled style="opacity: 0.5; cursor: not-allowed;" title="Время редактирования истекло (доступно 15 мин)">⏱️ Время истекло</button>
+              `}
             </div>
           ` : ''}
         </div>
@@ -5467,17 +5476,23 @@ async function sendChatMessage(friendId) {
     if (editingMessageId) {
       // Редактирование существующего сообщения
       res = await apiCall(`/api/messages/${editingMessageId}`, {
-        method: 'PUT',
+        method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       });
       
-      if (res.ok) {
+      const data = await res.json().catch(() => ({ ok: false }));
+      
+      if (res.ok && data.ok) {
         showTopNotification('success', 'Сообщение отредактировано');
         cancelEdit();
       } else {
-        showTopNotification('error', 'Не удалось отредактировать сообщение');
+        const errorMsg = data.error || 'Не удалось отредактировать сообщение';
+        showTopNotification('error', errorMsg);
+        if (errorMsg.includes('15 minutes') || errorMsg.includes('15 минут')) {
+          cancelEdit(); // Отменяем редактирование если время истекло
+        }
       }
     } else {
       // Отправка нового сообщения
@@ -5867,6 +5882,15 @@ function openChat(friendId, friendUsername) {
 
   // Горячие клавиши для форматирования
   messageInput.addEventListener('keydown', (e) => {
+    // ESC для отмены редактирования
+    if (e.key === 'Escape') {
+      const editingId = document.getElementById('editingMessageId')?.value;
+      if (editingId) {
+        e.preventDefault();
+        cancelEdit();
+      }
+    }
+    
     if (e.ctrlKey || e.metaKey) {
       if (e.key === 'b') {
         e.preventDefault();
@@ -6006,27 +6030,59 @@ async function editMessage(messageId, currentContent) {
   // Сохраняем ID редактируемого сообщения
   document.getElementById('editingMessageId').value = messageId;
   
-  // Меняем кнопку отправки
+  // Меняем кнопку отправки и добавляем кнопку отмены
   const sendBtn = document.querySelector('.chat-send-btn');
   if (sendBtn) {
-    sendBtn.textContent = 'Сохранить';
+    sendBtn.textContent = '💾 Сохранить';
     sendBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
   }
   
-  showTopNotification('info', 'Редактирование сообщения. Нажмите Enter или "Сохранить"');
+  // Добавляем индикатор редактирования
+  const inputWrapper = document.querySelector('.chat-input-wrapper');
+  if (inputWrapper && !document.getElementById('editingIndicator')) {
+    const indicator = document.createElement('div');
+    indicator.id = 'editingIndicator';
+    indicator.style.cssText = `
+      background: rgba(240, 147, 251, 0.15);
+      border: 1px solid rgba(240, 147, 251, 0.3);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    `;
+    indicator.innerHTML = `
+      <span>✏️ Редактирование сообщения... <small style="opacity: 0.7;">(ESC для отмены)</small></span>
+      <button onclick="cancelEdit()" style="background: rgba(255,255,255,.1); border: none; color: white; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">❌ Отмена</button>
+    `;
+    inputWrapper.parentElement.insertBefore(indicator, inputWrapper);
+  }
+  
+  showTopNotification('info', 'Редактирование сообщения. ESC для отмены');
 }
 
 // Отмена редактирования
 function cancelEdit() {
   const input = document.getElementById('messageInput');
   const sendBtn = document.querySelector('.chat-send-btn');
+  const indicator = document.getElementById('editingIndicator');
   
-  if (input) input.value = '';
+  if (input) {
+    input.value = '';
+    input.style.height = 'auto';
+  }
+  
   document.getElementById('editingMessageId').value = '';
   
   if (sendBtn) {
     sendBtn.textContent = 'Отправить';
     sendBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+  }
+  
+  if (indicator) {
+    indicator.remove();
   }
 }
 
