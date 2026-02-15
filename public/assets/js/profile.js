@@ -145,7 +145,7 @@ const profileModule = (() => {
     console.log('[PROFILE] renderProfile called with username:', username);
     // Отключаем клубничный фон при просмотре профиля
     setNoStrawberries(true);
-    
+
     const app = document.getElementById('app');
 
     // Показываем загрузку
@@ -525,8 +525,10 @@ const profileModule = (() => {
       }
     },
     sendMessage: function (friendId, username) {
-      showNotification('Функция сообщений скоро будет доступна');
-      // TODO: Реализовать функцию отправки сообщений
+      // Сохраняем данные для автоматического открытия чата
+      sessionStorage.setItem('openChatWith', JSON.stringify({ friendId, username }));
+      // Редирект на страницу сообщений
+      CybRouter.navigate('account-messages');
     },
     shareProfile,
   };

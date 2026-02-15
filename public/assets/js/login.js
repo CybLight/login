@@ -5298,6 +5298,19 @@ async function loadMessagesTab(api) {
     console.error('Error loading messages:', error);
     container.innerHTML = `<div class="error-message">Ошибка загрузки. Попробуйте обновить страницу.</div>`;
   }
+
+  // Проверяем, нужно ли автоматически открыть чат
+  const openChatData = sessionStorage.getItem('openChatWith');
+  if (openChatData) {
+    try {
+      const { friendId, username } = JSON.parse(openChatData);
+      sessionStorage.removeItem('openChatWith'); // Удаляем, чтобы не открывать повторно
+      // Небольшая задержка, чтобы контейнер успел отрендериться
+      setTimeout(() => openChat(friendId, username), 100);
+    } catch (err) {
+      console.error('Error auto-opening chat:', err);
+    }
+  }
 }
 
 // ============ EMOJI SELECTOR ============
