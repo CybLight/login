@@ -1481,7 +1481,7 @@ body.no-strawberries .strawberry-ring-wave {
 .profile-hero__title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -1494,12 +1494,19 @@ body.no-strawberries .strawberry-ring-wave {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 420px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .profile-hero__subtitle {
-  margin-top: 4px;
+  margin-top: 8px;
   font-size: 12px;
   opacity: 0.75;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .profile-hero__right {

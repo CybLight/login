@@ -1098,19 +1098,360 @@ async function viewEditProfile() {
         <div class="edit-profile-content">
           <div id="editProfileMsg" class="msg" style="display:none;"></div>
           
-          <!-- Username -->
-          <section class="edit-section">
-            <h2>Имя пользователя</h2>
-            <div class="edit-field">
-              <input type="text" id="usernameInput" class="input" value="${escapeHtml(profile.username)}" ${profile.canChangeUsername ? '' : 'disabled'}>
-              <button id="checkUsernameBtn" class="btn btn-secondary" ${profile.canChangeUsername ? '' : 'disabled'}>
-                Проверить доступность
-              </button>
+          <!-- Username Section -->
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <h2>👤 Имя пользователя</h2>
+              <button class="btn btn-accordion" data-section="username">Изменить</button>
             </div>
-            <div id="usernameHint" class="field-hint">
-              ${profile.canChangeUsername ? '3-20 символов: буквы, цифры, _ или -' : `Можно изменить через ${Math.ceil((30 * 24 * 60 * 60 * 1000 - (Date.now() - profile.usernameChangedAt)) / (24 * 60 * 60 * 1000))} дней`}
+            <div class="accordion-content" id="section-username" style="display:none;">
+              <div class="edit-field">
+                <input type="text" id="usernameInput" class="input" value="${escapeHtml(profile.username)}" ${profile.canChangeUsername ? '' : 'disabled'}>
+                <button id="checkUsernameBtn" class="btn btn-secondary" ${profile.canChangeUsername ? '' : 'disabled'}>
+                  Проверить доступность
+                </button>
+              </div>
+              <div id="usernameHint" class="field-hint">
+                ${profile.canChangeUsername ? '3-20 символов: буквы, цифры, _ или -' : `Можно изменить через ${Math.ceil((30 * 24 * 60 * 60 * 1000 - (Date.now() - profile.usernameChangedAt)) / (24 * 60 * 60 * 1000))} дней`}
+              </div>
             </div>
-          </section>
+          </div>
+          
+          <!-- Avatar Section -->
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <h2>🎨 Аватар</h2>
+              <button class="btn btn-accordion" data-section="avatar">Изменить</button>
+            </div>
+            <div class="accordion-content" id="section-avatar" style="display:none;">
+              <div class="avatar-grid">
+                ${AVAILABLE_AVATARS.map(av => `
+                  <div class="avatar-option ${profile.avatar === av.id ? 'selected' : ''}" data-avatar="${av.id}">
+                    <div class="avatar-emoji">${av.emoji}</div>
+                    <div class="avatar-name">${av.name}</div>
+                  </div>
+                `).join('')}
+                ${EXCLUSIVE_AVATARS.filter(av => canUseAvatar(av.id, profile.role)).map(av => `
+                  <div class="avatar-option exclusive ${profile.avatar === av.id ? 'selected' : ''}" data-avatar="${av.id}">
+                    <div class="avatar-emoji">${av.emoji}</div>
+                    <div class="avatar-name">${av.name}</div>
+                    <div class="avatar-badge">🌟</div>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="privacy-setting">
+                <label>Кому видно:</label>
+                <select id="privacyAvatar" class="input">
+                  <option value="everyone" ${profile.privacy.avatar === 'everyone' ? 'selected' : ''}>Всем</option>
+                  <option value="friends" ${profile.privacy.avatar === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                  <option value="nobody" ${profile.privacy.avatar === 'nobody' ? 'selected' : ''}>Никому</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Bio Section -->
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <h2>✍️ О себе (кратко)</h2>
+              <button class="btn btn-accordion" data-section="bio">Изменить</button>
+            </div>
+            <div class="accordion-content" id="section-bio" style="display:none;">
+              <textarea id="bioInput" class="input" maxlength="500" rows="3" placeholder="Расскажите о себе кратко...">${profile.bio || ''}</textarea>
+              <div class="field-hint">До 500 символов</div>
+              <div class="privacy-setting">
+                <label>Кому видно:</label>
+                <select id="privacyBio" class="input">
+                  <option value="everyone" ${profile.privacy.bio === 'everyone' ? 'selected' : ''}>Всем</option>
+                  <option value="friends" ${profile.privacy.bio === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                  <option value="nobody" ${profile.privacy.bio === 'nobody' ? 'selected' : ''}>Никому</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- About Me Section -->
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <h2>📖 О себе (подробно)</h2>
+              <button class="btn btn-accordion" data-section="about">Изменить</button>
+            </div>
+            <div class="accordion-content" id="section-about" style="display:none;">
+              <textarea id="aboutMeInput" class="input" maxlength="1000" rows="5" placeholder="Расскажите о себе подробнее...">${profile.aboutMe || ''}</textarea>
+              <div class="field-hint">До 1000 символов</div>
+              <div class="privacy-setting">
+                <label>Кому видно:</label>
+                <select id="privacyAbout" class="input">
+                  <option value="everyone" ${profile.privacy.about === 'everyone' ? 'selected' : ''}>Всем</option>
+                  <option value="friends" ${profile.privacy.about === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                  <option value="nobody" ${profile.privacy.about === 'nobody' ? 'selected' : ''}>Никому</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Gender Section -->
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <h2>⚥️ Пол</h2>
+              <button class="btn btn-accordion" data-section="gender">Изменить</button>
+            </div>
+            <div class="accordion-content" id="section-gender" style="display:none;">
+              <select id="genderInput" class="input">
+                <option value="not_specified" ${profile.gender === 'not_specified' ? 'selected' : ''}>Не указано</option>
+                <option value="male" ${profile.gender === 'male' ? 'selected' : ''}>Мужской</option>
+                <option value="female" ${profile.gender === 'female' ? 'selected' : ''}>Женский</option>
+              </select>
+              <div class="privacy-setting">
+                <label>Кому видно:</label>
+                <select id="privacyGender" class="input">
+                  <option value="everyone" ${profile.privacy.gender === 'everyone' ? 'selected' : ''}>Всем</option>
+                  <option value="friends" ${profile.privacy.gender === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                  <option value="nobody" ${profile.privacy.gender === 'nobody' ? 'selected' : ''}>Никому</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Date of Birth Section -->
+          <div class="accordion-item">
+            <div class="accordion-header">
+              <h2>🎂 Дата рождения</h2>
+              <button class="btn btn-accordion" data-section="dob">Изменить</button>
+            </div>
+            <div class="accordion-content" id="section-dob" style="display:none;">
+              <input type="date" id="dobInput" class="input" value="${profile.dateOfBirth || ''}">
+              <div class="privacy-setting">
+                <label>Кому видно:</label>
+                <select id="privacyDob" class="input">
+                  <option value="everyone" ${profile.privacy.dob === 'everyone' ? 'selected' : ''}>Всем</option>
+                  <option value="friends" ${profile.privacy.dob === 'friends' ? 'selected' : ''}>Только друзьям</option>
+                  <option value="nobody" ${profile.privacy.dob === 'nobody' ? 'selected' : ''}>Никому</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="edit-actions">
+            <button id="saveProfileBtn" class="btn btn-primary">Сохранить изменения</button>
+            <button class="btn btn-secondary" onclick="history.back()">Отмена</button>
+          </div>
+        </div>
+      </div>
+      
+      <style>
+        .edit-profile-container {
+          max-width: 800px;
+          margin: 30px auto;
+          padding: 20px;
+        }
+        
+        .edit-profile-header {
+          margin-bottom: 30px;
+        }
+        
+        .btn-back {
+          background: none;
+          border: none;
+          color: #3b82f6;
+          cursor: pointer;
+          font-size: 14px;
+          padding: 8px 0;
+          margin-bottom: 10px;
+        }
+        
+        .edit-profile-header h1 {
+          margin: 0;
+          font-size: 28px;
+        }
+        
+        .accordion-item {
+          background: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          margin-bottom: 15px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          overflow: hidden;
+        }
+        
+        .accordion-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+        
+        .accordion-header:hover {
+          background: rgba(255, 255, 255, 0.08);
+        }
+        
+        .accordion-header h2 {
+          margin: 0;
+          font-size: 16px;
+          flex: 1;
+        }
+        
+        .btn-accordion {
+          background: rgba(59, 130, 246, 0.2);
+          border: 1px solid rgba(59, 130, 246, 0.4);
+          color: #93c5fd;
+          padding: 6px 16px;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 13px;
+          transition: all 0.2s;
+          flex-shrink: 0;
+        }
+        
+        .btn-accordion:hover {
+          background: rgba(59, 130, 246, 0.3);
+          border-color: rgba(59, 130, 246, 0.6);
+        }
+        
+        .accordion-content {
+          padding: 0 20px 20px 20px;
+          animation: slideDown 0.2s ease-out;
+        }
+        
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            max-height: 0;
+          }
+          to {
+            opacity: 1;
+            max-height: 1000px;
+          }
+        }
+        
+        .edit-field {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 8px;
+        }
+        
+        .edit-field .input {
+          flex: 1;
+        }
+        
+        .field-hint {
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.6);
+          margin-top: 5px;
+        }
+        
+        .avatar-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+          gap: 15px;
+          margin-bottom: 15px;
+        }
+        
+        .avatar-option {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 15px;
+          background: rgba(255, 255, 255, 0.03);
+          border: 2px solid transparent;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .avatar-option:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(59, 130, 246, 0.5);
+        }
+        
+        .avatar-option.selected {
+          background: rgba(59, 130, 246, 0.2);
+          border-color: #3b82f6;
+        }
+        
+        .avatar-option.exclusive {
+          position: relative;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+          border-color: rgba(139, 92, 246, 0.3);
+        }
+        
+        .avatar-option.exclusive:hover {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+          border-color: rgba(139, 92, 246, 0.6);
+        }
+        
+        .avatar-option.exclusive.selected {
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(59, 130, 246, 0.3));
+          border-color: #8b5cf6;
+          box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        }
+        
+        .avatar-badge {
+          position: absolute;
+          top: 5px;
+          right: 5px;
+          font-size: 12px;
+        }
+        
+        .avatar-emoji {
+          font-size: 40px;
+          margin-bottom: 8px;
+        }
+        
+        .avatar-name {
+          font-size: 12px;
+          text-align: center;
+        }
+        
+        .privacy-setting {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-top: 10px;
+        }
+        
+        .privacy-setting label {
+          font-size: 14px;
+          min-width: 100px;
+        }
+        
+        .privacy-setting select {
+          flex: 1;
+          max-width: 200px;
+        }
+        
+        .edit-actions {
+          display: flex;
+          gap: 15px;
+          margin-top: 30px;
+        }
+        
+        .msg {
+          padding: 15px;
+          border-radius: 8px;
+          margin-bottom: 20px;
+        }
+        
+        .msg-success {
+          background: rgba(34, 197, 94, 0.2);
+          border: 1px solid #22c55e;
+          color: #86efac;
+        }
+        
+        .msg-error {
+          background: rgba(239, 68, 68, 0.2);
+          border: 1px solid #ef4444;
+          color: #fca5a5;
+        }
+        
+        .msg-info {
+          background: rgba(59, 130, 246, 0.2);
+          border: 1px solid #3b82f6;
+          color: #93c5fd;
+        }
+      </style>
+    `;
           
           <!-- Avatar -->
           <section class="edit-section">
@@ -1375,6 +1716,35 @@ async function viewEditProfile() {
         }
       </style>
     `;
+    
+    // Accordion functionality
+    document.querySelectorAll('.btn-accordion').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const section = btn.dataset.section;
+        const content = document.getElementById(`section-${section}`);
+        
+        if (content) {
+          const isHidden = content.style.display === 'none';
+          // Закрываем все остальные
+          document.querySelectorAll('.accordion-content').forEach(c => c.style.display = 'none');
+          // Открываем текущий
+          if (isHidden) {
+            content.style.display = 'block';
+            btn.textContent = 'Закрыть';
+          } else {
+            content.style.display = 'none';
+            btn.textContent = 'Изменить';
+          }
+          // Обновляем другие кнопки на "Изменить"
+          document.querySelectorAll('.btn-accordion').forEach(b => {
+            if (b !== btn && b.textContent !== 'Изменить') {
+              b.textContent = 'Изменить';
+            }
+          });
+        }
+      });
+    });
     
     // Avatar selection
     let selectedAvatar = profile.avatar;
@@ -4497,9 +4867,6 @@ function renderTabHtml(tab, me) {
             <span class="chip status ${status.main.cls}" title="Статус аккаунта">
               <span class="dot"></span> ${status.main.label}
             </span>
-          </div>
-
-          <div class="profile-hero__subtitle">
             ${
               status.badges?.length
                 ? `
