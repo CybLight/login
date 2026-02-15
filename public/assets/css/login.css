@@ -2740,13 +2740,13 @@ body.no-strawberries .strawberry-ring-wave {
 .verified-badge {
   display: inline-flex;
   align-items: center;
-  margin-left: 8px;
   animation: verifiedPulse 2s ease-in-out infinite;
+  flex-shrink: 0;
 }
 
 .verified-icon {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
   animation: verifiedRotate 3s ease-in-out infinite;
 }
