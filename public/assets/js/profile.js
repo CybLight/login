@@ -27,6 +27,78 @@ function getAvatarEmoji(avatarId) {
   return AVATAR_EMOJI_MAP[avatarId] || '👤';
 }
 
+// Функции для отображения ролей и статусов
+function getRoleClass(role) {
+  const roleMap = {
+    'admin': 'status--admin',
+    'moderator': 'status--mod',
+    'developer': 'status--dev',
+    'verified': 'status--verified',
+    'vip': 'status--premium',
+    'premium': 'status--premium',
+  };
+  return roleMap[role] || 'status--active';
+}
+
+function getRoleLabel(role, flags) {
+  const flagsArray = flags || [];
+  
+  if (role === 'admin' || flagsArray.includes('admin')) {
+    return 'Администратор';
+  }
+  if (role === 'moderator' || flagsArray.includes('moderator')) {
+    return 'Модератор';
+  }
+  if (role === 'developer' || flagsArray.includes('developer')) {
+    return 'Разработчик';
+  }
+  if (role === 'vip' || flagsArray.includes('vip')) {
+    return 'VIP';
+  }
+  if (role === 'premium' || flagsArray.includes('premium')) {
+    return 'Premium';
+  }
+  
+  return 'Пользователь';
+}
+
+function buildProfileBadges(profile) {
+  const badges = [];
+  const flags = profile.flags || [];
+  
+  // 2FA
+  if (profile.twoFactorEnabled || flags.includes('2fa')) {
+    badges.push('<span class="chip badge badge--ok" title="Двухфакторная аутентификация">2FA</span>');
+  }
+  
+  // Developer
+  if (flags.includes('dev') || flags.includes('developer')) {
+    badges.push('<span class="chip badge badge--dev" title="Разработчик">Dev</span>');
+  }
+  
+  // Premium / Sponsor
+  if (flags.includes('premium') || flags.includes('sponsor')) {
+    badges.push('<span class="chip badge badge--premium" title="Premium">★</span>');
+  }
+  
+  // Helper / Contributor
+  if (flags.includes('helper') || flags.includes('contributor')) {
+    badges.push('<span class="chip badge badge--info" title="Помощник">Helper</span>');
+  }
+  
+  // Trusted
+  if (flags.includes('trusted')) {
+    badges.push('<span class="chip badge badge--ok" title="Доверенный">Trusted</span>');
+  }
+  
+  // Beta
+  if (flags.includes('beta')) {
+    badges.push('<span class="chip badge badge--beta" title="Beta тестер">Beta</span>');
+  }
+  
+  return badges.join(' ');
+}
+
 const profileModule = (() => {
   async function loadProfile(username) {
     try {
@@ -271,6 +343,12 @@ const profileModule = (() => {
                 ${escapeHtml(profile.username)}
                 ${profile.verified ? '<span class="verified-badge" title="Verified"><svg class="verified-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#3b82f6"/><path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : ''}
               </h1>
+              <div class="profile-status-badges">
+                <span class="chip status ${getRoleClass(profile.role)}" style="margin-right: 8px;">
+                  <span class="dot"></span> ${getRoleLabel(profile.role, profile.flags)}
+                </span>
+                ${buildProfileBadges(profile)}
+              </div>
               <p class="profile-joined">На CybLight с ${formattedDate}</p>
               ${profile.bio ? `<p class="profile-bio">${escapeHtml(profile.bio)}</p>` : ''}
               ${profile.aboutMe ? `<p class="profile-about">${escapeHtml(profile.aboutMe)}</p>` : ''}
@@ -544,6 +622,111 @@ const profileModule = (() => {
           border-radius: 12px;
           border: 1px solid rgba(255, 255, 255, 0.1);
           color: #ccc;
+        }
+
+        .profile-status-badges {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+          flex-wrap: wrap;
+        }
+
+        /* Chip styles for status and badges */
+        .chip {
+          display: inline-flex;
+          align-items: center;
+          padding: 4px 10px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 500;
+          border: 1px solid;
+        }
+
+        .chip.status {
+          padding: 5px 12px;
+        }
+
+        .chip .dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          margin-right: 6px;
+          background: currentColor;
+        }
+
+        /* Status colors */
+        .status--admin {
+          background: rgba(239, 68, 68, 0.2);
+          border-color: #ef4444;
+          color: #fca5a5;
+        }
+
+        .status--mod {
+          background: rgba(59, 130, 246, 0.2);
+          border-color: #3b82f6;
+          color: #93c5fd;
+        }
+
+        .status--dev {
+          background: rgba(139, 92, 246, 0.2);
+          border-color: #8b5cf6;
+          color: #c4b5fd;
+        }
+
+        .status--verified {
+          background: rgba(34, 197, 94, 0.2);
+          border-color: #22c55e;
+          color: #86efac;
+        }
+
+        .status--premium {
+          background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2));
+          border-color: #f59e0b;
+          color: #fcd34d;
+        }
+
+        .status--active {
+          background: rgba(34, 197, 94, 0.15);
+          border-color: rgba(34, 197, 94, 0.4);
+          color: #86efac;
+        }
+
+        /* Badge colors */
+        .badge--ok {
+          background: rgba(34, 197, 94, 0.15);
+          border-color: rgba(34, 197, 94, 0.4);
+          color: #86efac;
+        }
+
+        .badge--verified {
+          background: rgba(59, 130, 246, 0.15);
+          border-color: rgba(59, 130, 246, 0.4);
+          color: #93c5fd;
+        }
+
+        .badge--dev {
+          background: rgba(139, 92, 246, 0.15);
+          border-color: rgba(139, 92, 246, 0.4);
+          color: #c4b5fd;
+        }
+
+        .badge--premium {
+          background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.15));
+          border-color: #f59e0b;
+          color: #fcd34d;
+        }
+
+        .badge--info {
+          background: rgba(59, 130, 246, 0.15);
+          border-color: rgba(59, 130, 246, 0.4);
+          color: #93c5fd;
+        }
+
+        .badge--beta {
+          background: rgba(168, 85, 247, 0.15);
+          border-color: rgba(168, 85, 247, 0.4);
+          color: #d8b4fe;
         }
 
         @media (max-width: 600px) {

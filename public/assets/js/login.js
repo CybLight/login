@@ -4450,7 +4450,10 @@ function renderTabHtml(tab, me) {
 
         <div class="profile-hero__meta">
           <div class="profile-hero__title">
-            <h2 class="profile-name">${escapeHtml(login)}</h2>
+            <h2 class="profile-name">
+              ${escapeHtml(login)}
+              ${emailVerified ? '<span class="verified-badge" title="Verified" style="margin-left: 8px;"><svg class="verified-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#3b82f6"/><path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>' : ''}
+            </h2>
 
             <span class="chip status ${status.main.cls}" title="Статус аккаунта">
               <span class="dot"></span> ${status.main.label}

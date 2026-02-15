@@ -2737,6 +2737,20 @@ body.no-strawberries .strawberry-ring-wave {
   text-align: center;
 }
 /* Verified Badge Styles */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  animation: verifiedPulse 2s ease-in-out infinite;
+}
+
+.verified-icon {
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
+  animation: verifiedRotate 3s ease-in-out infinite;
+}
+
 .verified-icon-inline {
   width: 16px;
   height: 16px;
@@ -2754,4 +2768,12 @@ body.no-strawberries .strawberry-ring-wave {
 @keyframes verifiedPulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.08); }
+}
+
+@keyframes verifiedRotate {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(-10deg); }
+  20% { transform: rotate(10deg); }
+  30% { transform: rotate(0deg); }
+  100% { transform: rotate(0deg); }
 }
