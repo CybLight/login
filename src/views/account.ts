@@ -1,0 +1,121 @@
+/**
+ * Account view - полная страница аккаунта с вкладками
+ * Включает: Профиль, Безопасность, Сессии, Пасхалки
+ */
+
+import { Router } from '@/router/Router';
+import { setAppContent } from '@/ui';
+import { authService } from '@/services';
+import '@/styles/account.css';
+import '@/styles/account-render.css';
+import { renderAccountPage } from './account/account-render';
+import { bindAccountHandlers } from './account/account-handlers';
+import { hydrateAccountAvatar, isEmailVerified, stopAccountChatAutoRefresh } from './account/account-utils';
+import { createChatCore } from './account/chat-core';
+
+// Global state variables
+let twoFAEnabled = false;
+let passkeyCount = 0;
+let emailVerified = false;
+let accountChatIntervalId: number | undefined;
+let accountChatFriendId: string | null = null;
+let accountChatDocClickHandler: ((event: MouseEvent) => void) | null = null;
+const accountChatMessageMap = new Map<string, Record<string, unknown>>();
+const accountPinnedMessageByChat = new Map<string, { messageId: string; text: string }>();
+
+// Chat core initialization
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏'];
+const EDIT_TIME_LIMIT = 15 * 60 * 1000;
+
+const startEditMessageInAccount = (
+  messageId: string,
+  currentContent: string,
+  input: HTMLTextAreaElement,
+  sendBtn: HTMLButtonElement | null,
+  editIndicator: HTMLElement | null,
+  editingIdInput: HTMLInputElement | null
+): void => {
+  if (!input || !editIndicator || !editingIdInput) return;
+  input.value = currentContent;
+  input.style.height = 'auto';
+  input.style.height = `${input.scrollHeight}px`;
+  input.focus();
+  editingIdInput.value = messageId;
+  editIndicator.style.display = 'flex';
+  if (sendBtn) sendBtn.textContent = 'Сохранить';
+};
+
+const loadChatMessagesInAccount = createChatCore({
+  accountPinnedMessageByChat,
+  accountChatMessageMap,
+  quickReactions: QUICK_REACTIONS,
+  editTimeLimit: EDIT_TIME_LIMIT,
+  startEditMessageInAccount,
+});
+
+/**
+ * Main render function for account page
+ */
+export async function renderAccount(tab: string = 'profile'): Promise<void> {
+  // Show no-strawberries background
+  document.body.classList.add('no-strawberries');
+
+  // Check authorization and get user data
+  const user = await authService.checkSession();
+  if (!user) {
+    Router.navigate('username');
+    return;
+  }
+
+  // Initialize emailVerified from user data
+  emailVerified = isEmailVerified(user);
+
+  // Render account page
+  const html = renderAccountPage(tab, user);
+  setAppContent(html);
+
+  // Setup state and callbacks
+  const state = {
+    twoFAEnabled,
+    passkeyCount,
+    emailVerified,
+    accountChatFriendId,
+    accountChatIntervalId,
+    accountChatDocClickHandler,
+    accountChatMessageMap,
+    accountPinnedMessageByChat,
+  };
+
+  const callbacks = {
+    setTwoFAEnabled: (value: boolean) => {
+      twoFAEnabled = value;
+    },
+    setPasskeyCount: (value: number) => {
+      passkeyCount = value;
+    },
+    setEmailVerified: (value: boolean) => {
+      emailVerified = value;
+    },
+    setAccountChatFriendId: (id: string | null) => {
+      accountChatFriendId = id;
+    },
+    setAccountChatIntervalId: (id?: number) => {
+      accountChatIntervalId = id;
+    },
+    setAccountChatDocClickHandler: (handler: ((event: MouseEvent) => void) | null) => {
+      accountChatDocClickHandler = handler;
+    },
+    stopAccountChatAutoRefresh: () => {
+      stopAccountChatAutoRefresh(accountChatIntervalId, callbacks.setAccountChatIntervalId);
+    },
+    loadChatMessagesInAccount,
+  };
+
+  // Bind all event handlers
+  bindAccountHandlers(tab, user, state, callbacks);
+
+  // Hydrate avatar if on profile tab
+  if (tab === 'profile') {
+    void hydrateAccountAvatar(user);
+  }
+}

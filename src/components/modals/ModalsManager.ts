@@ -45,7 +45,11 @@ export class ModalsManager {
           await options.onOk();
         }
         (modal as HTMLElement).style.display = 'none';
-        try { cleanupFocus(); } catch { /* ignore cleanup errors */ }
+        try {
+          cleanupFocus();
+        } catch {
+          /* ignore cleanup errors */
+        }
         window.removeEventListener('keydown', onEsc);
         resolve();
       };
@@ -68,7 +72,11 @@ export class ModalsManager {
     function onEsc(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         (modal as HTMLElement).style.display = 'none';
-        try { cleanupFocus(); } catch { /* ignore cleanup errors */ }
+        try {
+          cleanupFocus();
+        } catch {
+          /* ignore cleanup errors */
+        }
         window.removeEventListener('keydown', onEsc);
       }
     }

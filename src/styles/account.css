@@ -1,0 +1,57 @@
+/* Account View Styles */
+
+/* Security Check - 2FA/Passkey Items */
+.security-check-icon {
+  font-size: 18px;
+}
+
+.security-check-label {
+  flex: 1;
+  font-size: 13px;
+}
+
+.security-check-status {
+  font-size: 12px;
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.security-check-item.disabled {
+  opacity: 0.7;
+}
+
+/* Progress Bar and Score */
+.security-score-text {
+  font-size: 12px;
+}
+
+/* Security Info Box - Success */
+.security-box-success {
+  padding: 10px;
+  background: rgba(34, 197, 94, 0.15);
+  border-radius: 6px;
+  border-left: 3px solid #22c55e;
+}
+
+.security-box-info {
+  padding: 10px;
+  background: rgba(59, 130, 246, 0.15);
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+}
+
+.security-box-title {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.security-box-text {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* Security Image */
+.security-icon-image {
+  display: block;
+}

@@ -80,11 +80,13 @@ function openReportModal(): void {
   const cleanup = trapFocus(modal as HTMLElement);
 
   // Cleanup when modal closed
-    const observer = new MutationObserver(() => {
+  const observer = new MutationObserver(() => {
     if (!modal.classList.contains('is-open')) {
       try {
         cleanup();
-      } catch { /* ignore cleanup errors */ }
+      } catch {
+        /* ignore cleanup errors */
+      }
       observer.disconnect();
     }
   });

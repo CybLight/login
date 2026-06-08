@@ -1,0 +1,225 @@
+/* ====================================
+   🍓 Strawberry Lightbox
+   ==================================== */
+
+.strawberry-lightbox {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  touch-action: pan-y;
+}
+
+.strawberry-lightbox.is-open {
+  display: flex;
+}
+
+.strawberry-lightbox__img {
+  max-width: min(96vw, 1100px);
+  max-height: 86vh;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.55);
+  object-fit: contain;
+
+  opacity: 0;
+  transform: scale(0.985);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+  user-select: none;
+
+  /* важно для touch */
+  touch-action: none; /* управляем жестами сами */
+  transform-origin: center center;
+
+  animation: strawberryZoomIn 0.18s ease;
+}
+
+@keyframes strawberryZoomIn {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.strawberry-lightbox__img.is-ready {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* когда zoom > 1, курсор */
+.strawberry-lightbox.is-zoomed .strawberry-lightbox__img {
+  cursor: grab;
+}
+.strawberry-lightbox.is-zoomed .strawberry-lightbox__img:active {
+  cursor: grabbing;
+}
+
+.strawberry-lightbox__close {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(231, 236, 255, 0.95);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.strawberry-lightbox__close:hover {
+  border-color: rgba(255, 59, 107, 0.55);
+}
+
+.strawberry-lightbox__nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(231, 236, 255, 0.95);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  user-select: none;
+}
+
+.strawberry-lightbox__nav:hover {
+  border-color: rgba(255, 59, 107, 0.55);
+}
+
+.strawberry-lightbox__nav.prev {
+  left: 14px;
+}
+.strawberry-lightbox__nav.next {
+  right: 14px;
+}
+
+/* ===== Lightbox HUD ===== */
+.strawberry-lightbox__hud {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  z-index: 100000;
+}
+
+.strawberry-lightbox__counter {
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(231, 236, 255, 0.92);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.strawberry-lightbox__caption {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  max-width: min(92vw, 900px);
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(231, 236, 255, 0.92);
+  font-size: 13px;
+  text-align: center;
+  z-index: 100000;
+}
+
+/* pinch zoom: контейнер для трансформаций */
+.strawberry-lightbox__stage {
+  position: relative;
+  max-width: min(96vw, 1100px);
+  max-height: 86vh;
+  display: grid;
+  place-items: center;
+}
+
+/* ====================================
+   🍓 Modal Effects
+   ==================================== */
+
+/* Emoji animations */
+.emoji.flash {
+  animation: strawberry-flash 0.35s ease-out;
+}
+
+@keyframes strawberry-flash {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 0, 80, 0));
+  }
+  40% {
+    transform: scale(1.25);
+    filter: drop-shadow(0 0 20px rgba(255, 0, 80, 0.75));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 0, 80, 0));
+  }
+}
+
+/* OK button animation */
+.modal-content .btn-okay-animate {
+  animation: ok-bounce 0.45s cubic-bezier(0.17, 0.67, 0.38, 1.32);
+}
+
+@keyframes ok-bounce {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Modal flash effect */
+.modal.flash {
+  animation: modal-flash 0.5s ease-out;
+}
+
+@keyframes modal-flash {
+  0% {
+    box-shadow: 0 0 0px 0 rgba(255, 0, 80, 0);
+  }
+  40% {
+    box-shadow: 0 0 32px 8px rgba(255, 0, 100, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0px 0 rgba(255, 0, 80, 0);
+  }
+}
+
+/* Congrats variant */
+.modal--congrats .subtitle b {
+  color: #ffffff;
+}
