@@ -12,3 +12,4 @@ export * from './logger';
 export * from './helpers';
 export * from './focus';
 export * from './keyboard';
+export * from './presence';

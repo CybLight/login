@@ -1,6 +1,6 @@
 import { Router } from '@/router/Router';
 import type { FriendListItem } from '@/types';
-import { apiCall, escapeHtml } from '@/utils';
+import { apiCall, escapeHtml, formatPresenceLabel, isUserOnline } from '@/utils';
 import { getAvatarListHtml } from './avatar';
 
 type ApiMessage = {
@@ -61,8 +61,26 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
 
     deps.setPendingRequestsBadge(pendingRequests.length);
 
-    const avatarHtml = (avatarRaw: string | undefined, usernameRaw: string | undefined) =>
-      getAvatarListHtml(avatarRaw, String(usernameRaw || ''));
+    const avatarHtml = (friend: FriendListItem) =>
+      getAvatarListHtml(
+        friend.avatar ||
+          friend.avatarUrl ||
+          friend.avatar_url ||
+          friend.avatarId ||
+          friend.avatar_id,
+        String(friend.username || ''),
+        { presence: friend }
+      );
+
+    const presenceMetaHtml = (friend: FriendListItem) => {
+      if (friend.isOnline || friend.lastSeenAt != null || friend.last_seen_at != null) {
+        const online = isUserOnline(friend);
+        const label = formatPresenceLabel(friend);
+        const metaClass = online ? 'friend-meta friend-meta--online' : 'friend-meta';
+        return `<div class="${metaClass}">${escapeHtml(label)}</div>`;
+      }
+      return '';
+    };
 
     container.innerHTML = `
       <div class="friends-search">
@@ -79,16 +97,12 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
             ? `<div class="friends-list">${friends
                 .map(
                   (friend: FriendListItem) => `
-                <div class="friend-card">
-                  <div class="friend-avatar">${avatarHtml(
-                    friend.avatar ||
-                      friend.avatarUrl ||
-                      friend.avatar_url ||
-                      friend.avatarId ||
-                      friend.avatar_id,
-                    friend.username
-                  )}</div>
-                  <div class="friend-info"><div class="friend-username">${escapeHtml(String(friend.username || 'Unknown'))}</div></div>
+                <div class="friend-card" data-presence-user-id="${escapeHtml(String(friend.id || ''))}">
+                  <div class="friend-avatar">${avatarHtml(friend)}</div>
+                  <div class="friend-info">
+                    <div class="friend-username">${escapeHtml(String(friend.username || 'Unknown'))}</div>
+                    ${presenceMetaHtml(friend)}
+                  </div>
                   <div class="friend-actions">
                     <button class="btn-friend btn-friend-message" data-action="message" data-id="${escapeHtml(String(friend.id || ''))}" data-username="${escapeHtml(String(friend.username || ''))}" type="button" aria-label="💬 Написать">💬 Написать</button>
                     <button class="btn-friend btn-friend-profile" data-action="profile" data-username="${escapeHtml(String(friend.username || ''))}" type="button" aria-label="👤 Профиль">👤 Профиль</button>
@@ -110,14 +124,7 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
                 .map(
                   (request: FriendListItem) => `
                 <div class="friend-card">
-                  <div class="friend-avatar">${avatarHtml(
-                    request.avatar ||
-                      request.avatarUrl ||
-                      request.avatar_url ||
-                      request.avatarId ||
-                      request.avatar_id,
-                    request.username
-                  )}</div>
+                  <div class="friend-avatar">${avatarHtml(request)}</div>
                   <div class="friend-info">
                     <div class="friend-username">${escapeHtml(String(request.username || 'Unknown'))}</div>
                     <div class="friend-meta">📬 Запрос в друзья ${escapeHtml(
@@ -144,14 +151,7 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
                 .map(
                   (request: FriendListItem) => `
                 <div class="friend-card">
-                  <div class="friend-avatar">${avatarHtml(
-                    request.avatar ||
-                      request.avatarUrl ||
-                      request.avatar_url ||
-                      request.avatarId ||
-                      request.avatar_id,
-                    request.username
-                  )}</div>
+                  <div class="friend-avatar">${avatarHtml(request)}</div>
                   <div class="friend-info">
                     <div class="friend-username">${escapeHtml(String(request.username || 'Unknown'))}</div>
                     <div class="friend-meta">⏳ Ожидание ответа ${escapeHtml(
@@ -209,15 +209,11 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
             .map(
               (foundUser: FriendListItem) => `
             <div class="search-result-item">
-              <div class="search-result-avatar">${avatarHtml(
-                foundUser.avatar ||
-                  foundUser.avatarUrl ||
-                  foundUser.avatar_url ||
-                  foundUser.avatarId ||
-                  foundUser.avatar_id,
-                foundUser.username
-              )}</div>
-              <div class="search-result-info"><div class="search-result-username">${escapeHtml(String(foundUser.username || 'Unknown'))}</div></div>
+              <div class="search-result-avatar">${avatarHtml(foundUser)}</div>
+              <div class="search-result-info">
+                <div class="search-result-username">${escapeHtml(String(foundUser.username || 'Unknown'))}</div>
+                ${presenceMetaHtml(foundUser)}
+              </div>
               <div class="search-result-actions">
                 <button class="btn-friend btn-friend-add" data-action="add" data-username="${escapeHtml(String(foundUser.username || ''))}" type="button" aria-label="➕ Добавить">➕ Добавить</button>
                 <button class="btn-friend btn-friend-profile" data-action="profile" data-username="${escapeHtml(String(foundUser.username || ''))}" type="button" aria-label="👤 Профиль">👤 Профиль</button>

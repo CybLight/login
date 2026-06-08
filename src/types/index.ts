@@ -31,6 +31,8 @@ export interface UserProfile {
   gender?: 'male' | 'female' | 'not_specified';
   dateOfBirth?: string;
   canChangeUsername?: boolean;
+  isOnline?: boolean;
+  lastSeenAt?: number | null;
 }
 
 export interface EditableProfile {
@@ -202,6 +204,9 @@ export interface FriendListItem {
   avatarId?: string;
   avatar_id?: string;
   createdAt?: string | number;
+  isOnline?: boolean;
+  lastSeenAt?: number | null;
+  last_seen_at?: number | null;
 }
 
 export interface UserEasterFlags {

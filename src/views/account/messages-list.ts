@@ -1,5 +1,5 @@
 import type { FriendListItem } from '@/types';
-import { apiCall, escapeHtml } from '@/utils';
+import { apiCall, escapeHtml, formatPresenceLabel, isUserOnline } from '@/utils';
 import { getAvatarListHtml } from './avatar';
 
 type ApiMessage = {
@@ -44,8 +44,26 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
 
     const friends = Array.isArray(friendsData.friends) ? friendsData.friends : [];
 
-    const avatarHtml = (avatarRaw: string | undefined, usernameRaw: string | undefined) =>
-      getAvatarListHtml(avatarRaw, String(usernameRaw || ''));
+    const avatarHtml = (friend: FriendListItem) =>
+      getAvatarListHtml(
+        friend.avatar ||
+          friend.avatarUrl ||
+          friend.avatar_url ||
+          friend.avatarId ||
+          friend.avatar_id,
+        String(friend.username || ''),
+        { presence: friend }
+      );
+
+    const chatPreviewHtml = (friend: FriendListItem) => {
+      if (friend.isOnline || friend.lastSeenAt != null || friend.last_seen_at != null) {
+        const online = isUserOnline(friend);
+        const label = formatPresenceLabel(friend);
+        const previewClass = online ? 'chat-preview chat-preview--online' : 'chat-preview';
+        return `<div class="${previewClass}">${escapeHtml(label)}</div>`;
+      }
+      return `<div class="chat-preview">Нажмите, чтобы открыть чат</div>`;
+    };
 
     container.innerHTML = `
       <div class="messages-info">
@@ -58,18 +76,11 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
           ? `<div class="chat-list">${friends
               .map(
                 (friend: FriendListItem) => `
-              <button class="chat-card" data-action="open-chat" data-id="${escapeHtml(String(friend.id || ''))}" data-username="${escapeHtml(String(friend.username || ''))}" type="button" aria-label="${avatarHtml( friend.avatar || friend.avatarUrl || friend.avatar_url || friend.avatarId || friend.avatar_id, friend.username )} ${escapeHtml(String(friend.username || 'Unknown'))} Нажмите, чтобы открыть чат">
-                <div class="chat-avatar">${avatarHtml(
-                  friend.avatar ||
-                    friend.avatarUrl ||
-                    friend.avatar_url ||
-                    friend.avatarId ||
-                    friend.avatar_id,
-                  friend.username
-                )}</div>
+              <button class="chat-card" data-action="open-chat" data-id="${escapeHtml(String(friend.id || ''))}" data-username="${escapeHtml(String(friend.username || ''))}" data-presence-user-id="${escapeHtml(String(friend.id || ''))}" type="button" aria-label="${escapeHtml(String(friend.username || 'Unknown'))} ${escapeHtml(formatPresenceLabel(friend))}">
+                <div class="chat-avatar">${avatarHtml(friend)}</div>
                 <div class="chat-info">
                   <div class="chat-username">${escapeHtml(String(friend.username || 'Unknown'))}</div>
-                  <div class="chat-preview">Нажмите, чтобы открыть чат</div>
+                  ${chatPreviewHtml(friend)}
                 </div>
                 <div class="chat-unread-badge is-hidden" data-unread-badge="${escapeHtml(String(friend.id || ''))}"></div>
               </button>

@@ -2,7 +2,7 @@
  * Messages tab - управление вкладкой Сообщения с чатом
  */
 
-import { apiCall, escapeHtml } from '@/utils';
+import { apiCall, escapeHtml, formatPresenceLabel, hasPresenceData, isUserOnline } from '@/utils';
 import { setupAccessibleModal } from '@/utils/keyboard';
 import type { ApiOkResponse, FriendListItem } from '@/types';
 import { createChatCore } from './chat-core';
@@ -107,6 +107,7 @@ export function openChatInMessagesTab(
       <div class="chat-header">
         <div class="chat-header-main">
           <div class="chat-header-title">💬 ${escapeHtml(friendUsername)}</div>
+          <div class="chat-header-presence" id="chatHeaderPresence" data-presence-user-id="${escapeHtml(friendId)}"></div>
         </div>
         <div id="chatPinnedBar" class="chat-pinned-bar is-hidden"></div>
       </div>
@@ -863,6 +864,45 @@ export function openChatInMessagesTab(
 
   renderInputLinkPreview();
 
+  const updateChatHeaderPresence = async () => {
+    const presenceEl = document.getElementById('chatHeaderPresence');
+    if (!presenceEl || state.accountChatFriendId !== friendId) return;
+
+    try {
+      const res = await apiCall(`/friends/presence/${encodeURIComponent(friendId)}`, {
+        credentials: 'include',
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        isOnline?: boolean;
+        lastSeenAt?: number | null;
+      };
+
+      if (!data?.ok) {
+        presenceEl.textContent = '';
+        presenceEl.className = 'chat-header-presence';
+        return;
+      }
+
+      const presence = { isOnline: data.isOnline, lastSeenAt: data.lastSeenAt };
+      if (!hasPresenceData(presence)) {
+        presenceEl.textContent = '';
+        presenceEl.className = 'chat-header-presence';
+        return;
+      }
+
+      const online = isUserOnline(presence);
+      presenceEl.textContent = formatPresenceLabel(presence);
+      presenceEl.className = online
+        ? 'chat-header-presence chat-header-presence--online'
+        : 'chat-header-presence';
+    } catch (error) {
+      console.error('Error updating chat presence:', error);
+    }
+  };
+
+  void updateChatHeaderPresence();
+
   callbacks.setAccountChatIntervalId(
     window.setInterval(() => {
       const chatExists = document.getElementById('chatMessages');
@@ -870,6 +910,7 @@ export function openChatInMessagesTab(
         callbacks.stopAccountChatAutoRefresh();
         return;
       }
+      void updateChatHeaderPresence();
       void loadChatMessagesInAccount(
         friendId,
         messagesEl,

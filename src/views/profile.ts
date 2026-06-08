@@ -2,7 +2,7 @@
  * Public profile view - отображение профилей других пользователей
  */
 
-import { apiCall, escapeHtml } from '@/utils';
+import { apiCall, escapeHtml, renderPresenceChip } from '@/utils';
 
 interface PublicProfile {
   id?: string;
@@ -22,6 +22,8 @@ interface PublicProfile {
   sessionsCount?: number;
   publicId?: string;
   twoFactorEnabled?: boolean;
+  isOnline?: boolean;
+  lastSeenAt?: number | null;
   [key: string]: unknown;
 }
 
@@ -606,6 +608,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
   const roleClass = getRoleClass(profile.role);
   const roleLabel = getRoleLabel(profile.role, profile.flags);
   const badgesHtml = buildProfileBadges(profile);
+  const presenceHtml = renderPresenceChip(profile);
   const friendsCount = profile.friendsCount || 0;
 
   app.innerHTML = `
@@ -627,6 +630,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
               <span class="chip status ${roleClass}" style="margin-right: 8px;">
                 <span class="dot"></span> ${roleLabel}
               </span>
+              ${presenceHtml}
               ${badgesHtml}
             </div>
             <p class="profile-joined">На CybLight с ${createdAt}</p>

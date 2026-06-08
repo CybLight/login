@@ -1,4 +1,6 @@
 import { escapeHtml } from '@/utils';
+import type { PresenceInput } from '@/utils/presence';
+import { formatPresenceLabel, hasPresenceData, isUserOnline } from '@/utils/presence';
 
 const AVATAR_EMOJI_MAP: Record<string, string> = {
   'avatar-cat': '🐱',
@@ -54,22 +56,50 @@ export function getAvatarInnerHtml(avatarRaw: string | undefined, login: string)
   return `<span>${escapeHtml(avatarValue)}</span>`;
 }
 
-export function getAvatarListHtml(avatarRaw: string | undefined, usernameRaw: string): string {
+export type AvatarListOptions = {
+  presence?: PresenceInput | null;
+};
+
+function wrapAvatarWithPresence(
+  innerHtml: string,
+  options?: AvatarListOptions
+): string {
+  if (!options?.presence || !hasPresenceData(options.presence)) {
+    return innerHtml;
+  }
+
+  const online = isUserOnline(options.presence);
+  const label = formatPresenceLabel(options.presence);
+
+  return `<span class="avatar-wrap">${innerHtml}<span class="presence-dot ${online ? 'presence-dot--online' : 'presence-dot--offline'}" title="${escapeHtml(label)}" aria-hidden="true"></span></span>`;
+}
+
+export function getAvatarListHtml(
+  avatarRaw: string | undefined,
+  usernameRaw: string,
+  options?: AvatarListOptions
+): string {
   const avatarValue = String(avatarRaw || '').trim();
   const username = String(usernameRaw || '').trim();
 
   if (!avatarValue) {
-    return `<span>${escapeHtml(username.slice(0, 1).toUpperCase() || 'U')}</span>`;
+    return wrapAvatarWithPresence(
+      `<span>${escapeHtml(username.slice(0, 1).toUpperCase() || 'U')}</span>`,
+      options
+    );
   }
 
   const mappedEmoji = getAvatarEmoji(avatarValue);
   if (mappedEmoji) {
-    return `<span>${mappedEmoji}</span>`;
+    return wrapAvatarWithPresence(`<span>${mappedEmoji}</span>`, options);
   }
 
   if (isAvatarUrl(avatarValue)) {
-    return `<img class="avatar-img" src="${escapeHtml(avatarValue)}" alt="" />`;
+    return wrapAvatarWithPresence(
+      `<img class="avatar-img" src="${escapeHtml(avatarValue)}" alt="" />`,
+      options
+    );
   }
 
-  return `<span>${escapeHtml(avatarValue)}</span>`;
+  return wrapAvatarWithPresence(`<span>${escapeHtml(avatarValue)}</span>`, options);
 }

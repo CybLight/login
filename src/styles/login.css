@@ -1617,6 +1617,19 @@ body.no-strawberries .strawberry-ring-wave {
   background: rgba(107, 255, 156, 0.12);
 }
 
+/* Онлайн / офлайн */
+.status--online {
+  color: #6bff9c;
+  border-color: rgba(107, 255, 156, 0.45);
+  background: rgba(107, 255, 156, 0.12);
+}
+
+.status--offline {
+  color: rgba(180, 190, 210, 0.92);
+  border-color: rgba(180, 190, 210, 0.28);
+  background: rgba(180, 190, 210, 0.08);
+}
+
 /* Участник */
 .status--member {
   color: #7fb7ff;
