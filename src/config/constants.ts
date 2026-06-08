@@ -4,7 +4,7 @@
 
 // In development, use proxy to avoid CORS issues
 // In production, use full API URL
-export const API_BASE = (import.meta as any).env.DEV ? '/api' : 'https://api.cyblight.org';
+export const API_BASE = ((import.meta as unknown) as { env?: { DEV?: boolean } }).env?.DEV ? '/api' : 'https://api.cyblight.org';
 
 // Storage keys
 export const EASTER_KEY = 'cyb_strawberry_unlocked';
