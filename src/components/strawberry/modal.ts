@@ -148,7 +148,9 @@ export function customPrompt(title: string, subtitle: string): Promise<string> {
       // удалить фокусную ловушку
       try {
         cleanupFocus();
-      } catch { /* ignore cleanup errors */ }
+      } catch {
+        /* ignore cleanup errors */
+      }
 
       input.value = '';
       input.style.display = '';
@@ -174,7 +176,7 @@ export function showCongratsModal(userName: string, onConfirm: () => void): Prom
     const convex = modal.querySelector('.convariant') as HTMLDivElement;
 
     // Очищаем старые обработчики
-    (window as any).__customPromptEnter = null;
+    (window as unknown as { __customPromptEnter?: unknown }).__customPromptEnter = undefined;
 
     function baseCleanup() {
       modal.style.display = 'none';
@@ -195,7 +197,9 @@ export function showCongratsModal(userName: string, onConfirm: () => void): Prom
       window.removeEventListener('keydown', onEnterCongrats, true);
       try {
         cleanupFocus();
-      } catch { /* ignore cleanup errors */ }
+      } catch {
+        /* ignore cleanup errors */
+      }
     }
 
     let cleanup = baseCleanup;
