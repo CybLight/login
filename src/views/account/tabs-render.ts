@@ -277,11 +277,16 @@ function renderProfileTab(user: User): string {
 function renderSecurityTab(user: User): string {
   const emailVerified = isEmailVerified(user);
   const emailText = user.email ? escapeHtml(user.email) : '—';
-  const emailBadge = emailVerified
-    ? `<span class="sec-badge sec-badge--ok">Подтверждён</span>`
+  const emailBadgeLabel = emailVerified
+    ? 'Подтверждён'
     : user.email
-      ? `<span class="sec-badge sec-badge--warn">Не подтверждён</span>`
-      : `<span class="sec-badge">—</span>`;
+      ? 'Не подтверждён'
+      : '—';
+  const emailBadge = emailVerified
+    ? `<span class="sec-badge sec-badge--ok">${emailBadgeLabel}</span>`
+    : user.email
+      ? `<span class="sec-badge sec-badge--warn">${emailBadgeLabel}</span>`
+      : `<span class="sec-badge">${emailBadgeLabel}</span>`;
 
   const emailStatus = emailVerified
     ? '✅ Email подтверждён'
@@ -332,10 +337,13 @@ function renderSecurityTab(user: User): string {
     securityScore >= 100
       ? 'Ваш аккаунт прошёл Проверку безопасности. Рекомендуемых действий не найдено.'
       : 'Обнаружены рекомендации по защите';
+  const securityStatusLabel =
+    securityScore >= 100 ? 'Защищён' : securityScore >= 50 ? 'Средняя' : 'Низкая';
+  const securityAriaLabel = `${securityItemTitle}. ${securityItemSubtitle}. ${securityStatusLabel}`;
 
   return `
     <div class="sec-list">
-      <button class="sec-item" id="secSecurityCheckItem" type="button" aria-label="${ securityScore >= 100 ? `` : ` = 50 ? '#fbbf24' : '#ef4444'} opacity=0.9/> ` } ${securityItemTitle} ${securityItemSubtitle} ${securityScore >= 100 ? '✓ Защищён' : securityScore >= 50 ? '⚠ Средняя' : '⚠ Низкая'}">
+      <button class="sec-item" id="secSecurityCheckItem" type="button" aria-label="${securityAriaLabel}">
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
@@ -414,7 +422,7 @@ function renderSecurityTab(user: User): string {
         </div>
       </div>
 
-      <button class="sec-item" id="secEmailItem" type="button" aria-label="Адрес электронной почты ${emailText} ${emailBadge}">
+      <button class="sec-item" id="secEmailItem" type="button" aria-label="Адрес электронной почты ${emailText}, ${emailBadgeLabel}">
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
