@@ -3,12 +3,15 @@
 .account-page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  flex: 1;
+  width: 100%;
+  min-height: 100%;
+  min-height: 100dvh;
 }
 
 .account-wrap {
   display: flex;
-  flex: 1;
+  flex: 1 0 auto;
   gap: 30px;
   max-width: 1400px;
   margin: 0 auto;
@@ -130,47 +133,59 @@
 
 .msg {
   position: fixed;
-  top: 20px;
+  top: 18px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 15px 24px;
-  border-radius: 8px;
+  padding: 12px 20px;
+  border-radius: 14px;
   display: none;
   z-index: 10000;
-  min-width: 320px;
-  max-width: 90vw;
+  width: max-content;
+  min-width: 0;
+  max-width: min(440px, calc(100vw - 32px));
   text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  animation: slideDown 0.3s ease-out;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.97) 0%, rgba(30, 41, 59, 0.96) 100%);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+  animation: slideDown 0.25s ease-out;
 }
 
 @keyframes slideDown {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
+    transform: translateX(-50%) translateY(-16px) scale(0.97);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 }
 
 .msg.msg--ok {
-  background: rgba(34, 197, 94, 0.15);
-  border: 1px solid #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.55);
   color: #86efac;
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(34, 197, 94, 0.22);
 }
 
 .msg.msg--error {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.6);
   color: #fca5a5;
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(239, 68, 68, 0.25);
 }
 
 .msg.msg--warn {
-  background: rgba(251, 191, 36, 0.15);
-  border: 1px solid #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.55);
   color: #fcd34d;
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(251, 191, 36, 0.22);
 }
 
 .profile-info {
@@ -385,6 +400,12 @@
   width: 20px;
   height: 20px;
   opacity: 0.5;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.sec-item.is-open .sec-arrow {
+  transform: rotate(90deg);
 }
 
 .sec-panel {
@@ -393,8 +414,9 @@
   border-radius: 12px;
   padding: 16px;
   margin-top: 8px;
-  margin-left: 16px;
-  margin-right: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   display: none;
 }
 
@@ -1266,18 +1288,461 @@
 
 /* ==================== END EASTER EGGS TAB ==================== */
 
-@media (max-width: 768px) {
+/* Mobile header + burger nav (hidden on desktop) */
+.account-mobile-header,
+.account-nav-overlay {
+  display: none;
+}
+
+/* Выпадающее меню шапки на публичной странице профиля:
+   вне мобильной версии не показываем вообще */
+.profile-mobile-nav {
+  display: none;
+}
+
+.account-page > .auth-footer {
+  position: static;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+@media (max-width: 860px) {
+  .account-mobile-header {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    background:
+      radial-gradient(120% 220% at 0% 0%, rgba(255, 127, 39, 0.3) 0%, transparent 45%),
+      radial-gradient(120% 220% at 100% 0%, rgba(96, 165, 250, 0.2) 0%, transparent 45%),
+      linear-gradient(to right, #0a1020, #12182b);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .account-mobile-header::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 127, 39, 0) 0%,
+      rgba(255, 127, 39, 0.9) 25%,
+      rgba(255, 200, 120, 1) 50%,
+      rgba(255, 127, 39, 0.9) 75%,
+      rgba(255, 127, 39, 0) 100%
+    );
+    box-shadow: 0 0 10px rgba(255, 127, 39, 0.6);
+    pointer-events: none;
+  }
+
+  .account-mobile-header__inner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    min-height: 56px;
+  }
+
+  .account-mobile-header__logo img {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: block;
+  }
+
+  .account-mobile-header__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .account-mobile-header__title {
+    font-weight: 800;
+    font-size: 15px;
+    line-height: 1.1;
+  }
+
+  .account-mobile-header__login {
+    opacity: 0.75;
+    font-size: 12px;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Тост показываем под липкой шапкой (56px) */
+  .msg {
+    top: 68px;
+  }
+
+  .account-mobile-header__signin {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #ff7f27 0%, #f59e0b 100%);
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(255, 127, 39, 0.35);
+  }
+
+  .account-mobile-header__signin:active {
+    transform: scale(0.96);
+  }
+
+  .account-burger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .account-burger span {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    height: 3px;
+    border-radius: 2px;
+    background: #fff;
+    transition:
+      transform 0.25s ease,
+      opacity 0.25s ease;
+  }
+
+  .account-burger span:nth-child(1) {
+    top: 10px;
+  }
+
+  .account-burger span:nth-child(2) {
+    top: 16px;
+  }
+
+  .account-burger span:nth-child(3) {
+    top: 22px;
+  }
+
+  body.account-nav-open .account-burger span:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  body.account-nav-open .account-burger span:nth-child(2) {
+    opacity: 0;
+  }
+
+  body.account-nav-open .account-burger span:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  .account-nav-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 900;
+  }
+
+  body.account-nav-open .account-nav-overlay {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .account-page {
+    padding: 0;
+  }
+
   .account-wrap {
     flex-direction: column;
-    gap: 20px;
+    gap: 0;
+    padding: 0;
+    max-width: none;
   }
 
   .account-sidebar {
-    width: 100%;
+    display: none;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    width: auto;
+    max-height: calc(100dvh - 56px);
+    overflow-y: auto;
+    z-index: 950;
+    margin: 0;
+    padding: 12px 16px 16px;
+    border-radius: 0 0 16px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: none;
+    background: rgba(10, 15, 31, 0.98);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  }
+
+  body.account-nav-open .account-sidebar {
+    display: block;
+  }
+
+  .account-brand {
+    display: none;
   }
 
   .account-nav {
-    flex-direction: row;
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+
+  .account-nav button {
+    font-size: 14px;
+    padding: 10px 12px;
+    white-space: normal;
+  }
+
+  .nav-icon {
+    font-size: 24px;
+  }
+
+  .account-main {
+    width: 100%;
+    max-width: none;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
+  .account-body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .sec-list {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .sec-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    padding: 12px;
+    column-gap: 10px;
+    row-gap: 4px;
+    overflow: visible;
+  }
+
+  .sec-left {
+    grid-column: 1;
+    min-width: 0;
+  }
+
+  .sec-head-row {
+    align-items: flex-start;
+  }
+
+  .sec-title {
+    flex: 1;
+    min-width: 0;
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .sec-sub {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+  }
+
+  .sec-right {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: center;
+    flex: 0 0 auto;
+    gap: 8px;
+    margin-left: 0;
+  }
+
+  .sec-badge,
+  .security-status-badge {
+    flex-shrink: 0;
+    font-size: 11px;
+  }
+
+  .sec-badge {
+    padding: 3px 8px;
+  }
+
+  .sec-arrow {
+    flex-shrink: 0;
+  }
+
+  .sec-panel {
+    margin-inline: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .account-header-row,
+  .account-header-row + .account-divider {
+    display: none;
+  }
+
+  .profile-card {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    padding: 16px;
+  }
+
+  .account-page > .auth-footer {
+    height: auto;
+    padding: 12px 16px 16px;
+  }
+
+  .friends-search {
+    margin-bottom: 16px;
+  }
+
+  .friends-search input {
+    padding: 10px 12px;
+    min-width: 0;
+  }
+
+  .friends-search button {
+    padding: 10px 14px;
+    flex-shrink: 0;
+  }
+
+  #searchResults {
+    margin-bottom: 16px;
+    padding: 12px;
+  }
+
+  .friends-section {
+    margin-bottom: 20px;
+  }
+
+  .friends-section-title {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .friends-list {
+    gap: 12px;
+  }
+
+  .friend-card,
+  .search-result-item {
     flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+    margin-bottom: 0;
+    border-radius: 14px;
+    background:
+      radial-gradient(700px 260px at 0% 0%, rgba(180, 120, 255, 0.08), transparent 55%),
+      rgba(0, 0, 0, 0.16);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  }
+
+  .friend-avatar,
+  .search-result-avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .friend-avatar span,
+  .search-result-avatar span {
+    font-size: 30px;
+  }
+
+  .presence-dot {
+    width: 12px;
+    height: 12px;
+  }
+
+  .friend-info,
+  .search-result-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .friend-username,
+  .search-result-username {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    font-size: 15px;
+    line-height: 1.3;
+  }
+
+  .friend-meta,
+  .presence-meta {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.4;
+    margin-top: 4px;
+  }
+
+  .friend-actions,
+  .search-result-actions {
+    width: 100%;
+    flex-basis: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .friend-actions .btn-friend-message,
+  .search-result-actions .btn-friend-add {
+    grid-column: 1 / -1;
+  }
+
+  .btn-friend {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 12px;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .account-main.is-chat-view {
+    padding: 0;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    overflow-x: hidden;
+  }
+
+  .account-main.is-chat-view #messagesContent {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 }

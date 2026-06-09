@@ -186,14 +186,23 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
       }
 
       try {
-        const res = await apiCall(`/api/search/users?q=${encodeURIComponent(query)}`, {
+        const res = await apiCall(`/search/users?q=${encodeURIComponent(query)}`, {
           credentials: 'include',
         });
         const data = await res.json().catch(() => ({}));
 
         searchResults.classList.add('active');
 
-        if (!data?.ok || !Array.isArray(data.users) || data.users.length === 0) {
+        if (!res.ok || data?.ok === false) {
+          searchResults.innerHTML = `
+            <div class="search-error">
+              ⚠️ ${escapeHtml(String(data?.error || 'Не удалось выполнить поиск'))}
+            </div>
+          `;
+          return;
+        }
+
+        if (!Array.isArray(data.users) || data.users.length === 0) {
           searchResults.innerHTML = `
             <div class="search-empty">
               🔍 Пользователи не найдены<br />

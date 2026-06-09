@@ -26,9 +26,33 @@ export function renderAccountPage(tab: string, user: AppUser): string {
       <!-- Toast уведомление (fixed в верхней части экрана) -->
       <div id="msg" class="msg is-hidden" aria-live="polite"></div>
 
+      <header class="account-mobile-header" aria-label="Навигация аккаунта">
+        <div class="account-mobile-header__inner">
+          <a href="https://cyblight.org/" class="account-mobile-header__logo" aria-label="Главная страница">
+            <img src="/assets/img/logo.svg" alt="CybLight" />
+          </a>
+          <div class="account-mobile-header__info">
+            <div class="account-mobile-header__title">${escapeHtml(tabTitle)}</div>
+            <div class="account-mobile-header__login">${escapeHtml(login)}</div>
+          </div>
+          <button
+            type="button"
+            class="account-burger"
+            id="accountMenuToggle"
+            aria-expanded="false"
+            aria-controls="accountSidebar"
+            aria-label="Открыть меню"
+          >
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="account-nav-overlay" id="accountNavOverlay" aria-hidden="true"></div>
+
       <div class="account-wrap">
         <!-- Боковая панель -->
-        <aside class="account-sidebar">
+        <aside class="account-sidebar" id="accountSidebar">
           <div class="account-brand">
             <a href="https://cyblight.org/" aria-label="Главная страница">
               <img src="/assets/img/logo.svg" alt="CybLight" />
@@ -117,7 +141,5 @@ export function renderAccountPage(tab: string, user: AppUser): string {
         </div>
       </footer>
     </div>
-
-    <link rel="stylesheet" href="/account-render.css">
   `;
 }

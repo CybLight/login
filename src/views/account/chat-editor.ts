@@ -72,7 +72,8 @@ export function startEditMessageInAccount(
 
   if (sendBtn) {
     sendBtn.textContent = '💾 Сохранить';
-    sendBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
+    sendBtn.classList.add('is-save-mode');
+    sendBtn.setAttribute('aria-label', 'Сохранить');
   }
 
   if (editIndicator) editIndicator.style.display = 'flex';
@@ -93,7 +94,8 @@ export function resetChatEditingState(
 
   if (sendBtn) {
     sendBtn.textContent = 'Отправить';
-    sendBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    sendBtn.classList.remove('is-save-mode');
+    sendBtn.setAttribute('aria-label', 'Отправить');
   }
 
   if (editIndicator) editIndicator.style.display = 'none';

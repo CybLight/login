@@ -12,6 +12,7 @@ import { renderAccountPage } from './account/account-render';
 import { bindAccountHandlers } from './account/account-handlers';
 import { hydrateAccountAvatar, isEmailVerified, stopAccountChatAutoRefresh } from './account/account-utils';
 import { createChatCore } from './account/chat-core';
+import { startEditMessageInAccount } from './account/chat-editor';
 
 // Global state variables
 let twoFAEnabled = false;
@@ -26,24 +27,6 @@ const accountPinnedMessageByChat = new Map<string, { messageId: string; text: st
 // Chat core initialization
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏'];
 const EDIT_TIME_LIMIT = 15 * 60 * 1000;
-
-const startEditMessageInAccount = (
-  messageId: string,
-  currentContent: string,
-  input: HTMLTextAreaElement,
-  sendBtn: HTMLButtonElement | null,
-  editIndicator: HTMLElement | null,
-  editingIdInput: HTMLInputElement | null
-): void => {
-  if (!input || !editIndicator || !editingIdInput) return;
-  input.value = currentContent;
-  input.style.height = 'auto';
-  input.style.height = `${input.scrollHeight}px`;
-  input.focus();
-  editingIdInput.value = messageId;
-  editIndicator.style.display = 'flex';
-  if (sendBtn) sendBtn.textContent = 'Сохранить';
-};
 
 const loadChatMessagesInAccount = createChatCore({
   accountPinnedMessageByChat,

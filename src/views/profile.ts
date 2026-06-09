@@ -3,6 +3,7 @@
  */
 
 import { apiCall, escapeHtml, renderPresenceChip } from '@/utils';
+import { Router } from '@/router/Router';
 
 interface PublicProfile {
   id?: string;
@@ -242,6 +243,122 @@ async function getFriendshipStatus(friendId: string): Promise<string | null> {
   }
 }
 
+function buildProfileHeader(subtitle: string, isLoggedIn: boolean): string {
+  const headerAction = isLoggedIn
+    ? `
+      <button
+        type="button"
+        class="account-burger"
+        id="accountMenuToggle"
+        aria-expanded="false"
+        aria-controls="accountSidebar"
+        aria-label="Открыть меню"
+      >
+        <span></span><span></span><span></span>
+      </button>
+    `
+    : `
+      <button type="button" class="account-mobile-header__signin" id="profileSigninBtn" aria-label="Войти">
+        Войти
+      </button>
+    `;
+
+  const navHtml = isLoggedIn
+    ? `
+      <div class="account-nav-overlay" id="accountNavOverlay" aria-hidden="true"></div>
+      <aside class="account-sidebar profile-mobile-nav" id="accountSidebar">
+        <nav class="account-nav">
+          <button data-tab="profile" type="button" aria-label="👤 Профиль"><span class="nav-icon">👤</span> Профиль</button>
+          <button data-tab="friends" type="button" aria-label="👥 Друзья"><span class="nav-icon">👥</span> Друзья</button>
+          <button data-tab="messages" type="button" aria-label="💬 Сообщения"><span class="nav-icon">💬</span> Сообщения</button>
+          <button data-tab="security" type="button" aria-label="🛡️ Безопасность"><span class="nav-icon">🛡️</span> Безопасность</button>
+          <button data-tab="sessions" type="button" aria-label="🧩 Сессии"><span class="nav-icon">🧩</span> Сессии</button>
+          <button data-tab="easter" type="button" aria-label="🍓 Пасхалки"><span class="nav-icon">🍓</span> Пасхалки</button>
+        </nav>
+        <div class="account-actions">
+          <button class="btn btn-primary" id="profileLogoutBtn" type="button" aria-label="Выйти">Выйти</button>
+        </div>
+      </aside>
+    `
+    : '';
+
+  return `
+    <header class="account-mobile-header" aria-label="Профиль пользователя">
+      <div class="account-mobile-header__inner">
+        <a href="https://cyblight.org/" class="account-mobile-header__logo" aria-label="Главная страница">
+          <img src="/assets/img/logo.svg" alt="CybLight" />
+        </a>
+        <div class="account-mobile-header__info">
+          <div class="account-mobile-header__title">Профиль</div>
+          <div class="account-mobile-header__login">${escapeHtml(subtitle)}</div>
+        </div>
+        ${headerAction}
+      </div>
+    </header>
+    ${navHtml}
+  `;
+}
+
+function bindProfileHeaderHandlers(): void {
+  const signinBtn = document.getElementById('profileSigninBtn');
+  signinBtn?.addEventListener('click', () => {
+    Router.navigate('username');
+  });
+
+  const menuToggle = document.getElementById('accountMenuToggle');
+  const overlay = document.getElementById('accountNavOverlay');
+  if (!menuToggle) return;
+
+  const closeNav = () => {
+    document.body.classList.remove('account-nav-open');
+    menuToggle.setAttribute('aria-expanded', 'false');
+    menuToggle.setAttribute('aria-label', 'Открыть меню');
+    overlay?.setAttribute('aria-hidden', 'true');
+  };
+
+  const openNav = () => {
+    document.body.classList.add('account-nav-open');
+    menuToggle.setAttribute('aria-expanded', 'true');
+    menuToggle.setAttribute('aria-label', 'Закрыть меню');
+    overlay?.setAttribute('aria-hidden', 'false');
+  };
+
+  menuToggle.addEventListener('click', () => {
+    if (document.body.classList.contains('account-nav-open')) {
+      closeNav();
+    } else {
+      openNav();
+    }
+  });
+
+  overlay?.addEventListener('click', closeNav);
+
+  document.querySelectorAll('.profile-mobile-nav .account-nav button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      closeNav();
+      const targetTab = btn.getAttribute('data-tab');
+      if (!targetTab) return;
+      const route = targetTab === 'easter' ? 'account-easter-eggs' : `account-${targetTab}`;
+      Router.navigate(route);
+    });
+  });
+
+  const logoutBtn = document.getElementById('profileLogoutBtn');
+  logoutBtn?.addEventListener('click', async () => {
+    closeNav();
+    try {
+      await apiCall('/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (e: unknown) {
+      console.error('Logout error:', e);
+    }
+    document.body.classList.remove('no-strawberries');
+    Router.navigate('username');
+  });
+}
+
 /**
  * Отобразить публичный профиль пользователя
  */
@@ -255,7 +372,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
       .profile-container {
         max-width: 1280px;
         margin: 0 auto;
-        padding: 24px 0 28px;
+        padding: 24px 16px 28px;
         color: #eef2ff;
       }
       .profile-loading,
@@ -503,7 +620,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
         transform: translateY(0) scale(1);
       }
       @media (max-width: 900px) {
-        .profile-container { padding: 16px 0 20px; }
+        .profile-container { padding: 16px 16px 24px; }
         .profile-header { flex-direction: column; }
         .profile-details h1 { font-size: 32px; }
         .profile-share { flex-direction: row; }
@@ -531,21 +648,24 @@ export async function renderPublicProfile(username: string): Promise<void> {
     </div>
   `;
 
-  const profile = await loadProfile(username);
+  document.body.classList.remove('account-nav-open');
+
+  const [profile, currentUser] = await Promise.all([loadProfile(username), getCurrentUser()]);
 
   if (!profile) {
     app.innerHTML = `
       ${profileStyles}
+      ${buildProfileHeader(username, Boolean(currentUser))}
       <div class="profile-notfound">
         <h1>Профиль не найден</h1>
         <p>Пользователь <strong>${escapeHtml(username)}</strong> не существует</p>
         <button class="btn btn-primary" type="button" data-route="username" aria-label="Вернуться">Вернуться</button>
       </div>
     `;
+    bindProfileHeaderHandlers();
     return;
   }
 
-  const currentUser = await getCurrentUser();
   const isSelf = currentUser?.id === profile.id;
 
   let friendStatus = null;
@@ -613,6 +733,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
 
   app.innerHTML = `
     ${profileStyles}
+    ${buildProfileHeader(String(profile.username || profile.login || username), Boolean(currentUser))}
     <div class="profile-container">
       <div class="profile-header">
         <div class="profile-info">
@@ -678,6 +799,8 @@ export async function renderPublicProfile(username: string): Promise<void> {
       </div>
     </div>
   `;
+
+  bindProfileHeaderHandlers();
 
   app.querySelectorAll('[data-profile-toast]').forEach((element) => {
     element.addEventListener('click', () => {

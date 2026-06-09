@@ -185,7 +185,7 @@ export const friendsService = {
    */
   async searchUsers(query: string): Promise<Friend[]> {
     try {
-      const response = await apiCall(`/api/friends/search?q=${encodeURIComponent(query)}`, {
+      const response = await apiCall(`/search/users?q=${encodeURIComponent(query)}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -194,8 +194,8 @@ export const friendsService = {
         return [];
       }
 
-      const data: ApiResponse<{ results: Friend[] }> = await response.json();
-      return data.data?.results || [];
+      const data = await response.json();
+      return Array.isArray(data?.users) ? data.users : [];
     } catch (error) {
       console.error('[FRIENDS] Search error:', error);
       return [];

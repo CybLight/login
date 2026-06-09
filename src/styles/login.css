@@ -5,18 +5,17 @@
 
 .auth-shell {
   min-height: 100vh;
+  min-height: 100dvh;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  grid-template-rows: 1fr auto;
-  padding-bottom: 25px;
 }
 
 .auth-center {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 48px 16px 24px;
-  padding-bottom: 90px; /* Увеличено для футера */
+  padding: 24px 16px;
   flex: 1 0 auto;
 }
 
@@ -206,7 +205,7 @@
 
 .divider::before,
 .divider::after {
-  content: '';
+  content: "";
   height: 1px;
   background: rgba(255, 255, 255, 0.14);
 }
@@ -246,11 +245,9 @@
 */
 
 .auth-footer {
-  position: fixed;
+  position: relative;
   flex-shrink: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  margin-top: auto;
   width: 100%;
   height: 44px;
   display: flex;
@@ -275,7 +272,7 @@
 }
 
 .auth-footer::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
@@ -291,7 +288,7 @@
 }
 
 .auth-footer::before {
-  content: 'DEVELOPER MODE • DEVELOPER MODE • DEVELOPER MODE • ';
+  content: "DEVELOPER MODE • DEVELOPER MODE • DEVELOPER MODE";
   position: absolute;
   left: 0;
   bottom: 0;
@@ -426,7 +423,8 @@
 .cyb-report-modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(2, 4, 12, 0.72);
+  backdrop-filter: blur(5px);
 }
 
 .cyb-report-modal__card {
@@ -437,11 +435,17 @@
   width: min(600px, calc(100vw - 28px));
   max-height: 90vh;
   overflow-y: auto;
-  background: #0b0f1c;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(255, 127, 39, 0.14) 0%, transparent 50%),
+    radial-gradient(120% 90% at 100% 100%, rgba(96, 165, 250, 0.12) 0%, transparent 50%),
+    linear-gradient(180deg, #1a2138 0%, #141a2e 100%);
+  border: 1px solid rgba(255, 145, 64, 0.35);
   border-radius: 18px;
   padding: 24px;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 0 22px rgba(255, 127, 39, 0.18),
+    0 24px 70px rgba(0, 0, 0, 0.7);
 }
 
 .cyb-report-modal__title {
@@ -577,8 +581,26 @@
   outline: none;
 }
 
+/* Мобильные: drop-shadow на десятках анимированных элементов
+   сильно нагружает GPU слабых устройств */
+@media (max-width: 860px), (pointer: coarse) {
+  .strawberry {
+    filter: none;
+  }
+
+  .strawberry.special {
+    filter: drop-shadow(0 0 8px rgba(255, 127, 39, 0.55));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .strawberry {
+    animation: none !important;
+  }
+}
+
 .strawberry.special::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -8px;
   border-radius: 999px;
@@ -916,7 +938,7 @@
 }
 
 .modal--strawberry .convariant::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -18px;
   border-radius: 50%;
@@ -1200,15 +1222,30 @@
 /* ===== Account layout ===== */
 .account-page {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
+  flex: 1;
   width: 100%;
-  min-height: 100vh;
-  padding: 24px 18px;
-  padding-bottom: 90px; /* Отступ от контента до футера */
+  min-height: 100%;
+  min-height: 100dvh;
+  padding: 24px 18px 0;
   background:
-    radial-gradient(1200px 700px at 30% 10%, rgba(180, 120, 255, 0.1), transparent 60%),
-    radial-gradient(900px 600px at 70% 20%, rgba(255, 127, 39, 0.1), transparent 55%),
+    radial-gradient(
+      1200px 700px at 30% 10%,
+      rgba(180, 120, 255, 0.1),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 600px at 70% 20%,
+      rgba(255, 127, 39, 0.1),
+      transparent 55%
+    ),
     var(--bg, #0a0f1f);
+}
+
+.account-page > .auth-footer {
+  position: static;
+  margin-top: auto;
 }
 
 .account-wrap {
@@ -1301,7 +1338,7 @@
 }
 
 .account-nav button.active::before {
-  content: '';
+  content: "";
   position: absolute;
   left: -1px;
   top: 10px;
@@ -1350,7 +1387,9 @@
 }
 
 .mono-pill {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
   font-size: 12px;
   padding: 6px 10px;
   border-radius: 999px;
@@ -1466,8 +1505,16 @@ body.no-strawberries .strawberry-ring-wave {
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background:
-    radial-gradient(700px 260px at 0% 0%, rgba(255, 127, 39, 0.14), transparent 55%),
-    radial-gradient(700px 260px at 100% 0%, rgba(180, 120, 255, 0.12), transparent 55%),
+    radial-gradient(
+      700px 260px at 0% 0%,
+      rgba(255, 127, 39, 0.14),
+      transparent 55%
+    ),
+    radial-gradient(
+      700px 260px at 100% 0%,
+      rgba(180, 120, 255, 0.12),
+      transparent 55%
+    ),
     rgba(0, 0, 0, 0.12);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.25);
 }
@@ -1781,12 +1828,75 @@ body.no-strawberries .strawberry-ring-wave {
 /* Responsive for profile */
 @media (max-width: 860px) {
   .profile-hero {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
   }
+
+  .profile-hero__left {
+    flex: 1;
+    min-width: 0;
+  }
+
   .profile-hero__right {
-    justify-content: flex-start;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    align-self: center;
   }
+
+  .profile-hero__right--stacked {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .profile-action-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow:
+      0 4px 14px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .profile-action-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .profile-link-btn {
+    background: linear-gradient(
+      145deg,
+      rgba(102, 126, 234, 0.98) 0%,
+      rgba(118, 75, 162, 0.98) 100%
+    );
+  }
+
+  .profile-edit-btn {
+    background: linear-gradient(
+      145deg,
+      rgba(255, 127, 39, 0.98) 0%,
+      rgba(245, 158, 11, 0.98) 100%
+    );
+  }
+
+  .profile-link-btn:active,
+  .profile-edit-btn:active {
+    transform: scale(0.96);
+  }
+
+  .profile-name {
+    max-width: none;
+    font-size: 16px;
+  }
+
+  .profile-hero__chips-row {
+    margin-top: 6px;
+    gap: 6px;
+  }
+
   .card-grid {
     grid-template-columns: 1fr;
   }
@@ -2321,8 +2431,8 @@ body.no-strawberries .strawberry-ring-wave {
 
 .mono {
   font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 }
 
 .icon-btn {
@@ -2525,7 +2635,7 @@ body.no-strawberries .strawberry-ring-wave {
 }
 
 .pass-hints__list li.ok .icon::before {
-  content: '✓';
+  content: "✓";
 }
 
 /* ===== eye toggle ===== */
@@ -2557,11 +2667,11 @@ body.no-strawberries .strawberry-ring-wave {
 
 /* icon (можно потом заменить на SVG) */
 .pass-eye::before {
-  content: '👁️';
+  content: "👁️";
   font-size: 16px;
 }
 .pass-eye.is-open::before {
-  content: '🙈';
+  content: "🙈";
 }
 
 /* ============================
@@ -2692,12 +2802,8 @@ body.no-strawberries .strawberry-ring-wave {
 */
 
 @media (max-width: 860px) {
-  .auth-shell {
-    padding-bottom: 200px;
-  }
-
   .account-page {
-    padding-bottom: 200px;
+    padding: 0;
   }
 
   .auth-footer {
@@ -2722,24 +2828,10 @@ body.no-strawberries .strawberry-ring-wave {
     text-align: center;
   }
 
-  /* mobile: sidebar becomes top nav */
+  /* mobile: sidebar hidden, opened via burger in account-render.css */
   .account-wrap {
     flex-direction: column;
-    align-items: center;
-  }
-  .account-sidebar {
-    width: 100%;
-    flex: 0 0 auto;
-  }
-  .account-nav button {
-    font-size: 14px;
-    padding: 8px 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .nav-icon {
-    font-size: 24px;
+    align-items: stretch;
   }
   .kv {
     grid-template-columns: 1fr;
@@ -2759,8 +2851,29 @@ body.no-strawberries .strawberry-ring-wave {
 }
 
 @media (max-width: 720px) {
+  .sessions-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .sessions-head .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sessions-count {
+    font-size: 14px;
+    opacity: 0.85;
+  }
+
   .sessions-table-wrap {
+    margin-top: 12px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     overflow: visible;
+    box-shadow: none;
   }
 
   .sessions-table thead {
@@ -2768,86 +2881,146 @@ body.no-strawberries .strawberry-ring-wave {
   }
 
   .sessions-table,
-  .sessions-table tbody,
-  .sessions-table tr,
-  .sessions-table td {
+  .sessions-table tbody {
     display: block;
     width: 100%;
   }
 
+  .sessions-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
   .sessions-table tr {
+    display: block;
     position: relative;
-    margin: 10px 0;
-    padding: 12px 12px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    background: rgba(0, 0, 0, 0.14);
+    width: 100%;
+    margin: 0;
+    padding: 14px 14px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    background:
+      radial-gradient(
+        700px 260px at 0% 0%,
+        rgba(180, 120, 255, 0.08),
+        transparent 55%
+      ),
+      rgba(0, 0, 0, 0.16);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .sessions-table tr.is-current {
+    border-color: rgba(255, 127, 39, 0.35);
+    background:
+      radial-gradient(
+        700px 260px at 0% 0%,
+        rgba(255, 127, 39, 0.14),
+        transparent 55%
+      ),
+      rgba(255, 127, 39, 0.05);
+    box-shadow:
+      0 10px 28px rgba(0, 0, 0, 0.22),
+      inset 0 1px 0 rgba(255, 127, 39, 0.1);
   }
 
   .sessions-table td {
+    display: flex;
+    width: 100%;
     border: 0 !important;
     padding: 7px 0;
-    display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     gap: 12px;
+    font-size: 13px;
+    line-height: 1.4;
   }
 
   .sessions-table td::before {
     content: attr(data-label);
-    opacity: 0.65;
-    font-size: 12px;
-    flex: 0 0 auto;
-    padding-right: 10px;
+    flex: 0 0 42%;
+    max-width: 132px;
+    opacity: 0.55;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding-right: 8px;
+    line-height: 1.35;
   }
 
-  /* Device блок красивее */
-  .sessions-table td[data-label='Device'] {
+  .sessions-table td[data-label="Device"] {
+    display: block;
     padding-top: 0;
+    padding-right: 48px;
+    padding-bottom: 10px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
-  .sessions-table td[data-label='Device']::before {
-    content: ''; /* у Device не нужен label */
+  .sessions-table td[data-label="Device"]::before {
+    content: "";
     padding-right: 0;
   }
 
   .sessions-table .dev-top {
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.25;
+  }
+
+  .sessions-table .dev-ico {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+  }
+
+  .sessions-table .dev-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
 
   .sessions-table .dev-sub {
     opacity: 0.75;
     font-size: 12px;
     margin-top: 2px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    overflow-wrap: anywhere;
   }
 
-  /* Action как кнопка справа сверху (как в Zoom) */
+  .sessions-table .pill {
+    margin-left: 0 !important;
+    padding: 4px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    border-color: rgba(255, 127, 39, 0.45);
+    background: rgba(255, 127, 39, 0.14);
+    color: #ffb257;
+  }
+
   .sessions-table td.td-action {
+    display: block;
+    height: 0;
     padding: 0;
+    overflow: visible;
   }
+
   .sessions-table td.td-action::before {
-    content: '';
+    content: "";
   }
+
   .sessions-table td.td-action .icon-btn {
     position: absolute;
-    top: 10px;
-    right: 10px;
-  }
-
-  /* mobile: pill не пытается уползти в край (там кнопка) */
-  .sessions-table .pill {
-    margin-left: 0 !important; /* убираем auto */
-    order: 3; /* если перенесётся — будет ниже */
-  }
-
-  /* даём место под кнопку action справа сверху */
-  .sessions-table td[data-label='Device'] {
-    padding-right: 56px; /* чтобы pill/текст не залезали под icon-btn */
-  }
-
-  /* делаем “Device” строкой, а не как остальные td (иначе flex space-between мешает) */
-  .sessions-table td[data-label='Device'] {
-    display: block;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.28);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 }
 
@@ -2941,7 +3114,7 @@ body.no-strawberries .strawberry-ring-wave {
 
 @media (max-width: 768px) {
   .auth-center {
-    padding: 24px 12px 80px; /* Увеличен отступ для футера */
+    padding: 20px 12px;
   }
 
   .auth-card {
@@ -2977,7 +3150,7 @@ body.no-strawberries .strawberry-ring-wave {
 
 @media (max-width: 480px) {
   .auth-center {
-    padding: 16px 8px 70px; /* Увеличен отступ для футера */
+    padding: 16px 8px;
   }
 
   .auth-card {
@@ -3068,54 +3241,8 @@ body.no-strawberries .strawberry-ring-wave {
    ДОПОЛНИТЕЛЬНАЯ АДАПТИВНОСТЬ ДЛЯ ФУТЕРА
    ============================================ */
 
-/* Планшеты: увеличиваем отступ от контента до футера */
-@media (min-width: 481px) and (max-width: 1024px) {
-  .account-page {
-    padding-bottom: 250px; /* Отступ для футера + 30px */
-  }
-
-  .auth-center {
-    padding-bottom: 250px; /* Отступ для футера + 30px */
-  }
-}
-
-/* Экраны 360px-480px: увеличиваем отступ */
-@media (max-width: 480px) {
-  .account-page {
-    padding-bottom: 250px; /* Отступ для высокого футера (колоночный layout) + 30px */
-  }
-
-  .auth-center {
-    padding-bottom: 250px; /* Отступ для высокого футера (колоночный layout) + 30px */
-  }
-
-  .account-nav button {
-    font-size: 13px;
-    padding: 7px 8px;
-  }
-  .nav-icon {
-    font-size: 20px;
-  }
-}
-
-/* Очень узкие экраны (360px и меньше): максимальный отступ */
+/* Очень узкие экраны (360px и меньше) */
 @media (max-width: 360px) {
-  .account-page {
-    padding-bottom: 250px; /* Максимальный отступ для узких экранов (футер очень высокий) */
-  }
-
-  .auth-center {
-    padding-bottom: 250px; /* Максимальный отступ для узких экранов (футер очень высокий) */
-  }
-
-  .account-nav button {
-    font-size: 12px;
-    padding: 6px 7px;
-  }
-  .nav-icon {
-    font-size: 18px;
-  }
-
   .auth-footer {
     font-size: 11px;
   }
@@ -3234,15 +3361,29 @@ body.no-strawberries .strawberry-ring-wave {
 }
 
 @keyframes verifiedPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
 }
 
 @keyframes verifiedRotate {
-  0% { transform: rotate(0deg); }
-  10% { transform: rotate(-10deg); }
-  20% { transform: rotate(10deg); }
-  30% { transform: rotate(0deg); }
-  100% { transform: rotate(0deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  10% {
+    transform: rotate(-10deg);
+  }
+  20% {
+    transform: rotate(10deg);
+  }
+  30% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
-

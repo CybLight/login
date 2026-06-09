@@ -24,6 +24,43 @@ interface ApiMessage {
 // Use application `User` type where appropriate
 
 /**
+ * Мобильное burger-меню аккаунта
+ */
+function bindAccountMobileNav(): void {
+  const menuToggle = document.getElementById('accountMenuToggle');
+  const overlay = document.getElementById('accountNavOverlay');
+  if (!menuToggle) return;
+
+  const closeNav = () => {
+    document.body.classList.remove('account-nav-open');
+    menuToggle.setAttribute('aria-expanded', 'false');
+    menuToggle.setAttribute('aria-label', 'Открыть меню');
+    overlay?.setAttribute('aria-hidden', 'true');
+  };
+
+  const openNav = () => {
+    document.body.classList.add('account-nav-open');
+    menuToggle.setAttribute('aria-expanded', 'true');
+    menuToggle.setAttribute('aria-label', 'Закрыть меню');
+    overlay?.setAttribute('aria-hidden', 'false');
+  };
+
+  menuToggle.addEventListener('click', () => {
+    if (document.body.classList.contains('account-nav-open')) {
+      closeNav();
+    } else {
+      openNav();
+    }
+  });
+
+  overlay?.addEventListener('click', closeNav);
+
+  document.querySelectorAll('.account-nav button, #adminPanelBtn, #logoutBtn').forEach((btn) => {
+    btn.addEventListener('click', closeNav);
+  });
+}
+
+/**
  * Bind copy buttons (data-copybtn)
  */
 function bindCopyButtons(api: ApiMessage): void {
@@ -149,6 +186,9 @@ export function bindAccountHandlers(
   };
 
   const api: ApiMessage = { showMsg, clearMsg };
+
+  document.body.classList.remove('account-nav-open');
+  bindAccountMobileNav();
 
   // Bind copy buttons (copy to clipboard)
   bindCopyButtons(api);

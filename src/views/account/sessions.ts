@@ -88,10 +88,10 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
             </div>
           </td>
 
-          <td data-label="OS">${escapeHtml(os)}</td>
-          <td data-label="Location" title="Edge: ${s.colo || '—'}">${escapeHtml(loc)}</td>
-          <td data-label="Last Login">${escapeHtml(fmtTs(lastLogin))}</td>
-          <td data-label="Last Seen">${escapeHtml(fmtTs(lastSeen))}</td>
+          <td data-label="ОС">${escapeHtml(os)}</td>
+          <td data-label="Местоположение" title="Edge: ${s.colo || '—'}">${escapeHtml(loc)}</td>
+          <td data-label="Последний вход">${escapeHtml(fmtTs(lastLogin))}</td>
+          <td data-label="Последняя активность">${escapeHtml(fmtTs(lastSeen))}</td>
 
           <td class="td-action td-action--right" data-label="Action">
             <button class="icon-btn" type="button" title="Завершить" data-revoke="${escapeHtml(

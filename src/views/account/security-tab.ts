@@ -33,6 +33,23 @@ type SecurityTabDeps = {
   isEmailVerified: (user: AppUser) => boolean;
 };
 
+function setSecPanelOpen(
+  item: HTMLElement | null,
+  panel: HTMLElement | null,
+  open: boolean
+): void {
+  if (!panel) return;
+  panel.style.display = open ? 'block' : 'none';
+  item?.classList.toggle('is-open', open);
+}
+
+function toggleSecPanel(item: HTMLElement | null, panel: HTMLElement | null): boolean {
+  if (!panel) return false;
+  const open = panel.style.display === 'none';
+  setSecPanelOpen(item, panel, open);
+  return open;
+}
+
 export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   const { user, api, state, onTwoFAChanged, onPasskeyCountChanged, onEmailVerifiedChanged, onUserUpdated, isEmailVerified } = deps;
 
@@ -71,8 +88,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   if (itemSecurityCheck && panelSecurityCheck) {
     panelSecurityCheck.style.display = 'none';
     itemSecurityCheck.onclick = () => {
-      const isClosed = panelSecurityCheck.style.display === 'none';
-      panelSecurityCheck.style.display = isClosed ? 'block' : 'none';
+      toggleSecPanel(itemSecurityCheck, panelSecurityCheck);
     };
   }
 
@@ -122,13 +138,12 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   if (emailItem && emailPanel) {
     emailPanel.style.display = 'none';
     emailItem.onclick = () => {
-      const isClosed = emailPanel.style.display === 'none';
-      emailPanel.style.display = isClosed ? 'block' : 'none';
+      toggleSecPanel(emailItem, emailPanel);
     };
   }
 
   emailCancelBtn?.addEventListener('click', () => {
-    if (emailPanel) emailPanel.style.display = 'none';
+    setSecPanelOpen(emailItem, emailPanel, false);
     if (emailInp) emailInp.value = user.email || '';
     markInvalid(emailInp, false);
     if (emailHint) {
@@ -183,7 +198,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
             : 'Email сохранён ✅ Письмо отправлено.'
         );
         user.email = email;
-        if (emailPanel) emailPanel.style.display = 'none';
+        setSecPanelOpen(emailItem, emailPanel, false);
 
         const meResp = await apiCall('/auth/me', { credentials: 'include' });
         const meData = await meResp.json().catch(() => ({}));
@@ -283,7 +298,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
 
   const openPassPanel = () => {
     if (!passPanel) return;
-    passPanel.style.display = 'block';
+    setSecPanelOpen(passItem, passPanel, true);
     api.clearMsg();
     clearPassHint();
     clearPassInvalid();
@@ -293,7 +308,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
 
   const closePassPanel = () => {
     if (!passPanel) return;
-    passPanel.style.display = 'none';
+    setSecPanelOpen(passItem, passPanel, false);
     api.clearMsg();
     clearPassHint();
     if (passCurInp) passCurInp.value = '';
@@ -442,8 +457,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   if (twoFAItem && twoFAPanel) {
     twoFAPanel.style.display = 'none';
     twoFAItem.onclick = () => {
-      const isClosed = twoFAPanel.style.display === 'none';
-      twoFAPanel.style.display = isClosed ? 'block' : 'none';
+      toggleSecPanel(twoFAItem, twoFAPanel);
     };
   }
 
@@ -455,8 +469,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   if (itemPasskeys && panelPasskeys) {
     panelPasskeys.style.display = 'none';
     itemPasskeys.onclick = () => {
-      const isClosed = panelPasskeys.style.display === 'none';
-      panelPasskeys.style.display = isClosed ? 'block' : 'none';
+      toggleSecPanel(itemPasskeys, panelPasskeys);
     };
   }
 
@@ -468,9 +481,8 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   if (itemDevices && panelDevices) {
     panelDevices.style.display = 'none';
     itemDevices.onclick = () => {
-      const isClosed = panelDevices.style.display === 'none';
-      panelDevices.style.display = isClosed ? 'block' : 'none';
-      if (isClosed && listDevices) {
+      const opened = toggleSecPanel(itemDevices, panelDevices);
+      if (opened && listDevices) {
         loadTrustedDevices(listDevices, api, showAccountConfirmModal);
       }
     };
@@ -484,9 +496,8 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   if (itemHistory && panelHistory) {
     panelHistory.style.display = 'none';
     itemHistory.onclick = () => {
-      const isClosed = panelHistory.style.display === 'none';
-      panelHistory.style.display = isClosed ? 'block' : 'none';
-      if (isClosed && listHistory) {
+      const opened = toggleSecPanel(itemHistory, panelHistory);
+      if (opened && listHistory) {
         loadLoginHistory(listHistory);
       }
     };

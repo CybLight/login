@@ -150,8 +150,10 @@ export function updateSecurityIndicator(
     if (panelSecurityCheck) {
       if (score < 100) {
         panelSecurityCheck.style.display = 'block';
+        itemSecurityCheck?.classList.add('is-open');
       } else {
         panelSecurityCheck.style.display = 'none';
+        itemSecurityCheck?.classList.remove('is-open');
       }
     }
 

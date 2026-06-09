@@ -39,6 +39,10 @@ type ChatMessageRecord = Record<string, unknown> & {
 
 type LoadChatMessagesInAccount = ReturnType<typeof createChatCore>;
 
+function setAccountChatViewActive(active: boolean): void {
+  document.querySelector('.account-main')?.classList.toggle('is-chat-view', active);
+}
+
 type MessageTabDeps = {
   api: { showMsg: (type: string, text: string, persist?: boolean) => void; clearMsg: () => void };
   state: {
@@ -75,6 +79,7 @@ export function openChatInMessagesTab(
 
   callbacks.setAccountChatFriendId(friendId);
   callbacks.stopAccountChatAutoRefresh();
+  setAccountChatViewActive(true);
 
   // Mark messages as read
   void (async () => {
@@ -431,6 +436,7 @@ export function openChatInMessagesTab(
     backNavigationInProgress = true;
 
     callbacks.stopAccountChatAutoRefresh();
+    setAccountChatViewActive(false);
     if (state.accountChatDocClickHandler) {
       document.removeEventListener('click', state.accountChatDocClickHandler);
       callbacks.setAccountChatDocClickHandler(null);

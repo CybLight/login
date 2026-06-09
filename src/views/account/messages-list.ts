@@ -32,6 +32,7 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
 
   deps.stopAccountChatAutoRefresh();
   deps.setAccountChatFriendId(null);
+  document.querySelector('.account-main')?.classList.remove('is-chat-view');
 
   try {
     const friendsRes = await apiCall('/friends/list', { credentials: 'include' });
