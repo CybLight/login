@@ -15,7 +15,9 @@ export const captchaService = {
    * Initialize Turnstile widget
    */
   async init(containerId: string = 'turnstile-container'): Promise<boolean> {
-    const container = document.getElementById(containerId);
+    const container =
+      document.getElementById(containerId) ||
+      (document.querySelector(`.${CSS.escape(containerId)}`) as HTMLElement | null);
     if (!container) {
       logger.error('Turnstile container not found', { containerId });
       return false;

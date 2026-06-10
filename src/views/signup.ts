@@ -51,7 +51,7 @@ export async function renderSignup(): Promise<void> {
         </div>
 
         <div class="field" style="margin-top:12px;">
-          <div class="cf-turnstile"></div>
+          <div id="cf-turnstile" class="cf-turnstile"></div>
         </div>
 
         <div class="row">

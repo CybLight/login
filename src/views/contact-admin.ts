@@ -54,7 +54,7 @@ export async function renderContactAdmin(params: Record<string, unknown> = {}): 
         </div>
 
         <div class="field" style="margin-top:12px;">
-          <div class="cf-turnstile"></div>
+          <div id="cf-turnstile" class="cf-turnstile"></div>
         </div>
 
         <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
