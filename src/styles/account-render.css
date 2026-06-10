@@ -521,6 +521,47 @@
   color: #fde68a;
 }
 
+.account-notice-head.is-success {
+  color: #86efac;
+}
+
+.account-notice-card--role {
+  width: min(92vw, 520px);
+}
+
+.account-notice-role {
+  margin-bottom: 12px;
+}
+
+.account-notice-role .chip {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.account-notice-lead {
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.account-notice-desc {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(134, 239, 172, 0.18);
+  background: rgba(134, 239, 172, 0.08);
+  color: rgba(235, 245, 255, 0.92);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.account-notice-desc.is-hidden {
+  display: none;
+}
+
 .account-notice-text {
   opacity: 0.95;
   line-height: 1.5;
