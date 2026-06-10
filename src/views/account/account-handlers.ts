@@ -61,6 +61,56 @@ function bindAccountMobileNav(): void {
 }
 
 /**
+ * Выпадающие меню шапки: язык и аватар пользователя
+ */
+function bindAccountHeaderMenus(): void {
+  const langBtn = document.getElementById('accountLangBtn');
+  const langMenu = document.getElementById('accountLangMenu');
+  const avatarBtn = document.getElementById('accountAvatarBtn');
+  const userMenu = document.getElementById('accountUserMenu');
+
+  const closeMenus = () => {
+    langMenu?.setAttribute('hidden', '');
+    userMenu?.setAttribute('hidden', '');
+    langBtn?.setAttribute('aria-expanded', 'false');
+    avatarBtn?.setAttribute('aria-expanded', 'false');
+  };
+
+  const toggleMenu = (btn: HTMLElement | null, menu: HTMLElement | null) => {
+    if (!btn || !menu) return;
+    const willOpen = menu.hasAttribute('hidden');
+    closeMenus();
+    if (willOpen) {
+      menu.removeAttribute('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+  };
+
+  langBtn?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleMenu(langBtn, langMenu);
+  });
+
+  avatarBtn?.addEventListener('click', (event) => {
+    event.stopPropagation();
+    toggleMenu(avatarBtn, userMenu);
+  });
+
+  langMenu?.addEventListener('click', (event) => event.stopPropagation());
+  userMenu?.addEventListener('click', (event) => event.stopPropagation());
+
+  document.getElementById('headerEditAccountBtn')?.addEventListener('click', () => {
+    closeMenus();
+    Router.navigate('edit-profile');
+  });
+
+  document.addEventListener('click', closeMenus);
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeMenus();
+  });
+}
+
+/**
  * Bind copy buttons (data-copybtn)
  */
 function bindCopyButtons(api: ApiMessage): void {
@@ -189,6 +239,7 @@ export function bindAccountHandlers(
 
   document.body.classList.remove('account-nav-open');
   bindAccountMobileNav();
+  bindAccountHeaderMenus();
 
   // Bind copy buttons (copy to clipboard)
   bindCopyButtons(api);
@@ -208,9 +259,8 @@ export function bindAccountHandlers(
     });
   });
 
-  // Logout handler
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
+  // Logout handler (кнопка в сайдбаре + в меню аватара)
+  document.querySelectorAll('#logoutBtn, #headerLogoutBtn').forEach((logoutBtn) => {
     logoutBtn.addEventListener('click', async () => {
       try {
         await apiCall('/auth/logout', {
@@ -224,7 +274,7 @@ export function bindAccountHandlers(
       document.body.classList.remove('no-strawberries');
       Router.navigate('username');
     });
-  }
+  });
 
   // Security tab handlers
   if (_tab === 'security') {

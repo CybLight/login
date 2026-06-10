@@ -299,6 +299,35 @@ function buildProfileHeader(subtitle: string, isLoggedIn: boolean): string {
   `;
 }
 
+function buildProfileFooter(): string {
+  return `
+    <footer class="auth-footer">
+      <div class="footer-row">
+        <div class="footer-copy">
+          <p class="footer-text" dir="ltr" lang="en">
+            © ${new Date().getFullYear()} CybLight
+          </p>
+        </div>
+        <div class="footer-links">
+          <a class="footer-brand" href="https://cyblight.org/" aria-label="Главная страница" target="_blank" rel="noopener">
+            <img src="/assets/img/logo.svg" class="footer-logo" alt="CybLight" />
+            <span>CybLight.org</span>
+          </a>
+
+          <a class="report-btn" href="#" data-report-modal-open>
+            <img src="/assets/img/report.svg" alt="Report" class="report-icon" />
+            Сообщить о проблеме
+          </a>
+
+          <a href="#" data-noop>Условия использования</a>
+          <a href="https://cyblight.org/privacy/" target="_blank" rel="noopener">Политика конфиденциальности</a>
+          <a href="#" data-noop>Настройки конфиденциальности</a>
+        </div>
+      </div>
+    </footer>
+  `;
+}
+
 function bindProfileHeaderHandlers(): void {
   const signinBtn = document.getElementById('profileSigninBtn');
   signinBtn?.addEventListener('click', () => {
@@ -653,6 +682,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
   const [profile, currentUser] = await Promise.all([loadProfile(username), getCurrentUser()]);
 
   if (!profile) {
+    document.title = 'Профиль не найден — CybLight';
     app.innerHTML = `
       ${profileStyles}
       ${buildProfileHeader(username, Boolean(currentUser))}
@@ -661,6 +691,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
         <p>Пользователь <strong>${escapeHtml(username)}</strong> не существует</p>
         <button class="btn btn-primary" type="button" data-route="username" aria-label="Вернуться">Вернуться</button>
       </div>
+      ${buildProfileFooter()}
     `;
     bindProfileHeaderHandlers();
     return;
@@ -723,6 +754,8 @@ export async function renderPublicProfile(username: string): Promise<void> {
       </div>
     `;
   }
+
+  document.title = `${String(profile.username || profile.login || username)} — CybLight`;
 
   const avatarEmoji = getAvatarEmoji(profile.avatar || '');
   const roleClass = getRoleClass(profile.role);
@@ -798,6 +831,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
         <p>Это профиль пользователя. Дополнительная информация скоро будет доступна.</p>
       </div>
     </div>
+    ${buildProfileFooter()}
   `;
 
   bindProfileHeaderHandlers();

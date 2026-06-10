@@ -37,7 +37,8 @@ export function stopAccountChatAutoRefresh(
  */
 export async function hydrateAccountAvatar(user: AppUser): Promise<void> {
   const avatarEl = document.getElementById('accountProfileAvatar');
-  if (!avatarEl) return;
+  const headerAvatarEl = document.getElementById('accountAvatarBtn');
+  if (!avatarEl && !headerAvatarEl) return;
   const maybe = user as unknown as Record<string, unknown>;
   const existingAvatar = user.avatar || (maybe.avatarUrl as string | undefined) || (maybe.avatar_url as string | undefined);
   if (existingAvatar) return;
@@ -65,7 +66,9 @@ export async function hydrateAccountAvatar(user: AppUser): Promise<void> {
     const profileAvatar = profile.avatar || (profile.avatarUrl as string | undefined) || (profile.avatar_url as string | undefined);
     if (!profileAvatar) return;
     const login = (maybe.login as string | undefined) || user.username || 'User';
-    avatarEl.innerHTML = getAvatarInnerHtml(String(profileAvatar), String(login));
+    const avatarHtml = getAvatarInnerHtml(String(profileAvatar), String(login));
+    if (avatarEl) avatarEl.innerHTML = avatarHtml;
+    if (headerAvatarEl) headerAvatarEl.innerHTML = avatarHtml;
   } catch (error) {
     console.warn('[ACCOUNT] Avatar hydrate skipped:', error);
   }

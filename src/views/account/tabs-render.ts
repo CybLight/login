@@ -60,7 +60,7 @@ function formatDate(timestamp: string | number | null | undefined): string {
 /**
  * Получить статус и бейджи пользователя
  */
-function getUserStatus(user: User): {
+export function getUserStatus(user: User): {
   main: { label: string; cls: string };
   badges: Array<{ label: string; cls: string; title?: string }>;
 } {
@@ -165,7 +165,7 @@ function buildBadges(
   return badges;
 }
 
-function formatPublicId(publicId?: string): string {
+export function formatPublicId(publicId?: string): string {
   if (!publicId) return '—';
   const n = Number(publicId);
   if (!Number.isFinite(n) || n <= 0) return '—';

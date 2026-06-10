@@ -9,6 +9,7 @@ import { authService } from '@/services';
 import '@/styles/account.css';
 import '@/styles/account-render.css';
 import { renderAccountPage } from './account/account-render';
+import { getTabTitle } from './account/tabs-render';
 import { bindAccountHandlers } from './account/account-handlers';
 import { hydrateAccountAvatar, isEmailVerified, stopAccountChatAutoRefresh } from './account/account-utils';
 import { createChatCore } from './account/chat-core';
@@ -52,6 +53,9 @@ export async function renderAccount(tab: string = 'profile'): Promise<void> {
 
   // Initialize emailVerified from user data
   emailVerified = isEmailVerified(user);
+
+  // Заголовок вкладки браузера по текущей вкладке аккаунта
+  document.title = `${getTabTitle(tab)} — CybLight`;
 
   // Render account page
   const html = renderAccountPage(tab, user);
@@ -97,8 +101,6 @@ export async function renderAccount(tab: string = 'profile'): Promise<void> {
   // Bind all event handlers
   bindAccountHandlers(tab, user, state, callbacks);
 
-  // Hydrate avatar if on profile tab
-  if (tab === 'profile') {
-    void hydrateAccountAvatar(user);
-  }
+  // Hydrate avatar (профиль + аватарка в шапке на всех вкладках)
+  void hydrateAccountAvatar(user);
 }

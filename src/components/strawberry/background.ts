@@ -29,7 +29,6 @@ export function initStrawberryBackground(): void {
   // Если уже есть фон — не дублируем
   if (document.querySelector('.bg-strawberries')) return;
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const mobile = isMobileDevice();
   const lowEnd = isLowEndDevice();
 
@@ -67,12 +66,7 @@ export function initStrawberryBackground(): void {
     el.style.setProperty('--drift', drift);
     el.style.setProperty('--rot', rot);
 
-    if (prefersReducedMotion) {
-      // Без анимации: клубнички статично разбросаны по экрану
-      el.style.top = rand(5, 90) + 'vh';
-    } else {
-      el.style.animation = `fallStrawberry ${duration}s linear ${delay}s infinite`;
-    }
+    el.style.animation = `fallStrawberry ${duration}s linear ${delay}s infinite`;
 
     // Делаем клубнику кликабельной
     el.style.pointerEvents = 'auto';

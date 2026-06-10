@@ -12,11 +12,11 @@
 .account-wrap {
   display: flex;
   flex: 1 0 auto;
-  gap: 30px;
-  max-width: 1400px;
-  margin: 0 auto;
+  gap: 24px;
+  max-width: none;
+  margin: 0;
   width: 100%;
-  padding: 30px 20px;
+  padding: 0;
 }
 
 .account-sidebar {
@@ -133,7 +133,8 @@
 
 .msg {
   position: fixed;
-  top: 18px;
+  /* Под липкой шапкой (56px) */
+  top: 68px;
   left: 50%;
   transform: translateX(-50%);
   padding: 12px 20px;
@@ -147,7 +148,11 @@
   font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.97) 0%, rgba(30, 41, 59, 0.96) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(17, 24, 39, 0.97) 0%,
+    rgba(30, 41, 59, 0.96) 100%
+  );
   backdrop-filter: blur(8px);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
   animation: slideDown 0.25s ease-out;
@@ -493,7 +498,11 @@
   width: min(92vw, 460px);
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(180deg, rgba(24, 28, 50, 0.98), rgba(12, 16, 33, 0.98));
+  background: linear-gradient(
+    180deg,
+    rgba(24, 28, 50, 0.98),
+    rgba(12, 16, 33, 0.98)
+  );
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
   padding: 16px;
 }
@@ -1007,7 +1016,7 @@
   line-height: 1.6;
   margin-bottom: 24px;
   padding: 12px 16px;
-  background: rgba(255,255,255,.03);
+  background: rgba(255, 255, 255, 0.03);
   border-left: 3px solid rgba(59, 130, 246, 0.5);
   border-radius: 4px;
   font-size: 14px;
@@ -1035,10 +1044,14 @@
 }
 
 .easter-card {
-  border: 2px solid rgba(255,255,255,.12);
+  border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   padding: 20px;
-  background: linear-gradient(135deg, rgba(255,255,255,.04) 0%, rgba(255,255,255,.01) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.01) 100%
+  );
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -1046,19 +1059,27 @@
 }
 
 .easter-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at top-right, rgba(255,255,255,.08) 0%, transparent 70%);
+  background: radial-gradient(
+    circle at top-right,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 70%
+  );
   pointer-events: none;
 }
 
 .easter-card:hover {
-  border-color: rgba(255,255,255,.25);
-  background: linear-gradient(135deg, rgba(255,255,255,.08) 0%, rgba(255,255,255,.03) 100%);
+  border-color: rgba(255, 255, 255, 0.25);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
   transform: translateY(-2px);
 }
 
@@ -1078,7 +1099,9 @@
   display: inline-block;
   transform-origin: 50% 60%;
   filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.35));
-  animation: moonFloat 3.2s ease-in-out infinite, moonGlow 2.6s ease-in-out infinite;
+  animation:
+    moonFloat 3.2s ease-in-out infinite,
+    moonGlow 2.6s ease-in-out infinite;
 }
 
 @keyframes moonFloat {
@@ -1128,7 +1151,7 @@
 }
 
 .easter-strawberry.special::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 78px;
   height: 78px;
@@ -1136,8 +1159,16 @@
   top: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 88, 88, 0.45) 0%, rgba(255, 127, 39, 0.3) 42%, rgba(255, 127, 39, 0.1) 62%, rgba(255, 127, 39, 0) 100%);
-  box-shadow: 0 0 24px rgba(255, 92, 67, 0.6), 0 0 38px rgba(255, 127, 39, 0.45);
+  background: radial-gradient(
+    circle,
+    rgba(255, 88, 88, 0.45) 0%,
+    rgba(255, 127, 39, 0.3) 42%,
+    rgba(255, 127, 39, 0.1) 62%,
+    rgba(255, 127, 39, 0) 100%
+  );
+  box-shadow:
+    0 0 24px rgba(255, 92, 67, 0.6),
+    0 0 38px rgba(255, 127, 39, 0.45);
   opacity: 0.95;
   pointer-events: none;
   z-index: -1;
@@ -1208,7 +1239,7 @@
   right: 12px;
   z-index: 10;
   backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .easter-card-badge.locked {
@@ -1218,19 +1249,27 @@
 
 .easter-card-rare {
   border: 2px solid #8b5cf6;
-  background: linear-gradient(135deg, rgba(139, 92, 246, .08) 0%, rgba(99, 102, 241, .04) 100%);
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), inset 0 0 20px rgba(139, 92, 246, 0.1);
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.08) 0%,
+    rgba(99, 102, 241, 0.04) 100%
+  );
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.3),
+    inset 0 0 20px rgba(139, 92, 246, 0.1);
   animation: neonPulse 3s ease-in-out infinite;
 }
 
 .easter-card-rare::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -2px;
   border-radius: 12px;
   padding: 2px;
   background: linear-gradient(45deg, #8b5cf6, #6366f1, #8b5cf6);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   opacity: 0.6;
@@ -1239,11 +1278,16 @@
 }
 
 @keyframes neonPulse {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), inset 0 0 20px rgba(139, 92, 246, 0.1);
+  0%,
+  100% {
+    box-shadow:
+      0 0 20px rgba(139, 92, 246, 0.3),
+      inset 0 0 20px rgba(139, 92, 246, 0.1);
   }
   50% {
-    box-shadow: 0 0 35px rgba(139, 92, 246, 0.6), inset 0 0 30px rgba(139, 92, 246, 0.2);
+    box-shadow:
+      0 0 35px rgba(139, 92, 246, 0.6),
+      inset 0 0 30px rgba(139, 92, 246, 0.2);
   }
 }
 
@@ -1258,7 +1302,9 @@
 
 .easter-card-rare:hover {
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 0 40px rgba(139, 92, 246, 0.7), inset 0 0 30px rgba(139, 92, 246, 0.2);
+  box-shadow:
+    0 0 40px rgba(139, 92, 246, 0.7),
+    inset 0 0 30px rgba(139, 92, 246, 0.2);
 }
 
 .easter-hint {
@@ -1288,16 +1334,453 @@
 
 /* ==================== END EASTER EGGS TAB ==================== */
 
-/* Mobile header + burger nav (hidden on desktop) */
-.account-mobile-header,
-.account-nav-overlay {
+/* ==================== HEADER + BURGER NAV ==================== */
+
+.account-mobile-header {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  background:
+    radial-gradient(
+      120% 220% at 0% 0%,
+      rgba(255, 127, 39, 0.3) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      120% 220% at 100% 0%,
+      rgba(96, 165, 250, 0.2) 0%,
+      transparent 45%
+    ),
+    linear-gradient(to right, #0a1020, #12182b);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.account-mobile-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 127, 39, 0) 0%,
+    rgba(255, 127, 39, 0.9) 25%,
+    rgba(255, 200, 120, 1) 50%,
+    rgba(255, 127, 39, 0.9) 75%,
+    rgba(255, 127, 39, 0) 100%
+  );
+  box-shadow: 0 0 10px rgba(255, 127, 39, 0.6);
+  pointer-events: none;
+}
+
+.account-mobile-header__inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  min-height: 56px;
+}
+
+.account-mobile-header__logo img {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  display: block;
+}
+
+.account-mobile-header__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.account-mobile-header__title {
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.1;
+}
+
+.account-mobile-header__login {
+  opacity: 0.75;
+  font-size: 12px;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-mobile-header__signin {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ff7f27 0%, #f59e0b 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 127, 39, 0.35);
+}
+
+.account-mobile-header__signin:active {
+  transform: scale(0.96);
+}
+
+.account-header-actions {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.account-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.account-lang-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.account-lang-btn .cl-language {
+  width: 22px;
+  height: 22px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.account-lang-btn__label {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  text-transform: lowercase;
+}
+
+/* На узких экранах оставляем только иконку */
+@media (max-width: 480px) {
+  .account-lang-btn__label {
+    display: none;
+  }
+}
+
+.account-avatar-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.account-avatar-btn:hover {
+  box-shadow: 0 0 0 2px rgba(255, 127, 39, 0.45);
+}
+
+.account-avatar-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.account-lang-menu,
+.account-user-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  min-width: 230px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  background: rgba(10, 15, 31, 0.98);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+}
+
+.account-lang-menu[hidden],
+.account-user-menu[hidden] {
   display: none;
 }
 
-/* Выпадающее меню шапки на публичной странице профиля:
-   вне мобильной версии не показываем вообще */
+.account-lang-menu button {
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.account-lang-menu button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.account-lang-menu button.is-active {
+  background: rgba(255, 127, 39, 0.16);
+  border: 1px solid rgba(255, 127, 39, 0.35);
+}
+
+.account-user-menu__name {
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.account-user-menu__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.account-user-menu__id {
+  font-size: 12px;
+  font-weight: 700;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+}
+
+.account-user-menu__edit {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 9px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.account-user-menu__edit:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.account-user-menu__divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 10px 0;
+}
+
+.account-user-menu__logout {
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ff7f27 0%, #f59e0b 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.account-user-menu__logout:active {
+  transform: scale(0.97);
+}
+
+.account-burger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.account-burger span {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  border-radius: 2px;
+  background: #fff;
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.account-burger span:nth-child(1) {
+  top: 10px;
+}
+
+.account-burger span:nth-child(2) {
+  top: 16px;
+}
+
+.account-burger span:nth-child(3) {
+  top: 22px;
+}
+
+body.account-nav-open .account-burger span:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+body.account-nav-open .account-burger span:nth-child(2) {
+  opacity: 0;
+}
+
+body.account-nav-open .account-burger span:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+.account-nav-overlay {
+  display: block;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 900;
+}
+
+body.account-nav-open .account-nav-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Выпадающее меню шапки на публичной странице профиля */
 .profile-mobile-nav {
   display: none;
+  position: fixed;
+  top: 56px;
+  left: 0;
+  right: 0;
+  width: auto;
+  max-height: calc(100dvh - 56px);
+  overflow-y: auto;
+  z-index: 950;
+  margin: 0;
+  padding: 12px 16px 16px;
+  border-radius: 0 0 16px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: none;
+  background: rgba(10, 15, 31, 0.98);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+body.account-nav-open .profile-mobile-nav {
+  display: block;
+}
+
+.profile-mobile-nav .account-nav {
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+
+@media (min-width: 861px) {
+  /* На десктопе у кабинета есть сайдбар с вкладками — бургер не нужен */
+  .account-page .account-burger {
+    display: none;
+  }
+
+  /* Страница без боковых отступов: сайдбар прижат к левому краю */
+  .account-page {
+    padding: 0;
+  }
+
+  .account-page > .account-mobile-header {
+    width: 100%;
+    margin: 0;
+  }
+
+  .account-wrap {
+    flex: 1;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  /* Сайдбар — колонка во всю высоту у левого края */
+  .account-sidebar {
+    border-radius: 0;
+    border-top: 0;
+    border-left: 0;
+    border-bottom: 0;
+    padding: 18px 14px;
+  }
+
+  /* Навигация остаётся на виду при прокрутке длинного контента */
+  .account-sidebar .account-nav {
+    position: sticky;
+    top: 74px;
+  }
+
+  /* «Выйти» на десктопе доступна в меню аватара в шапке */
+  .account-sidebar #logoutBtn {
+    display: none;
+  }
+
+  /* Контент занимает всю оставшуюся ширину справа от сайдбара */
+  .account-main {
+    max-width: none;
+    margin: 24px 24px 24px 0;
+  }
+
+  /* Карточки внутри не растягиваем: компактная центрированная колонка */
+  .account-main .account-header-row,
+  .account-main .account-divider,
+  .account-main .account-body {
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
+  .account-main {
+    padding: 28px 32px;
+  }
+
+  .account-main .account-divider {
+    margin: 16px auto 20px;
+  }
+
+  /* На профиле выпадающее меню — компактная панель справа под шапкой */
+  .profile-mobile-nav {
+    left: auto;
+    right: 16px;
+    width: 300px;
+    border-radius: 0 0 16px 16px;
+    border-top: none;
+  }
 }
 
 .account-page > .auth-footer {
@@ -1306,163 +1789,20 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 860px) {
-  .account-mobile-header {
-    display: block;
+/* Десктоп: футер прилипает к низу видимой области,
+   остаётся виден даже при открытой панели разработчика */
+@media (min-width: 861px) {
+  .account-page > .auth-footer {
     position: sticky;
-    top: 0;
-    z-index: 1000;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    background:
-      radial-gradient(120% 220% at 0% 0%, rgba(255, 127, 39, 0.3) 0%, transparent 45%),
-      radial-gradient(120% 220% at 100% 0%, rgba(96, 165, 250, 0.2) 0%, transparent 45%),
-      linear-gradient(to right, #0a1020, #12182b);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-  }
-
-  .account-mobile-header::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
     bottom: 0;
-    height: 2px;
-    background: linear-gradient(
-      90deg,
-      rgba(255, 127, 39, 0) 0%,
-      rgba(255, 127, 39, 0.9) 25%,
-      rgba(255, 200, 120, 1) 50%,
-      rgba(255, 127, 39, 0.9) 75%,
-      rgba(255, 127, 39, 0) 100%
-    );
-    box-shadow: 0 0 10px rgba(255, 127, 39, 0.6);
-    pointer-events: none;
+    z-index: 60;
   }
+}
 
-  .account-mobile-header__inner {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    min-height: 56px;
-  }
-
-  .account-mobile-header__logo img {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    display: block;
-  }
-
-  .account-mobile-header__info {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .account-mobile-header__title {
-    font-weight: 800;
-    font-size: 15px;
-    line-height: 1.1;
-  }
-
-  .account-mobile-header__login {
-    opacity: 0.75;
-    font-size: 12px;
-    margin-top: 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* Тост показываем под липкой шапкой (56px) */
-  .msg {
-    top: 68px;
-  }
-
-  .account-mobile-header__signin {
-    flex-shrink: 0;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #ff7f27 0%, #f59e0b 100%);
-    color: #fff;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-    box-shadow: 0 4px 14px rgba(255, 127, 39, 0.35);
-  }
-
-  .account-mobile-header__signin:active {
-    transform: scale(0.96);
-  }
-
-  .account-burger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    width: 36px;
-    height: 36px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  .account-burger span {
-    position: absolute;
-    left: 6px;
-    right: 6px;
-    height: 3px;
-    border-radius: 2px;
-    background: #fff;
-    transition:
-      transform 0.25s ease,
-      opacity 0.25s ease;
-  }
-
-  .account-burger span:nth-child(1) {
-    top: 10px;
-  }
-
-  .account-burger span:nth-child(2) {
-    top: 16px;
-  }
-
-  .account-burger span:nth-child(3) {
-    top: 22px;
-  }
-
-  body.account-nav-open .account-burger span:nth-child(1) {
-    transform: translateY(6px) rotate(45deg);
-  }
-
-  body.account-nav-open .account-burger span:nth-child(2) {
-    opacity: 0;
-  }
-
-  body.account-nav-open .account-burger span:nth-child(3) {
-    transform: translateY(-6px) rotate(-45deg);
-  }
-
-  .account-nav-overlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-    z-index: 900;
-  }
-
-  body.account-nav-open .account-nav-overlay {
-    opacity: 1;
-    pointer-events: auto;
+@media (max-width: 860px) {
+  /* На мобильном аватар не показываем — есть бургер-меню */
+  .account-avatar-btn {
+    display: none;
   }
 
   .account-page {
@@ -1663,7 +2003,11 @@
     margin-bottom: 0;
     border-radius: 14px;
     background:
-      radial-gradient(700px 260px at 0% 0%, rgba(180, 120, 255, 0.08), transparent 55%),
+      radial-gradient(
+        700px 260px at 0% 0%,
+        rgba(180, 120, 255, 0.08),
+        transparent 55%
+      ),
       rgba(0, 0, 0, 0.16);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   }

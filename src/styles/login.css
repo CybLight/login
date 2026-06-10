@@ -593,11 +593,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .strawberry {
-    animation: none !important;
-  }
-}
 
 .strawberry.special::after {
   content: "";
@@ -1246,14 +1241,16 @@
 .account-page > .auth-footer {
   position: static;
   margin-top: auto;
+  width: 100%;
 }
 
 .account-wrap {
   width: 100%;
-  margin: 0 auto;
+  margin: 0;
   display: flex;
   gap: 18px;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .account-sidebar {

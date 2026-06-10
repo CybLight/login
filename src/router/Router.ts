@@ -29,6 +29,29 @@ export class Router {
 
   private static handlers: Record<string, RouteHandler> = {};
 
+  /** Заголовки вкладки браузера по роутам */
+  private static titles: Record<string, string> = {
+    signup: 'Регистрация',
+    username: 'Вход',
+    password: 'Вход',
+    reset: 'Сброс пароля',
+    '2fa-verify': 'Подтверждение входа',
+    'verify-email': 'Подтверждение почты',
+    done: 'Готово',
+    account: 'Учётка',
+    'account-profile': 'Профиль',
+    'edit-profile': 'Редактирование профиля',
+    'account-security': 'Безопасность',
+    'account-sessions': 'Сессии',
+    'account-easter-eggs': 'Пасхалки',
+    'account-friends': 'Друзья',
+    'account-messages': 'Сообщения',
+    'account-banned': 'Аккаунт заблокирован',
+    'contact-admin': 'Связь с администрацией',
+    'strawberry-history': 'Клубничная история',
+    profile: 'Профиль',
+  };
+
   /**
    * Register route handler
    */
@@ -102,6 +125,8 @@ export class Router {
     };
 
     console.log('[ROUTER] Rendering route:', route, params);
+
+    document.title = `${this.titles[route] || 'Вход'} — CybLight`;
 
     const handler = this.handlers[route];
     if (handler) {
