@@ -6,7 +6,7 @@ import { bindProfileMirrorEaster } from '@/components/easter/profile-mirror';
 import { t, sitePath, getLocale, getLocaleLabel, localePath, localeTag, type Locale } from '@/i18n';
 import { apiCall, escapeHtml, renderPresenceChip } from '@/utils';
 import { Router } from '@/router/Router';
-import { showAppPrompt } from '@/ui';
+import { showAppConfirm, showAppPrompt } from '@/ui';
 
 interface PublicProfile {
   id?: string;
@@ -226,24 +226,47 @@ async function getCurrentUser(): Promise<CurrentUser | null> {
   }
 }
 
+interface FriendshipStatus {
+  status: string | null;
+  pendingDirection: 'incoming' | 'outgoing' | null;
+}
+
 /**
  * Получить статус дружбы между текущим пользователем и просматриваемым профилем
  */
-async function getFriendshipStatus(friendId: string): Promise<string | null> {
+async function getFriendshipStatus(friendId: string): Promise<FriendshipStatus> {
   try {
     const response = await apiCall(`/friends/status/${friendId}`, {
       method: 'GET',
       credentials: 'include',
     });
     if (!response.ok) {
-      return null;
+      return { status: null, pendingDirection: null };
     }
     const data = await response.json();
-    return data.ok ? data.status : null;
+    if (!data.ok) {
+      return { status: null, pendingDirection: null };
+    }
+    return {
+      status: data.status ?? null,
+      pendingDirection: data.pendingDirection ?? null,
+    };
   } catch (error) {
     console.error('Error getting friendship status:', error);
-    return null;
+    return { status: null, pendingDirection: null };
   }
+}
+
+function mapFriendApiError(error: string | undefined): string {
+  const messages: Record<string, string> = {
+    'Already friends': t('Вы уже друзья с этим пользователем'),
+    'Friendship request already sent': t('Запрос на добавление отправлен'),
+    'User not found': t('Пользователь не найден'),
+    'Cannot add yourself as friend': t('Нельзя добавить себя в друзья'),
+    'No friendship request found': t('Запрос на дружбу не найден'),
+  };
+
+  return messages[error || ''] || error || t('Ошибка при отправке запроса');
 }
 
 const LANG_ICON_SVG = `<svg class="cl-language" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M3.814 16.464a.501.501 0 00.65-.278L5.54 13.5h2.923l1.074 2.686a.5.5 0 00.928-.372l-3-7.5a.52.52 0 00-.928 0l-3 7.5a.5.5 0 00.278.65zM7 9.846L8.061 12.5H5.94zM6 7.5a.5.5 0 00.224-.053l2-1a.5.5 0 10-.448-.894l-2 1A.5.5 0 006 7.5zM11.75 14.25a2.025 2.025 0 001.75 2.25 2.584 2.584 0 001.482-.431c.039.088.07.152.075.162a.5.5 0 00.887-.461 4.654 4.654 0 01-.15-.368c.176-.168.359-.348.56-.548a11.374 11.374 0 001.92-2.652A1.55 1.55 0 0119 13.5a2.082 2.082 0 01-1.607 2.012.5.5 0 00.107.988.506.506 0 00.107-.012A3.055 3.055 0 0020 13.5a2.542 2.542 0 00-1.283-2.205c.16-.364.244-.6.255-.63a.5.5 0 10-.944-.33 7.97 7.97 0 01-.225.552 5.11 5.11 0 00-2.482-.21c.04-.428.091-.845.153-1.229 1.427-.123 3.04-.44 3.124-.458a.5.5 0 00-.196-.98c-.019.003-1.43.283-2.736.418.162-.761.31-1.273.313-1.284a.5.5 0 10-.958-.288c-.016.053-.206.695-.393 1.64-.041 0-.088.004-.128.004h-2a.5.5 0 000 1h1.955c-.072.476-.134.985-.17 1.517a4.001 4.001 0 00-2.535 3.233zm1.75 1.25c-.362 0-.75-.502-.75-1.25a2.82 2.82 0 011.506-2.094 11.674 11.674 0 00.384 2.927 1.684 1.684 0 01-1.14.417zm2.604-3.897a4.4 4.4 0 011.251.193 10.325 10.325 0 01-1.708 2.35l-.163.162A11.04 11.04 0 0115.25 12c0-.093.008-.185.01-.278a3.318 3.318 0 01.844-.12z M22.5 3h-21a.5.5 0 00-.5.5v16a.5.5 0 00.5.5H10v3.5a.5.5                       0 00.854.354L14.707 20H22.5a.5.5 0 00.5-.5v-16a.5.5 0 00-.5-.5zM22 19h-7.5a.5.5 0 00-.354.146L11 22.293V19.5a.5.5 0 00-.5-.5H2V4h20z"></path></svg>`;
@@ -474,6 +497,120 @@ function bindProfileHeaderHandlers(): void {
     }
     document.body.classList.remove('no-strawberries');
     Router.navigate('username');
+  });
+}
+
+function bindProfileFriendActions(profileRoute: string): void {
+  const actions = document.querySelector('.profile-actions');
+  if (!actions) return;
+
+  const runAction = async (button: HTMLButtonElement, handler: () => Promise<void>) => {
+    if (button.disabled) return;
+    button.disabled = true;
+    try {
+      await handler();
+    } finally {
+      button.disabled = false;
+    }
+  };
+
+  actions.addEventListener('click', (event) => {
+    const target = (event.target as HTMLElement | null)?.closest('[data-action]') as HTMLButtonElement | null;
+    if (!target || !actions.contains(target)) return;
+
+    const action = target.getAttribute('data-action') || '';
+    const friendId = target.getAttribute('data-user-id') || '';
+    const friendUsername = target.getAttribute('data-username') || profileRoute;
+
+    if (action === 'open-message') {
+      if (!friendId || !friendUsername) return;
+      sessionStorage.setItem('openChatWith', JSON.stringify({ friendId, username: friendUsername }));
+      Router.navigate('account-messages');
+      return;
+    }
+
+    void runAction(target, async () => {
+      if (action === 'add-friend') {
+        const response = await apiCall('/friends/add', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ friendUsername }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data?.ok) {
+          showProfileToast(t('✅ Запрос отправлен пользователю {username}!', { username: friendUsername }));
+          await renderPublicProfile(profileRoute);
+          return;
+        }
+        showProfileToast(mapFriendApiError(data?.error));
+        return;
+      }
+
+      if (action === 'accept-friend') {
+        if (!friendId) return;
+        const response = await apiCall('/friends/accept', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ friendId }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data?.ok !== false) {
+          showProfileToast(t('✅ {username} добавлен в друзья!', { username: friendUsername }));
+          await renderPublicProfile(profileRoute);
+          return;
+        }
+        showProfileToast(mapFriendApiError(data?.error));
+        return;
+      }
+
+      if (action === 'reject-friend') {
+        if (!friendId) return;
+        const response = await apiCall('/friends/reject', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ friendId }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data?.ok !== false) {
+          showProfileToast(t('❌ Запрос от {username} отклонён', { username: friendUsername }));
+          await renderPublicProfile(profileRoute);
+          return;
+        }
+        showProfileToast(mapFriendApiError(data?.error));
+        return;
+      }
+
+      if (action === 'remove-friend') {
+        if (!friendId) return;
+        const confirmed = await showAppConfirm(
+          t('Вы уверены, что хотите удалить {name}?', { name: friendUsername }),
+          {
+            title: t('Удаление друга'),
+            confirmLabel: t('Удалить'),
+            cancelLabel: t('Отмена'),
+            destructive: true,
+          }
+        );
+        if (!confirmed) return;
+
+        const response = await apiCall('/friends/remove', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ friendId }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (response.ok && data?.ok !== false) {
+          showProfileToast(t('{name} удалён из друзей', { name: friendUsername }));
+          await renderPublicProfile(profileRoute);
+          return;
+        }
+        showProfileToast(mapFriendApiError(data?.error));
+      }
+    });
   });
 }
 
@@ -980,10 +1117,12 @@ export async function renderPublicProfile(username: string): Promise<void> {
   }
 
   const isSelf = currentUser?.id === profile.id;
+  const profileUsername = String(profile.username || profile.login || username);
+  const profileUserId = String(profile.id || '');
 
-  let friendStatus = null;
+  let friendship: FriendshipStatus = { status: null, pendingDirection: null };
   if (currentUser && !isSelf && profile.id) {
-    friendStatus = await getFriendshipStatus(profile.id);
+    friendship = await getFriendshipStatus(profile.id);
   }
 
   const createdAt = profile.createdAt
@@ -1001,18 +1140,29 @@ export async function renderPublicProfile(username: string): Promise<void> {
   if (isSelf) {
     actionButtons = '';
   } else if (currentUser) {
-    if (friendStatus === 'accepted') {
+    if (friendship.status === 'accepted') {
       actionButtons = `
         <div class="profile-actions">
-          <button class="btn btn-primary" type="button" data-action="open-message" data-user-id="${escapeHtml(String(profile.id || ''))}" data-username="${escapeHtml(String(profile.username || profile.login || username))}" aria-label="💬 ${t('Написать сообщение')}">
+          <button class="btn btn-primary" type="button" data-action="open-message" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="💬 ${t('Написать сообщение')}">
             💬 ${t('Написать сообщение')}
           </button>
-          <button class="btn btn-secondary" type="button" data-profile-toast="${t('Удаление из друзей скоро будет доступно')}" aria-label="✕ ${t('Удалить из друзей')}">
+          <button class="btn btn-secondary" type="button" data-action="remove-friend" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="✕ ${t('Удалить из друзей')}">
             ✕ ${t('Удалить из друзей')}
           </button>
         </div>
       `;
-    } else if (friendStatus === 'pending') {
+    } else if (friendship.status === 'pending' && friendship.pendingDirection === 'incoming') {
+      actionButtons = `
+        <div class="profile-actions">
+          <button class="btn btn-primary" type="button" data-action="accept-friend" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="✅ ${t('Принять')}">
+            ✅ ${t('Принять')}
+          </button>
+          <button class="btn btn-secondary" type="button" data-action="reject-friend" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="❌ ${t('Отклонить')}">
+            ❌ ${t('Отклонить')}
+          </button>
+        </div>
+      `;
+    } else if (friendship.status === 'pending') {
       actionButtons = `
         <div class="profile-actions">
           <button class="btn btn-secondary" disabled aria-label="⏳ ${t('Запрос на добавление отправлен')}">
@@ -1023,7 +1173,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
     } else {
       actionButtons = `
         <div class="profile-actions">
-          <button class="btn btn-primary" type="button" data-profile-toast="${t('Добавление в друзья скоро будет доступно')}" aria-label="➕ ${t('Добавить в друзья')}">
+          <button class="btn btn-primary" type="button" data-action="add-friend" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="➕ ${t('Добавить в друзья')}">
             ➕ ${t('Добавить в друзья')}
           </button>
         </div>
@@ -1118,30 +1268,12 @@ export async function renderPublicProfile(username: string): Promise<void> {
 
   bindProfileHeaderHandlers();
 
+  bindProfileFriendActions(username);
+
   bindProfileMirrorEaster(app.querySelector('#profileAvatar') as HTMLElement | null, {
     enabled: Boolean(isSelf && currentUser),
     username: String(profile.username || profile.login || username),
   });
-
-  app.querySelectorAll('[data-profile-toast]').forEach((element) => {
-    element.addEventListener('click', () => {
-      const message = element.getAttribute('data-profile-toast');
-      if (message) {
-        showProfileToast(message);
-      }
-    });
-  });
-
-  const messageBtn = app.querySelector('[data-action="open-message"]') as HTMLButtonElement | null;
-  if (messageBtn) {
-    messageBtn.addEventListener('click', () => {
-      const friendId = messageBtn.getAttribute('data-user-id') || '';
-      const friendUsername = messageBtn.getAttribute('data-username') || '';
-      if (!friendId || !friendUsername) return;
-      sessionStorage.setItem('openChatWith', JSON.stringify({ friendId, username: friendUsername }));
-      Router.navigate('account-messages');
-    });
-  }
 
   const shareBtn = app.querySelector('[data-share-profile]') as HTMLButtonElement | null;
   if (shareBtn) {
