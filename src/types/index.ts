@@ -11,6 +11,7 @@ export interface User {
   avatar?: string;
   role: 'user' | 'moderator' | 'admin';
   flags: string[];
+  roleNotice?: string | null;
   twoFactorEnabled: boolean;
   createdAt: string;
   updatedAt: string;

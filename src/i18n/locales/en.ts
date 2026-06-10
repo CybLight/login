@@ -280,6 +280,7 @@ export const en: Record<string, string> = {
   "Включите двухфакторную аутентификацию": "Enable two-factor authentication",
   "Включить 2FA": "Enable 2FA",
   "Владелец": "Owner",
+  "Вам назначена роль: {role}": "You have been assigned the role: {role}",
   "Внимание": "Attention",
   "Войдите, чтобы добавить в друзья": "Sign in to add as friend",
   "Всем": "Everyone",

@@ -14,6 +14,7 @@ import { bindAccountHandlers } from './account/account-handlers';
 import { hydrateAccountAvatar, isEmailVerified, stopAccountChatAutoRefresh } from './account/account-utils';
 import { createChatCore } from './account/chat-core';
 import { startEditMessageInAccount } from './account/chat-editor';
+import { showPendingRoleNotice } from '@/utils/roleNotice';
 
 // Global state variables
 let twoFAEnabled = false;
@@ -53,6 +54,8 @@ export async function renderAccount(tab: string = 'profile'): Promise<void> {
 
   // Initialize emailVerified from user data
   emailVerified = isEmailVerified(user);
+
+  void showPendingRoleNotice(user.roleNotice);
 
   // Заголовок вкладки браузера по текущей вкладке аккаунта
   document.title = `${getTabTitle(tab)} — CybLight`;
