@@ -1,6 +1,6 @@
-import type { UserEasterFlags } from '@/types';
-import { escapeHtml } from '@/utils';
-import { getAvatarInnerHtml } from './avatar';
+import type { UserEasterFlags } from "@/types";
+import { escapeHtml } from "@/utils";
+import { getAvatarInnerHtml } from "./avatar";
 
 type User = {
   id?: string;
@@ -34,26 +34,26 @@ function isEmailVerified(user: User): boolean {
     user.emailVerified === true ||
     user.email_verified === true ||
     user.email_verified === 1 ||
-    user.email_verified === '1' ||
+    user.email_verified === "1" ||
     Boolean(user.email_verified_at)
   );
 }
 
 function formatDate(timestamp: string | number | null | undefined): string {
-  if (!timestamp) return '—';
+  if (!timestamp) return "—";
   const n = Number(timestamp);
-  if (!Number.isFinite(n)) return '—';
+  if (!Number.isFinite(n)) return "—";
 
   const ts = n > 10000000000 ? n : n * 1000;
   const d = new Date(ts);
-  if (Number.isNaN(d.getTime())) return '—';
+  if (Number.isNaN(d.getTime())) return "—";
 
-  return d.toLocaleString('ru-RU', {
-    year: 'numeric',
-    month: 'long',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
+  return d.toLocaleString("ru-RU", {
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -64,66 +64,70 @@ export function getUserStatus(user: User): {
   main: { label: string; cls: string };
   badges: Array<{ label: string; cls: string; title?: string }>;
 } {
-  if (user.isBlocked || user.flags?.includes('banned')) {
+  if (user.isBlocked || user.flags?.includes("banned")) {
     return {
-      main: { label: 'Заблокирован', cls: 'status--blocked' },
+      main: { label: "Заблокирован", cls: "status--blocked" },
       badges: [],
     };
   }
 
   const userRole = user.role?.toLowerCase();
 
-  if (userRole === 'owner' || user.flags?.includes('owner')) {
+  if (userRole === "owner" || user.flags?.includes("owner")) {
     return {
-      main: { label: 'Владелец', cls: 'status--owner' },
+      main: { label: "Владелец", cls: "status--owner" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
-  if (userRole === 'admin' || user.flags?.includes('admin')) {
+  if (userRole === "admin" || user.flags?.includes("admin")) {
     return {
-      main: { label: 'Администратор', cls: 'status--admin' },
+      main: { label: "Администратор", cls: "status--admin" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
-  if (userRole === 'moderator' || user.flags?.includes('moderator')) {
+  if (userRole === "moderator" || user.flags?.includes("moderator")) {
     return {
-      main: { label: 'Модератор', cls: 'status--mod' },
+      main: { label: "Модератор", cls: "status--mod" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
-  if (userRole === 'support' || user.flags?.includes('support')) {
+  if (userRole === "support" || user.flags?.includes("support")) {
     return {
-      main: { label: 'Поддержка', cls: 'status--support' },
+      main: { label: "Поддержка", cls: "status--support" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
-  if (userRole === 'registrar' || user.flags?.includes('registrar')) {
+  if (userRole === "registrar" || user.flags?.includes("registrar")) {
     return {
-      main: { label: 'Регистратор', cls: 'status--registrar' },
+      main: { label: "Регистратор", cls: "status--registrar" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
-  if (userRole === 'tester' || user.flags?.includes('tester')) {
+  if (userRole === "tester" || user.flags?.includes("tester")) {
     return {
-      main: { label: 'Тестер', cls: 'status--tester' },
+      main: { label: "Тестер", cls: "status--tester" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
 
   const createdAtMs =
-    typeof user.createdAt === 'string' ? parseInt(user.createdAt, 10) : user.createdAt || 0;
-  const days = createdAtMs ? Math.floor((Date.now() - createdAtMs) / 86400000) : 0;
+    typeof user.createdAt === "string"
+      ? parseInt(user.createdAt, 10)
+      : user.createdAt || 0;
+  const days = createdAtMs
+    ? Math.floor((Date.now() - createdAtMs) / 86400000)
+    : 0;
   const sessionsCount = user.sessionsCount || 0;
 
   let main;
   if (days < 7 || sessionsCount < 3) {
-    main = { label: 'Новичок', cls: 'status--newbie' };
+    main = { label: "Новичок", cls: "status--newbie" };
   } else if (days < 30 || sessionsCount < 20) {
-    main = { label: 'Активный', cls: 'status--active' };
+    main = { label: "Активный", cls: "status--active" };
   } else if (days < 180 || sessionsCount < 80) {
-    main = { label: 'Постоянный', cls: 'status--regular' };
+    main = { label: "Постоянный", cls: "status--regular" };
   } else {
-    main = { label: 'Ветеран', cls: 'status--veteran' };
+    main = { label: "Ветеран", cls: "status--veteran" };
   }
 
   return { main, badges: buildBadges(user) };
@@ -131,61 +135,67 @@ export function getUserStatus(user: User): {
 
 function buildBadges(
   user: User,
-  opts: { includeRoleBadges?: boolean } = {}
+  opts: { includeRoleBadges?: boolean } = {},
 ): Array<{ label: string; cls: string; title?: string }> {
   const includeRoleBadges = opts.includeRoleBadges !== false;
   const flags = new Set(user.flags || []);
   const badges: Array<{ label: string; cls: string; title?: string }> = [];
 
-  if (flags.has('dev') || flags.has('developer')) {
-    badges.push({ label: 'DEV', cls: 'badge--dev' });
+  if (flags.has("dev") || flags.has("developer")) {
+    badges.push({ label: "DEV", cls: "badge--dev" });
   }
 
-  if (flags.has('premium') || flags.has('sponsor')) {
-    badges.push({ label: '★', cls: 'badge--premium', title: 'Premium' });
+  if (flags.has("premium") || flags.has("sponsor")) {
+    badges.push({ label: "★", cls: "badge--premium", title: "Premium" });
   }
 
-  if (flags.has('helper') || flags.has('contributor')) {
-    badges.push({ label: 'Helper', cls: 'badge--info' });
+  if (flags.has("helper") || flags.has("contributor")) {
+    badges.push({ label: "Helper", cls: "badge--info" });
   }
 
   if (includeRoleBadges && user.role) {
     const role = user.role.toLowerCase();
-    if (role === 'owner') badges.push({ label: '• Владелец', cls: 'badge--owner' });
-    if (role === 'admin') badges.push({ label: '• Администратор', cls: 'badge--admin' });
-    if (role === 'moderator') badges.push({ label: '• Модератор', cls: 'badge--mod' });
-    if (role === 'support') badges.push({ label: '• Поддержка', cls: 'badge--support' });
-    if (role === 'registrar') badges.push({ label: '• Регистратор', cls: 'badge--registrar' });
-    if (role === 'tester') badges.push({ label: '• Тестер', cls: 'badge--tester' });
+    if (role === "owner")
+      badges.push({ label: "• Владелец", cls: "badge--owner" });
+    if (role === "admin")
+      badges.push({ label: "• Администратор", cls: "badge--admin" });
+    if (role === "moderator")
+      badges.push({ label: "• Модератор", cls: "badge--mod" });
+    if (role === "support")
+      badges.push({ label: "• Поддержка", cls: "badge--support" });
+    if (role === "registrar")
+      badges.push({ label: "• Регистратор", cls: "badge--registrar" });
+    if (role === "tester")
+      badges.push({ label: "• Тестер", cls: "badge--tester" });
   }
 
-  if (flags.has('trusted')) badges.push({ label: 'Trusted', cls: 'badge--ok' });
-  if (flags.has('beta')) badges.push({ label: 'Beta', cls: 'badge--beta' });
+  if (flags.has("trusted")) badges.push({ label: "Trusted", cls: "badge--ok" });
+  if (flags.has("beta")) badges.push({ label: "Beta", cls: "badge--beta" });
 
   return badges;
 }
 
 export function formatPublicId(publicId?: string): string {
-  if (!publicId) return '—';
+  if (!publicId) return "—";
   const n = Number(publicId);
-  if (!Number.isFinite(n) || n <= 0) return '—';
+  if (!Number.isFinite(n) || n <= 0) return "—";
   return `CYB - ${n}`;
 }
 
 function renderProfileTab(user: User): string {
-  const login = user.login || user.username || 'User';
+  const login = user.login || user.username || "User";
   const avatarSource = user.avatar || user.avatarUrl || user.avatar_url;
   const avatarInnerHtml = getAvatarInnerHtml(avatarSource, login);
   const emailVerified = isEmailVerified(user);
   const pubId = formatPublicId(user.publicId);
-  const createdAt = formatDate(user.createdAt) || '—';
+  const createdAt = formatDate(user.createdAt) || "—";
 
   const status = getUserStatus(user);
   const statusHtml = `<span class="chip status ${status.main.cls}" title="Статус аккаунта"><span class="dot"></span> ${status.main.label}</span>`;
   const badgesHtml =
     status.badges.length > 0
-      ? `<span class="badges">${status.badges.map((b) => `<span class="chip badge ${b.cls}" ${b.title ? `title="${b.title}"` : ''}>${b.label}</span>`).join('')}</span>`
-      : '';
+      ? `<span class="badges">${status.badges.map((b) => `<span class="chip badge ${b.cls}" ${b.title ? `title="${b.title}"` : ""}>${b.label}</span>`).join("")}</span>`
+      : "";
 
   const verifiedSvg = emailVerified
     ? `<span class="verified-badge" title="Email подтверждён">
@@ -194,7 +204,7 @@ function renderProfileTab(user: User): string {
           <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>`
-    : '';
+    : "";
 
   return `
     <section class="profile-hero">
@@ -258,7 +268,7 @@ function renderProfileTab(user: User): string {
                       <path fill="currentColor" d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z"/>
                     </svg>
                   </button>`
-                : ''
+                : ""
             }
           </span>
         </div>
@@ -276,12 +286,12 @@ function renderProfileTab(user: User): string {
 
 function renderSecurityTab(user: User): string {
   const emailVerified = isEmailVerified(user);
-  const emailText = user.email ? escapeHtml(user.email) : '—';
+  const emailText = user.email ? escapeHtml(user.email) : "—";
   const emailBadgeLabel = emailVerified
-    ? 'Подтверждён'
+    ? "Подтверждён"
     : user.email
-      ? 'Не подтверждён'
-      : '—';
+      ? "Не подтверждён"
+      : "—";
   const emailBadge = emailVerified
     ? `<span class="sec-badge sec-badge--ok">${emailBadgeLabel}</span>`
     : user.email
@@ -289,10 +299,10 @@ function renderSecurityTab(user: User): string {
       : `<span class="sec-badge">${emailBadgeLabel}</span>`;
 
   const emailStatus = emailVerified
-    ? '✅ Email подтверждён'
+    ? "✅ Email подтверждён"
     : user.email
-      ? '⚠️ Email не подтверждён'
-      : 'Email не указан';
+      ? "⚠️ Email не подтверждён"
+      : "Email не указан";
 
   const passChanged =
     user.password_changed_at ||
@@ -300,45 +310,58 @@ function renderSecurityTab(user: User): string {
     user.passChangedAt ||
     user.pass_changed_at ||
     null;
-  const passChangedText = passChanged ? formatDate(passChanged) : '—';
+  const passChangedText = passChanged ? formatDate(passChanged) : "—";
 
   let securityScore = 0;
-  const securityChecks: Array<{ done: boolean; text: string; icon: string; id?: string }> = [];
+  const securityChecks: Array<{
+    done: boolean;
+    text: string;
+    icon: string;
+    id?: string;
+  }> = [];
 
   if (emailVerified) {
     securityScore += 30;
-    securityChecks.push({ done: true, text: 'Email подтвержден', icon: '✅' });
+    securityChecks.push({ done: true, text: "Email подтвержден", icon: "✅" });
   } else {
-    securityChecks.push({ done: false, text: 'Подтвердите email адрес', icon: '⚠️' });
+    securityChecks.push({
+      done: false,
+      text: "Подтвердите email адрес",
+      icon: "⚠️",
+    });
   }
 
   securityChecks.push({
     done: false,
-    text: 'Включите двухфакторную аутентификацию',
-    icon: '🔐',
-    id: '2fa-check',
+    text: "Включите двухфакторную аутентификацию",
+    icon: "🔐",
+    id: "2fa-check",
   });
   securityChecks.push({
     done: false,
-    text: 'Добавьте ключ доступа (Passkey)',
-    icon: '🔑',
-    id: 'passkey-check',
+    text: "Добавьте ключ доступа (Passkey)",
+    icon: "🔑",
+    id: "passkey-check",
   });
 
   const securityLevelClass =
     securityScore >= 100
-      ? 'security-level--good'
+      ? "security-level--good"
       : securityScore >= 50
-        ? 'security-level--medium'
-        : 'security-level--low';
+        ? "security-level--medium"
+        : "security-level--low";
   const securityItemTitle =
-    securityScore >= 100 ? 'Ваш аккаунт под защитой' : 'Проверка безопасности';
+    securityScore >= 100 ? "Ваш аккаунт под защитой" : "Проверка безопасности";
   const securityItemSubtitle =
     securityScore >= 100
-      ? 'Ваш аккаунт прошёл Проверку безопасности. Рекомендуемых действий не найдено.'
-      : 'Обнаружены рекомендации по защите';
+      ? "Ваш аккаунт прошёл Проверку безопасности. Рекомендуемых действий не найдено."
+      : "Обнаружены рекомендации по защите";
   const securityStatusLabel =
-    securityScore >= 100 ? 'Защищён' : securityScore >= 50 ? 'Средняя' : 'Низкая';
+    securityScore >= 100
+      ? "Защищён"
+      : securityScore >= 50
+        ? "Средняя"
+        : "Низкая";
   const securityAriaLabel = `${securityItemTitle}. ${securityItemSubtitle}. ${securityStatusLabel}`;
 
   return `
@@ -351,7 +374,7 @@ function renderSecurityTab(user: User): string {
                 securityScore >= 100
                   ? `<img src="/assets/img/security/okey_64.png" width="32" height="32" alt="Защищён" class="sec-icon-img" />`
                   : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L4 6V11C4 16.55 7.84 21.74 13 23C18.16 21.74 22 16.55 22 11V6L12 2Z" fill="${securityScore >= 50 ? '#fbbf24' : '#ef4444'}" opacity="0.9"/>
+                <path d="M12 2L4 6V11C4 16.55 7.84 21.74 13 23C18.16 21.74 22 16.55 22 11V6L12 2Z" fill="${securityScore >= 50 ? "#fbbf24" : "#ef4444"}" opacity="0.9"/>
               </svg>`
               }
             </div>
@@ -361,7 +384,7 @@ function renderSecurityTab(user: User): string {
         </div>
         <div class="sec-right">
           <div id="securityStatusBadge" class="security-status-badge ${securityLevelClass}">
-            ${securityScore >= 100 ? '✓ Защищён' : securityScore >= 50 ? '⚠ Средняя' : '⚠ Низкая'}
+            ${securityScore >= 100 ? "✓ Защищён" : securityScore >= 50 ? "⚠ Средняя" : "⚠ Низкая"}
           </div>
           <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
             <g><path fill="currentColor" d="M8.809,23.588l-1.617-1.176L14.764,12L7.191,1.588l1.617-1.176l8,11c0.255,0.351,0.255,0.825,0,1.176 L8.809,23.588z"></path></g>
@@ -384,14 +407,14 @@ function renderSecurityTab(user: User): string {
             ${securityChecks
               .map(
                 (check) => `
-              <div ${check.id ? `id="${check.id}"` : ''} class="security-check-item ${check.done ? 'is-done' : ''}">
+              <div ${check.id ? `id="${check.id}"` : ""} class="security-check-item ${check.done ? "is-done" : ""}">
                 <div class="security-check-icon">${check.icon}</div>
                 <div class="security-check-text">${check.text}</div>
-                ${check.done ? '<div class="security-check-done">Выполнено</div>' : ''}
+                ${check.done ? '<div class="security-check-done">Выполнено</div>' : ""}
               </div>
-            `
+            `,
               )
-              .join('')}
+              .join("")}
           </div>
 
           <div id="securityRecommendations">
@@ -403,10 +426,10 @@ function renderSecurityTab(user: User): string {
               <div class="security-recommendation-text">
                 ${
                   securityScore < 30
-                    ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.'
+                    ? "Начните с подтверждения email и включения 2FA для базовой защиты аккаунта."
                     : securityScore < 50
-                      ? 'Добавьте еще несколько методов защиты для повышения безопасности.'
-                      : 'Отлично! Осталось совсем немного для максимальной защиты.'
+                      ? "Добавьте еще несколько методов защиты для повышения безопасности."
+                      : "Отлично! Осталось совсем немного для максимальной защиты."
                 }
               </div>
             </div>
@@ -446,7 +469,7 @@ function renderSecurityTab(user: User): string {
         <div class="sec-panel-inner">
           <div class="sec-status" id="secEmailStatus">${emailStatus}</div>
           <div class="sec-form-row">
-            <input class="input" id="secEmailInp" type="email" placeholder="name@example.com" value="${escapeHtml(user.email || '')}" />
+            <input class="input" id="secEmailInp" type="email" placeholder="name@example.com" value="${escapeHtml(user.email || "")}" />
           </div>
           <div class="sec-actions">
             <button class="btn btn-outline" id="secEmailCancelBtn" type="button" aria-label="Отменить">Отменить</button>
@@ -630,17 +653,24 @@ function renderSessionsTab(_user: User): string {
 
 function renderEasterTab(user: User): string {
   const hasStrawberry =
-    localStorage.getItem('cyb_strawberry_unlocked') === '1' || !!user.easter?.strawberry;
+    localStorage.getItem("cyb_strawberry_unlocked") === "1" ||
+    !!user.easter?.strawberry;
   const hasDarkTrigger =
-    localStorage.getItem('cyb_dark_trigger_unlocked') === '1' || !!user.easter?.darkTrigger;
+    localStorage.getItem("cyb_dark_trigger_unlocked") === "1" ||
+    !!user.easter?.darkTrigger;
+  const hasProfileMirror =
+    localStorage.getItem("cyb_profile_mirror_unlocked") === "1" ||
+    !!user.easter?.profileMirror;
 
   console.log(
-    '[EASTER] hasStrawberry:',
+    "[EASTER] hasStrawberry:",
     hasStrawberry,
-    'hasDarkTrigger:',
+    "hasDarkTrigger:",
     hasDarkTrigger,
-    'user.easter:',
-    user.easter
+    "hasProfileMirror:",
+    hasProfileMirror,
+    "user.easter:",
+    user.easter,
   );
 
   return `
@@ -655,7 +685,7 @@ function renderEasterTab(user: User): string {
       </h3>
 
       <div class="easter-grid">
-        <div class="easter-card ${hasStrawberry ? '' : 'locked'}">
+        <div class="easter-card ${hasStrawberry ? "" : "locked"}">
           ${
             hasStrawberry
               ? '<span class="easter-card-badge">✓ Найдено</span>'
@@ -670,8 +700,8 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-desc">
             ${
               hasStrawberry
-                ? 'Ты нашел особую клубничку на сайте! Отличная работа 🎉'
-                : 'Найди спрятанную клубничку где-то там...'
+                ? "Ты нашел особую клубничку на сайте! Отличная работа 🎉"
+                : "Найди спрятанную клубничку где-то там..."
             }
           </div>
           ${
@@ -686,7 +716,40 @@ function renderEasterTab(user: User): string {
                 </button>`
               : '<div class="easter-hint">💡 Подсказка: исследуй страницы входа...</div>'
           }
-          ${hasStrawberry ? '<div class="easter-hint">🎊 Поздравляем с находкой!</div>' : ''}
+          ${hasStrawberry ? '<div class="easter-hint">🎊 Поздравляем с находкой!</div>' : ""}
+        </div>
+
+        <div class="easter-card ${hasProfileMirror ? "" : "locked"}">
+          ${
+            hasProfileMirror
+              ? '<span class="easter-card-badge">✓ Найдено</span>'
+              : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
+          }
+          <span class="easter-card-icon easter-mirror">🪞</span>
+          <div class="easter-card-title">
+            Зеркало профиля
+          </div>
+          <div class="easter-card-desc">
+            ${
+              hasProfileMirror
+                ? "Семь отражений — и ты увидел себя с другой стороны"
+                : "Секрет спрятан там, где ты показываешь себя миру"
+            }
+          </div>
+          ${
+            hasProfileMirror
+              ? `<button
+                  type="button"
+                  class="btn btn-outline easter-action-btn"
+                  data-route="${escapeHtml(user.login || user.username || "")}"
+                  aria-label="Открыть свой профиль"
+                >
+                  <span class="easter-action-icon">👤</span>
+                  <span>Мой профиль</span>
+                </button>`
+              : '<div class="easter-hint">💡 Подсказка: загляни в свой профиль и посмотри на себя чаще...</div>'
+          }
+          ${hasProfileMirror ? '<div class="easter-hint">🎊 Ты заглянул в своё отражение!</div>' : ""}
         </div>
       </div>
 
@@ -696,7 +759,7 @@ function renderEasterTab(user: User): string {
       </h3>
 
       <div class="easter-grid">
-        <div class="easter-card ${hasDarkTrigger ? 'easter-card-rare' : 'locked'}">
+        <div class="easter-card ${hasDarkTrigger ? "easter-card-rare" : "locked"}">
           ${
             hasDarkTrigger
               ? '<span class="easter-card-badge">✓ Найдено</span>'
@@ -709,8 +772,8 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-desc">
             ${
               hasDarkTrigger
-                ? 'Ты заметил тёмный триггер в полной темноте! Редкое достижение 🌟'
-                : 'Разгадай загадку тьмы, припрятанную где-то на сайте'
+                ? "Ты заметил тёмный триггер в полной темноте! Редкое достижение 🌟"
+                : "Разгадай загадку тьмы, припрятанную где-то на сайте"
             }
           </div>
           ${
@@ -729,7 +792,7 @@ function renderEasterTab(user: User): string {
           ${
             hasDarkTrigger
               ? '<div class="easter-hint">🎊 Конгратулейшн, ты настоящий детектив!</div>'
-              : ''
+              : ""
           }
         </div>
       </div>
@@ -761,31 +824,31 @@ function renderMessagesTab(): string {
 
 export function renderTabContent(tab: string, user: User): string {
   switch (tab) {
-    case 'profile':
+    case "profile":
       return renderProfileTab(user);
-    case 'friends':
+    case "friends":
       return renderFriendsTab();
-    case 'messages':
+    case "messages":
       return renderMessagesTab();
-    case 'security':
+    case "security":
       return renderSecurityTab(user);
-    case 'sessions':
+    case "sessions":
       return renderSessionsTab(user);
-    case 'easter':
+    case "easter":
       return renderEasterTab(user);
     default:
-      return '<div>—</div>';
+      return "<div>—</div>";
   }
 }
 
 export function getTabTitle(tab: string): string {
   const titles: Record<string, string> = {
-    profile: 'Профиль',
-    friends: 'Друзья',
-    messages: 'Сообщения',
-    security: 'Безопасность',
-    sessions: 'Сессии',
-    easter: 'Пасхалки',
+    profile: "Профиль",
+    friends: "Друзья",
+    messages: "Сообщения",
+    security: "Безопасность",
+    sessions: "Сессии",
+    easter: "Пасхалки",
   };
-  return titles[tab] || 'Учётка';
+  return titles[tab] || "Учётка";
 }

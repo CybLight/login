@@ -2,6 +2,7 @@
  * Public profile view - отображение профилей других пользователей
  */
 
+import { bindProfileMirrorEaster } from '@/components/easter/profile-mirror';
 import { apiCall, escapeHtml, renderPresenceChip } from '@/utils';
 import { Router } from '@/router/Router';
 
@@ -441,6 +442,199 @@ export async function renderPublicProfile(username: string): Promise<void> {
         font-size: 75px;
         flex-shrink: 0;
         box-shadow: 0 10px 24px rgba(0,0,0,.24);
+        position: relative;
+        overflow: visible;
+      }
+      .profile-avatar--easter {
+        cursor: pointer;
+        user-select: none;
+        transform-style: preserve-3d;
+      }
+      .profile-avatar--easter::after {
+        content: '';
+        position: absolute;
+        inset: -3px;
+        border-radius: 50%;
+        border: 1px solid rgba(147, 197, 253, 0);
+        pointer-events: none;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+      }
+      .profile-avatar--easter:hover::after {
+        border-color: rgba(147, 197, 253, 0.22);
+        box-shadow: 0 0 18px rgba(96, 165, 250, 0.15);
+      }
+      .profile-avatar-pulse {
+        animation: profileAvatarPulse 0.35s ease;
+      }
+      .profile-avatar--found {
+        animation: profileAvatarFlip 0.82s cubic-bezier(0.34, 1.1, 0.44, 1);
+      }
+      .profile-avatar--found::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        z-index: 2;
+        pointer-events: none;
+        background: linear-gradient(
+          105deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.04) 40%,
+          rgba(186, 230, 253, 0.7) 50%,
+          rgba(255, 255, 255, 0.04) 60%,
+          transparent 100%
+        );
+        opacity: 0;
+        animation: profileAvatarMirrorShine 0.82s ease-out;
+      }
+      .profile-avatar-ring {
+        position: absolute;
+        inset: -6px;
+        border-radius: 50%;
+        border: 2px solid rgba(147, 197, 253, calc(0.25 + var(--mirror-step, 1) * 0.08));
+        pointer-events: none;
+        animation: profileAvatarRing 0.55s ease forwards;
+      }
+      @keyframes profileAvatarPulse {
+        0% { transform: scale(1); }
+        45% { transform: scale(0.94); }
+        100% { transform: scale(1); }
+      }
+      @keyframes profileAvatarFlip {
+        0% {
+          transform: perspective(720px) rotateY(0deg) scale(1);
+          filter: brightness(1);
+        }
+        42% {
+          transform: perspective(720px) rotateY(168deg) scale(0.95);
+          filter: brightness(0.72);
+        }
+        50% {
+          transform: perspective(720px) rotateY(180deg) scale(0.9);
+          filter: brightness(1.45) drop-shadow(0 0 20px rgba(147, 197, 253, 0.75));
+        }
+        58% {
+          transform: perspective(720px) rotateY(192deg) scale(0.95);
+          filter: brightness(0.72);
+        }
+        100% {
+          transform: perspective(720px) rotateY(360deg) scale(1);
+          filter: brightness(1);
+        }
+      }
+      @keyframes profileAvatarMirrorShine {
+        0%, 36%, 64%, 100% { opacity: 0; }
+        48%, 52% { opacity: 1; }
+      }
+      @keyframes profileAvatarRing {
+        0% { transform: scale(0.92); opacity: 0.9; }
+        100% { transform: scale(1.22); opacity: 0; }
+      }
+      .profile-mirror-flip {
+        animation: profileMirrorFlip 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      @keyframes profileMirrorFlip {
+        0% { transform: perspective(900px) rotateY(0deg); }
+        45% { transform: perspective(900px) rotateY(180deg) scale(0.98); }
+        100% { transform: perspective(900px) rotateY(360deg); }
+      }
+      body.profile-mirror-active::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 1100;
+        pointer-events: none;
+        background: linear-gradient(90deg, transparent 49.5%, rgba(147, 197, 253, 0.12) 50%, transparent 50.5%);
+        animation: profileMirrorScan 0.9s ease;
+      }
+      @keyframes profileMirrorScan {
+        0% { opacity: 0; transform: translateX(-8%); }
+        35% { opacity: 1; }
+        100% { opacity: 0; transform: translateX(8%); }
+      }
+      .profile-mirror-particle {
+        position: fixed;
+        z-index: 1200;
+        pointer-events: none;
+        font-size: 16px;
+        animation: profileMirrorParticle 0.85s ease forwards;
+      }
+      @keyframes profileMirrorParticle {
+        0% { opacity: 1; transform: translate(0, 0) scale(1); }
+        100% { opacity: 0; transform: translate(var(--mx), var(--my)) scale(0.4) rotate(180deg); }
+      }
+      .profile-mirror-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1300;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(2, 6, 18, 0.78);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        transition: opacity 0.28s ease;
+      }
+      .profile-mirror-overlay.is-visible { opacity: 1; }
+      .profile-mirror-modal {
+        position: relative;
+        width: min(420px, 100%);
+        border-radius: 18px;
+        border: 1px solid rgba(147, 197, 253, 0.35);
+        background:
+          radial-gradient(120% 90% at 0% 0%, rgba(96, 165, 250, 0.18) 0%, transparent 55%),
+          linear-gradient(180deg, #1a2138 0%, #12182b 100%);
+        padding: 28px 24px 22px;
+        text-align: center;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+          0 0 28px rgba(96, 165, 250, 0.22),
+          0 24px 60px rgba(0, 0, 0, 0.65);
+        transform: translateY(12px) scale(0.96);
+        transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      .profile-mirror-overlay.is-visible .profile-mirror-modal {
+        transform: translateY(0) scale(1);
+      }
+      .profile-mirror-modal__glow {
+        position: absolute;
+        inset: -1px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(147, 197, 253, 0.25), transparent 45%, rgba(255, 127, 39, 0.18));
+        opacity: 0.45;
+        pointer-events: none;
+      }
+      .profile-mirror-modal__icon {
+        font-size: 52px;
+        margin-bottom: 10px;
+        filter: drop-shadow(0 0 16px rgba(147, 197, 253, 0.45));
+      }
+      .profile-mirror-modal__title {
+        margin: 0 0 10px;
+        font-size: 24px;
+        font-weight: 800;
+        color: #eef2ff;
+      }
+      .profile-mirror-modal__text {
+        margin: 0 0 18px;
+        font-size: 14px;
+        line-height: 1.55;
+        color: rgba(238, 242, 255, 0.82);
+      }
+      .profile-mirror-modal__text strong {
+        color: #93c5fd;
+      }
+      .profile-mirror-modal__btn {
+        border: none;
+        border-radius: 10px;
+        padding: 11px 22px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #fff;
+        cursor: pointer;
+        background: linear-gradient(135deg, rgba(96, 165, 250, 0.95) 0%, rgba(59, 130, 246, 0.9) 100%);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
       }
       .profile-details h1 {
         margin: 0;
@@ -770,7 +964,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
     <div class="profile-container">
       <div class="profile-header">
         <div class="profile-info">
-          <div class="profile-avatar">${avatarEmoji}</div>
+          <div class="profile-avatar" id="profileAvatar">${avatarEmoji}</div>
           <div class="profile-details">
             <h1>
               ${escapeHtml(profile.username || profile.login || '')}
@@ -835,6 +1029,11 @@ export async function renderPublicProfile(username: string): Promise<void> {
   `;
 
   bindProfileHeaderHandlers();
+
+  bindProfileMirrorEaster(app.querySelector('#profileAvatar') as HTMLElement | null, {
+    enabled: Boolean(isSelf && currentUser),
+    username: String(profile.username || profile.login || username),
+  });
 
   app.querySelectorAll('[data-profile-toast]').forEach((element) => {
     element.addEventListener('click', () => {

@@ -9,6 +9,7 @@ export const API_BASE = ((import.meta as unknown) as { env?: { DEV?: boolean } }
 // Storage keys
 export const EASTER_KEY = 'cyb_strawberry_unlocked';
 export const DARK_TRIGGER_KEY = 'cyb_dark_trigger_unlocked';
+export const PROFILE_MIRROR_KEY = 'cyb_profile_mirror_unlocked';
 export const HISTORY_FROM_KEY = 'cyb_history_from';
 
 // API configuration

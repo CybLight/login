@@ -213,6 +213,8 @@ export interface UserEasterFlags {
   strawberry?: boolean;
   darkTrigger?: boolean;
   dark_trigger?: boolean;
+  profileMirror?: boolean;
+  profile_mirror?: boolean;
 }
 
 export interface EasterLoginPayload {

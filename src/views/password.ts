@@ -6,13 +6,14 @@ import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import type { EasterLoginPayload } from '@/types';
 import { getStorage, setStorage, escapeHtml, apiCall } from '@/utils';
-import { EASTER_KEY, DARK_TRIGGER_KEY } from '@/config/constants';
+import { EASTER_KEY, DARK_TRIGGER_KEY, PROFILE_MIRROR_KEY } from '@/config/constants';
 import { captchaService } from '@/services';
 import { initPasswordEyes, shakeElement } from '@/components/password/password-helpers';
 
 function extractEasterFlags(payload: EasterLoginPayload): {
   strawberry?: boolean;
   darkTrigger?: boolean;
+  profileMirror?: boolean;
 } {
   const easter = payload?.easter ?? payload?.user?.easter;
   const flags = Array.isArray(payload?.flags)
@@ -29,6 +30,12 @@ function extractEasterFlags(payload: EasterLoginPayload): {
       : typeof easter?.dark_trigger === 'boolean'
         ? easter.dark_trigger
         : undefined;
+  const profileMirrorFromEaster =
+    typeof easter?.profileMirror === 'boolean'
+      ? easter.profileMirror
+      : typeof easter?.profile_mirror === 'boolean'
+        ? easter.profile_mirror
+        : undefined;
 
   const strawberryFromFlags =
     flags.includes('strawberry') ||
@@ -38,20 +45,33 @@ function extractEasterFlags(payload: EasterLoginPayload): {
     flags.includes('dark_trigger') ||
     flags.includes('dark_trigger_unlocked') ||
     flags.includes('easter_dark_trigger');
+  const profileMirrorFromFlags =
+    flags.includes('profile_mirror') ||
+    flags.includes('profile_mirror_unlocked') ||
+    flags.includes('easter_profile_mirror');
 
   return {
     strawberry: strawberryFromEaster ?? (strawberryFromFlags ? true : undefined),
     darkTrigger: darkTriggerFromEaster ?? (darkTriggerFromFlags ? true : undefined),
+    profileMirror: profileMirrorFromEaster ?? (profileMirrorFromFlags ? true : undefined),
   };
 }
 
-function syncEasterFlagsToStorage(source: { strawberry?: boolean; darkTrigger?: boolean }): void {
+function syncEasterFlagsToStorage(source: {
+  strawberry?: boolean;
+  darkTrigger?: boolean;
+  profileMirror?: boolean;
+}): void {
   if (source.strawberry === true) {
     localStorage.setItem(EASTER_KEY, '1');
   }
 
   if (source.darkTrigger === true) {
     localStorage.setItem(DARK_TRIGGER_KEY, '1');
+  }
+
+  if (source.profileMirror === true) {
+    localStorage.setItem(PROFILE_MIRROR_KEY, '1');
   }
 }
 

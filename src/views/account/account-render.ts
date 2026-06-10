@@ -79,6 +79,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
 
             <div class="account-user-menu" id="accountUserMenu" hidden>
               <div class="account-user-menu__name">${escapeHtml(String(user.username ?? login))}</div>
+              <div class="account-user-menu__divider" aria-hidden="true"></div>
               <div class="account-user-menu__meta">
                 <span class="chip status ${userStatus.main.cls}" title="Статус аккаунта"><span class="dot"></span> ${userStatus.main.label}</span>
                 <span class="account-user-menu__id" title="ID пользователя">${escapeHtml(userPublicId)}</span>
