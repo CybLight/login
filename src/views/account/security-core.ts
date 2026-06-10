@@ -1,5 +1,6 @@
 import { t, getLocale, localeTag } from '@/i18n';
 import type { PasskeyItem, WebAuthnCredentialDescriptorInput } from '@/types';
+import { showAppConfirm, showAppPrompt } from '@/ui';
 import { apiCall, escapeHtml } from '@/utils';
 import { fmtTs } from './device-utils';
 
@@ -426,7 +427,16 @@ export function createSecurityCore(deps: SecurityCoreDeps) {
           document.querySelectorAll('[data-delete-passkey]').forEach((btn) => {
             btn.addEventListener('click', async () => {
               const passkeyId = btn.getAttribute('data-delete-passkey');
-              if (!passkeyId || !confirm(t('Удалить этот ключ доступа?'))) return;
+              if (
+                !passkeyId ||
+                !(await showAppConfirm(t('Удалить этот ключ доступа?'), {
+                  tone: 'warn',
+                  destructive: true,
+                  confirmLabel: t('Удалить'),
+                }))
+              ) {
+                return;
+              }
 
               try {
                 const r = await apiCall(`/auth/passkey/${passkeyId}`, {
@@ -521,7 +531,13 @@ export function createSecurityCore(deps: SecurityCoreDeps) {
               transports: responseAny.getTransports?.() || [],
             };
 
-            const name = window.prompt(t('Введите название для этого ключа доступа:'), t('Мой ключ'));
+            const name = await showAppPrompt(t('Введите название для этого ключа доступа:'), t('Мой ключ'), {
+              title: t('Ключ доступа'),
+            });
+            if (name === null) {
+              api.showMsg('warn', t('Регистрация ключа отменена'));
+              return;
+            }
             const r2 = await apiCall('/auth/passkey/register', {
               method: 'POST',
               credentials: 'include',

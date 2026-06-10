@@ -8,7 +8,7 @@ export function shell(contentHtml: string): string {
   const locale = getLocale();
   const homeUrl = sitePath('', locale);
   const privacyUrl = `${sitePath('privacy', locale)}`;
-  const langHref = (code: Locale) => localePath(stripLocalePrefix().path || 'username', code);
+  const langHref = (code: Locale) => localePath(stripLocalePrefix().path, code);
 
   return `
     <div class="auth-shell">
@@ -92,21 +92,45 @@ function positionFooterLangMenu(btn: HTMLButtonElement, menu: HTMLUListElement):
   menu.style.left = `${left}px`;
 }
 
+function restoreFooterLangMenu(menu: HTMLUListElement): void {
+  const wrapId = menu.dataset.langWrapId;
+  if (!wrapId) return;
+  const wrap = document.querySelector(`[data-lang-wrap-id="${wrapId}"]`);
+  if (wrap) wrap.appendChild(menu);
+}
+
+function openFooterLangMenu(btn: HTMLButtonElement, menu: HTMLUListElement): void {
+  if (menu.parentElement !== document.body) {
+    document.body.appendChild(menu);
+  }
+  menu.removeAttribute('hidden');
+  positionFooterLangMenu(btn, menu);
+  btn.setAttribute('aria-expanded', 'true');
+}
+
 function closeFooterLangMenus(): void {
   document.querySelectorAll('.footer-lang-menu').forEach((m) => {
-    m.setAttribute('hidden', '');
-    (m as HTMLElement).style.top = '';
-    (m as HTMLElement).style.left = '';
+    const menu = m as HTMLUListElement;
+    menu.setAttribute('hidden', '');
+    menu.style.top = '';
+    menu.style.left = '';
+    restoreFooterLangMenu(menu);
   });
   document.querySelectorAll('.footer-lang-btn').forEach((b) => b.setAttribute('aria-expanded', 'false'));
 }
 
 function initFooterLangSwitcher(): void {
+  document.querySelectorAll('body > .footer-lang-menu').forEach((menu) => menu.remove());
+
   document.querySelectorAll('.footer-lang-wrap').forEach((wrap) => {
     const btn = wrap.querySelector('.footer-lang-btn') as HTMLButtonElement | null;
     const menu = wrap.querySelector('.footer-lang-menu') as HTMLUListElement | null;
     if (!btn || !menu || wrap.getAttribute('data-lang-init') === '1') return;
+
+    const wrapId = `footer-lang-${Math.random().toString(36).slice(2, 9)}`;
     wrap.setAttribute('data-lang-init', '1');
+    wrap.setAttribute('data-lang-wrap-id', wrapId);
+    menu.dataset.langWrapId = wrapId;
 
     menu.querySelectorAll('[data-locale-link]').forEach((link) => {
       link.addEventListener('click', () => {
@@ -121,19 +145,13 @@ function initFooterLangSwitcher(): void {
       });
     });
 
-    wrap.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const open = menu.hasAttribute('hidden');
+      const willOpen = menu.hasAttribute('hidden');
       closeFooterLangMenus();
-      if (open) {
-        menu.removeAttribute('hidden');
-        positionFooterLangMenu(btn, menu);
-        btn.setAttribute('aria-expanded', 'true');
+      if (willOpen) {
+        openFooterLangMenu(btn, menu);
       }
     });
   });

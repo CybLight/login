@@ -821,7 +821,7 @@ export function openChatInMessagesTab(
     }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
-      insertChatLink(chatInput);
+      void insertChatLink(chatInput);
       return;
     }
     if (event.key === 'Escape') {
@@ -846,8 +846,8 @@ export function openChatInMessagesTab(
       else if (format === 'mono') insertChatFormatting('`', '`', chatInput);
       else if (format === 'strike') insertChatFormatting('~~', '~~', chatInput);
       else if (format === 'spoiler') insertChatFormatting('||', '||', chatInput);
-      else if (format === 'link') insertChatLink(chatInput);
-      else if (format === 'code') insertChatCode(chatInput);
+      else if (format === 'link') void insertChatLink(chatInput);
+      else if (format === 'code') void insertChatCode(chatInput);
     });
   });
 

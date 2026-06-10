@@ -6,6 +6,7 @@ import { bindProfileMirrorEaster } from '@/components/easter/profile-mirror';
 import { t, sitePath, getLocale, getLocaleLabel, localePath, localeTag, type Locale } from '@/i18n';
 import { apiCall, escapeHtml, renderPresenceChip } from '@/utils';
 import { Router } from '@/router/Router';
+import { showAppPrompt } from '@/ui';
 
 interface PublicProfile {
   id?: string;
@@ -1151,8 +1152,10 @@ export async function renderPublicProfile(username: string): Promise<void> {
         .then(() => {
           showProfileToast(t('Ссылка на Профиль скопирована'));
         })
-        .catch(() => {
-          window.prompt(t('Копируйте ссылку:'), url);
+        .catch(async () => {
+          await showAppPrompt(t('Копируйте ссылку:'), url, {
+            title: t('Поделиться профилем'),
+          });
         });
     });
   }

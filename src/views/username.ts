@@ -4,7 +4,7 @@
 
 import { t, sitePath, getLocale } from '@/i18n';
 import { Router } from '@/router/Router';
-import { setAppContent, shell } from '@/ui';
+import { setAppContent, shell, showAppAlert } from '@/ui';
 import { setStorage, apiCall } from '@/utils';
 
 export function renderUsername(): void {
@@ -79,12 +79,12 @@ export function renderUsername(): void {
 
   const form = document.getElementById('f') as HTMLFormElement;
   if (form) {
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const loginInput = document.getElementById('login') as HTMLInputElement;
       const login = loginInput.value.trim();
       if (!login) {
-        alert(t('Введите имя пользователя'));
+        await showAppAlert(t('Введите имя пользователя'), { tone: 'warn' });
         return;
       }
       setStorage('cyb_login', login, sessionStorage);
@@ -95,12 +95,18 @@ export function renderUsername(): void {
 
 async function handlePasskeyLogin(): Promise<void> {
   if (!window.isSecureContext) {
-    alert(t('❌ WebAuthn требует безопасный контекст.\n\nОткройте страницу на https:// или используйте Chrome/Edge.\n\nДля Firefox: убедитесь, что страница открыта именно как http://localhost:5173/ без прокси/iframe.'));
+    await showAppAlert(
+      t('❌ WebAuthn требует безопасный контекст.\n\nОткройте страницу на https:// или используйте Chrome/Edge.\n\nДля Firefox: убедитесь, что страница открыта именно как http://localhost:5173/ без прокси/iframe.'),
+      { tone: 'error' }
+    );
     return;
   }
 
   if (!window.PublicKeyCredential) {
-    alert(t('❌ Ваш браузер не поддерживает ключи доступа (passkeys).\n\nИспользуйте современный браузер: Chrome, Edge, Safari или Firefox.'));
+    await showAppAlert(
+      t('❌ Ваш браузер не поддерживает ключи доступа (passkeys).\n\nИспользуйте современный браузер: Chrome, Edge, Safari или Firefox.'),
+      { tone: 'error' }
+    );
     return;
   }
 
@@ -201,7 +207,7 @@ async function handlePasskeyLogin(): Promise<void> {
       errorMessage = `${t('Ошибка: {error}', { error: err.message })}`;
     }
 
-    alert(errorMessage);
+    await showAppAlert(errorMessage, { tone: 'error' });
   } finally {
     keyLoginBtn.disabled = false;
     keyLoginBtn.innerHTML = originalText;

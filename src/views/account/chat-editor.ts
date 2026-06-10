@@ -1,3 +1,5 @@
+import { t } from '@/i18n';
+import { showAppPrompt } from '@/ui';
 import { stripNoPreviewTokens } from './chat-format';
 
 export function insertChatFormatting(
@@ -26,15 +28,16 @@ export function insertChatFormatting(
   input.focus();
 }
 
-export function insertChatLink(input: HTMLTextAreaElement): void {
+export async function insertChatLink(input: HTMLTextAreaElement): Promise<void> {
   const selectionStart = input.selectionStart;
   const selectionEnd = input.selectionEnd;
   const selectedText = input.value.substring(selectionStart, selectionEnd);
 
-  const url = window.prompt('Введите URL:', 'https://');
+  const url = await showAppPrompt(t('Введите URL:'), 'https://');
   if (!url) return;
 
-  const fallbackText = window.prompt('Текст ссылки:', selectedText || url) || selectedText || url;
+  const fallbackText =
+    (await showAppPrompt(t('Текст ссылки:'), selectedText || url)) || selectedText || url;
   const markdown = `[${fallbackText}](${url})`;
 
   input.value =
@@ -43,11 +46,11 @@ export function insertChatLink(input: HTMLTextAreaElement): void {
   input.focus();
 }
 
-export function insertChatCode(input: HTMLTextAreaElement): void {
+export async function insertChatCode(input: HTMLTextAreaElement): Promise<void> {
   const selectionStart = input.selectionStart;
   const selectionEnd = input.selectionEnd;
   const selectedText = input.value.substring(selectionStart, selectionEnd);
-  const language = window.prompt('Язык программирования (необязательно):', '') || '';
+  const language = (await showAppPrompt(t('Язык программирования (необязательно):'), '')) || '';
   const formatted = `\`\`\`${language}\n${selectedText || 'код здесь'}\n\`\`\``;
 
   input.value =

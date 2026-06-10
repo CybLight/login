@@ -407,7 +407,7 @@
 
 .footer-lang-menu {
   position: fixed;
-  z-index: 130;
+  z-index: 10000;
   min-width: 148px;
   margin: 0;
   padding: 6px 0;
@@ -576,6 +576,157 @@
 .cyb-report-modal__actions button {
   flex: 1;
   max-width: 150px;
+}
+
+/* ===== App dialog (alert / confirm / prompt) ===== */
+
+.cyb-app-dialog {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 10050;
+}
+
+.cyb-app-dialog.is-open {
+  display: block;
+}
+
+.cyb-app-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 4, 12, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.cyb-app-dialog__card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(440px, calc(100vw - 28px));
+  padding: 22px 22px 18px;
+  text-align: center;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(255, 127, 39, 0.14) 0%, transparent 52%),
+    radial-gradient(120% 90% at 100% 100%, rgba(96, 165, 250, 0.12) 0%, transparent 52%),
+    linear-gradient(180deg, #1a2138 0%, #141a2e 100%);
+  border: 1px solid rgba(255, 145, 64, 0.35);
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 0 22px rgba(255, 127, 39, 0.18),
+    0 24px 70px rgba(0, 0, 0, 0.72);
+}
+
+.cyb-app-dialog--error .cyb-app-dialog__card {
+  border-color: rgba(248, 113, 113, 0.45);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset,
+    0 0 22px rgba(248, 113, 113, 0.2),
+    0 24px 70px rgba(0, 0, 0, 0.72);
+}
+
+.cyb-app-dialog--warn .cyb-app-dialog__card {
+  border-color: rgba(251, 191, 36, 0.42);
+}
+
+.cyb-app-dialog--success .cyb-app-dialog__card {
+  border-color: rgba(52, 211, 153, 0.42);
+}
+
+.cyb-app-dialog__icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: rgba(231, 236, 255, 0.95);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 18px rgba(70, 200, 255, 0.12);
+}
+
+.cyb-app-dialog--error .cyb-app-dialog__icon {
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.14);
+  border-color: rgba(248, 113, 113, 0.35);
+  box-shadow: 0 0 18px rgba(248, 113, 113, 0.18);
+}
+
+.cyb-app-dialog--warn .cyb-app-dialog__icon {
+  color: #fde68a;
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.32);
+}
+
+.cyb-app-dialog--success .cyb-app-dialog__icon {
+  color: #a7f3d0;
+  background: rgba(52, 211, 153, 0.12);
+  border-color: rgba(52, 211, 153, 0.32);
+}
+
+.cyb-app-dialog__title {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: rgba(231, 236, 255, 0.96);
+}
+
+.cyb-app-dialog__message {
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(231, 236, 255, 0.82);
+  text-align: left;
+  margin-bottom: 4px;
+}
+
+.cyb-app-dialog__field {
+  margin-top: 14px;
+  text-align: left;
+}
+
+.cyb-app-dialog__field.is-hidden {
+  display: none;
+}
+
+.cyb-app-dialog__label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: rgba(231, 236, 255, 0.88);
+}
+
+.cyb-app-dialog__input {
+  width: 100%;
+}
+
+.cyb-app-dialog__actions {
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.cyb-app-dialog__actions .btn {
+  min-width: 120px;
+}
+
+.cyb-app-dialog--alert .cyb-app-dialog__actions .btn {
+  min-width: 148px;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  filter: brightness(1.06);
 }
 
 /* ============================

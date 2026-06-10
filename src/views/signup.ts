@@ -4,7 +4,7 @@
 
 import { t } from '@/i18n';
 import { Router } from '@/router/Router';
-import { setAppContent, shell } from '@/ui';
+import { setAppContent, shell, showAppAlert } from '@/ui';
 import { setStorage, apiCall } from '@/utils';
 import { authService, captchaService } from '@/services';
 import { initPasswordEyes } from '@/components/password/password-helpers';
@@ -108,33 +108,37 @@ export async function renderSignup(): Promise<void> {
         !/\d/.test(pass1) ||
         !/[^\w\s]/.test(pass1)
       ) {
-        alert(t('Пароль не соответствует требованиям.'));
+        await showAppAlert(t('Пароль не соответствует требованиям.'), { tone: 'warn' });
         return;
       }
 
       if (!/^[\x20-\x7E]*$/.test(pass1)) {
-        alert(t('Пароль: нельзя использовать русские/украинские буквы и любые не-ASCII символы.'));
+        await showAppAlert(t('Пароль: нельзя использовать русские/украинские буквы и любые не-ASCII символы.'), {
+          tone: 'warn',
+        });
         pass1El?.focus();
         return;
       }
 
       // Валидация логина
       if (!login) {
-        alert(t('🚫 Введите логин'));
+        await showAppAlert(t('🚫 Введите логин'), { tone: 'warn' });
         return;
       }
       if (!/^[A-Za-z0-9_]{3,24}$/.test(login)) {
-        alert(t('Логин: только латиница (A–Z), цифры (0–9) и "_" . Длина 3–24.'));
+        await showAppAlert(t('Логин: только латиница (A–Z), цифры (0–9) и "_" . Длина 3–24.'), {
+          tone: 'warn',
+        });
         return;
       }
 
       // Проверка совпадения паролей
       if (!pass1) {
-        alert(t('🚫 Введите пароль'));
+        await showAppAlert(t('🚫 Введите пароль'), { tone: 'warn' });
         return;
       }
       if (pass1 !== pass2) {
-        alert(t('🚫 Пароли не совпадают'));
+        await showAppAlert(t('🚫 Пароли не совпадают'), { tone: 'warn' });
         pass2El?.focus();
         pass2El?.select();
         return;
@@ -142,8 +146,9 @@ export async function renderSignup(): Promise<void> {
 
       // Проверка Turnstile
       if (!captchaService.token) {
-        alert(
-          t('🛡️ Не удалось получить токен Turnstile.\n\nВозможные причины:\n• Открыта панель разработчика (DevTools) в Firefox\n• Включён режим приватности или блокировщик\n\nПопробуйте закрыть DevTools или использовать другой браузер.')
+        await showAppAlert(
+          t('🛡️ Не удалось получить токен Turnstile.\n\nВозможные причины:\n• Открыта панель разработчика (DevTools) в Firefox\n• Включён режим приватности или блокировщик\n\nПопробуйте закрыть DevTools или использовать другой браузер.'),
+          { tone: 'error' }
         );
         return;
       }
@@ -172,15 +177,16 @@ export async function renderSignup(): Promise<void> {
           // Сброс капчи
           await captchaService.reset();
 
-          alert(data.error || t('Ошибка регистрации'));
+          await showAppAlert(data.error || t('Ошибка регистрации'), { tone: 'error' });
           return;
         }
 
         // Проверяем, что сессия установилась
         const user = await authService.checkSession();
         if (!user) {
-          alert(
-            t('Регистрация прошла, но сессия не установилась (cookie заблокирована). Проверь CORS / credentials.')
+          await showAppAlert(
+            t('Регистрация прошла, но сессия не установилась (cookie заблокирована). Проверь CORS / credentials.'),
+            { tone: 'error' }
           );
           return;
         }
@@ -209,7 +215,7 @@ export async function renderSignup(): Promise<void> {
 
         await captchaService.reset();
 
-        alert(t('Ошибка сети. Проверьте соединение и попробуйте ещё раз.'));
+        await showAppAlert(t('Ошибка сети. Проверьте соединение и попробуйте ещё раз.'), { tone: 'error' });
       }
     });
   }
