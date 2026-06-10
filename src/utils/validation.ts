@@ -2,14 +2,15 @@
  * Validation utilities
  */
 
-import { PASSWORD_MIN_LENGTH, USERNAME_REGEX, PASSWORD_HINTS } from '@/config/constants';
+import { PASSWORD_MIN_LENGTH, USERNAME_REGEX, PASSWORD_HINT_REGEX } from '@/config/constants';
+import { t } from '@/i18n';
 import type { PasswordStrength, ValidationResult } from '@/types';
 
 export const validators = {
   email: (email: string): ValidationResult => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return { valid: false, message: 'Некорректный email-адрес' };
+      return { valid: false, message: t('Некорректный email-адрес') };
     }
     return { valid: true };
   },
@@ -18,7 +19,7 @@ export const validators = {
     if (!USERNAME_REGEX.test(username)) {
       return {
         valid: false,
-        message: 'Имя пользователя: 3-20 символов, латиница, цифры, _ или -',
+        message: t('Имя пользователя: 3-20 символов, латиница, цифры, _ или -'),
       };
     }
     return { valid: true };
@@ -28,7 +29,7 @@ export const validators = {
     if (password.length < PASSWORD_MIN_LENGTH) {
       return {
         valid: false,
-        message: `Пароль должен быть минимум ${PASSWORD_MIN_LENGTH} символов`,
+        message: t('Пароль должен быть минимум {min} символов', { min: PASSWORD_MIN_LENGTH }),
       };
     }
     return { valid: true };
@@ -36,18 +37,18 @@ export const validators = {
 
   passwordStrength: (password: string): PasswordStrength => {
     return {
-      lowercase: PASSWORD_HINTS.lowercase.regex.test(password),
-      uppercase: PASSWORD_HINTS.uppercase.regex.test(password),
-      numbers: PASSWORD_HINTS.numbers.regex.test(password),
-      special: PASSWORD_HINTS.special.regex.test(password),
-      length: PASSWORD_HINTS.length.regex.test(password),
+      lowercase: PASSWORD_HINT_REGEX.lowercase.test(password),
+      uppercase: PASSWORD_HINT_REGEX.uppercase.test(password),
+      numbers: PASSWORD_HINT_REGEX.numbers.test(password),
+      special: PASSWORD_HINT_REGEX.special.test(password),
+      length: PASSWORD_HINT_REGEX.length.test(password),
       score: calculatePasswordScore(password),
     };
   },
 
   passwordMatch: (password: string, confirm: string): ValidationResult => {
     if (password !== confirm) {
-      return { valid: false, message: 'Пароли не совпадают' };
+      return { valid: false, message: t('Пароли не совпадают') };
     }
     return { valid: true };
   },
@@ -55,11 +56,11 @@ export const validators = {
 
 export function calculatePasswordScore(password: string): number {
   let score = 0;
-  if (PASSWORD_HINTS.lowercase.regex.test(password)) score++;
-  if (PASSWORD_HINTS.uppercase.regex.test(password)) score++;
-  if (PASSWORD_HINTS.numbers.regex.test(password)) score++;
-  if (PASSWORD_HINTS.special.regex.test(password)) score++;
-  if (PASSWORD_HINTS.length.regex.test(password)) score++;
+  if (PASSWORD_HINT_REGEX.lowercase.test(password)) score++;
+  if (PASSWORD_HINT_REGEX.uppercase.test(password)) score++;
+  if (PASSWORD_HINT_REGEX.numbers.test(password)) score++;
+  if (PASSWORD_HINT_REGEX.special.test(password)) score++;
+  if (PASSWORD_HINT_REGEX.length.test(password)) score++;
   return score;
 }
 
@@ -67,15 +68,15 @@ export function getPasswordStrengthLabel(score: number): string {
   switch (score) {
     case 0:
     case 1:
-      return 'Очень слабый';
+      return t('Очень слабый');
     case 2:
-      return 'Слабый';
+      return t('Слабый');
     case 3:
-      return 'Средний';
+      return t('Средний');
     case 4:
-      return 'Хороший';
+      return t('Хороший');
     case 5:
-      return 'Отличный';
+      return t('Отличный');
     default:
       return 'Unknown';
   }

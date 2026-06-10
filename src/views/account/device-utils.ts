@@ -1,3 +1,5 @@
+import { getLocale, localeTag } from '../../i18n/locale';
+
 export interface ParsedUA {
   os: string;
   browser: string;
@@ -145,7 +147,7 @@ export function fmtTs(ms: number | string | null | undefined): string {
   const d = new Date(timestamp);
   if (Number.isNaN(d.getTime())) return '—';
 
-  return d.toLocaleString('ru-RU', {
+  return d.toLocaleString(localeTag(getLocale()), {
     year: 'numeric',
     month: 'long',
     day: '2-digit',

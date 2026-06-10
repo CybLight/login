@@ -2,6 +2,7 @@
  * Strawberry History view - галерея фотографий
  */
 
+import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { getStorage, escapeHtml, apiCall } from '@/utils';
@@ -42,7 +43,7 @@ export async function renderStrawberryHistory(): Promise<void> {
   }
 
   const from = String(getStorage(HISTORY_FROM_KEY, '', sessionStorage) || '');
-  const login = getStorage('cyb_login', '', sessionStorage) || 'Гость';
+  const login = getStorage('cyb_login', '', sessionStorage) || t('Гость');
 
   setAppContent(
     shell(`
@@ -52,14 +53,14 @@ export async function renderStrawberryHistory(): Promise<void> {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Стенография 🍓</h1>
+          <h1>${t('Стенография 🍓')}</h1>
           <span class="brand">${escapeHtml(login)}</span>
         </div>
       </div>
 
       <p class="strawberry-text">
-        Мы зафиксировали необычную активность.<br>
-        Этот клубничный дождь не зря тут падает…
+        ${t('Мы зафиксировали необычную активность.')}<br>
+        ${t('Этот клубничный дождь не зря тут падает…')}
       </p>
 
       <div class="strawberry-grid">
@@ -73,8 +74,8 @@ export async function renderStrawberryHistory(): Promise<void> {
         <img src="/assets/img/strawberries/8.jpg" alt="🍓 Izzzi">
       </div>
 
-      <button class="btn btn-primary" id="toUsername" aria-label="${from === 'account-easter-eggs' ? '← Вернуться назад' : 'Продолжить'}">
-         ${from === 'account-easter-eggs' ? '← Вернуться назад' : 'Продолжить'}
+      <button class="btn btn-primary" id="toUsername" aria-label="${from === 'account-easter-eggs' ? t('← Вернуться назад') : t('Продолжить')}">
+         ${from === 'account-easter-eggs' ? t('← Вернуться назад') : t('Продолжить')}
       </button>
     </section>
   `)

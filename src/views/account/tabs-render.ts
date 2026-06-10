@@ -1,3 +1,4 @@
+import { t, getLocale, localeTag, sitePath } from '@/i18n';
 import type { UserEasterFlags } from "@/types";
 import { escapeHtml } from "@/utils";
 import { getAvatarInnerHtml } from "./avatar";
@@ -48,7 +49,7 @@ function formatDate(timestamp: string | number | null | undefined): string {
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return "—";
 
-  return d.toLocaleString("ru-RU", {
+  return d.toLocaleString(localeTag(getLocale()), {
     year: "numeric",
     month: "long",
     day: "2-digit",
@@ -66,7 +67,7 @@ export function getUserStatus(user: User): {
 } {
   if (user.isBlocked || user.flags?.includes("banned")) {
     return {
-      main: { label: "Заблокирован", cls: "status--blocked" },
+      main: { label: t("Заблокирован"), cls: "status--blocked" },
       badges: [],
     };
   }
@@ -75,37 +76,37 @@ export function getUserStatus(user: User): {
 
   if (userRole === "owner" || user.flags?.includes("owner")) {
     return {
-      main: { label: "Владелец", cls: "status--owner" },
+      main: { label: t("Владелец"), cls: "status--owner" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
   if (userRole === "admin" || user.flags?.includes("admin")) {
     return {
-      main: { label: "Администратор", cls: "status--admin" },
+      main: { label: t("Администратор"), cls: "status--admin" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
   if (userRole === "moderator" || user.flags?.includes("moderator")) {
     return {
-      main: { label: "Модератор", cls: "status--mod" },
+      main: { label: t("Модератор"), cls: "status--mod" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
   if (userRole === "support" || user.flags?.includes("support")) {
     return {
-      main: { label: "Поддержка", cls: "status--support" },
+      main: { label: t("Поддержка"), cls: "status--support" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
   if (userRole === "registrar" || user.flags?.includes("registrar")) {
     return {
-      main: { label: "Регистратор", cls: "status--registrar" },
+      main: { label: t("Регистратор"), cls: "status--registrar" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
   if (userRole === "tester" || user.flags?.includes("tester")) {
     return {
-      main: { label: "Тестер", cls: "status--tester" },
+      main: { label: t("Тестер"), cls: "status--tester" },
       badges: buildBadges(user, { includeRoleBadges: false }),
     };
   }
@@ -121,13 +122,13 @@ export function getUserStatus(user: User): {
 
   let main;
   if (days < 7 || sessionsCount < 3) {
-    main = { label: "Новичок", cls: "status--newbie" };
+    main = { label: t("Новичок"), cls: "status--newbie" };
   } else if (days < 30 || sessionsCount < 20) {
-    main = { label: "Активный", cls: "status--active" };
+    main = { label: t("Активный"), cls: "status--active" };
   } else if (days < 180 || sessionsCount < 80) {
-    main = { label: "Постоянный", cls: "status--regular" };
+    main = { label: t("Постоянный"), cls: "status--regular" };
   } else {
-    main = { label: "Ветеран", cls: "status--veteran" };
+    main = { label: t("Ветеран"), cls: "status--veteran" };
   }
 
   return { main, badges: buildBadges(user) };
@@ -156,17 +157,17 @@ function buildBadges(
   if (includeRoleBadges && user.role) {
     const role = user.role.toLowerCase();
     if (role === "owner")
-      badges.push({ label: "• Владелец", cls: "badge--owner" });
+      badges.push({ label: t("• Владелец"), cls: "badge--owner" });
     if (role === "admin")
-      badges.push({ label: "• Администратор", cls: "badge--admin" });
+      badges.push({ label: t("• Администратор"), cls: "badge--admin" });
     if (role === "moderator")
-      badges.push({ label: "• Модератор", cls: "badge--mod" });
+      badges.push({ label: t("• Модератор"), cls: "badge--mod" });
     if (role === "support")
-      badges.push({ label: "• Поддержка", cls: "badge--support" });
+      badges.push({ label: t("• Поддержка"), cls: "badge--support" });
     if (role === "registrar")
-      badges.push({ label: "• Регистратор", cls: "badge--registrar" });
+      badges.push({ label: t("• Регистратор"), cls: "badge--registrar" });
     if (role === "tester")
-      badges.push({ label: "• Тестер", cls: "badge--tester" });
+      badges.push({ label: t("• Тестер"), cls: "badge--tester" });
   }
 
   if (flags.has("trusted")) badges.push({ label: "Trusted", cls: "badge--ok" });
@@ -191,14 +192,14 @@ function renderProfileTab(user: User): string {
   const createdAt = formatDate(user.createdAt) || "—";
 
   const status = getUserStatus(user);
-  const statusHtml = `<span class="chip status ${status.main.cls}" title="Статус аккаунта"><span class="dot"></span> ${status.main.label}</span>`;
+  const statusHtml = `<span class="chip status ${status.main.cls}" title="${t('Статус аккаунта')}"><span class="dot"></span> ${status.main.label}</span>`;
   const badgesHtml =
     status.badges.length > 0
       ? `<span class="badges">${status.badges.map((b) => `<span class="chip badge ${b.cls}" ${b.title ? `title="${b.title}"` : ""}>${b.label}</span>`).join("")}</span>`
       : "";
 
   const verifiedSvg = emailVerified
-    ? `<span class="verified-badge" title="Email подтверждён">
+    ? `<span class="verified-badge" title="${t('Email подтверждён')}">
         <svg class="verified-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="12" r="10" fill="#3b82f6"/>
           <path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -228,7 +229,7 @@ function renderProfileTab(user: User): string {
       <div class="profile-hero__right profile-hero__right--stacked">
         <button type="button" data-route="${escapeHtml(login)}" 
                 class="profile-action-btn profile-link-btn"
-                title="Посмотреть профиль" aria-label="Посмотреть профиль">
+                title="${t('Посмотреть профиль')}" aria-label="${t('Посмотреть профиль')}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
             <circle cx="12" cy="12" r="3"></circle>
@@ -236,7 +237,7 @@ function renderProfileTab(user: User): string {
         </button>
         <button type="button" data-route="edit-profile" 
           class="profile-action-btn profile-edit-btn"
-                title="Редактировать профиль" aria-label="Редактировать профиль">
+                title="${t('Редактировать профиль')}" aria-label="${t('Редактировать профиль')}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -247,13 +248,13 @@ function renderProfileTab(user: User): string {
 
     <section class="card-grid">
       <article class="info-card">
-        <div class="info-card__label">Логин</div>
+        <div class="info-card__label">${t('Логин')}</div>
         <div class="info-card__value">${escapeHtml(login)}</div>
-        <div class="info-card__hint">Основное имя для входа</div>
+        <div class="info-card__hint">${t('Основное имя для входа')}</div>
       </article>
 
       <article class="info-card">
-        <div class="info-card__label">ID пользователя</div>
+        <div class="info-card__label">${t('ID пользователя')}</div>
         <div class="info-card__value">
           <span class="mono-pill id-pill">
             <b class="mono">${escapeHtml(pubId)}</b>
@@ -262,8 +263,8 @@ function renderProfileTab(user: User): string {
                 ? `<button class="copy-btn copy-btn--icon"
                       type="button"
                       data-copybtn="${escapeHtml(pubId)}"
-                      aria-label="Скопировать ID пользователя"
-                      title="Скопировать">
+                      aria-label="${t('Скопировать ID пользователя')}"
+                      title="${t('Скопировать')}">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path fill="currentColor" d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z"/>
                     </svg>
@@ -272,13 +273,13 @@ function renderProfileTab(user: User): string {
             }
           </span>
         </div>
-        <div class="info-card__hint">Отправляй его поддержке</div>
+        <div class="info-card__hint">${t('Отправляй его поддержке')}</div>
       </article>
 
       <article class="info-card">
-        <div class="info-card__label">Дата регистрации</div>
+        <div class="info-card__label">${t('Дата регистрации')}</div>
         <div class="info-card__value">${escapeHtml(createdAt)}</div>
-        <div class="info-card__hint">Создано в системе</div>
+        <div class="info-card__hint">${t('Создано в системе')}</div>
       </article>
     </section>
   `;
@@ -288,9 +289,9 @@ function renderSecurityTab(user: User): string {
   const emailVerified = isEmailVerified(user);
   const emailText = user.email ? escapeHtml(user.email) : "—";
   const emailBadgeLabel = emailVerified
-    ? "Подтверждён"
+    ? t('Подтверждён')
     : user.email
-      ? "Не подтверждён"
+      ? t('Не подтверждён')
       : "—";
   const emailBadge = emailVerified
     ? `<span class="sec-badge sec-badge--ok">${emailBadgeLabel}</span>`
@@ -299,10 +300,10 @@ function renderSecurityTab(user: User): string {
       : `<span class="sec-badge">${emailBadgeLabel}</span>`;
 
   const emailStatus = emailVerified
-    ? "✅ Email подтверждён"
+    ? t('✅ Email подтверждён')
     : user.email
-      ? "⚠️ Email не подтверждён"
-      : "Email не указан";
+      ? t('⚠️ Email не подтверждён')
+      : t('Email не указан');
 
   const passChanged =
     user.password_changed_at ||
@@ -322,24 +323,24 @@ function renderSecurityTab(user: User): string {
 
   if (emailVerified) {
     securityScore += 30;
-    securityChecks.push({ done: true, text: "Email подтвержден", icon: "✅" });
+    securityChecks.push({ done: true, text: t('Email подтвержден'), icon: "✅" });
   } else {
     securityChecks.push({
       done: false,
-      text: "Подтвердите email адрес",
+      text: t('Подтвердите email адрес'),
       icon: "⚠️",
     });
   }
 
   securityChecks.push({
     done: false,
-    text: "Включите двухфакторную аутентификацию",
+    text: t('Включите двухфакторную аутентификацию'),
     icon: "🔐",
     id: "2fa-check",
   });
   securityChecks.push({
     done: false,
-    text: "Добавьте ключ доступа (Passkey)",
+    text: t('Добавьте ключ доступа (Passkey)'),
     icon: "🔑",
     id: "passkey-check",
   });
@@ -351,17 +352,17 @@ function renderSecurityTab(user: User): string {
         ? "security-level--medium"
         : "security-level--low";
   const securityItemTitle =
-    securityScore >= 100 ? "Ваш аккаунт под защитой" : "Проверка безопасности";
+    securityScore >= 100 ? t('Ваш аккаунт под защитой') : t('Проверка безопасности');
   const securityItemSubtitle =
     securityScore >= 100
-      ? "Ваш аккаунт прошёл Проверку безопасности. Рекомендуемых действий не найдено."
-      : "Обнаружены рекомендации по защите";
+      ? t('Ваш аккаунт прошёл Проверку безопасности. Рекомендуемых действий не найдено.')
+      : t('Обнаружены рекомендации по защите');
   const securityStatusLabel =
     securityScore >= 100
-      ? "Защищён"
+      ? t('Защищён')
       : securityScore >= 50
-        ? "Средняя"
-        : "Низкая";
+        ? t('Средняя')
+        : t('Низкая');
   const securityAriaLabel = `${securityItemTitle}. ${securityItemSubtitle}. ${securityStatusLabel}`;
 
   return `
@@ -372,7 +373,7 @@ function renderSecurityTab(user: User): string {
             <div class="sec-icon-box">
               ${
                 securityScore >= 100
-                  ? `<img src="/assets/img/security/okey_64.png" width="32" height="32" alt="Защищён" class="sec-icon-img" />`
+                  ? `<img src="/assets/img/security/okey_64.png" width="32" height="32" alt="${t('Защищён')}" class="sec-icon-img" />`
                   : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L4 6V11C4 16.55 7.84 21.74 13 23C18.16 21.74 22 16.55 22 11V6L12 2Z" fill="${securityScore >= 50 ? "#fbbf24" : "#ef4444"}" opacity="0.9"/>
               </svg>`
@@ -384,7 +385,7 @@ function renderSecurityTab(user: User): string {
         </div>
         <div class="sec-right">
           <div id="securityStatusBadge" class="security-status-badge ${securityLevelClass}">
-            ${securityScore >= 100 ? "✓ Защищён" : securityScore >= 50 ? "⚠ Средняя" : "⚠ Низкая"}
+            ${securityScore >= 100 ? `✓ ${t('Защищён')}` : securityScore >= 50 ? `⚠ ${t('Средняя')}` : `⚠ ${t('Низкая')}`}
           </div>
           <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
             <g><path fill="currentColor" d="M8.809,23.588l-1.617-1.176L14.764,12L7.191,1.588l1.617-1.176l8,11c0.255,0.351,0.255,0.825,0,1.176 L8.809,23.588z"></path></g>
@@ -399,7 +400,7 @@ function renderSecurityTab(user: User): string {
           </div>
 
           <div class="security-score-row">
-            <div class="security-score-label">Уровень защиты:</div>
+            <div class="security-score-label">${t('Уровень защиты:')}</div>
             <div id="securityScoreText" class="security-score-text ${securityLevelClass}">${securityScore}%</div>
           </div>
 
@@ -410,7 +411,7 @@ function renderSecurityTab(user: User): string {
               <div ${check.id ? `id="${check.id}"` : ""} class="security-check-item ${check.done ? "is-done" : ""}">
                 <div class="security-check-icon">${check.icon}</div>
                 <div class="security-check-text">${check.text}</div>
-                ${check.done ? '<div class="security-check-done">Выполнено</div>' : ""}
+                ${check.done ? `<div class="security-check-done">${t('Выполнено')}</div>` : ""}
               </div>
             `,
               )
@@ -422,22 +423,22 @@ function renderSecurityTab(user: User): string {
               securityScore < 100
                 ? `
             <div class="security-recommendation security-recommendation--info">
-              <div class="security-recommendation-title">💡 Рекомендация</div>
+              <div class="security-recommendation-title">${t('💡 Рекомендация')}</div>
               <div class="security-recommendation-text">
                 ${
                   securityScore < 30
-                    ? "Начните с подтверждения email и включения 2FA для базовой защиты аккаунта."
+                    ? t('Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.')
                     : securityScore < 50
-                      ? "Добавьте еще несколько методов защиты для повышения безопасности."
-                      : "Отлично! Осталось совсем немного для максимальной защиты."
+                      ? t('Добавьте еще несколько методов защиты для повышения безопасности.')
+                      : t('Отлично! Осталось совсем немного для максимальной защиты.')
                 }
               </div>
             </div>
           `
                 : `
             <div class="security-recommendation security-recommendation--ok">
-              <div class="security-recommendation-title">🎉 Превосходно!</div>
-              <div class="security-recommendation-text">Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.</div>
+              <div class="security-recommendation-title">${t('🎉 Превосходно!')}</div>
+              <div class="security-recommendation-text">${t('Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.')}</div>
             </div>
           `
             }
@@ -445,7 +446,7 @@ function renderSecurityTab(user: User): string {
         </div>
       </div>
 
-      <button class="sec-item" id="secEmailItem" type="button" aria-label="Адрес электронной почты ${emailText}, ${emailBadgeLabel}">
+      <button class="sec-item" id="secEmailItem" type="button" aria-label="${t('Адрес электронной почты')} ${emailText}, ${emailBadgeLabel}">
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
@@ -453,7 +454,7 @@ function renderSecurityTab(user: User): string {
                 <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="#3b82f6" opacity="0.9"/>
               </svg>
             </div>
-            <div class="sec-title">Адрес электронной почты</div>
+            <div class="sec-title">${t('Адрес электронной почты')}</div>
           </div>
           <div class="sec-sub">${emailText}</div>
         </div>
@@ -472,19 +473,19 @@ function renderSecurityTab(user: User): string {
             <input class="input" id="secEmailInp" type="email" placeholder="name@example.com" value="${escapeHtml(user.email || "")}" />
           </div>
           <div class="sec-actions">
-            <button class="btn btn-outline" id="secEmailCancelBtn" type="button" aria-label="Отменить">Отменить</button>
-            <button class="btn btn-primary" id="secEmailSaveBtn" type="button" aria-label="Сохранить">Сохранить</button>
+            <button class="btn btn-outline" id="secEmailCancelBtn" type="button" aria-label="${t('Отменить')}">${t('Отменить')}</button>
+            <button class="btn btn-primary" id="secEmailSaveBtn" type="button" aria-label="${t('Сохранить')}">${t('Сохранить')}</button>
           </div>
           <div class="sec-hint is-hidden" id="secEmailHint"></div>
           ${
             !emailVerified && user.email
-              ? `<button class="btn btn-outline sec-mt-10" id="secEmailResendBtn" type="button" aria-label="Отправить письмо ещё раз">Отправить письмо ещё раз</button>`
+              ? `<button class="btn btn-outline sec-mt-10" id="secEmailResendBtn" type="button" aria-label="${t('Отправить письмо ещё раз')}">${t('Отправить письмо ещё раз')}</button>`
               : ``
           }
         </div>
       </div>
 
-      <button class="sec-item" id="secPassItem" type="button" aria-label="Сменить пароль Последний раз был изменён: ${passChangedText}">
+      <button class="sec-item" id="secPassItem" type="button" aria-label="${t('Сменить пароль')} ${t('Последний раз был изменён:')} ${passChangedText}">
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
@@ -492,9 +493,9 @@ function renderSecurityTab(user: User): string {
                 <path d="M18 8H17V6C17 3.24 14.76 1 12 1C9.24 1 7 3.24 7 6V8H6C4.9 8 4 8.9 4 10V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V10C20 8.9 19.1 8 18 8ZM12 17C10.9 17 10 16.1 10 15C10 13.9 10.9 13 12 13C13.1 13 14 13.9 14 15C14 16.1 13.1 17 12 17ZM15.1 8H8.9V6C8.9 4.29 10.29 2.9 12 2.9C13.71 2.9 15.1 4.29 15.1 6V8Z" fill="#8b5cf6" opacity="0.9"/>
               </svg>
             </div>
-            <div class="sec-title">Сменить пароль</div>
+            <div class="sec-title">${t('Сменить пароль')}</div>
           </div>
-          <div class="sec-sub">Последний раз был изменён: ${passChangedText}</div>
+          <div class="sec-sub">${t('Последний раз был изменён:')} ${passChangedText}</div>
         </div>
         <div class="sec-right">
           <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
@@ -507,36 +508,36 @@ function renderSecurityTab(user: User): string {
         <div class="sec-panel-inner">
           <div class="sec-status" id="secPassStatus">—</div>
           <div class="sec-form-row">
-            <label class="label sec-label">Действующий пароль</label>
+            <label class="label sec-label">${t('Действующий пароль')}</label>
             <div class="pass-wrap">
               <input class="input" id="secPassCur" type="password" autocomplete="current-password" />
-              <button type="button" class="pass-eye" data-target="secPassCur" aria-label="Показать пароль"></button>
+              <button type="button" class="pass-eye" data-target="secPassCur" aria-label="${t('Показать пароль')}"></button>
             </div>
           </div>
           <div class="sec-form-row sec-mt-10">
-            <label class="label sec-label">Новый пароль</label>
+            <label class="label sec-label">${t('Новый пароль')}</label>
             <div class="pass-wrap">
               <input class="input" id="secPassNew" type="password" autocomplete="new-password" />
-              <button type="button" class="pass-eye" data-target="secPassNew" aria-label="Показать пароль"></button>
+              <button type="button" class="pass-eye" data-target="secPassNew" aria-label="${t('Показать пароль')}"></button>
             </div>
             <div id="passHintsChange"></div>
           </div>
           <div class="sec-form-row sec-mt-10">
-            <label class="label sec-label">Введите новый пароль еще раз</label>
+            <label class="label sec-label">${t('Введите новый пароль еще раз')}</label>
             <div class="pass-wrap">
               <input class="input" id="secPassNew2" type="password" autocomplete="new-password" />
-              <button type="button" class="pass-eye" data-target="secPassNew2" aria-label="Показать пароль"></button>
+              <button type="button" class="pass-eye" data-target="secPassNew2" aria-label="${t('Показать пароль')}"></button>
             </div>
           </div>
           <div class="sec-actions sec-mt-12">
-            <button class="btn btn-outline" id="secPassCancelBtn" type="button" aria-label="Отменить">Отменить</button>
-            <button class="btn btn-primary" id="secPassSaveBtn" type="button" aria-label="Сохранить">Сохранить</button>
+            <button class="btn btn-outline" id="secPassCancelBtn" type="button" aria-label="${t('Отменить')}">${t('Отменить')}</button>
+            <button class="btn btn-primary" id="secPassSaveBtn" type="button" aria-label="${t('Сохранить')}">${t('Сохранить')}</button>
           </div>
           <div class="sec-hint is-hidden" id="secPassHint"></div>
         </div>
       </div>
 
-      <button class="sec-item" id="sec2FAItem" type="button" aria-label="Двухфакторная аутентификация (2FA) Загрузка...">
+      <button class="sec-item" id="sec2FAItem" type="button" aria-label="${t('Двухфакторная аутентификация (2FA)')} ${t('Загрузка...')}">
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
@@ -544,9 +545,9 @@ function renderSecurityTab(user: User): string {
                 <path d="M17 1H7C5.9 1 5 1.9 5 3V21C5 22.1 5.9 23 7 23H17C18.1 23 19 22.1 19 21V3C19 1.9 18.1 1 17 1ZM17 19H7V5H17V19ZM12 17C13.1 17 14 16.1 14 15C14 13.9 13.1 13 12 13C10.9 13 10 13.9 10 15C10 16.1 10.9 17 12 17Z" fill="#10b981" opacity="0.9"/>
               </svg>
             </div>
-            <div class="sec-title">Двухфакторная аутентификация (2FA)</div>
+            <div class="sec-title">${t('Двухфакторная аутентификация (2FA)')}</div>
           </div>
-          <div class="sec-sub" id="sec2FAStatus">Загрузка...</div>
+          <div class="sec-sub" id="sec2FAStatus">${t('Загрузка...')}</div>
           <div class="sec-sub is-hidden" id="sec2FADate"></div>
         </div>
         <div class="sec-right">
@@ -560,7 +561,7 @@ function renderSecurityTab(user: User): string {
         <div class="sec-panel-inner" id="sec2FAContent"></div>
       </div>
 
-      <button class="sec-item" id="secPasskeysItem" type="button" aria-label="Ключи доступа (Passkeys) Загрузка...">
+      <button class="sec-item" id="secPasskeysItem" type="button" aria-label="${t('Ключи доступа (Passkeys)')} ${t('Загрузка...')}">
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
@@ -568,9 +569,9 @@ function renderSecurityTab(user: User): string {
                 <path d="M12.65 10C11.7 7.31 8.9 5.5 5.77 6.12C3.48 6.58 1.62 8.41 1.14 10.7C0.32 14.57 3.26 18 7 18C9.61 18 11.83 16.33 12.65 14H17V18H21V14H23V10H12.65ZM7 14C5.9 14 5 13.1 5 12C5 10.9 5.9 10 7 10C8.1 10 9 10.9 9 12C9 13.1 8.1 14 7 14Z" fill="#f59e0b" opacity="0.9"/>
               </svg>
             </div>
-            <div class="sec-title">Ключи доступа (Passkeys)</div>
+            <div class="sec-title">${t('Ключи доступа (Passkeys)')}</div>
           </div>
-          <div class="sec-sub" id="secPasskeysStatus">Загрузка...</div>
+          <div class="sec-sub" id="secPasskeysStatus">${t('Загрузка...')}</div>
         </div>
         <div class="sec-right">
           <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
@@ -583,7 +584,7 @@ function renderSecurityTab(user: User): string {
         <div class="sec-panel-inner" id="secPasskeysContent"></div>
       </div>
 
-      <button class="sec-item" id="secDevicesItem" type="button" aria-label="Доверенные устройства Управление устройствами для входа с 2FA">
+      <button class="sec-item" id="secDevicesItem" type="button" aria-label="${t('Доверенные устройства')} ${t('Управление устройствами для входа с 2FA')}">
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
@@ -591,9 +592,9 @@ function renderSecurityTab(user: User): string {
                 <path d="M20 18C21.1 18 21.99 17.1 21.99 16L22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V16C2 17.1 2.9 18 4 18H0V20H24V18H20ZM4 6H20V16H4V6Z" fill="#06b6d4" opacity="0.9"/>
               </svg>
             </div>
-            <div class="sec-title">Доверенные устройства</div>
+            <div class="sec-title">${t('Доверенные устройства')}</div>
           </div>
-          <div class="sec-sub">Управление устройствами для входа с 2FA</div>
+          <div class="sec-sub">${t('Управление устройствами для входа с 2FA')}</div>
         </div>
         <div class="sec-right">
           <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
@@ -605,13 +606,13 @@ function renderSecurityTab(user: User): string {
       <div class="sec-panel is-hidden" id="secDevicesPanel">
         <div class="sec-panel-inner">
           <div class="sec-status sec-status-muted">
-            Доверенные устройства для входа с 2FA. Эти устройства не требуют код при входе.
+            ${t('Доверенные устройства для входа с 2FA. Эти устройства не требуют код при входе.')}
           </div>
-          <div id="trustedDevicesList" class="sec-muted-text">Загружаю...</div>
+          <div id="trustedDevicesList" class="sec-muted-text">${t('Загружаю...')}</div>
         </div>
       </div>
 
-      <button class="sec-item" id="secHistoryItem" type="button" aria-label="История входов Просмотр активности аккаунта">
+      <button class="sec-item" id="secHistoryItem" type="button" aria-label="${t('История входов')} ${t('Просмотр активности аккаунта')}">
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
@@ -619,9 +620,9 @@ function renderSecurityTab(user: User): string {
                 <path d="M13 3C8.03 3 4 7.03 4 12H1L4.89 15.89L4.96 16.03L9 12H6C6 8.13 9.13 5 13 5C16.87 5 20 8.13 20 12C20 15.87 16.87 19 13 19C11.07 19 9.32 18.21 8.06 16.94L6.64 18.36C8.27 19.99 10.51 21 13 21C17.97 21 22 16.97 22 12C22 7.03 17.97 3 13 3ZM12 8V13L16.25 15.52L17.02 14.24L13.5 12.15V8H12Z" fill="#64748b" opacity="0.9"/>
               </svg>
             </div>
-            <div class="sec-title">История входов</div>
+            <div class="sec-title">${t('История входов')}</div>
           </div>
-          <div class="sec-sub">Просмотр активности аккаунта</div>
+          <div class="sec-sub">${t('Просмотр активности аккаунта')}</div>
         </div>
         <div class="sec-right">
           <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
@@ -633,9 +634,9 @@ function renderSecurityTab(user: User): string {
       <div class="sec-panel is-hidden" id="secHistoryPanel">
         <div class="sec-panel-inner">
           <div class="sec-status sec-status-muted">
-            История входов в аккаунт за последнее время
+            ${t('История входов в аккаунт за последнее время')}
           </div>
-          <div id="loginHistoryList" class="sec-muted-text">Загружаю...</div>
+          <div id="loginHistoryList" class="sec-muted-text">${t('Загружаю...')}</div>
         </div>
       </div>
 
@@ -646,7 +647,7 @@ function renderSecurityTab(user: User): string {
 function renderSessionsTab(_user: User): string {
   return `
     <div id="sessionsList" class="sec-muted-text sec-font-13">
-      Загружаю список устройств…
+      ${t('Загружаю список устройств…')}
     </div>
   `;
 }
@@ -676,20 +677,20 @@ function renderEasterTab(user: User): string {
   return `
     <div>
       <div class="easter-intro">
-        🎯 Пасхалки открываются, когда ты находишь секреты на сайте
+        ${t('🎯 Пасхалки открываются, когда ты находишь секреты на сайте')}
       </div>
 
       <h3 class="easter-section-title">
         <span>🎁</span>
-        <span>Обычные пасхалки</span>
+        <span>${t('Обычные пасхалки')}</span>
       </h3>
 
       <div class="easter-grid">
         <div class="easter-card ${hasStrawberry ? "" : "locked"}">
           ${
             hasStrawberry
-              ? '<span class="easter-card-badge">✓ Найдено</span>'
-              : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
+              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
           }
           <div class="easter-strawberry-wrap" aria-hidden="true">
             <span class="easter-strawberry special">🍓</span>
@@ -700,8 +701,8 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-desc">
             ${
               hasStrawberry
-                ? "Ты нашел особую клубничку на сайте! Отличная работа 🎉"
-                : "Найди спрятанную клубничку где-то там..."
+                ? t('Ты нашел особую клубничку на сайте! Отличная работа 🎉')
+                : t('Найди спрятанную клубничку где-то там...')
             }
           </div>
           ${
@@ -710,30 +711,30 @@ function renderEasterTab(user: User): string {
                   id="toHistoryBtn"
                   class="btn btn-outline easter-action-btn"
                   type="button"
-                 aria-label="📖 Открыть стенографию">
+                 aria-label="${t('📖 Открыть стенографию')}">
                   <span class="easter-action-icon">📖</span>
-                  <span>Открыть стенографию</span>
+                  <span>${t('Открыть стенографию')}</span>
                 </button>`
-              : '<div class="easter-hint">💡 Подсказка: исследуй страницы входа...</div>'
+              : `<div class="easter-hint">${t('💡 Подсказка: исследуй страницы входа...')}</div>`
           }
-          ${hasStrawberry ? '<div class="easter-hint">🎊 Поздравляем с находкой!</div>' : ""}
+          ${hasStrawberry ? `<div class="easter-hint">${t('🎊 Поздравляем с находкой!')}</div>` : ""}
         </div>
 
         <div class="easter-card ${hasProfileMirror ? "" : "locked"}">
           ${
             hasProfileMirror
-              ? '<span class="easter-card-badge">✓ Найдено</span>'
-              : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
+              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
           }
           <span class="easter-card-icon easter-mirror">🪞</span>
           <div class="easter-card-title">
-            Зеркало профиля
+            ${t('Зеркало профиля')}
           </div>
           <div class="easter-card-desc">
             ${
               hasProfileMirror
-                ? "Семь отражений — и ты увидел себя с другой стороны"
-                : "Секрет спрятан там, где ты показываешь себя миру"
+                ? t('Семь отражений — и ты увидел себя с другой стороны')
+                : t('Секрет спрятан там, где ты показываешь себя миру')
             }
           </div>
           ${
@@ -742,28 +743,28 @@ function renderEasterTab(user: User): string {
                   type="button"
                   class="btn btn-outline easter-action-btn"
                   data-route="${escapeHtml(user.login || user.username || "")}"
-                  aria-label="Открыть свой профиль"
+                  aria-label="${t('Открыть свой профиль')}"
                 >
                   <span class="easter-action-icon">👤</span>
-                  <span>Мой профиль</span>
+                  <span>${t('Мой профиль')}</span>
                 </button>`
-              : '<div class="easter-hint">💡 Подсказка: загляни в свой профиль и посмотри на себя чаще...</div>'
+              : `<div class="easter-hint">${t('💡 Подсказка: загляни в свой профиль и посмотри на себя чаще...')}</div>`
           }
-          ${hasProfileMirror ? '<div class="easter-hint">🎊 Ты заглянул в своё отражение!</div>' : ""}
+          ${hasProfileMirror ? `<div class="easter-hint">${t('🎊 Ты заглянул в своё отражение!')}</div>` : ""}
         </div>
       </div>
 
       <h3 class="easter-section-title">
         <span>🌟</span>
-        <span>Редкие пасхалки</span>
+        <span>${t('Редкие пасхалки')}</span>
       </h3>
 
       <div class="easter-grid">
         <div class="easter-card ${hasDarkTrigger ? "easter-card-rare" : "locked"}">
           ${
             hasDarkTrigger
-              ? '<span class="easter-card-badge">✓ Найдено</span>'
-              : '<span class="easter-card-badge locked">🔒 Закрыто</span>'
+              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
           }
           <span class="easter-card-icon easter-moon">🌑</span>
           <div class="easter-card-title">
@@ -772,26 +773,26 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-desc">
             ${
               hasDarkTrigger
-                ? "Ты заметил тёмный триггер в полной темноте! Редкое достижение 🌟"
-                : "Разгадай загадку тьмы, припрятанную где-то на сайте"
+                ? t('Ты заметил тёмный триггер в полной темноте! Редкое достижение 🌟')
+                : t('Разгадай загадку тьмы, припрятанную где-то на сайте')
             }
           </div>
           ${
             hasDarkTrigger
               ? `<a 
-                  href="https://cyblight.org/dark/trig/c4...77/media/dark-trigger.jpg" 
+                  href="${sitePath('dark/trig/c4...77/media/dark-trigger.jpg', getLocale())}" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   class="btn btn-outline easter-action-btn easter-action-link"
                 >
                   <span class="easter-action-icon">👁️</span>
-                  <span>Бусинвальд</span>
+                  <span>${t('Бусинвальд')}</span>
                 </a>`
-              : '<div class="easter-hint">💡 Подсказка: посмотри в тёмную папку на сайте...</div>'
+              : `<div class="easter-hint">${t('💡 Подсказка: посмотри в тёмную папку на сайте...')}</div>`
           }
           ${
             hasDarkTrigger
-              ? '<div class="easter-hint">🎊 Конгратулейшн, ты настоящий детектив!</div>'
+              ? `<div class="easter-hint">${t('🎊 Конгратулейшн, ты настоящий детектив!')}</div>`
               : ""
           }
         </div>
@@ -805,7 +806,7 @@ function renderFriendsTab(): string {
     <div id="friendsContent">
       <div class="loading-spinner loading-spinner--centered">
         <div class="spinner loading-spinner__icon"></div>
-        <p class="loading-spinner__text">Загрузка списка друзей...</p>
+        <p class="loading-spinner__text">${t('Загрузка списка друзей...')}</p>
       </div>
     </div>
   `;
@@ -816,7 +817,7 @@ function renderMessagesTab(): string {
     <div id="messagesContent">
       <div class="loading-spinner loading-spinner--centered">
         <div class="spinner loading-spinner__icon"></div>
-        <p class="loading-spinner__text">Загрузка сообщений...</p>
+        <p class="loading-spinner__text">${t('Загрузка сообщений...')}</p>
       </div>
     </div>
   `;
@@ -843,12 +844,12 @@ export function renderTabContent(tab: string, user: User): string {
 
 export function getTabTitle(tab: string): string {
   const titles: Record<string, string> = {
-    profile: "Профиль",
-    friends: "Друзья",
-    messages: "Сообщения",
-    security: "Безопасность",
-    sessions: "Сессии",
-    easter: "Пасхалки",
+    profile: t('Профиль'),
+    friends: t('Друзья'),
+    messages: t('Сообщения'),
+    security: t('Безопасность'),
+    sessions: t('Сессии'),
+    easter: t('Пасхалки'),
   };
-  return titles[tab] || "Учётка";
+  return titles[tab] || t('Учётка');
 }

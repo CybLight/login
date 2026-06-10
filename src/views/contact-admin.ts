@@ -2,6 +2,7 @@
  * Contact Admin view - форма обращения к администратору
  */
 
+import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { escapeHtml, apiCall } from '@/utils';
@@ -22,34 +23,34 @@ export async function renderContactAdmin(params: Record<string, unknown> = {}): 
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Обращение к администратору</h1>
+          <h1>${t('Обращение к администратору')}</h1>
         </div>
       </div>
 
       <form id="fContact">
         <div class="field">
-          <label class="label" for="email">Ваш Email *</label>
+          <label class="label" for="email">${t('Ваш Email *')}</label>
           <input class="input" id="email" type="email" autocomplete="email" 
             placeholder="name@example.com" required />
         </div>
 
         <div class="field">
-          <label class="label" for="name">Ваше имя</label>
+          <label class="label" for="name">${t('Ваше имя')}</label>
           <input class="input" id="name" type="text" autocomplete="name"
-            placeholder="Как к вам обращаться" value="${escapeHtml(username)}" />
+            placeholder="${t('Как к вам обращаться')}" value="${escapeHtml(username)}" />
         </div>
 
         <div class="field">
-          <label class="label" for="subject">Тема обращения *</label>
+          <label class="label" for="subject">${t('Тема обращения *')}</label>
           <input class="input" id="subject" type="text" 
-            placeholder="Краткое описание проблемы" required 
-            value="${banContext ? 'Вопрос по блокировке аккаунта' : ''}" />
+            placeholder="${t('Краткое описание проблемы')}" required 
+            value="${banContext ? t('Вопрос по блокировке аккаунта') : ''}" />
         </div>
 
         <div class="field">
-          <label class="label" for="message">Сообщение *</label>
+          <label class="label" for="message">${t('Сообщение *')}</label>
           <textarea class="input" id="message" rows="6" required 
-            placeholder="Опишите ситуацию подробно..." style="resize: vertical; min-height: 120px;"></textarea>
+            placeholder="${t('Опишите ситуацию подробно...')}" style="resize: vertical; min-height: 120px;"></textarea>
         </div>
 
         <div class="field" style="margin-top:12px;">
@@ -59,14 +60,14 @@ export async function renderContactAdmin(params: Record<string, unknown> = {}): 
         <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
 
         <div class="row" style="margin-top: 12px;">
-          <a class="link" href="#" id="back">← Назад</a>
+          <a class="link" href="#" id="back">${t('← Назад')}</a>
         </div>
 
-        <button class="btn btn-primary" type="submit" aria-label="Отправить сообщение">Отправить сообщение</button>
+        <button class="btn btn-primary" type="submit" aria-label="${t('Отправить сообщение')}">${t('Отправить сообщение')}</button>
       </form>
 
       <p style="margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5;">
-        Администрация рассмотрит ваше обращение и свяжется с вами по указанному email.
+        ${t('Администрация рассмотрит ваше обращение и свяжется с вами по указанному email.')}
       </p>
     </section>
   `)
@@ -109,7 +110,7 @@ export async function renderContactAdmin(params: Record<string, unknown> = {}): 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-      const oldText = btn.textContent || 'Отправить сообщение';
+      const oldText = btn.textContent || t('Отправить сообщение');
 
       clearMsg();
 
@@ -119,17 +120,17 @@ export async function renderContactAdmin(params: Record<string, unknown> = {}): 
       const message = (document.getElementById('message') as HTMLTextAreaElement).value.trim();
 
       if (!email || !subject || !message) {
-        showMsg('error', 'Заполните все обязательные поля');
+        showMsg('error', t('Заполните все обязательные поля'));
         return;
       }
 
       if (!captchaService.token) {
-        showMsg('warn', 'Подтвердите, что вы не робот');
+        showMsg('warn', t('Подтвердите, что вы не робот'));
         return;
       }
 
       btn.disabled = true;
-      btn.textContent = 'Отправка...';
+      btn.textContent = t('Отправка...');
 
       try {
         const res = await apiCall('/support/contact', {
@@ -147,7 +148,7 @@ export async function renderContactAdmin(params: Record<string, unknown> = {}): 
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          showMsg('error', data?.error || 'Ошибка при отправке. Попробуйте позже.');
+          showMsg('error', data?.error || t('Ошибка при отправке. Попробуйте позже.'));
           await captchaService.reset();
           btn.disabled = false;
           btn.textContent = oldText;
@@ -156,7 +157,7 @@ export async function renderContactAdmin(params: Record<string, unknown> = {}): 
 
         showMsg(
           'ok',
-          '✓ Спасибо! Ваше обращение отправлено. Мы свяжемся с вами в ближайшее время.'
+          t('✓ Спасибо! Ваше обращение отправлено. Мы свяжемся с вами в ближайшее время.')
         );
         form.reset();
 
@@ -165,7 +166,7 @@ export async function renderContactAdmin(params: Record<string, unknown> = {}): 
         }, 3000);
       } catch (err) {
         console.error('[CONTACT] Error:', err);
-        showMsg('error', 'Ошибка сети. Проверьте подключение и попробуйте ещё раз.');
+        showMsg('error', t('Ошибка сети. Проверьте подключение и попробуйте ещё раз.'));
         await captchaService.reset();
         btn.disabled = false;
         btn.textContent = oldText;

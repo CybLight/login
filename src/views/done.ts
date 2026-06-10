@@ -2,6 +2,7 @@
  * Done view - страница успешного завершения действия
  */
 
+import { t, sitePath, getLocale } from '@/i18n';
 import { setAppContent, shell } from '@/ui';
 
 export async function renderDone(): Promise<void> {
@@ -16,22 +17,22 @@ export async function renderDone(): Promise<void> {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Готово!</h1>
+          <h1>${t('Готово!')}</h1>
         </div>
       </div>
 
       <div style="text-align: center; padding: 20px 0;">
         <div style="font-size: 64px; margin-bottom: 16px;">✓</div>
         <p style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">
-          Действие выполнено успешно!
+          ${t('Действие выполнено успешно!')}
         </p>
         <p style="font-size: 14px; color: var(--muted);">
-          Вы можете закрыть эту страницу
+          ${t('Вы можете закрыть эту страницу')}
         </p>
       </div>
 
-      <button class="btn btn-primary" id="goHome" aria-label="Перейти на главную">
-        Перейти на главную
+      <button class="btn btn-primary" id="goHome" aria-label="${t('Перейти на главную')}">
+        ${t('Перейти на главную')}
       </button>
     </section>
   `)
@@ -43,7 +44,7 @@ export async function renderDone(): Promise<void> {
   const goHomeBtn = document.getElementById('goHome');
   if (goHomeBtn) {
     goHomeBtn.onclick = () => {
-      window.location.href = 'https://cyblight.org/';
+      window.location.href = sitePath('', getLocale());
     };
   }
 }

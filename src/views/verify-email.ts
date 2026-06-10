@@ -2,6 +2,7 @@
  * Verify Email view - подтверждение email
  */
 
+import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { apiCall } from '@/utils';
@@ -34,19 +35,19 @@ function renderNoToken(): void {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Подтверждение email</h1>
+          <h1>${t('Подтверждение email')}</h1>
         </div>
       </div>
 
       <div style="text-align: center; padding: 20px 0;">
         <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
         <p style="font-size: 14px; color: var(--muted);">
-          Отсутствует токен подтверждения. Проверьте ссылку из письма.
+          ${t('Отсутствует токен подтверждения. Проверьте ссылку из письма.')}
         </p>
       </div>
 
-      <button class="btn btn-primary" id="goBack" aria-label="На главную">
-        На главную
+      <button class="btn btn-primary" id="goBack" aria-label="${t('На главную')}">
+        ${t('На главную')}
       </button>
     </section>
   `)
@@ -70,14 +71,14 @@ async function performVerification(token: string): Promise<void> {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Подтверждение email</h1>
+          <h1>${t('Подтверждение email')}</h1>
         </div>
       </div>
 
       <div id="verifyContent" style="text-align: center; padding: 20px 0;">
         <div class="spinner" style="margin: 0 auto 16px;"></div>
         <p style="font-size: 14px; color: var(--muted);">
-          Проверяем email...
+          ${t('Проверяем email...')}
         </p>
       </div>
 
@@ -104,14 +105,14 @@ async function performVerification(token: string): Promise<void> {
       contentEl.innerHTML = `
         <div style="font-size: 64px; margin-bottom: 16px; color: #10b981;">✓</div>
         <p style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">
-          Email успешно подтверждён!
+          ${t('Email успешно подтверждён!')}
         </p>
         <p style="font-size: 14px; color: var(--muted);">
-          Теперь вы можете войти в аккаунт
+          ${t('Теперь вы можете войти в аккаунт')}
         </p>
       `;
       actionsEl.innerHTML = `
-        <button class="btn btn-primary" id="goLogin" aria-label="Перейти к входу">Перейти к входу</button>
+        <button class="btn btn-primary" id="goLogin" aria-label="${t('Перейти к входу')}">${t('Перейти к входу')}</button>
       `;
       actionsEl.style.display = 'block';
 
@@ -124,14 +125,14 @@ async function performVerification(token: string): Promise<void> {
       contentEl.innerHTML = `
         <div style="font-size: 48px; margin-bottom: 16px; color: #ef4444;">✕</div>
         <p style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">
-          Ошибка подтверждения
+          ${t('Ошибка подтверждения')}
         </p>
         <p style="font-size: 14px; color: var(--muted);">
-          ${data?.error || 'Неверная или устаревшая ссылка'}
+          ${data?.error || t('Неверная или устаревшая ссылка')}
         </p>
       `;
       actionsEl.innerHTML = `
-        <button class="btn btn-primary" id="goBack" aria-label="На главную">На главную</button>
+        <button class="btn btn-primary" id="goBack" aria-label="${t('На главную')}">${t('На главную')}</button>
       `;
       actionsEl.style.display = 'block';
 
@@ -148,7 +149,7 @@ async function performVerification(token: string): Promise<void> {
       contentEl.innerHTML = `
         <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
         <p style="font-size: 14px; color: var(--muted);">
-          Ошибка сети. Попробуйте позже.
+          ${t('Ошибка сети. Попробуйте позже.')}
         </p>
       `;
     }

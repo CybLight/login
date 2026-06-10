@@ -2,6 +2,7 @@
  * Messages tab - управление вкладкой Сообщения с чатом
  */
 
+import { t } from '@/i18n';
 import { apiCall, escapeHtml, formatPresenceLabel, hasPresenceData, isUserOnline } from '@/utils';
 import { setupAccessibleModal } from '@/utils/keyboard';
 import type { ApiOkResponse, FriendListItem } from '@/types';
@@ -17,7 +18,7 @@ import {
   insertChatCode,
 } from './chat-editor';
 import { showAccountConfirmModal } from './modals';
-import { CYBLIGHT_EMOJI_CATEGORIES } from './emoji-categories';
+import { CYBLIGHT_EMOJI_CATEGORIES, getEmojiCategoryTitle } from './emoji-categories';
 import '@/styles/messages-tab.css';
 
 type ReplyMessageState = {
@@ -99,14 +100,14 @@ export function openChatInMessagesTab(
   container.innerHTML = `
     <div class="chat-container">
       <div class="chat-back-row" id="chatBackRow">
-        <button id="chatBackBtn" class="chat-close-btn" type="button" aria-label="← Назад">← Назад</button>
+        <button id="chatBackBtn" class="chat-close-btn" type="button" aria-label="${t('← Назад')}">${t('← Назад')}</button>
       </div>
       <div class="chat-selection-bar" id="chatSelectionBar">
-        <div class="chat-selection-info" id="chatSelectionInfo">Выбрано: 0</div>
+        <div class="chat-selection-info" id="chatSelectionInfo">${t('Выбрано: {count}', { count: 0 })}</div>
         <div class="chat-selection-actions">
-          <button class="chat-selection-btn" id="chatSelectionForward" type="button" aria-label="↪️ Переслать">↪️ Переслать</button>
-          <button class="chat-selection-btn" id="chatSelectionDelete" type="button" aria-label="🗑️ Удалить">🗑️ Удалить</button>
-          <button class="chat-selection-btn chat-selection-btn-cancel" id="chatSelectionCancel" type="button" aria-label="✕ Отменить">✕ Отменить</button>
+          <button class="chat-selection-btn" id="chatSelectionForward" type="button" aria-label="${t('↪️ Переслать')}">${t('↪️ Переслать')}</button>
+          <button class="chat-selection-btn" id="chatSelectionDelete" type="button" aria-label="${t('🗑️ Удалить')}">${t('🗑️ Удалить')}</button>
+          <button class="chat-selection-btn chat-selection-btn-cancel" id="chatSelectionCancel" type="button" aria-label="${t('✕ Отменить')}">${t('✕ Отменить')}</button>
         </div>
       </div>
       <div class="chat-header">
@@ -117,13 +118,13 @@ export function openChatInMessagesTab(
         <div id="chatPinnedBar" class="chat-pinned-bar is-hidden"></div>
       </div>
 
-      <div id="chatMessages"><div class="chat-loading">Загрузка сообщений...</div></div>
+      <div id="chatMessages"><div class="chat-loading">${t('Загрузка сообщений...')}</div></div>
       <input id="chatEditingMessageId" type="hidden" value="" />
 
       <div class="chat-footer">
         <div id="chatEditIndicator" class="chat-edit-indicator">
-          <span>✏️ Редактирование сообщения... <small class="chat-edit-hint">(ESC для отмены)</small></span>
-          <button id="chatCancelEditBtn" type="button" class="chat-msg-btn" aria-label="❌ Отмена">❌ Отмена</button>
+          <span>✏️ ${t('Редактирование сообщения...')} <small class="chat-edit-hint">${t('(ESC для отмены)')}</small></span>
+          <button id="chatCancelEditBtn" type="button" class="chat-msg-btn" aria-label="${t('❌ Отмена')}">${t('❌ Отмена')}</button>
         </div>
 
         <div id="chatReplyCompose" class="chat-reply-compose"></div>
@@ -131,22 +132,22 @@ export function openChatInMessagesTab(
         <div id="chatInputPreviewWrap" class="chat-input-preview-wrap"></div>
 
         <div class="chat-formatting-toolbar">
-          <button class="chat-format-btn" data-format="bold" type="button" title="Жирный (Ctrl+B)" aria-label="Жирный (Ctrl+B)"><b>B</b></button>
-          <button class="chat-format-btn" data-format="italic" type="button" title="Курсив (Ctrl+I)" aria-label="Курсив (Ctrl+I)"><i>I</i></button>
-          <button class="chat-format-btn" data-format="mono" type="button" title="Моноширинный" aria-label="Моноширинный"><code>M</code></button>
-          <button class="chat-format-btn" data-format="strike" type="button" title="Зачёркнутый" aria-label="Зачёркнутый"><s>S</s></button>
-          <button class="chat-format-btn" data-format="link" type="button" title="Вставить ссылку" aria-label="Вставить ссылку">🔗</button>
-          <button class="chat-format-btn" data-format="spoiler" type="button" title="Спойлер" aria-label="Спойлер">||</button>
-          <button class="chat-format-btn" data-format="code" type="button" title="Блок кода" aria-label="Блок кода">{ }</button>
+          <button class="chat-format-btn" data-format="bold" type="button" title="${t('Жирный (Ctrl+B)')}" aria-label="${t('Жирный (Ctrl+B)')}"><b>B</b></button>
+          <button class="chat-format-btn" data-format="italic" type="button" title="${t('Курсив (Ctrl+I)')}" aria-label="${t('Курсив (Ctrl+I)')}"><i>I</i></button>
+          <button class="chat-format-btn" data-format="mono" type="button" title="${t('Моноширинный')}" aria-label="${t('Моноширинный')}"><code>M</code></button>
+          <button class="chat-format-btn" data-format="strike" type="button" title="${t('Зачёркнутый')}" aria-label="${t('Зачёркнутый')}"><s>S</s></button>
+          <button class="chat-format-btn" data-format="link" type="button" title="${t('Вставить ссылку')}" aria-label="${t('Вставить ссылку')}">🔗</button>
+          <button class="chat-format-btn" data-format="spoiler" type="button" title="${t('Спойлер')}" aria-label="${t('Спойлер')}">||</button>
+          <button class="chat-format-btn" data-format="code" type="button" title="${t('Блок кода')}" aria-label="${t('Блок кода')}">{ }</button>
         </div>
 
         <div class="chat-input-wrapper">
-          <textarea id="chatInput" placeholder="Напишите сообщение..." rows="1" maxlength="2000"></textarea>
+          <textarea id="chatInput" placeholder="${t('Напишите сообщение...')}" rows="1" maxlength="2000"></textarea>
           <div class="chat-input-emoji-wrap">
-            <button id="chatEmojiBtn" type="button" title="Смайлики" aria-label="Смайлики">😊</button>
+            <button id="chatEmojiBtn" type="button" title="${t('Смайлики')}" aria-label="${t('Смайлики')}">😊</button>
             <div id="chatInputEmojiPicker" class="chat-input-emoji-picker"></div>
           </div>
-          <button id="chatSendBtn" type="button" aria-label="Отправить">Отправить</button>
+          <button id="chatSendBtn" type="button" aria-label="${t('Отправить')}">${t('Отправить')}</button>
         </div>
       </div>
     </div>
@@ -182,7 +183,7 @@ export function openChatInMessagesTab(
     const friendsRes = await apiCall('/friends/list', { credentials: 'include' });
     const friendsData = await friendsRes.json().catch(() => ({}));
     if (!friendsData?.ok) {
-      api.showMsg('error', 'Не удалось загрузить список друзей для пересылки');
+      api.showMsg('error', t('Не удалось загрузить список друзей для пересылки'));
       return;
     }
 
@@ -194,7 +195,7 @@ export function openChatInMessagesTab(
       .slice(0, 50);
 
     if (friends.length === 0) {
-      api.showMsg('warn', 'Нет друзей для пересылки');
+      api.showMsg('warn', t('Нет друзей для пересылки'));
       return;
     }
 
@@ -212,7 +213,7 @@ export function openChatInMessagesTab(
         aria-labelledby="chatForwardTitle"
         aria-describedby="chatForwardPreview"
       >
-        <div id="chatForwardTitle" class="chat-forward-title">Переслать сообщение</div>
+        <div id="chatForwardTitle" class="chat-forward-title">${t('Переслать сообщение')}</div>
         <div id="chatForwardPreview" class="chat-forward-preview">${escapeHtml(
           messageText.replace(/\s+/g, ' ').trim().slice(0, 180)
         )}</div>
@@ -220,12 +221,12 @@ export function openChatInMessagesTab(
           ${friends
             .map(
               (item: FriendListItem) =>
-                `<button type="button" data-forward-id="${escapeHtml(String(item.id || ''))}" class="chat-forward-item" aria-label="${escapeHtml(String(item.username || 'Пользователь'))}">${escapeHtml(String(item.username || 'Пользователь'))}</button>`
+                `<button type="button" data-forward-id="${escapeHtml(String(item.id || ''))}" class="chat-forward-item" aria-label="${escapeHtml(String(item.username || t('Пользователь')))}">${escapeHtml(String(item.username || t('Пользователь')))}</button>`
             )
             .join('')}
         </div>
         <div class="chat-forward-footer">
-          <button id="chatForwardCancel" type="button" class="chat-forward-cancel" aria-label="Отмена">Отмена</button>
+          <button id="chatForwardCancel" type="button" class="chat-forward-cancel" aria-label="${t('Отмена')}">${t('Отмена')}</button>
         </div>
       </div>
     `;
@@ -268,11 +269,11 @@ export function openChatInMessagesTab(
         const payload = await response.json().catch(() => ({}));
 
         if (!response.ok || !payload?.ok) {
-          api.showMsg('error', payload?.error || 'Не удалось переслать сообщение');
+          api.showMsg('error', payload?.error || t('Не удалось переслать сообщение'));
           return;
         }
 
-        api.showMsg('success', 'Сообщение переслано');
+        api.showMsg('success', t('Сообщение переслано'));
         close();
 
         if (targetId === friendId && messagesEl) {
@@ -318,10 +319,10 @@ export function openChatInMessagesTab(
     chatReplyCompose.classList.add('active');
     chatReplyCompose.innerHTML = `
       <div class="chat-reply-compose-text">
-        <div class="chat-reply-compose-title">Ответ на ${escapeHtml(currentReplyState.author || 'сообщение')}</div>
-        <div class="chat-reply-compose-snippet">${escapeHtml(snippet || 'Сообщение')}</div>
+        <div class="chat-reply-compose-title">${t('Ответ на')} ${escapeHtml(currentReplyState.author || t('сообщение'))}</div>
+        <div class="chat-reply-compose-snippet">${escapeHtml(snippet || t('Сообщение'))}</div>
       </div>
-      <button id="chatReplyComposeClose" class="chat-reply-compose-close" type="button" title="Отменить ответ" aria-label="Отменить ответ">✕</button>
+      <button id="chatReplyComposeClose" class="chat-reply-compose-close" type="button" title="${t('Отменить ответ')}" aria-label="${t('Отменить ответ')}">✕</button>
     `;
 
     const closeBtn = document.getElementById('chatReplyComposeClose') as HTMLButtonElement | null;
@@ -331,7 +332,7 @@ export function openChatInMessagesTab(
     });
   };
 
-  const setReplyState = (messageId: string, text: string, author = 'Собеседник') => {
+  const setReplyState = (messageId: string, text: string, author = t('Собеседник')) => {
     currentReplyState = {
       messageId,
       author,
@@ -351,12 +352,12 @@ export function openChatInMessagesTab(
 
     chatPinnedBar.style.display = 'flex';
     chatPinnedBar.innerHTML = `
-      <div id="chatPinnedMain" class="chat-pinned-main" title="Перейти к сообщению">
-        <div class="chat-pinned-label">📌 Закреплённое сообщение</div>
-        <div class="chat-pinned-text">${escapeHtml(pinned.text || 'Сообщение')}</div>
+      <div id="chatPinnedMain" class="chat-pinned-main" title="${t('Перейти к сообщению')}">
+        <div class="chat-pinned-label">📌 ${t('Закреплённое сообщение')}</div>
+        <div class="chat-pinned-text">${escapeHtml(pinned.text || t('Сообщение'))}</div>
       </div>
       <div class="chat-pinned-actions">
-        <button id="chatPinnedCloseBtn" class="chat-pinned-btn" type="button" title="Открепить" aria-label="Открепить">✕</button>
+        <button id="chatPinnedCloseBtn" class="chat-pinned-btn" type="button" title="${t('Открепить')}" aria-label="${t('Открепить')}">✕</button>
       </div>
     `;
 
@@ -380,10 +381,10 @@ export function openChatInMessagesTab(
     const closeBtn = document.getElementById('chatPinnedCloseBtn') as HTMLButtonElement | null;
     closeBtn?.addEventListener('click', async () => {
       const confirmed = await showAccountConfirmModal({
-        title: 'Открепить сообщение',
-        text: 'Убрать закреп из этого чата?',
-        confirmText: 'Открепить',
-        cancelText: 'Отмена',
+        title: t('Открепить сообщение'),
+        text: t('Убрать закреп из этого чата?'),
+        confirmText: t('Открепить'),
+        cancelText: t('Отмена'),
       });
       if (!confirmed) return;
 
@@ -396,11 +397,11 @@ export function openChatInMessagesTab(
 
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        api.showMsg('error', payload?.error || 'Не удалось открепить сообщение');
+        api.showMsg('error', payload?.error || t('Не удалось открепить сообщение'));
         return;
       }
 
-      api.showMsg('info', 'Сообщение откреплено');
+      api.showMsg('info', t('Сообщение откреплено'));
 
       if (messagesEl) {
         await loadChatMessagesInAccount(
@@ -542,10 +543,10 @@ export function openChatInMessagesTab(
     chatInputPreviewWrap.innerHTML = `
       <div class="chat-input-preview-box">
         <div class="chat-input-preview-text">
-          <div class="chat-input-preview-title">Предпросмотр ссылки</div>
+          <div class="chat-input-preview-title">${t('Предпросмотр ссылки')}</div>
           <div class="chat-input-preview-url">${escapeHtml(display || host)}</div>
         </div>
-        <button id="chatInputPreviewRemove" class="chat-input-preview-remove" type="button" title="Удалить предпросмотр" aria-label="Удалить предпросмотр">✕</button>
+        <button id="chatInputPreviewRemove" class="chat-input-preview-remove" type="button" title="${t('Удалить предпросмотр')}" aria-label="${t('Удалить предпросмотр')}">✕</button>
       </div>
     `;
 
@@ -586,7 +587,7 @@ export function openChatInMessagesTab(
       if (!ownerCategory) return false;
 
       const keywordBase = normalizeEmojiSearch(
-        `${ownerCategory.title} ${ownerCategory.titleEn || ''} ${ownerCategory.tags.join(' ')} ${
+        `${getEmojiCategoryTitle(ownerCategory)} ${ownerCategory.titleEn || ''} ${ownerCategory.tags.join(' ')} ${
           ownerCategory.tagsEn ? ownerCategory.tagsEn.join(' ') : ''
         }`
       );
@@ -599,7 +600,7 @@ export function openChatInMessagesTab(
           id="chatInputEmojiSearch"
           class="chat-input-emoji-search"
           type="text"
-          placeholder="Поиск эмодзи..."
+          placeholder="${t('Поиск эмодзи...')}"
           value="${escapeHtml(currentInputEmojiSearch)}"
         />
       </div>
@@ -613,15 +614,15 @@ export function openChatInMessagesTab(
               class="chat-input-emoji-cat-btn ${category.key === currentInputEmojiCategory ? 'active' : ''}"
               data-emoji-cat="${escapeHtml(category.key)}"
               type="button"
-              title="${escapeHtml(category.title)}"
-             aria-label="${escapeHtml(category.title)}">${category.icon}</button>`
+              title="${escapeHtml(getEmojiCategoryTitle(category))}"
+             aria-label="${escapeHtml(getEmojiCategoryTitle(category))}">${category.icon}</button>`
         ).join('')}
       </div>
 
       <div class="chat-input-emoji-divider"></div>
 
       <div class="chat-input-emoji-quick">
-        <div class="chat-input-emoji-quick-label">Быстрые</div>
+        <div class="chat-input-emoji-quick-label">${t('Быстрые')}</div>
         <div class="chat-input-emoji-quick-grid">
           ${quickSearchEmojis
             .map(
@@ -643,7 +644,7 @@ export function openChatInMessagesTab(
                     `<button class="chat-input-emoji-btn" data-emoji="${escapeHtml(emoji)}" type="button" aria-label="${emoji}">${emoji}</button>`
                 )
                 .join('')
-            : '<div class="chat-input-emoji-empty">Ничего не найдено</div>'
+            : `<div class="chat-input-emoji-empty">${t('Ничего не найдено')}</div>`
         }
       </div>
     `;
@@ -779,11 +780,11 @@ export function openChatInMessagesTab(
         api.showMsg(
           'error',
           data?.error ||
-            (editingId ? 'Не удалось отредактировать сообщение' : 'Не удалось отправить сообщение')
+            (editingId ? t('Не удалось отредактировать сообщение') : t('Не удалось отправить сообщение'))
         );
       }
     } catch {
-      api.showMsg('error', 'Ошибка при отправке');
+      api.showMsg('error', t('Ошибка при отправке'));
     } finally {
       if (chatSendBtn) chatSendBtn.disabled = false;
     }
@@ -954,7 +955,7 @@ export function openChatInMessagesTab(
     } else {
       selectionBar.classList.add('active');
       chatBackRow?.classList.add('hidden');
-      selectionInfo.textContent = `Выбрано: ${selectedMessages.size}`;
+      selectionInfo.textContent = t('Выбрано: {count}', { count: selectedMessages.size });
       messagesContainer?.classList.add('selection-mode');
     }
 
@@ -1020,7 +1021,7 @@ export function openChatInMessagesTab(
   document.getElementById('chatSelectionForward')?.addEventListener('click', async () => {
     if (selectedMessages.size === 0) return;
     const selectedIds = Array.from(selectedMessages.keys());
-    api.showMsg('info', `Переслано ${selectedIds.length} сообщений`);
+    api.showMsg('info', t('Переслано {count} сообщений', { count: selectedIds.length }));
     cancelSelection();
   });
 
@@ -1035,15 +1036,15 @@ export function openChatInMessagesTab(
     });
 
     if (foreignSelectedIds.length > 0) {
-      api.showMsg('error', 'Нельзя удалять чужие сообщения');
+      api.showMsg('error', t('Нельзя удалять чужие сообщения'));
       return;
     }
 
     const confirmed = await showAccountConfirmModal({
-      title: 'Удалить сообщения',
-      text: `Удалить ${selectedMessages.size} выбранных сообщений?`,
-      confirmText: 'Удалить',
-      cancelText: 'Отмена',
+      title: t('Удалить сообщения'),
+      text: t('Удалить {count} выбранных сообщений?', { count: selectedMessages.size }),
+      confirmText: t('Удалить'),
+      cancelText: t('Отмена'),
     });
     if (!confirmed) return;
 
@@ -1058,7 +1059,7 @@ export function openChatInMessagesTab(
       }
     }
 
-    api.showMsg('ok', `Удалено ${selectedMessages.size} сообщений`);
+    api.showMsg('ok', t('Удалено {count} сообщений', { count: selectedMessages.size }));
     cancelSelection();
     if (messagesEl) {
       await loadChatMessagesInAccount(

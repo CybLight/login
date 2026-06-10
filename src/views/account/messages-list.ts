@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { FriendListItem } from '@/types';
 import { apiCall, escapeHtml, formatPresenceLabel, isUserOnline } from '@/utils';
 import { getAvatarListHtml } from './avatar';
@@ -39,7 +40,7 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
     const friendsData = await friendsRes.json().catch(() => ({}));
 
     if (!friendsData?.ok) {
-      container.innerHTML = '<div class="sec-error-text">Не удалось загрузить сообщения</div>';
+      container.innerHTML = `<div class="sec-error-text">${t('Не удалось загрузить сообщения')}</div>`;
       return;
     }
 
@@ -63,13 +64,13 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
         const previewClass = online ? 'chat-preview chat-preview--online' : 'chat-preview';
         return `<div class="${previewClass}">${escapeHtml(label)}</div>`;
       }
-      return `<div class="chat-preview">Нажмите, чтобы открыть чат</div>`;
+      return `<div class="chat-preview">${t('Нажмите, чтобы открыть чат')}</div>`;
     };
 
     container.innerHTML = `
       <div class="messages-info">
-        <strong>💬 Сообщения</strong>
-        <p class="messages-info-hint">Выберите друга, чтобы начать переписку</p>
+        <strong>💬 ${t('Сообщения')}</strong>
+        <p class="messages-info-hint">${t('Выберите друга, чтобы начать переписку')}</p>
       </div>
 
       ${
@@ -88,7 +89,7 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
             `
               )
               .join('')}</div>`
-          : `<div class="messages-empty"><div class="messages-empty-icon">💬</div><p>Нет доступных чатов</p><p class="messages-empty-sub">Добавьте друзей, чтобы начать общение</p></div>`
+          : `<div class="messages-empty"><div class="messages-empty-icon">💬</div><p>${t('Нет доступных чатов')}</p><p class="messages-empty-sub">${t('Добавьте друзей, чтобы начать общение')}</p></div>`
       }
     `;
 
@@ -139,6 +140,6 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
   } catch (error) {
     console.error('Error loading messages:', error);
     container.innerHTML =
-      '<div class="sec-error-text">Ошибка загрузки. Попробуйте обновить страницу.</div>';
+      `<div class="sec-error-text">${t('Ошибка загрузки. Попробуйте обновить страницу.')}</div>`;
   }
 }

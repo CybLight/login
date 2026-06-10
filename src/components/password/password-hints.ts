@@ -2,6 +2,8 @@
  * Password hints component - подсказки для правил пароля
  */
 
+import { t } from '@/i18n';
+
 export interface PasswordHintsOptions {
   minLen?: number;
   requireUpper?: boolean;
@@ -27,15 +29,15 @@ export function attachPasswordHints(
   // HTML подсказок
   containerEl.innerHTML = `
     <div class="pass-hints">
-      <div class="pass-hints__title">Пароль должен содержать как минимум:</div>
+      <div class="pass-hints__title">${t('Пароль должен содержать как минимум:')}</div>
       <ul class="pass-hints__list">
-        <li data-rule="minLen"><span class="icon" aria-hidden="true"></span> ${settings.minLen} символов</li>
-        ${settings.requireUpper ? `<li data-rule="hasUpper"><span class="icon" aria-hidden="true"></span> 1 заглавную букву (A-Z)</li>` : ''}
-        ${settings.requireLower ? `<li data-rule="hasLower"><span class="icon" aria-hidden="true"></span> 1 строчную букву (a-z)</li>` : ''}
-        <li data-rule="hasDigit"><span class="icon" aria-hidden="true"></span> 1 число</li>
-        <li data-rule="hasSpecial"><span class="icon" aria-hidden="true"></span> 1 спецсимвол (например, $ ! @ % &)</li>
-        <li data-rule="noEdgeSpaces"><span class="icon" aria-hidden="true"></span> Без пробелов в начале и конце</li>
-        <li data-rule="asciiOnly"><span class="icon" aria-hidden="true"></span>Только латиница (без рус/укр)</li>
+        <li data-rule="minLen"><span class="icon" aria-hidden="true"></span> ${t('{count} символов', { count: settings.minLen })}</li>
+        ${settings.requireUpper ? `<li data-rule="hasUpper"><span class="icon" aria-hidden="true"></span> ${t('1 заглавную букву (A-Z)')}</li>` : ''}
+        ${settings.requireLower ? `<li data-rule="hasLower"><span class="icon" aria-hidden="true"></span> ${t('1 строчную букву (a-z)')}</li>` : ''}
+        <li data-rule="hasDigit"><span class="icon" aria-hidden="true"></span> ${t('1 число')}</li>
+        <li data-rule="hasSpecial"><span class="icon" aria-hidden="true"></span> ${t('1 спецсимвол (например, $ ! @ % &)')}</li>
+        <li data-rule="noEdgeSpaces"><span class="icon" aria-hidden="true"></span> ${t('Без пробелов в начале и конце')}</li>
+        <li data-rule="asciiOnly"><span class="icon" aria-hidden="true"></span>${t('Только латиница (без рус/укр)')}</li>
       </ul>
     </div>
   `;

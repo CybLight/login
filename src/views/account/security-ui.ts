@@ -2,6 +2,8 @@
  * Security UI helper functions
  */
 
+import { t } from '@/i18n';
+
 export function updateSecurityIndicator(
   twoFAEnabled: boolean,
   passkeyCount: number,
@@ -39,8 +41,8 @@ export function updateSecurityIndicator(
       if (check2FA) {
         check2FA.innerHTML = `
           <div class="security-check-icon">✅</div>
-          <div class="security-check-label">Двухфакторная аутентификация включена</div>
-          <div class="security-check-status">Выполнено</div>
+          <div class="security-check-label">${t('Двухфакторная аутентификация включена')}</div>
+          <div class="security-check-status">${t('Выполнено')}</div>
         `;
         check2FA.classList.add('disabled');
       }
@@ -51,8 +53,8 @@ export function updateSecurityIndicator(
       if (checkPasskey) {
         checkPasskey.innerHTML = `
           <div class="security-check-icon">✅</div>
-          <div class="security-check-label">Ключ доступа (Passkey) добавлен</div>
-          <div class="security-check-status">Выполнено</div>
+          <div class="security-check-label">${t('Ключ доступа (Passkey) добавлен')}</div>
+          <div class="security-check-status">${t('Выполнено')}</div>
         `;
         checkPasskey.classList.add('disabled');
       }
@@ -64,12 +66,12 @@ export function updateSecurityIndicator(
         : score >= 50
           ? 'security-level--medium'
           : 'security-level--low';
-    const badgeText = score >= 100 ? '✓ Защищён' : score >= 50 ? '⚠ Средняя' : '⚠ Низкая';
-    const itemTitle = score >= 100 ? 'Ваш аккаунт под защитой' : 'Проверка безопасности';
+    const badgeText = score >= 100 ? `✓ ${t('Защищён')}` : score >= 50 ? `⚠ ${t('Средняя')}` : `⚠ ${t('Низкая')}`;
+    const itemTitle = score >= 100 ? t('Ваш аккаунт под защитой') : t('Проверка безопасности');
     const itemSubtitle =
       score >= 100
-        ? 'Ваш аккаунт прошёл Проверку безопасности'
-        : 'Обнаружены рекомендации по защите';
+        ? t('Ваш аккаунт прошёл Проверку безопасности')
+        : t('Обнаружены рекомендации по защите');
 
     // Обновляем прогресс-бар и процент
     progressBar.style.width = `${score}%`;
@@ -101,7 +103,7 @@ export function updateSecurityIndicator(
       // Обновляем иконку (PNG при 100%, SVG щит при меньше)
       if (iconContainer) {
         if (score >= 100) {
-          iconContainer.innerHTML = `<img src="/assets/img/security/okey_64.png" width="32" height="32" alt="Защищён" class="sec-icon-img" />`;
+          iconContainer.innerHTML = `<img src="/assets/img/security/okey_64.png" width="32" height="32" alt="${t('Защищён')}" class="sec-icon-img" />`;
         } else {
           const svgColor = score >= 50 ? '#fbbf24' : '#ef4444';
           iconContainer.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -126,20 +128,20 @@ export function updateSecurityIndicator(
       if (score >= 100) {
         securityRecommendations.innerHTML = `
           <div class="security-box-success">
-            <div class="security-box-title">🎉 Превосходно!</div>
-            <div class="security-box-text">Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.</div>
+            <div class="security-box-title">${t('🎉 Превосходно!')}</div>
+            <div class="security-box-text">${t('Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.')}</div>
           </div>
         `;
       } else {
         const recommendationText =
           score < 30
-            ? 'Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.'
+            ? t('Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.')
             : score < 50
-              ? 'Добавьте еще несколько методов защиты для повышения безопасности.'
-              : 'Отлично! Осталось совсем немного для максимальной защиты.';
+              ? t('Добавьте еще несколько методов защиты для повышения безопасности.')
+              : t('Отлично! Осталось совсем немного для максимальной защиты.');
         securityRecommendations.innerHTML = `
           <div class="security-box-info">
-            <div class="security-box-title">💡 Рекомендация</div>
+            <div class="security-box-title">${t('💡 Рекомендация')}</div>
             <div class="security-box-text">${recommendationText}</div>
           </div>
         `;
@@ -176,15 +178,15 @@ export function attachPasswordHints(
 
   mount.innerHTML = `
     <div class="pass-hints">
-      <div class="pass-hints__title">Пароль должен содержать как минимум:</div>
+      <div class="pass-hints__title">${t('Пароль должен содержать как минимум:')}</div>
       <ul class="pass-hints__list">
-        <li data-rule="len"><span class="icon"></span><span>${minLen} символов</span></li>
-        ${requireUpper ? '<li data-rule="upper"><span class="icon"></span><span>1 заглавную букву (A-Z)</span></li>' : ''}
-        ${requireLower ? '<li data-rule="lower"><span class="icon"></span><span>1 строчную букву (a-z)</span></li>' : ''}
-        <li data-rule="digit"><span class="icon"></span><span>1 число</span></li>
-        <li data-rule="special"><span class="icon"></span><span>1 спецсимвол (например ! $ ! @ % &)</span></li>
-        <li data-rule="trim"><span class="icon"></span><span>Без пробелов в начале и конце</span></li>
-        <li data-rule="ascii"><span class="icon"></span><span>Только латиница (без рус/укр)</span></li>
+        <li data-rule="len"><span class="icon"></span><span>${t('{count} символов', { count: minLen })}</span></li>
+        ${requireUpper ? `<li data-rule="upper"><span class="icon"></span><span>${t('1 заглавную букву (A-Z)')}</span></li>` : ''}
+        ${requireLower ? `<li data-rule="lower"><span class="icon"></span><span>${t('1 строчную букву (a-z)')}</span></li>` : ''}
+        <li data-rule="digit"><span class="icon"></span><span>${t('1 число')}</span></li>
+        <li data-rule="special"><span class="icon"></span><span>${t('1 спецсимвол (например ! $ ! @ % &)')}</span></li>
+        <li data-rule="trim"><span class="icon"></span><span>${t('Без пробелов в начале и конце')}</span></li>
+        <li data-rule="ascii"><span class="icon"></span><span>${t('Только латиница (без рус/укр)')}</span></li>
       </ul>
     </div>
   `;

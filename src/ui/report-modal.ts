@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { apiCall, parseUA } from '@/utils';
 import { trapFocus } from '@/utils/focus';
 
@@ -11,33 +12,33 @@ function ensureReportModal(): HTMLElement {
   modal.innerHTML = `
     <div class="cyb-report-modal__backdrop"></div>
     <div class="cyb-report-modal__card" role="dialog" aria-modal="true" aria-labelledby="cyb-report-title" aria-describedby="cyb-report-desc">
-      <div id="cyb-report-title" class="cyb-report-modal__title">Сообщить о проблеме</div>
-      <div id="cyb-report-desc" class="sr-only">Форма для отправки сообщения администратору</div>
+      <div id="cyb-report-title" class="cyb-report-modal__title">${t('Сообщить о проблеме')}</div>
+      <div id="cyb-report-desc" class="sr-only">${t('Форма для отправки сообщения администратору')}</div>
       <form id="reportForm" class="cyb-report-modal__form">
         <div class="field">
-          <label class="label" for="reportEmail">Email (опционально)</label>
+          <label class="label" for="reportEmail">${t('Email (опционально)')}</label>
           <input class="input" id="reportEmail" type="email" placeholder="your@email.com" />
         </div>
         <div class="field">
-          <label class="label" for="reportCategory">Категория</label>
+          <label class="label" for="reportCategory">${t('Категория')}</label>
           <select class="input" id="reportCategory" required>
-            <option value="">-- Выберите категорию --</option>
-            <option value="bug">Ошибка/Баг</option>
-            <option value="performance">Проблема с производительностью</option>
-            <option value="security">Проблема безопасности</option>
-            <option value="feature">Предложение функции</option>
-            <option value="other">Прочее</option>
+            <option value="">${t('-- Выберите категорию --')}</option>
+            <option value="bug">${t('Ошибка/Баг')}</option>
+            <option value="performance">${t('Проблема с производительностью')}</option>
+            <option value="security">${t('Проблема безопасности')}</option>
+            <option value="feature">${t('Предложение функции')}</option>
+            <option value="other">${t('Прочее')}</option>
           </select>
         </div>
         <div class="field">
-          <label class="label" for="reportMessage">Описание проблемы</label>
-          <textarea class="input" id="reportMessage" rows="5" placeholder="Подробно опишите проблему..." required style="resize: vertical; font-family: inherit;"></textarea>
+          <label class="label" for="reportMessage">${t('Описание проблемы')}</label>
+          <textarea class="input" id="reportMessage" rows="5" placeholder="${t('Подробно опишите проблему...')}" required style="resize: vertical; font-family: inherit;"></textarea>
         </div>
         <div class="msg msg--warn" id="reportWarning" style="display: none;"></div>
         <div class="msg msg--ok" id="reportSuccess" style="display: none;"></div>
         <div class="cyb-report-modal__actions">
-          <button class="btn btn-outline" type="button" id="reportCancel" aria-label="Отмена">Отмена</button>
-          <button class="btn btn-primary" type="submit" id="reportSubmit" aria-label="Отправить">Отправить</button>
+          <button class="btn btn-outline" type="button" id="reportCancel" aria-label="${t('Отмена')}">${t('Отмена')}</button>
+          <button class="btn btn-primary" type="submit" id="reportSubmit" aria-label="${t('Отправить')}">${t('Отправить')}</button>
         </div>
       </form>
     </div>
@@ -114,19 +115,19 @@ async function handleReportSubmit(event: Event): Promise<void> {
   const message = messageInput.value.trim();
 
   if (!message) {
-    warning.textContent = 'Пожалуйста, опишите проблему';
+    warning.textContent = t('Пожалуйста, опишите проблему');
     warning.style.display = 'block';
     return;
   }
 
   if (!category) {
-    warning.textContent = 'Пожалуйста, выберите категорию';
+    warning.textContent = t('Пожалуйста, выберите категорию');
     warning.style.display = 'block';
     return;
   }
 
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Отправляю...';
+  submitBtn.textContent = t('Отправляю...');
   warning.style.display = 'none';
   success.style.display = 'none';
 
@@ -153,7 +154,7 @@ async function handleReportSubmit(event: Event): Promise<void> {
     });
 
     if (response.ok) {
-      success.textContent = '✓ Спасибо! Ваш отчёт отправлен администраторам.';
+      success.textContent = t('✓ Спасибо! Ваш отчёт отправлен администраторам.');
       success.style.display = 'block';
       (modal.querySelector('#reportForm') as HTMLFormElement | null)?.reset();
 
@@ -162,16 +163,16 @@ async function handleReportSubmit(event: Event): Promise<void> {
       }, 2000);
     } else {
       const errorData = await response.json().catch(() => ({}) as { message?: string });
-      warning.textContent = errorData.message || 'Ошибка при отправке. Попробуйте позже.';
+      warning.textContent = errorData.message || t('Ошибка при отправке. Попробуйте позже.');
       warning.style.display = 'block';
     }
   } catch (error) {
     console.error('Report submission error:', error);
-    warning.textContent = 'Ошибка сети. Проверьте подключение и попробуйте ещё раз.';
+    warning.textContent = t('Ошибка сети. Проверьте подключение и попробуйте ещё раз.');
     warning.style.display = 'block';
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Отправить';
+    submitBtn.textContent = t('Отправить');
   }
 }
 

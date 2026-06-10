@@ -7,6 +7,7 @@ import '@/styles/global.css';
 import '@/styles/login.css';
 import '@/styles/accessibility.css';
 
+import { initLocaleRouting, t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { initErrorHandlers, logger } from '@/utils';
 import { authService } from '@/services';
@@ -72,6 +73,8 @@ function initGlobalUiDelegation(): void {
 (window as unknown as { CybRouter?: typeof Router }).CybRouter = Router;
 
 export async function initApp(): Promise<void> {
+  initLocaleRouting();
+
   console.log('📱 CybLight Login - Initializing...');
 
   if (!document.getElementById('skip-to-main')) {
@@ -79,7 +82,7 @@ export async function initApp(): Promise<void> {
     skipLink.id = 'skip-to-main';
     skipLink.href = '#main-content';
     skipLink.className = 'skip-link';
-    skipLink.textContent = 'Перейти к основному содержимому';
+    skipLink.textContent = t('Перейти к основному содержимому');
     document.body.prepend(skipLink);
   }
 
@@ -161,7 +164,7 @@ export async function initApp(): Promise<void> {
 
   // Listen for auth-related events
   window.addEventListener('auth:unauthorized', () => {
-    NotificationManager.error('Ваша сессия истекла. Пожалуйста, войдите снова.');
+    NotificationManager.error(t('Ваша сессия истекла. Пожалуйста, войдите снова.'));
     authService.clearAuthCookie();
     Router.navigate('username');
   });
@@ -179,9 +182,9 @@ if (document.readyState === 'loading') {
     if (app) {
       app.innerHTML = `
         <div class="error-page">
-          <h1>Ошибка инициализации</h1>
-          <p>Не удалось инициализировать приложение.</p>
-          <button type="button" data-reload aria-label="Обновить страницу">Обновить страницу</button>
+          <h1>${t('Ошибка инициализации')}</h1>
+          <p>${t('Не удалось инициализировать приложение.')}</p>
+          <button type="button" data-reload aria-label="${t('Обновить страницу')}">${t('Обновить страницу')}</button>
         </div>
       `;
     }

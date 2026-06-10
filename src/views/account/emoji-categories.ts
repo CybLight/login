@@ -2,6 +2,8 @@
  * Emoji categories with localized titles and search tags
  */
 
+import { t } from '@/i18n';
+
 export type EmojiCategory = {
   key: string;
   icon: string;
@@ -205,3 +207,7 @@ export const CYBLIGHT_EMOJI_CATEGORIES: EmojiCategory[] = [
     emojis: ['🏳️', '🏴', '🏁', '🚩', '🇺🇦', '🇺🇸', '🇬🇧', '🇩🇪', '🇫🇷', '🇮🇹', '🇪🇸', '🇵🇱', '🇯🇵', '🇨🇦'],
   },
 ];
+
+export function getEmojiCategoryTitle(category: EmojiCategory): string {
+  return t(category.title);
+}

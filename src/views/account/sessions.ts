@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import type { SessionListItem } from '@/types';
 import { apiCall, escapeHtml } from '@/utils';
@@ -29,7 +30,7 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
     const response = await r.json().catch(() => ({}));
 
     if (!r.ok || !response.ok) {
-      container.innerHTML = '<div class="sec-error-text">Ошибка загрузки устройств</div>';
+      container.innerHTML = `<div class="sec-error-text">${t('Ошибка загрузки устройств')}</div>`;
       return;
     }
 
@@ -38,7 +39,7 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
     const sessionsCount = meData?.sessionsCount || sessions.length || 0;
 
     if (sessions.length === 0) {
-      container.innerHTML = '<div class="sec-empty-text">Нет активных сессий</div>';
+      container.innerHTML = `<div class="sec-empty-text">${t('Нет активных сессий')}</div>`;
       return;
     }
 
@@ -69,7 +70,7 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
 
         return `
         <tr class="${isCur ? 'is-current' : ''}">
-          <td data-label="Device">
+          <td data-label="${t('Устройство')}">
             <div class="dev">
               <div class="dev-top">
                 <span class="dev-ico" aria-hidden="true">
@@ -79,7 +80,7 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
                 <div class="dev-text">
                   <div class="dev-name-row">
                     <span class="dev-name">${escapeHtml(line1)}</span>
-                    ${isCur ? '<span class="pill">Текущая</span>' : ''}
+                    ${isCur ? `<span class="pill">${t('Текущая')}</span>` : ''}
                   </div>
               
                   ${line2 ? `<div class="dev-sub mono">${escapeHtml(line2 || '—')}</div>` : ''}
@@ -88,15 +89,15 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
             </div>
           </td>
 
-          <td data-label="ОС">${escapeHtml(os)}</td>
-          <td data-label="Местоположение" title="Edge: ${s.colo || '—'}">${escapeHtml(loc)}</td>
-          <td data-label="Последний вход">${escapeHtml(fmtTs(lastLogin))}</td>
-          <td data-label="Последняя активность">${escapeHtml(fmtTs(lastSeen))}</td>
+          <td data-label="${t('ОС')}">${escapeHtml(os)}</td>
+          <td data-label="${t('Местоположение')}" title="Edge: ${s.colo || '—'}">${escapeHtml(loc)}</td>
+          <td data-label="${t('Последний вход')}">${escapeHtml(fmtTs(lastLogin))}</td>
+          <td data-label="${t('Последняя активность')}">${escapeHtml(fmtTs(lastSeen))}</td>
 
-          <td class="td-action td-action--right" data-label="Action">
-            <button class="icon-btn" type="button" title="Завершить" data-revoke="${escapeHtml(
+          <td class="td-action td-action--right" data-label="${t('Действие')}">
+            <button class="icon-btn" type="button" title="${t('Завершить')}" data-revoke="${escapeHtml(
               s.id
-            )}" aria-label="Завершить">
+            )}" aria-label="${t('Завершить')}">
               ⎋
             </button>
           </td>
@@ -107,11 +108,11 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
 
     container.innerHTML = `
     <div class="sessions-head">
-      <div class="sessions-count">Активных сессий: <b>${sessionsCount}</b></div>
+      <div class="sessions-count">${t('Активных сессий:')} <b>${sessionsCount}</b></div>
       <button class="btn btn-outline${sessionsCount <= 1 ? ' is-disabled' : ''}" id="logoutOthersBtn" type="button" ${
         sessionsCount <= 1 ? 'disabled' : ''
-      } aria-label="Выход из всех, кроме текущей">
-        Выход из всех, кроме текущей
+      } aria-label="${t('Выход из всех, кроме текущей')}">
+        ${t('Выход из всех, кроме текущей')}
       </button>
     </div>
 
@@ -119,16 +120,16 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
       <table class="sessions-table">
         <thead>
           <tr>
-            <th>Device</th>
-            <th>OS</th>
-            <th>Location</th>
-            <th>Last Login</th>
-            <th>Last Seen</th>
-            <th class="th-action">Action</th>
+            <th>${t('Устройство')}</th>
+            <th>${t('ОС')}</th>
+            <th>${t('Местоположение')}</th>
+            <th>${t('Последний вход')}</th>
+            <th>${t('Последняя активность')}</th>
+            <th class="th-action">${t('Действие')}</th>
           </tr>
         </thead>
         <tbody>
-          ${rows || `<tr><td colspan="6" class="td-empty">Нет сессий</td></tr>`}
+          ${rows || `<tr><td colspan="6" class="td-empty">${t('Нет сессий')}</td></tr>`}
         </tbody>
       </table>
     </div>
@@ -153,9 +154,9 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
           const d = await r2.json().catch(() => ({}));
 
           if (!r2.ok) {
-            api.showMsg('error', d?.error ? `Ошибка: ${d.error}` : 'Не удалось завершить сессию.');
+            api.showMsg('error', d?.error ? `${t('Ошибка:')} ${d.error}` : t('Не удалось завершить сессию.'));
           } else {
-            api.showMsg('ok', 'Сессия завершена ✅');
+            api.showMsg('ok', t('Сессия завершена ✅'));
             if (d.loggedOut) {
               document.body.classList.remove('no-strawberries');
               Router.navigate('username');
@@ -164,7 +165,7 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
             setTimeout(() => Router.navigate('account-sessions'), 300);
           }
         } catch {
-          api.showMsg('error', 'Ошибка сети.');
+          api.showMsg('error', t('Ошибка сети.'));
         } finally {
           btn.disabled = false;
         }
@@ -183,11 +184,11 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
             credentials: 'include',
           });
           const d = await r2.json().catch(() => ({}));
-          if (!r2.ok) api.showMsg('error', d?.error ? `Ошибка: ${d.error}` : 'Не удалось.');
-          else api.showMsg('ok', `Готово ✅ Завершено: ${d.removed ?? 0}`);
+          if (!r2.ok) api.showMsg('error', d?.error ? `${t('Ошибка:')} ${d.error}` : t('Не удалось.'));
+          else api.showMsg('ok', t('Готово ✅ Завершено: {count}', { count: d.removed ?? 0 }));
           setTimeout(() => Router.navigate('account-sessions'), 350);
         } catch {
-          api.showMsg('error', 'Ошибка сети.');
+          api.showMsg('error', t('Ошибка сети.'));
         } finally {
           lo.disabled = false;
         }
@@ -195,6 +196,6 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
     }
   } catch (e) {
     console.error('Error loading sessions:', e);
-    container.innerHTML = '<div class="sec-error-text">Ошибка сети</div>';
+    container.innerHTML = `<div class="sec-error-text">${t('Ошибка сети')}</div>`;
   }
 }

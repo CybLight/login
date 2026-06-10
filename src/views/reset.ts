@@ -2,6 +2,7 @@
  * Reset password view - восстановление пароля
  */
 
+import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { getStorage, apiCall } from '@/utils';
@@ -36,28 +37,28 @@ function renderPasswordResetForm(token: string): void {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Новый пароль</h1>
+          <h1>${t('Новый пароль')}</h1>
         </div>
       </div>
 
       <form id="fReset">
         <div class="field">
-          <label class="label" for="p1">Новый пароль</label>
+          <label class="label" for="p1">${t('Новый пароль')}</label>
           <input class="input" id="p1" type="password" autocomplete="new-password" required />
         </div>
 
         <div class="field">
-          <label class="label" for="p2">Повтори пароль</label>
+          <label class="label" for="p2">${t('Повтори пароль')}</label>
           <input class="input" id="p2" type="password" autocomplete="new-password" required />
         </div>
 
         <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
 
         <div class="row" style="margin-top:10px;">
-          <a class="link" href="#" id="back">← Назад</a>
+          <a class="link" href="#" id="back">${t('← Назад')}</a>
         </div>
 
-        <button class="btn btn-primary" type="submit" aria-label="Сохранить пароль">Сохранить пароль</button>
+        <button class="btn btn-primary" type="submit" aria-label="${t('Сохранить пароль')}">${t('Сохранить пароль')}</button>
       </form>
     </section>
   `)
@@ -100,17 +101,17 @@ function renderPasswordResetForm(token: string): void {
       const p2 = (document.getElementById('p2') as HTMLInputElement)?.value || '';
 
       if (!p1 || !p2) {
-        showMsg('error', 'Заполните оба поля');
+        showMsg('error', t('Заполните оба поля'));
         return;
       }
       if (p1 !== p2) {
-        showMsg('error', 'Пароли не совпадают');
+        showMsg('error', t('Пароли не совпадают'));
         return;
       }
 
       const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
       btn.disabled = true;
-      btn.textContent = 'Сохраняю...';
+      btn.textContent = t('Сохраняю...');
 
       try {
         const res = await apiCall('/auth/reset-password', {
@@ -121,21 +122,21 @@ function renderPasswordResetForm(token: string): void {
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          showMsg('error', data?.error || 'Ошибка смены пароля');
+          showMsg('error', data?.error || t('Ошибка смены пароля'));
           btn.disabled = false;
-          btn.textContent = 'Сохранить пароль';
+          btn.textContent = t('Сохранить пароль');
           return;
         }
 
-        showMsg('ok', 'Пароль успешно изменён! Переход к входу...');
+        showMsg('ok', t('Пароль успешно изменён! Переход к входу...'));
         setTimeout(() => {
           Router.navigate('username');
         }, 2000);
       } catch (err) {
         console.error('[RESET] Error:', err);
-        showMsg('error', 'Ошибка сети. Попробуйте ещё раз.');
+        showMsg('error', t('Ошибка сети. Попробуйте ещё раз.'));
         btn.disabled = false;
-        btn.textContent = 'Сохранить пароль';
+        btn.textContent = t('Сохранить пароль');
       }
     });
   }
@@ -155,12 +156,12 @@ function renderRecoveryRequestForm(mode: string): void {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>${isUsername ? 'Восстановление логина' : 'Восстановление пароля'}</h1>
+          <h1>${isUsername ? t('Восстановление логина') : t('Восстановление пароля')}</h1>
         </div>
       </div>
 
       <p style="margin:0 0 16px;color:var(--muted);font-size:13px;">
-        ${isUsername ? 'Введите email, указанный при регистрации. Мы отправим вам логин.' : 'Введите email для получения ссылки на сброс пароля.'}
+        ${isUsername ? t('Введите email, указанный при регистрации. Мы отправим вам логин.') : t('Введите email для получения ссылки на сброс пароля.')}
       </p>
 
       <form id="fRecover">
@@ -172,10 +173,10 @@ function renderRecoveryRequestForm(mode: string): void {
         <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
 
         <div class="row" style="margin-top:10px;">
-          <a class="link" href="#" id="back">← Назад</a>
+          <a class="link" href="#" id="back">${t('← Назад')}</a>
         </div>
 
-        <button class="btn btn-primary" type="submit" aria-label="Отправить">Отправить</button>
+        <button class="btn btn-primary" type="submit" aria-label="${t('Отправить')}">${t('Отправить')}</button>
       </form>
     </section>
   `)
@@ -207,13 +208,13 @@ function renderRecoveryRequestForm(mode: string): void {
       const email = emailInput.value.trim();
 
       if (!email) {
-        showMsg('error', 'Введите email');
+        showMsg('error', t('Введите email'));
         return;
       }
 
       const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
       btn.disabled = true;
-      btn.textContent = 'Отправляю...';
+      btn.textContent = t('Отправляю...');
 
       try {
         const endpoint = isUsername ? '/auth/recover-username' : '/auth/request-password-reset';
@@ -225,17 +226,17 @@ function renderRecoveryRequestForm(mode: string): void {
         const data = await res.json().catch(() => ({}));
 
         if (res.ok) {
-          showMsg('ok', data?.message || 'Письмо отправлено! Проверьте свой email.');
+          showMsg('ok', data?.message || t('Письмо отправлено! Проверьте свой email.'));
           emailInput.value = '';
         } else {
-          showMsg('error', data?.error || 'Ошибка при отправке');
+          showMsg('error', data?.error || t('Ошибка при отправке'));
         }
       } catch (err) {
         console.error('[RESET] Error:', err);
-        showMsg('error', 'Ошибка сети. Попробуйте ещё раз.');
+        showMsg('error', t('Ошибка сети. Попробуйте ещё раз.'));
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Отправить';
+        btn.textContent = t('Отправить');
       }
     });
   }

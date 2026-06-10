@@ -1,0 +1,7 @@
+{
+  "В сети": ["В мережі", "Online"],
+  "Был(а) только что": ["Був(ла) щойно", "Last seen just now"],
+  "Был(а) {count} мин назад": ["Був(ла) {count} хв тому", "Last seen {count} min ago"],
+  "Был(а) {count} ч назад": ["Був(ла) {count} год тому", "Last seen {count} h ago"],
+  "Был(а) {count} дн назад": ["Був(ла) {count} дн тому", "Last seen {count} d ago"]
+}

@@ -2,6 +2,7 @@
  * Edit Profile View - страница редактирования профиля
  */
 
+import { t, localeTag, getLocale } from '@/i18n';
 import { apiCall, escapeHtml } from '@/utils';
 import { Router } from '@/router/Router';
 
@@ -109,7 +110,7 @@ async function checkUsernameAvailability(
     };
   } catch (error) {
     console.error('Error checking username:', error);
-    return { available: false, reason: 'Ошибка проверки' };
+    return { available: false, reason: t('Ошибка проверки') };
   }
 }
 
@@ -133,7 +134,7 @@ async function updateProfile(
     };
   } catch (error) {
     console.error('Error updating profile:', error);
-    return { ok: false, error: 'Ошибка при обновлении профиля' };
+    return { ok: false, error: t('Ошибка при обновлении профиля') };
   }
 }
 
@@ -200,7 +201,7 @@ export async function renderEditProfile(): Promise<void> {
   app.innerHTML = `
     <div class="profile-loading">
       <div class="spinner"></div>
-      <p>Загрузка...</p>
+      <p>${t('Загрузка...')}</p>
     </div>
   `;
 
@@ -209,11 +210,11 @@ export async function renderEditProfile(): Promise<void> {
   if (!profile) {
     app.innerHTML = `
       <div class="profile-notfound">
-        <h1>Ошибка загрузки</h1>
-        <p>Не удалось загрузить профиль для редактирования</p>
+        <h1>${t('Ошибка загрузки')}</h1>
+        <p>${t('Не удалось загрузить профиль для редактирования')}</p>
         <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
-          <button class="btn btn-primary" type="button" data-reload aria-label="Обновить страницу">Обновить страницу</button>
-          <button class="btn btn-secondary" type="button" data-route="account-profile" aria-label="Вернуться в профиль">Вернуться в профиль</button>
+          <button class="btn btn-primary" type="button" data-reload aria-label="${t('Обновить страницу')}">${t('Обновить страницу')}</button>
+          <button class="btn btn-secondary" type="button" data-route="account-profile" aria-label="${t('Вернуться в профиль')}">${t('Вернуться в профиль')}</button>
         </div>
       </div>
     `;
@@ -243,7 +244,7 @@ export async function renderEditProfile(): Promise<void> {
       (avatar) => `
     <div class="avatar-option ${profile.avatar === avatar.id ? 'selected' : ''}" 
          data-avatar="${avatar.id}"
-         title="${avatar.label}">
+         title="${t(avatar.label)}">
       <div class="avatar-badge">${avatar.emoji}</div>
     </div>
   `
@@ -259,23 +260,27 @@ export async function renderEditProfile(): Promise<void> {
     ? profile.bio.length > 40
       ? profile.bio.substring(0, 40) + '...'
       : profile.bio
-    : 'Не указано';
+    : t('Не указано');
   const currentAboutMe = profile.aboutMe
     ? profile.aboutMe.length > 40
       ? profile.aboutMe.substring(0, 40) + '...'
       : profile.aboutMe
-    : 'Не указано';
+    : t('Не указано');
   const currentGender =
-    profile.gender === 'male' ? 'Мужской' : profile.gender === 'female' ? 'Женский' : 'Не указано';
+    profile.gender === 'male'
+      ? t('Мужской')
+      : profile.gender === 'female'
+        ? t('Женский')
+        : t('Не указано');
   const currentDob = profile.dateOfBirth
-    ? new Date(profile.dateOfBirth).toLocaleDateString('ru-RU')
-    : 'Не указано';
+    ? new Date(profile.dateOfBirth).toLocaleDateString(localeTag(getLocale()))
+    : t('Не указано');
 
   app.innerHTML = `
     <div class="edit-profile-container">
       <div class="edit-profile-header">
-        <button class="btn-back" type="button" data-route="account-profile" aria-label="← Назад">← Назад</button>
-        <h1>✏️ Редактирование профиля</h1>
+        <button class="btn-back" type="button" data-route="account-profile" aria-label="${t('← Назад')}">${t('← Назад')}</button>
+        <h1>✏️ ${t('Редактирование профиля')}</h1>
       </div>
       
       <div class="edit-profile-content">
@@ -285,10 +290,10 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>👤 Имя пользователя</h2>
+              <h2>👤 ${t('Имя пользователя')}</h2>
               <span class="current-value">${escapeHtml(profile.username || '')}</span>
             </div>
-            <button class="btn-accordion" data-section="username" aria-label="Изменить">Изменить</button>
+            <button class="btn-accordion" data-section="username" aria-label="${t('Изменить')}">${t('Изменить')}</button>
           </div>
           <div class="accordion-content" id="section-username" style="display:none;">
             <div class="username-field">
@@ -298,19 +303,24 @@ export async function renderEditProfile(): Promise<void> {
                 class="input username-input" 
                 value="${escapeHtml(profile.username || '')}" 
                 ${profile.canChangeUsername ? '' : 'disabled'}
-                placeholder="Введите новое имя пользователя"
+                placeholder="${t('Введите новое имя пользователя')}"
               />
-              <button id="checkUsernameBtn" class="btn btn-secondary btn-check-username" ${profile.canChangeUsername ? '' : 'disabled'} aria-label="Проверить">
-                Проверить
+              <button id="checkUsernameBtn" class="btn btn-secondary btn-check-username" ${profile.canChangeUsername ? '' : 'disabled'} aria-label="${t('Проверить')}">
+                ${t('Проверить')}
               </button>
             </div>
             <div id="usernameHint" class="field-hint">
               ${
                 profile.canChangeUsername
-                  ? '3-20 символов: буквы, цифры, _ или -'
+                  ? t('3-20 символов: буквы, цифры, _ или -')
                   : profile.usernameChangedAt
-                    ? `Можно изменить через ${Math.ceil((30 * 24 * 60 * 60 * 1000 - (Date.now() - profile.usernameChangedAt)) / (24 * 60 * 60 * 1000))} дней`
-                    : 'Изменение временно недоступно'
+                    ? t('Можно изменить через {days} дней', {
+                        days: Math.ceil(
+                          (30 * 24 * 60 * 60 * 1000 - (Date.now() - profile.usernameChangedAt)) /
+                            (24 * 60 * 60 * 1000)
+                        ),
+                      })
+                    : t('Изменение временно недоступно')
               }
             </div>
           </div>
@@ -320,21 +330,21 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>🎨 Аватар</h2>
+              <h2>🎨 ${t('Аватар')}</h2>
               <span class="current-value">${currentAvatarEmoji}</span>
             </div>
-            <button class="btn-accordion" data-section="avatar" aria-label="Изменить">Изменить</button>
+            <button class="btn-accordion" data-section="avatar" aria-label="${t('Изменить')}">${t('Изменить')}</button>
           </div>
           <div class="accordion-content" id="section-avatar" style="display:none;">
             <div class="avatar-grid">
               ${avatarOptionsHtml}
             </div>
             <div class="privacy-setting">
-              <label>Кому видно:</label>
+              <label>${t('Кому видно:')}</label>
               <select id="privacyAvatar" class="input">
-                <option value="everyone" ${profile.privacy.avatar === 'everyone' ? 'selected' : ''}>Всем</option>
-                <option value="friends" ${profile.privacy.avatar === 'friends' ? 'selected' : ''}>Только друзьям</option>
-                <option value="nobody" ${profile.privacy.avatar === 'nobody' ? 'selected' : ''}>Никому</option>
+                <option value="everyone" ${profile.privacy.avatar === 'everyone' ? 'selected' : ''}>${t('Всем')}</option>
+                <option value="friends" ${profile.privacy.avatar === 'friends' ? 'selected' : ''}>${t('Только друзьям')}</option>
+                <option value="nobody" ${profile.privacy.avatar === 'nobody' ? 'selected' : ''}>${t('Никому')}</option>
               </select>
             </div>
           </div>
@@ -344,10 +354,10 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>✍️ О себе (кратко)</h2>
+              <h2>✍️ ${t('О себе (кратко)')}</h2>
               <span class="current-value">${escapeHtml(currentBio)}</span>
             </div>
-            <button class="btn-accordion" data-section="bio" aria-label="Изменить">Изменить</button>
+            <button class="btn-accordion" data-section="bio" aria-label="${t('Изменить')}">${t('Изменить')}</button>
           </div>
           <div class="accordion-content" id="section-bio" style="display:none;">
             <textarea 
@@ -355,15 +365,15 @@ export async function renderEditProfile(): Promise<void> {
               class="input" 
               maxlength="500" 
               rows="3" 
-              placeholder="Расскажите о себе кратко..."
+              placeholder="${t('Расскажите о себе кратко...')}"
             >${profile.bio || ''}</textarea>
-            <div class="field-hint">До 500 символов</div>
+            <div class="field-hint">${t('До 500 символов')}</div>
             <div class="privacy-setting">
-              <label>Кому видно:</label>
+              <label>${t('Кому видно:')}</label>
               <select id="privacyBio" class="input">
-                <option value="everyone" ${profile.privacy.bio === 'everyone' ? 'selected' : ''}>Всем</option>
-                <option value="friends" ${profile.privacy.bio === 'friends' ? 'selected' : ''}>Только друзьям</option>
-                <option value="nobody" ${profile.privacy.bio === 'nobody' ? 'selected' : ''}>Никому</option>
+                <option value="everyone" ${profile.privacy.bio === 'everyone' ? 'selected' : ''}>${t('Всем')}</option>
+                <option value="friends" ${profile.privacy.bio === 'friends' ? 'selected' : ''}>${t('Только друзьям')}</option>
+                <option value="nobody" ${profile.privacy.bio === 'nobody' ? 'selected' : ''}>${t('Никому')}</option>
               </select>
             </div>
           </div>
@@ -373,10 +383,10 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>📖 О себе (подробно)</h2>
+              <h2>📖 ${t('О себе (подробно)')}</h2>
               <span class="current-value">${escapeHtml(currentAboutMe)}</span>
             </div>
-            <button class="btn-accordion" data-section="about" aria-label="Изменить">Изменить</button>
+            <button class="btn-accordion" data-section="about" aria-label="${t('Изменить')}">${t('Изменить')}</button>
           </div>
           <div class="accordion-content" id="section-about" style="display:none;">
             <textarea 
@@ -384,15 +394,15 @@ export async function renderEditProfile(): Promise<void> {
               class="input" 
               maxlength="1000" 
               rows="5" 
-              placeholder="Расскажите о себе подробнее..."
+              placeholder="${t('Расскажите о себе подробнее...')}"
             >${profile.aboutMe || ''}</textarea>
-            <div class="field-hint">До 1000 символов</div>
+            <div class="field-hint">${t('До 1000 символов')}</div>
             <div class="privacy-setting">
-              <label>Кому видно:</label>
+              <label>${t('Кому видно:')}</label>
               <select id="privacyAbout" class="input">
-                <option value="everyone" ${profile.privacy.about === 'everyone' ? 'selected' : ''}>Всем</option>
-                <option value="friends" ${profile.privacy.about === 'friends' ? 'selected' : ''}>Только друзьям</option>
-                <option value="nobody" ${profile.privacy.about === 'nobody' ? 'selected' : ''}>Никому</option>
+                <option value="everyone" ${profile.privacy.about === 'everyone' ? 'selected' : ''}>${t('Всем')}</option>
+                <option value="friends" ${profile.privacy.about === 'friends' ? 'selected' : ''}>${t('Только друзьям')}</option>
+                <option value="nobody" ${profile.privacy.about === 'nobody' ? 'selected' : ''}>${t('Никому')}</option>
               </select>
             </div>
           </div>
@@ -402,23 +412,23 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>⚥️ Пол</h2>
+              <h2>⚥️ ${t('Пол')}</h2>
               <span class="current-value">${escapeHtml(currentGender)}</span>
             </div>
-            <button class="btn-accordion" data-section="gender" aria-label="Изменить">Изменить</button>
+            <button class="btn-accordion" data-section="gender" aria-label="${t('Изменить')}">${t('Изменить')}</button>
           </div>
           <div class="accordion-content" id="section-gender" style="display:none;">
             <select id="genderInput" class="input">
-              <option value="not_specified" ${profile.gender === 'not_specified' || !profile.gender ? 'selected' : ''}>Не указано</option>
-              <option value="male" ${profile.gender === 'male' ? 'selected' : ''}>Мужской</option>
-              <option value="female" ${profile.gender === 'female' ? 'selected' : ''}>Женский</option>
+              <option value="not_specified" ${profile.gender === 'not_specified' || !profile.gender ? 'selected' : ''}>${t('Не указано')}</option>
+              <option value="male" ${profile.gender === 'male' ? 'selected' : ''}>${t('Мужской')}</option>
+              <option value="female" ${profile.gender === 'female' ? 'selected' : ''}>${t('Женский')}</option>
             </select>
             <div class="privacy-setting">
-              <label>Кому видно:</label>
+              <label>${t('Кому видно:')}</label>
               <select id="privacyGender" class="input">
-                <option value="everyone" ${profile.privacy.gender === 'everyone' ? 'selected' : ''}>Всем</option>
-                <option value="friends" ${profile.privacy.gender === 'friends' ? 'selected' : ''}>Только друзьям</option>
-                <option value="nobody" ${profile.privacy.gender === 'nobody' ? 'selected' : ''}>Никому</option>
+                <option value="everyone" ${profile.privacy.gender === 'everyone' ? 'selected' : ''}>${t('Всем')}</option>
+                <option value="friends" ${profile.privacy.gender === 'friends' ? 'selected' : ''}>${t('Только друзьям')}</option>
+                <option value="nobody" ${profile.privacy.gender === 'nobody' ? 'selected' : ''}>${t('Никому')}</option>
               </select>
             </div>
           </div>
@@ -428,10 +438,10 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>🎂 Дата рождения</h2>
+              <h2>🎂 ${t('Дата рождения')}</h2>
               <span class="current-value">${escapeHtml(currentDob)}</span>
             </div>
-            <button class="btn-accordion" data-section="dob" aria-label="Изменить">Изменить</button>
+            <button class="btn-accordion" data-section="dob" aria-label="${t('Изменить')}">${t('Изменить')}</button>
           </div>
           <div class="accordion-content" id="section-dob" style="display:none;">
             <input 
@@ -441,11 +451,11 @@ export async function renderEditProfile(): Promise<void> {
               value="${profile.dateOfBirth || ''}"
             />
             <div class="privacy-setting">
-              <label>Кому видно:</label>
+              <label>${t('Кому видно:')}</label>
               <select id="privacyDob" class="input">
-                <option value="everyone" ${profile.privacy.dob === 'everyone' ? 'selected' : ''}>Всем</option>
-                <option value="friends" ${profile.privacy.dob === 'friends' ? 'selected' : ''}>Только друзьям</option>
-                <option value="nobody" ${profile.privacy.dob === 'nobody' ? 'selected' : ''}>Никому</option>
+                <option value="everyone" ${profile.privacy.dob === 'everyone' ? 'selected' : ''}>${t('Всем')}</option>
+                <option value="friends" ${profile.privacy.dob === 'friends' ? 'selected' : ''}>${t('Только друзьям')}</option>
+                <option value="nobody" ${profile.privacy.dob === 'nobody' ? 'selected' : ''}>${t('Никому')}</option>
               </select>
             </div>
           </div>
@@ -453,8 +463,8 @@ export async function renderEditProfile(): Promise<void> {
         
         <!-- Action Buttons -->
         <div class="edit-actions">
-          <button id="saveProfileBtn" class="btn btn-primary" aria-label="💾 Сохранить изменения">💾 Сохранить изменения</button>
-          <button class="btn btn-secondary" type="button" data-route="account-profile" aria-label="Отмена">Отмена</button>
+          <button id="saveProfileBtn" class="btn btn-primary" aria-label="${t('💾 Сохранить изменения')}">${t('💾 Сохранить изменения')}</button>
+          <button class="btn btn-secondary" type="button" data-route="account-profile" aria-label="${t('Отмена')}">${t('Отмена')}</button>
         </div>
       </div>
     </div>
@@ -926,7 +936,7 @@ function initAccordions(): void {
 
       if (isOpen) {
         content.style.display = 'none';
-        btn.textContent = 'Изменить';
+        btn.textContent = t('Изменить');
         btn.classList.remove('active');
       } else {
         // Закрываем все остальные секции
@@ -934,13 +944,13 @@ function initAccordions(): void {
           (c as HTMLElement).style.display = 'none';
         });
         document.querySelectorAll('.btn-accordion').forEach((b) => {
-          b.textContent = 'Изменить';
+          b.textContent = t('Изменить');
           b.classList.remove('active');
         });
 
         // Открываем текущую секцию
         content.style.display = 'block';
-        btn.textContent = 'Свернуть';
+        btn.textContent = t('Свернуть');
         btn.classList.add('active');
       }
     });
@@ -982,30 +992,30 @@ function initUsernameCheck(profile: EditableProfile): void {
     const username = usernameInput.value.trim();
 
     if (!username || username === profile.username) {
-      hintEl.textContent = '3-20 символов: буквы, цифры, _ или -';
+      hintEl.textContent = t('3-20 символов: буквы, цифры, _ или -');
       hintEl.style.color = '';
       return;
     }
 
     if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
-      hintEl.textContent = '❌ Неверный формат. Используйте 3-20 символов: буквы, цифры, _ или -';
+      hintEl.textContent = t('❌ Неверный формат. Используйте 3-20 символов: буквы, цифры, _ или -');
       hintEl.style.color = '#ef4444';
       return;
     }
 
-    checkBtn.textContent = 'Проверка...';
+    checkBtn.textContent = t('Проверка...');
     checkBtn.disabled = true;
 
     const result = await checkUsernameAvailability(username);
 
-    checkBtn.textContent = 'Проверить';
+    checkBtn.textContent = t('Проверить');
     checkBtn.disabled = false;
 
     if (result.available) {
-      hintEl.textContent = '✅ Имя доступно!';
+      hintEl.textContent = t('✅ Имя доступно!');
       hintEl.style.color = '#22c55e';
     } else {
-      hintEl.textContent = `❌ ${result.reason || 'Имя недоступно'}`;
+      hintEl.textContent = `❌ ${result.reason || t('Имя недоступно')}`;
       hintEl.style.color = '#ef4444';
     }
   });
@@ -1030,7 +1040,7 @@ function initSaveProfile(profile: EditableProfile, getSelectedAvatar: () => stri
   saveBtn.addEventListener('click', async () => {
     try {
       saveBtn.disabled = true;
-      saveBtn.textContent = 'Сохранение...';
+      saveBtn.textContent = t('Сохранение...');
 
       const usernameInput = document.getElementById('usernameInput') as HTMLInputElement;
       const bioInput = document.getElementById('bioInput') as HTMLTextAreaElement;
@@ -1073,7 +1083,7 @@ function initSaveProfile(profile: EditableProfile, getSelectedAvatar: () => stri
       const result = await updateProfile(updateData);
 
       if (result.ok) {
-        showMsg('success', '✅ Профиль успешно обновлен!');
+        showMsg('success', t('✅ Профиль успешно обновлен!'));
         setTimeout(() => {
           Router.navigate(
             (typeof updateData.username === 'string' ? updateData.username : undefined) ||
@@ -1082,14 +1092,14 @@ function initSaveProfile(profile: EditableProfile, getSelectedAvatar: () => stri
           );
         }, 1500);
       } else {
-        showMsg('error', result.error || 'Ошибка при сохранении профиля');
+        showMsg('error', result.error || t('Ошибка при сохранении профиля'));
       }
     } catch (error) {
-      showMsg('error', 'Произошла ошибка при сохранении');
+      showMsg('error', t('Произошла ошибка при сохранении'));
       console.error('Save error:', error);
     } finally {
       saveBtn.disabled = false;
-      saveBtn.textContent = '💾 Сохранить изменения';
+      saveBtn.textContent = t('💾 Сохранить изменения');
     }
   });
 }

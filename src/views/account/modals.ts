@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { escapeHtml } from '@/utils';
 import { setupAccessibleModal } from '@/utils/keyboard';
 
@@ -33,7 +34,7 @@ export function showAccountNoticeModal(type: 'warn' | 'error', text: string): vo
   wrap.id = 'accountNoticeModal';
   wrap.className = 'account-notice-modal';
 
-  const title = type === 'error' ? 'Ошибка' : 'Внимание';
+  const title = type === 'error' ? t('Ошибка') : t('Внимание');
   const icon = type === 'error' ? '⛔' : '⚠️';
 
   wrap.innerHTML = `
@@ -48,7 +49,7 @@ export function showAccountNoticeModal(type: 'warn' | 'error', text: string): vo
       <div id="accountNoticeTitle" class="account-notice-head ${type === 'error' ? 'is-error' : 'is-warn'}">${icon} ${title}</div>
       <div id="accountNoticeText" class="account-notice-text">${escapeHtml(text)}</div>
       <div class="account-notice-actions">
-        <button type="button" class="btn btn-primary" id="accountNoticeOkBtn" aria-label="Понятно">Понятно</button>
+        <button type="button" class="btn btn-primary" id="accountNoticeOkBtn" aria-label="${t('Понятно')}">${t('Понятно')}</button>
       </div>
     </div>
   `;
@@ -88,8 +89,8 @@ export function showAccountConfirmModal(opts: {
         <div id="accountConfirmTitle" class="account-notice-head is-warn">⚠️ ${escapeHtml(opts.title)}</div>
         <div id="accountConfirmText" class="account-notice-text">${escapeHtml(opts.text)}</div>
         <div class="account-notice-actions account-notice-actions--end">
-          <button type="button" class="btn btn-outline" id="accountConfirmCancelBtn" aria-label="${escapeHtml(opts.cancelText || 'Отмена')}">${escapeHtml(opts.cancelText || 'Отмена')}</button>
-          <button type="button" class="btn btn-danger-soft" id="accountConfirmOkBtn" aria-label="${escapeHtml(opts.confirmText || 'Удалить')}">${escapeHtml(opts.confirmText || 'Удалить')}</button>
+          <button type="button" class="btn btn-outline" id="accountConfirmCancelBtn" aria-label="${escapeHtml(opts.cancelText || t('Отмена'))}">${escapeHtml(opts.cancelText || t('Отмена'))}</button>
+          <button type="button" class="btn btn-danger-soft" id="accountConfirmOkBtn" aria-label="${escapeHtml(opts.confirmText || t('Удалить'))}">${escapeHtml(opts.confirmText || t('Удалить'))}</button>
         </div>
       </div>
     `;
@@ -143,11 +144,11 @@ export function showAccountPinScopeModal(opts: {
         <div id="accountPinScopeText" class="account-notice-text">${escapeHtml(opts.text)}</div>
         <label class="account-pin-scope-label">
           <input id="accountPinScopeCheckbox" type="checkbox" ${opts.defaultChecked ? 'checked' : ''} />
-          <span>${escapeHtml(opts.checkboxText || 'Также закрепить для собеседника')}</span>
+          <span>${escapeHtml(opts.checkboxText || t('Также закрепить для собеседника'))}</span>
         </label>
         <div class="account-notice-actions account-notice-actions--end account-notice-actions--spaced">
-          <button type="button" class="btn btn-outline" id="accountPinScopeCancelBtn" aria-label="${escapeHtml(opts.cancelText || 'Отмена')}">${escapeHtml(opts.cancelText || 'Отмена')}</button>
-          <button type="button" class="btn btn-primary" id="accountPinScopeOkBtn" aria-label="${escapeHtml(opts.confirmText || 'Закрепить')}">${escapeHtml(opts.confirmText || 'Закрепить')}</button>
+          <button type="button" class="btn btn-outline" id="accountPinScopeCancelBtn" aria-label="${escapeHtml(opts.cancelText || t('Отмена'))}">${escapeHtml(opts.cancelText || t('Отмена'))}</button>
+          <button type="button" class="btn btn-primary" id="accountPinScopeOkBtn" aria-label="${escapeHtml(opts.confirmText || t('Закрепить'))}">${escapeHtml(opts.confirmText || t('Закрепить'))}</button>
         </div>
       </div>
     `;

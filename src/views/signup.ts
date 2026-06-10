@@ -2,6 +2,7 @@
  * Signup view - регистрация нового пользователя
  */
 
+import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { setStorage, apiCall } from '@/utils';
@@ -21,29 +22,29 @@ export async function renderSignup(): Promise<void> {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Регистрация</h1>
+          <h1>${t('Регистрация')}</h1>
         </div>
       </div>
 
       <form id="f">
         <div class="field">
-          <label class="label" for="login">Логин</label>
+          <label class="label" for="login">${t('Логин')}</label>
           <input class="input" id="login" autocomplete="username" required />
         </div>
 
         <div class="field">
-          <label class="label" for="pass1">Пароль</label>
+          <label class="label" for="pass1">${t('Пароль')}</label>
           <div class="pass-wrap">
             <input class="input" id="pass1" type="password" autocomplete="new-password" required />
-            <button type="button" class="pass-eye" data-target="pass1" aria-label="Показать пароль"></button>
+            <button type="button" class="pass-eye" data-target="pass1" aria-label="${t('Показать пароль')}"></button>
           </div>
         </div>
 
         <div class="field">
-          <label class="label" for="pass2">Повтори пароль</label>
+          <label class="label" for="pass2">${t('Повтори пароль')}</label>
           <div class="pass-wrap">
             <input class="input" id="pass2" type="password" autocomplete="new-password" required />
-            <button type="button" class="pass-eye" data-target="pass2" aria-label="Показать пароль"></button>
+            <button type="button" class="pass-eye" data-target="pass2" aria-label="${t('Показать пароль')}"></button>
           </div>
 
           <div id="passHintsSignup"></div>
@@ -54,10 +55,10 @@ export async function renderSignup(): Promise<void> {
         </div>
 
         <div class="row">
-          <a class="link" href="#" id="back">← Назад</a>
+          <a class="link" href="#" id="back">${t('← Назад')}</a>
         </div>
 
-        <button class="btn btn-primary" type="submit" aria-label="Создать аккаунт">Создать аккаунт</button>
+        <button class="btn btn-primary" type="submit" aria-label="${t('Создать аккаунт')}">${t('Создать аккаунт')}</button>
       </form>
     </section>
   `)
@@ -107,33 +108,33 @@ export async function renderSignup(): Promise<void> {
         !/\d/.test(pass1) ||
         !/[^\w\s]/.test(pass1)
       ) {
-        alert('Пароль не соответствует требованиям.');
+        alert(t('Пароль не соответствует требованиям.'));
         return;
       }
 
       if (!/^[\x20-\x7E]*$/.test(pass1)) {
-        alert('Пароль: нельзя использовать русские/украинские буквы и любые не-ASCII символы.');
+        alert(t('Пароль: нельзя использовать русские/украинские буквы и любые не-ASCII символы.'));
         pass1El?.focus();
         return;
       }
 
       // Валидация логина
       if (!login) {
-        alert('🚫 Введите логин');
+        alert(t('🚫 Введите логин'));
         return;
       }
       if (!/^[A-Za-z0-9_]{3,24}$/.test(login)) {
-        alert('Логин: только латиница (A–Z), цифры (0–9) и "_" . Длина 3–24.');
+        alert(t('Логин: только латиница (A–Z), цифры (0–9) и "_" . Длина 3–24.'));
         return;
       }
 
       // Проверка совпадения паролей
       if (!pass1) {
-        alert('🚫 Введите пароль');
+        alert(t('🚫 Введите пароль'));
         return;
       }
       if (pass1 !== pass2) {
-        alert('🚫 Пароли не совпадают');
+        alert(t('🚫 Пароли не совпадают'));
         pass2El?.focus();
         pass2El?.select();
         return;
@@ -142,7 +143,7 @@ export async function renderSignup(): Promise<void> {
       // Проверка Turnstile
       if (!captchaService.token) {
         alert(
-          '🛡️ Не удалось получить токен Turnstile.\n\nВозможные причины:\n• Открыта панель разработчика (DevTools) в Firefox\n• Включён режим приватности или блокировщик\n\nПопробуйте закрыть DevTools или использовать другой браузер.'
+          t('🛡️ Не удалось получить токен Turnstile.\n\nВозможные причины:\n• Открыта панель разработчика (DevTools) в Firefox\n• Включён режим приватности или блокировщик\n\nПопробуйте закрыть DevTools или использовать другой браузер.')
         );
         return;
       }
@@ -171,7 +172,7 @@ export async function renderSignup(): Promise<void> {
           // Сброс капчи
           await captchaService.reset();
 
-          alert(data.error || 'Ошибка регистрации');
+          alert(data.error || t('Ошибка регистрации'));
           return;
         }
 
@@ -179,7 +180,7 @@ export async function renderSignup(): Promise<void> {
         const user = await authService.checkSession();
         if (!user) {
           alert(
-            'Регистрация прошла, но сессия не установилась (cookie заблокирована). Проверь CORS / credentials.'
+            t('Регистрация прошла, но сессия не установилась (cookie заблокирована). Проверь CORS / credentials.')
           );
           return;
         }
@@ -190,7 +191,7 @@ export async function renderSignup(): Promise<void> {
         const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
         if (btn) {
           btn.disabled = true;
-          btn.textContent = '✅ Регистрация успешна';
+          btn.textContent = t('✅ Регистрация успешна');
         }
         if (backLink) {
           (backLink as HTMLElement).style.pointerEvents = 'none';
@@ -208,7 +209,7 @@ export async function renderSignup(): Promise<void> {
 
         await captchaService.reset();
 
-        alert('Ошибка сети. Проверьте соединение и попробуйте ещё раз.');
+        alert(t('Ошибка сети. Проверьте соединение и попробуйте ещё раз.'));
       }
     });
   }

@@ -2,60 +2,60 @@
  * Username view - первый этап входа
  */
 
+import { t, sitePath, getLocale } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { setStorage, apiCall } from '@/utils';
 
 export function renderUsername(): void {
-  // Убираем no-strawberries класс
   document.body.classList.remove('no-strawberries');
+
+  const homeUrl = sitePath('', getLocale());
 
   setAppContent(
     shell(`
     <section class="auth-card">
       <div class="auth-head">
         <div class="brand-logo">
-        <a href="https://cyblight.org/" aria-label="Главная страница" title="Открыть главную страницу">
+        <a href="${homeUrl}" aria-label="${t('Главная страница')}" title="${t('Открыть главную страницу')}">
           <img src="/assets/img/logo.svg" alt="CybLight" />
           </a>
         </div>
         <div class="auth-title">
-          <h1>Войти</h1>
+          <h1>${t('Войти')}</h1>
         </div>
       </div>
 
       <form id="f">
         <div class="field">
-          <label class="label" for="login">Пользователь</label>
+          <label class="label" for="login">${t('Пользователь')}</label>
           <input class="input" id="login" autocomplete="username" required />
         </div>
 
         <div class="row">
-          <a class="link" href="#" id="forgotUser">Забыли имя пользователя?</a>
+          <a class="link" href="#" id="forgotUser">${t('Забыли имя пользователя?')}</a>
         </div>
 
-        <button class="btn btn-primary" type="submit" aria-label="Далее">Далее</button>
+        <button class="btn btn-primary" type="submit" aria-label="${t('Далее')}">${t('Далее')}</button>
 
-        <div class="divider">ИЛИ</div>
+        <div class="divider">${t('ИЛИ')}</div>
 
-        <button class="btn btn-outline" type="button" id="keyLogin" aria-label="Войти с помощью ключа доступа">
-          Войти с помощью ключа доступа
+        <button class="btn btn-outline" type="button" id="keyLogin" aria-label="${t('Войти с помощью ключа доступа')}">
+          ${t('Войти с помощью ключа доступа')}
         </button>
       </form>
     </section>
 
     <div class="below">
-      <p class="hint">Ты еще не с нами?</p>
-      <button class="btn-create" type="button" id="createAcc" aria-label="Регистрируйся!">Регистрируйся!</button>
+      <p class="hint">${t('Ты еще не с нами?')}</p>
+      <button class="btn-create" type="button" id="createAcc" aria-label="${t('Регистрируйся!')}">${t('Регистрируйся!')}</button>
     </div>
   `)
   );
 
-  // Удаляем старую кнопку scroll-to-top если есть
   const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
 
-  // Обработчик "Забыли имя пользователя"
   const forgotUserLink = document.getElementById('forgotUser');
   if (forgotUserLink) {
     forgotUserLink.onclick = (e) => {
@@ -65,13 +65,11 @@ export function renderUsername(): void {
     };
   }
 
-  // Обработчик "Войти с ключом доступа"
   const keyLoginBtn = document.getElementById('keyLogin');
   if (keyLoginBtn) {
     keyLoginBtn.onclick = () => handlePasskeyLogin();
   }
 
-  // Обработчик "Регистрация"
   const createAccBtn = document.getElementById('createAcc');
   if (createAccBtn) {
     createAccBtn.onclick = () => {
@@ -79,7 +77,6 @@ export function renderUsername(): void {
     };
   }
 
-  // Обработчик формы
   const form = document.getElementById('f') as HTMLFormElement;
   if (form) {
     form.addEventListener('submit', (e) => {
@@ -87,7 +84,7 @@ export function renderUsername(): void {
       const loginInput = document.getElementById('login') as HTMLInputElement;
       const login = loginInput.value.trim();
       if (!login) {
-        alert('Введите имя пользователя');
+        alert(t('Введите имя пользователя'));
         return;
       }
       setStorage('cyb_login', login, sessionStorage);
@@ -96,21 +93,14 @@ export function renderUsername(): void {
   }
 }
 
-/**
- * Обработка входа через Passkey (WebAuthn)
- */
 async function handlePasskeyLogin(): Promise<void> {
   if (!window.isSecureContext) {
-    alert(
-      '❌ WebAuthn требует безопасный контекст.\n\nОткройте страницу на https:// или используйте Chrome/Edge.\n\nДля Firefox: убедитесь, что страница открыта именно как http://localhost:5173/ без прокси/iframe.'
-    );
+    alert(t('❌ WebAuthn требует безопасный контекст.\n\nОткройте страницу на https:// или используйте Chrome/Edge.\n\nДля Firefox: убедитесь, что страница открыта именно как http://localhost:5173/ без прокси/iframe.'));
     return;
   }
 
   if (!window.PublicKeyCredential) {
-    alert(
-      '❌ Ваш браузер не поддерживает ключи доступа (passkeys).\n\nИспользуйте современный браузер: Chrome, Edge, Safari или Firefox.'
-    );
+    alert(t('❌ Ваш браузер не поддерживает ключи доступа (passkeys).\n\nИспользуйте современный браузер: Chrome, Edge, Safari или Firefox.'));
     return;
   }
 
@@ -119,7 +109,7 @@ async function handlePasskeyLogin(): Promise<void> {
 
   const originalText = keyLoginBtn.innerHTML;
   keyLoginBtn.disabled = true;
-  keyLoginBtn.innerHTML = '🔐 Проверка...';
+  keyLoginBtn.innerHTML = t('🔐 Проверка...');
 
   try {
     const optionsRes = await apiCall('/auth/passkey/login/options', {
@@ -131,12 +121,12 @@ async function handlePasskeyLogin(): Promise<void> {
 
     if (!optionsRes.ok) {
       const err = await optionsRes.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(err.error || 'Не удалось получить параметры аутентификации');
+      throw new Error(err.error || t('Не удалось получить параметры аутентификации'));
     }
 
     const optionsData = await optionsRes.json();
     if (!optionsData.ok || !optionsData.options || !optionsData.challengeId) {
-      throw new Error('Некорректный ответ сервера');
+      throw new Error(t('Некорректный ответ сервера'));
     }
 
     const options = optionsData.options;
@@ -158,14 +148,14 @@ async function handlePasskeyLogin(): Promise<void> {
       userVerification: options.userVerification || 'preferred',
     };
 
-    keyLoginBtn.innerHTML = '🔑 Используйте ключ доступа...';
+    keyLoginBtn.innerHTML = t('🔑 Используйте ключ доступа...');
 
     const credential = (await navigator.credentials.get({
       publicKey: publicKeyOptions,
     })) as PublicKeyCredential | null;
 
     if (!credential) {
-      throw new Error('Аутентификация отменена');
+      throw new Error(t('Аутентификация отменена'));
     }
 
     const response = credential.response as AuthenticatorAssertionResponse;
@@ -182,7 +172,7 @@ async function handlePasskeyLogin(): Promise<void> {
       type: credential.type,
     };
 
-    keyLoginBtn.innerHTML = '✅ Вход...';
+    keyLoginBtn.innerHTML = t('✅ Вход...');
 
     const loginRes = await apiCall('/auth/passkey/login', {
       method: 'POST',
@@ -194,21 +184,21 @@ async function handlePasskeyLogin(): Promise<void> {
     const loginData = await loginRes.json().catch(() => ({}));
 
     if (!loginRes.ok) {
-      throw new Error(loginData.error || 'Ошибка входа');
+      throw new Error(loginData.error || t('Ошибка входа'));
     }
 
     Router.navigate('account-profile');
   } catch (err: unknown) {
     console.error('Passkey login error:', err);
 
-    let errorMessage = 'Не удалось войти по ключу доступа';
+    let errorMessage = t('Не удалось войти по ключу доступа');
 
     if (err instanceof Error && err.name === 'NotAllowedError') {
-      errorMessage = '❌ Аутентификация отменена или время ожидания истекло';
+      errorMessage = t('❌ Аутентификация отменена или время ожидания истекло');
     } else if (err instanceof Error && err.name === 'InvalidStateError') {
-      errorMessage = '❌ Ключ доступа не найден на этом устройстве';
+      errorMessage = t('❌ Ключ доступа не найден на этом устройстве');
     } else if (err instanceof Error && err.message) {
-      errorMessage = `❌ ${err.message}`;
+      errorMessage = `${t('Ошибка: {error}', { error: err.message })}`;
     }
 
     alert(errorMessage);

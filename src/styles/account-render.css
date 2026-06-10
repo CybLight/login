@@ -1585,8 +1585,8 @@
   position: absolute;
   top: calc(100% + 12px);
   right: 0;
-  min-width: 230px;
-  padding: 12px;
+  min-width: 180px;
+  padding: 6px 0;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   background: rgba(10, 15, 31, 0.98);
@@ -1600,25 +1600,41 @@
   display: none;
 }
 
-.account-lang-menu button {
+.account-lang-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.account-lang-menu li {
+  display: block;
+}
+
+.account-lang-menu a {
+  display: block;
   width: 100%;
-  padding: 9px 10px;
+  padding: 9px 14px;
   border: none;
-  border-radius: 9px;
+  border-radius: 0;
   background: transparent;
   color: #fff;
   font-size: 14px;
   text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
-.account-lang-menu button:hover {
+.account-lang-menu a:hover,
+.account-lang-menu a:focus {
   background: rgba(255, 255, 255, 0.08);
+  text-decoration: none;
 }
 
-.account-lang-menu button.is-active {
+.account-lang-menu a.is-active {
   background: rgba(255, 127, 39, 0.16);
-  border: 1px solid rgba(255, 127, 39, 0.35);
+  color: #fff;
 }
 
 .account-user-menu__name {
@@ -1836,11 +1852,15 @@ body.account-nav-open .profile-mobile-nav {
     min-height: calc(100dvh - 56px);
   }
 
-  /* Сайдбар — отдельная тёмная колонка с разделителем */
+  /* Сайдбар — отдельная тёмная колонка на всю высоту */
   .account-page .account-sidebar:not(.profile-mobile-nav) {
+    display: flex;
+    flex-direction: column;
     width: 272px;
     flex-shrink: 0;
     align-self: stretch;
+    min-height: 100%;
+    position: relative;
     padding: 22px 14px 28px;
     border-radius: 0;
     border: none;
@@ -1862,7 +1882,6 @@ body.account-nav-open .profile-mobile-nav {
         rgba(11, 17, 34, 0.96) 100%
       );
     box-shadow: 8px 0 36px rgba(0, 0, 0, 0.28);
-    position: relative;
     z-index: 2;
   }
 
@@ -1884,9 +1903,10 @@ body.account-nav-open .profile-mobile-nav {
   }
 
   .account-page .account-sidebar:not(.profile-mobile-nav) .account-nav {
-    position: sticky;
-    top: 74px;
+    position: static;
+    flex: 0 0 auto;
     gap: 6px;
+    margin-bottom: 0;
   }
 
   .account-page .account-sidebar:not(.profile-mobile-nav) .account-nav button {
@@ -1933,6 +1953,33 @@ body.account-nav-open .profile-mobile-nav {
     border-radius: 0 4px 4px 0;
     background: linear-gradient(180deg, #ffb347 0%, #ff7f27 100%);
     box-shadow: 0 0 12px rgba(255, 127, 39, 0.55);
+  }
+
+  .account-page .account-sidebar:not(.profile-mobile-nav) .account-actions:has(#adminPanelBtn) {
+    flex: 0 0 auto;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(34, 240, 230, 0.22);
+    position: relative;
+  }
+
+  .account-page
+    .account-sidebar:not(.profile-mobile-nav)
+    .account-actions:has(#adminPanelBtn)::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      rgba(34, 240, 230, 0) 0%,
+      rgba(34, 240, 230, 0.85) 50%,
+      rgba(34, 240, 230, 0) 100%
+    );
+    box-shadow: 0 0 10px rgba(34, 240, 230, 0.35);
+    pointer-events: none;
   }
 
   /* «Выйти» на десктопе доступна в меню аватара в шапке */

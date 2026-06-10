@@ -2,6 +2,7 @@
  * 2FA Verify view - подтверждение двухфакторной аутентификации
  */
 
+import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { getStorage, apiCall } from '@/utils';
@@ -24,17 +25,17 @@ export async function render2FAVerify(): Promise<void> {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Двухфакторная аутентификация</h1>
+          <h1>${t('Двухфакторная аутентификация')}</h1>
         </div>
       </div>
 
       <p style="margin:0 0 16px;color:var(--muted);font-size:13px;text-align:center;">
-        Введите код из приложения аутентификатора или резервный код.
+        ${t('Введите код из приложения аутентификатора или резервный код.')}
       </p>
 
       <form id="f2fa">
         <div class="field">
-          <label class="label" for="code2fa">Код подтверждения</label>
+          <label class="label" for="code2fa">${t('Код подтверждения')}</label>
           <input class="input" id="code2fa" type="text" inputmode="numeric" 
                  autocomplete="one-time-code" required 
                  placeholder="000000" maxlength="20" 
@@ -44,17 +45,17 @@ export async function render2FAVerify(): Promise<void> {
         <div style="margin:12px 0;">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;">
             <input type="checkbox" id="rememberDevice" style="cursor:pointer;" />
-            <span>Запомнить устройство на 30 дней</span>
+            <span>${t('Запомнить устройство на 30 дней')}</span>
           </label>
         </div>
 
         <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
 
         <div class="row" style="margin-top:10px;">
-          <a class="link" href="#" id="back">← Назад</a>
+          <a class="link" href="#" id="back">${t('← Назад')}</a>
         </div>
 
-        <button class="btn btn-primary" type="submit" aria-label="Подтвердить">Подтвердить</button>
+        <button class="btn btn-primary" type="submit" aria-label="${t('Подтвердить')}">${t('Подтвердить')}</button>
       </form>
     </section>
   `)
@@ -100,7 +101,7 @@ export async function render2FAVerify(): Promise<void> {
 
       const code = codeInput.value.trim();
       if (!code) {
-        showMsg('error', 'Введите код');
+        showMsg('error', t('Введите код'));
         return;
       }
 
@@ -108,9 +109,9 @@ export async function render2FAVerify(): Promise<void> {
       const rememberDevice = rememberDeviceCheckbox?.checked || false;
 
       const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-      const oldText = btn.textContent || 'Подтвердить';
+      const oldText = btn.textContent || t('Подтвердить');
       btn.disabled = true;
-      btn.textContent = 'Проверка...';
+      btn.textContent = t('Проверка...');
 
       try {
         const res = await apiCall('/auth/2fa/verify', {
@@ -126,7 +127,7 @@ export async function render2FAVerify(): Promise<void> {
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          showMsg('error', data?.error || 'Неверный код');
+          showMsg('error', data?.error || t('Неверный код'));
           btn.disabled = false;
           btn.textContent = oldText;
           codeInput.value = '';
@@ -135,7 +136,7 @@ export async function render2FAVerify(): Promise<void> {
         }
 
         // Успешная верификация
-        showMsg('ok', 'Код подтверждён! Переход...');
+        showMsg('ok', t('Код подтверждён! Переход...'));
 
         // Очищаем временный userId
         sessionStorage.removeItem('cyb_2fa_userId');
@@ -150,7 +151,7 @@ export async function render2FAVerify(): Promise<void> {
         }, 1000);
       } catch (err) {
         console.error('[2FA] Error:', err);
-        showMsg('error', 'Ошибка сети. Попробуйте ещё раз.');
+        showMsg('error', t('Ошибка сети. Попробуйте ещё раз.'));
         btn.disabled = false;
         btn.textContent = oldText;
       }

@@ -2,6 +2,8 @@
  * Application configuration constants
  */
 
+import { t } from '@/i18n';
+
 // In development, use proxy to avoid CORS issues
 // In production, use full API URL
 export const API_BASE = ((import.meta as unknown) as { env?: { DEV?: boolean } }).env?.DEV ? '/api' : 'https://api.cyblight.org';
@@ -29,13 +31,26 @@ export const TURNSTILE_SITEKEY = '0x4AAAAAACIMk1fcGPcs3NLf';
 
 // Password validation
 export const PASSWORD_MIN_LENGTH = 8;
-export const PASSWORD_HINTS = {
-  lowercase: { regex: /[a-z]/, text: 'Маленькие буквы (a-z)' },
-  uppercase: { regex: /[A-Z]/, text: 'Большие буквы (A-Z)' },
-  numbers: { regex: /\d/, text: 'Цифры (0-9)' },
-  special: { regex: /[^\w\s]/, text: 'Спецсимволы' },
-  length: { regex: /.{8,}/, text: `Длина минимум ${PASSWORD_MIN_LENGTH} символов` },
+export const PASSWORD_HINT_REGEX = {
+  lowercase: /[a-z]/,
+  uppercase: /[A-Z]/,
+  numbers: /\d/,
+  special: /[^\w\s]/,
+  length: /.{8,}/,
 };
+
+export function getPasswordHints() {
+  return {
+    lowercase: { regex: PASSWORD_HINT_REGEX.lowercase, text: t('Маленькие буквы (a-z)') },
+    uppercase: { regex: PASSWORD_HINT_REGEX.uppercase, text: t('Большие буквы (A-Z)') },
+    numbers: { regex: PASSWORD_HINT_REGEX.numbers, text: t('Цифры (0-9)') },
+    special: { regex: PASSWORD_HINT_REGEX.special, text: t('Спецсимволы') },
+    length: {
+      regex: PASSWORD_HINT_REGEX.length,
+      text: t('Длина минимум {min} символов', { min: PASSWORD_MIN_LENGTH }),
+    },
+  };
+}
 
 // Session list limits
 export const MAX_SESSION_LIST_SIZE = 20;

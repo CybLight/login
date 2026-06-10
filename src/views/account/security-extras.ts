@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import type { LoginHistoryItem, TrustedDeviceItem } from '@/types';
 import { apiCall, escapeHtml } from '@/utils';
 import { fmtTs } from './device-utils';
@@ -26,20 +27,20 @@ export async function loadTrustedDevices(
     const d = await r.json().catch(() => ({}));
 
     if (!r.ok || !d.ok) {
-      container.innerHTML = '<div class="sec-error-text">Ошибка загрузки устройств</div>';
+      container.innerHTML = `<div class="sec-error-text">${t('Ошибка загрузки устройств')}</div>`;
       return;
     }
 
     const devices = d.devices || [];
     if (devices.length === 0) {
-      container.innerHTML = '<div class="sec-empty-text">Нет доверенных устройств</div>';
+      container.innerHTML = `<div class="sec-empty-text">${t('Нет доверенных устройств')}</div>`;
       return;
     }
 
     const html = devices
       .map((device: TrustedDeviceItem) => {
         const created = fmtTs(device.createdAt);
-        const lastUsed = device.lastUsedAt ? fmtTs(device.lastUsedAt) : 'Не использовалось';
+        const lastUsed = device.lastUsedAt ? fmtTs(device.lastUsedAt) : t('Не использовалось');
         const ip = device.ipAddress || '—';
         const ua = device.userAgent || '—';
 
@@ -47,15 +48,15 @@ export async function loadTrustedDevices(
           <div class="sec-card-item">
             <div class="sec-row-between sec-row-start sec-wrap">
               <div class="sec-col-flex">
-                <div class="sec-item-title">📱 Доверенное устройство</div>
-                <div class="sec-item-subtitle">Добавлено: ${escapeHtml(created)}</div>
-                <div class="sec-item-subtitle">Последний вход: ${escapeHtml(lastUsed)}</div>
+                <div class="sec-item-title">📱 ${t('Доверенное устройство')}</div>
+                <div class="sec-item-subtitle">${t('Добавлено:')} ${escapeHtml(created)}</div>
+                <div class="sec-item-subtitle">${t('Последний вход:')} ${escapeHtml(lastUsed)}</div>
               </div>
               <div class="sec-col-flex sec-meta-col">
                 <div><b>IP:</b> ${escapeHtml(ip)}</div>
-                <div class="sec-break-all"><b>Устройство:</b> ${escapeHtml(ua)}</div>
-                <button class="btn btn-outline sec-btn-compact sec-mt-8" data-remove-device="${escapeHtml(device.id)}" aria-label="Удалить">
-                  Удалить
+                <div class="sec-break-all"><b>${t('Устройство:')}</b> ${escapeHtml(ua)}</div>
+                <button class="btn btn-outline sec-btn-compact sec-mt-8" data-remove-device="${escapeHtml(device.id)}" aria-label="${t('Удалить')}">
+                  ${t('Удалить')}
                 </button>
               </div>
             </div>
@@ -72,10 +73,10 @@ export async function loadTrustedDevices(
         if (!deviceId) return;
 
         const isConfirmed = await confirmModal({
-          title: 'Удаление доверенного устройства',
-          text: 'Удалить это доверенное устройство?',
-          confirmText: 'Удалить',
-          cancelText: 'Отмена',
+          title: t('Удаление доверенного устройства'),
+          text: t('Удалить это доверенное устройство?'),
+          confirmText: t('Удалить'),
+          cancelText: t('Отмена'),
         });
         if (!isConfirmed) return;
 
@@ -86,22 +87,22 @@ export async function loadTrustedDevices(
           });
 
           if (r.ok) {
-            api.showMsg('ok', 'Устройство удалено');
+            api.showMsg('ok', t('Устройство удалено'));
             void loadTrustedDevices(container, api, confirmModal);
             setTimeout(api.clearMsg, 1800);
           } else {
-            api.showMsg('error', 'Ошибка удаления');
+            api.showMsg('error', t('Ошибка удаления'));
             setTimeout(api.clearMsg, 2200);
           }
         } catch {
-          api.showMsg('error', 'Ошибка сети');
+          api.showMsg('error', t('Ошибка сети'));
           setTimeout(api.clearMsg, 2200);
         }
       });
     });
   } catch (e) {
     console.error('Error loading trusted devices:', e);
-    container.innerHTML = '<div class="sec-error-text">Ошибка сети</div>';
+    container.innerHTML = `<div class="sec-error-text">${t('Ошибка сети')}</div>`;
   }
 }
 
@@ -113,31 +114,31 @@ export async function loadLoginHistory(container: HTMLElement): Promise<void> {
     const d = await r.json().catch(() => ({}));
 
     if (!r.ok || !d.ok) {
-      container.innerHTML = '<div class="sec-error-text">Ошибка загрузки истории</div>';
+      container.innerHTML = `<div class="sec-error-text">${t('Ошибка загрузки истории')}</div>`;
       return;
     }
 
     const history = d.history || [];
     if (history.length === 0) {
-      container.innerHTML = '<div class="sec-empty-text">История входов пуста</div>';
+      container.innerHTML = `<div class="sec-empty-text">${t('История входов пуста')}</div>`;
       return;
     }
 
     const actionLabels: Record<string, string> = {
-      login_success: '✅ Успешный вход',
-      login_failed: '❌ Неудачный вход',
-      login_2fa: '🔐 Вход с 2FA',
-      logout: '🚪 Выход',
-      password_changed: '🔑 Смена пароля',
-      'auth.password.change': '🔑 Смена пароля',
-      '2fa_enabled': '🛡️ 2FA включена',
-      '2fa_disabled': '🔓 2FA отключена',
-      passkey_added: '➕ Passkey добавлен',
-      passkey_removed: '➖ Passkey удалён',
-      passkey_login: '🔑 Вход через passkey',
-      account_created: '🆕 Аккаунт создан',
-      trusted_device_added: '📱+ Устройство добавлено',
-      trusted_device_removed: '📱- Устройство удалено',
+      login_success: t('✅ Успешный вход'),
+      login_failed: t('❌ Неудачный вход'),
+      login_2fa: t('🔐 Вход с 2FA'),
+      logout: t('🚪 Выход'),
+      password_changed: t('🔑 Смена пароля'),
+      'auth.password.change': t('🔑 Смена пароля'),
+      '2fa_enabled': t('🛡️ 2FA включена'),
+      '2fa_disabled': t('🔓 2FA отключена'),
+      passkey_added: t('➕ Passkey добавлен'),
+      passkey_removed: t('➖ Passkey удалён'),
+      passkey_login: t('🔑 Вход через passkey'),
+      account_created: t('🆕 Аккаунт создан'),
+      trusted_device_added: t('📱+ Устройство добавлено'),
+      trusted_device_removed: t('📱- Устройство удалено'),
     };
 
     const html = history
@@ -156,7 +157,7 @@ export async function loadLoginHistory(container: HTMLElement): Promise<void> {
               </div>
               <div class="sec-col-flex sec-meta-col">
                 <div><b>IP:</b> ${escapeHtml(ip)}</div>
-                <div class="sec-break-all"><b>Устройство:</b> ${escapeHtml(ua)}</div>
+                <div class="sec-break-all"><b>${t('Устройство:')}</b> ${escapeHtml(ua)}</div>
               </div>
             </div>
           </div>
@@ -167,6 +168,6 @@ export async function loadLoginHistory(container: HTMLElement): Promise<void> {
     container.innerHTML = html;
   } catch (e) {
     console.error('Error loading login history:', e);
-    container.innerHTML = '<div class="sec-error-text">Ошибка сети</div>';
+    container.innerHTML = `<div class="sec-error-text">${t('Ошибка сети')}</div>`;
   }
 }

@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { escapeHtml } from './string';
 
 export const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
@@ -39,23 +40,23 @@ export function formatPresenceLabel(
   item: PresenceInput | null | undefined,
   now = Date.now()
 ): string {
-  if (!item) return 'Не в сети';
-  if (isUserOnline(item, now)) return 'В сети';
+  if (!item) return t('Не в сети');
+  if (isUserOnline(item, now)) return t('В сети');
 
   const lastSeenAt = normalizeLastSeenAt(item);
-  if (lastSeenAt == null) return 'Не в сети';
+  if (lastSeenAt == null) return t('Не в сети');
 
   const diff = now - lastSeenAt;
-  if (diff < 60_000) return 'Был(а) только что';
+  if (diff < 60_000) return t('Был(а) только что');
 
   const minutes = Math.floor(diff / 60_000);
-  if (minutes < 60) return `Был(а) ${minutes} мин назад`;
+  if (minutes < 60) return t('Был(а) {count} мин назад', { count: minutes });
 
   const hours = Math.floor(diff / 3_600_000);
-  if (hours < 24) return `Был(а) ${hours} ч назад`;
+  if (hours < 24) return t('Был(а) {count} ч назад', { count: hours });
 
   const days = Math.floor(diff / 86_400_000);
-  return `Был(а) ${days} дн назад`;
+  return t('Был(а) {count} дн назад', { count: days });
 }
 
 export function renderPresenceDot(

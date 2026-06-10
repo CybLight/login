@@ -2,6 +2,7 @@
  * Password view - второй этап входа (ввод пароля)
  */
 
+import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import type { EasterLoginPayload } from '@/types';
@@ -111,20 +112,20 @@ export async function renderPassword(): Promise<void> {
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </div>
         <div class="auth-title">
-          <h1>Войти</h1>
+          <h1>${t('Войти')}</h1>
         </div>
       </div>
       
       <form id="f">
         <div class="field">
-          <label class="label">Пользователь</label>
+          <label class="label">${t('Пользователь')}</label>
           <input class="input" value="${escapeHtml(login)}" disabled />
         </div>
 
         <div class="field">
           <label class="label" for="pass" id="pass-label">
-            Пароль
-            <span class="required" aria-label="обязательное поле">*</span>
+            ${t('Пароль')}
+            <span class="required" aria-label="${t('обязательное поле')}">*</span>
           </label>
           <div class="pass-wrap">
             <input
@@ -137,7 +138,7 @@ export async function renderPassword(): Promise<void> {
               aria-required="true"
               required
             />
-            <button type="button" class="pass-eye" data-target="pass" aria-label="Показать пароль"></button>
+            <button type="button" class="pass-eye" data-target="pass" aria-label="${t('Показать пароль')}"></button>
           </div>
         </div>
 
@@ -146,14 +147,14 @@ export async function renderPassword(): Promise<void> {
         </div>
 
         <div class="row">
-          <a class="link" href="#" id="back">← Назад</a>
-          <a class="link" href="#" id="forgotPass">Забыли пароль?</a>
+          <a class="link" href="#" id="back">${t('← Назад')}</a>
+          <a class="link" href="#" id="forgotPass">${t('Забыли пароль?')}</a>
         </div>
 
         <div id="msg" class="msg" role="alert" aria-live="polite" style="display:none;"></div>
         <span id="pass-error" class="sr-only" hidden></span>
 
-        <button class="btn btn-primary" type="submit" aria-label="Войти">Войти</button>
+        <button class="btn btn-primary" type="submit" aria-label="${t('Войти')}">${t('Войти')}</button>
       </form>
     </section>
   `)
@@ -230,25 +231,25 @@ export async function renderPassword(): Promise<void> {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
-      const oldText = btn.textContent || 'Войти';
+      const oldText = btn.textContent || t('Войти');
 
       clearMsg();
 
       const pass = passEl?.value || '';
       if (!pass) {
-        showMsg('error', 'Введите пароль.');
+        showMsg('error', t('Введите пароль.'));
         shakeElement(passEl);
         return;
       }
 
       if (!captchaService.token) {
-        showMsg('warn', 'Подтверди, что ты не робот (Turnstile).');
+        showMsg('warn', t('Подтверди, что ты не робот (Turnstile).'));
         return;
       }
 
       // Блокируем кнопку
       btn.disabled = true;
-      btn.textContent = 'Вхожу…';
+      btn.textContent = t('Вхожу…');
 
       try {
         console.log('[PASSWORD] Attempting login for:', login);
@@ -277,7 +278,7 @@ export async function renderPassword(): Promise<void> {
           const err = String(data?.error || '').toLowerCase();
 
           if (res.status === 401 || err.includes('invalid_credentials')) {
-            showMsg('error', 'Неправильный пароль или логин. Попробуй ещё раз.');
+            showMsg('error', t('Неправильный пароль или логин. Попробуй ещё раз.'));
             shakeElement(passEl);
             passEl?.focus();
             passEl?.select();
@@ -285,12 +286,12 @@ export async function renderPassword(): Promise<void> {
           }
 
           if (res.status === 429 || err.includes('rate') || err.includes('too_many')) {
-            showMsg('warn', 'Слишком много попыток. Подожди немного и попробуй снова.');
+            showMsg('warn', t('Слишком много попыток. Подожди немного и попробуй снова.'));
             return;
           }
 
           if (err.includes('turnstile')) {
-            showMsg('warn', 'Проверка Turnstile не прошла. Обнови капчу и попробуй снова.');
+            showMsg('warn', t('Проверка Turnstile не прошла. Обнови капчу и попробуй снова.'));
             return;
           }
 
@@ -302,14 +303,14 @@ export async function renderPassword(): Promise<void> {
             data?.errorCode === 'ACCOUNT_BANNED';
 
           if (isBanned) {
-            const banReason = data?.reason || 'Нарушение правил сообщества';
+            const banReason = data?.reason || t('Нарушение правил сообщества');
             Router.navigate('account-banned', { reason: banReason, username: login });
             return;
           }
 
           showMsg(
             'error',
-            data?.error ? `Ошибка: ${data.error}` : 'Не удалось войти. Попробуй позже.'
+            data?.error ? t('Ошибка: {error}', { error: data.error }) : t('Не удалось войти. Попробуй позже.')
           );
           return;
         }
@@ -318,13 +319,13 @@ export async function renderPassword(): Promise<void> {
         const loginData = data?.data || data;
         if (loginData.requires2FA && loginData.userId) {
           console.log('[PASSWORD] 2FA required for user:', loginData.userId);
-          showMsg('ok', 'Требуется код двухфакторной аутентификации');
+          showMsg('ok', t('Требуется код двухфакторной аутентификации'));
           setStorage('cyb_2fa_userId', loginData.userId, sessionStorage);
           Router.navigate('2fa-verify');
           return;
         }
 
-        showMsg('ok', 'Успешный вход! Перенаправляю…');
+        showMsg('ok', t('Успешный вход! Перенаправляю…'));
 
         await syncEasterAfterLogin(loginData);
 
@@ -333,7 +334,7 @@ export async function renderPassword(): Promise<void> {
       } catch (err) {
         console.error('[PASSWORD] Login error:', err);
         await captchaService.reset();
-        showMsg('error', 'Непредвиденная ошибка. Попробуйте обновить страницу.');
+        showMsg('error', t('Непредвиденная ошибка. Попробуйте обновить страницу.'));
       } finally {
         btn.disabled = false;
         btn.textContent = oldText;

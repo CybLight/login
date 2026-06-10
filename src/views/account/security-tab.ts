@@ -2,6 +2,7 @@
  * Security tab handlers - управление вкладкой Безопасность
  */
 
+import { t } from '@/i18n';
 import { initPasswordEyes } from '@/components/password/password-helpers';
 import type { User as AppUser } from '@/types';
 import { apiCall } from '@/utils';
@@ -109,10 +110,10 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   const refreshEmailSecurityUi = () => {
     if (emailStatusEl) {
       emailStatusEl.textContent = state.emailVerified
-        ? '✅ Email подтверждён'
+        ? t('✅ Email подтверждён')
         : user.email
-          ? '⚠️ Email не подтверждён'
-          : '— Email не указан';
+          ? t('⚠️ Email не подтверждён')
+          : t('— Email не указан');
     }
 
     if (emailItem) {
@@ -123,10 +124,10 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
       if (badge) {
         if (state.emailVerified) {
           badge.className = 'sec-badge sec-badge--ok';
-          badge.textContent = 'Подтверждён';
+          badge.textContent = t('Подтверждён');
         } else if (user.email) {
           badge.className = 'sec-badge sec-badge--warn';
-          badge.textContent = 'Не подтверждён';
+          badge.textContent = t('Не подтверждён');
         } else {
           badge.className = 'sec-badge';
           badge.textContent = '—';
@@ -159,7 +160,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     const email = emailInp.value.trim();
     markInvalid(emailInp, false);
     if (!email) {
-      api.showMsg('warn', 'Введите email.');
+      api.showMsg('warn', t('Введите email.'));
       markInvalid(emailInp, true);
       return;
     }
@@ -168,14 +169,14 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     const next = email.toLowerCase();
 
     if (cur && cur === next) {
-      api.showMsg('warn', 'Это текущий email. Введите другой адрес.');
+      api.showMsg('warn', t('Это текущий email. Введите другой адрес.'));
       markInvalid(emailInp, true);
       return;
     }
 
     (emailSaveBtn as HTMLButtonElement).disabled = true;
     const oldText = emailSaveBtn.textContent;
-    emailSaveBtn.textContent = 'Сохраняю…';
+    emailSaveBtn.textContent = t('Сохраняю…');
 
     try {
       const r = await apiCall('/auth/email/set', {
@@ -188,14 +189,14 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
       const d = await r.json().catch(() => ({}));
 
       if (!r.ok) {
-        api.showMsg('error', d?.error ? `Ошибка: ${d.error}` : 'Не удалось сохранить email.');
+        api.showMsg('error', d?.error ? `${t('Ошибка:')} ${d.error}` : t('Не удалось сохранить email.'));
         markInvalid(emailInp, true);
       } else {
         api.showMsg(
           'ok',
           d?.cooldown
-            ? 'Email сохранён ✅ Письмо уже отправляли недавно.'
-            : 'Email сохранён ✅ Письмо отправлено.'
+            ? t('Email сохранён ✅ Письмо уже отправляли недавно.')
+            : t('Email сохранён ✅ Письмо отправлено.')
         );
         user.email = email;
         setSecPanelOpen(emailItem, emailPanel, false);
@@ -214,7 +215,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
         }
       }
     } catch {
-      api.showMsg('error', 'Ошибка сети.');
+      api.showMsg('error', t('Ошибка сети.'));
     } finally {
       (emailSaveBtn as HTMLButtonElement).disabled = false;
       if (oldText) emailSaveBtn.textContent = oldText;
@@ -226,7 +227,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     api.clearMsg();
     resendBtn.disabled = true;
     const old = resendBtn.textContent;
-    resendBtn.textContent = 'Отправляю…';
+    resendBtn.textContent = t('Отправляю…');
 
     try {
       const r = await apiCall('/auth/email/resend', {
@@ -238,21 +239,21 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
       const d = await r.json().catch(() => ({}));
 
       if (!r.ok) {
-        api.showMsg('error', d?.error ? `Ошибка: ${d.error}` : 'Не удалось отправить письмо.');
+        api.showMsg('error', d?.error ? `${t('Ошибка:')} ${d.error}` : t('Не удалось отправить письмо.'));
       } else if (d?.alreadyVerified) {
-        api.showMsg('ok', 'Email уже подтверждён ✅');
+        api.showMsg('ok', t('Email уже подтверждён ✅'));
         user.email_verified = true;
         state.emailVerified = true;
         onEmailVerifiedChanged?.(true);
         refreshEmailSecurityUi();
         refreshSecurityIndicator();
       } else if (d?.cooldown) {
-        api.showMsg('warn', 'Письмо уже отправляли недавно. Подожди минутку и попробуй снова.');
+        api.showMsg('warn', t('Письмо уже отправляли недавно. Подожди минутку и попробуй снова.'));
       } else {
-        api.showMsg('ok', 'Письмо отправлено ✅ Проверь почту (и Спам).');
+        api.showMsg('ok', t('Письмо отправлено ✅ Проверь почту (и Спам).'));
       }
     } catch {
-      api.showMsg('error', 'Ошибка сети.');
+      api.showMsg('error', t('Ошибка сети.'));
     } finally {
       resendBtn.disabled = false;
       if (old) resendBtn.textContent = old;
@@ -302,7 +303,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     api.clearMsg();
     clearPassHint();
     clearPassInvalid();
-    if (passStatusEl) passStatusEl.textContent = 'Введите текущий пароль и новый пароль.';
+    if (passStatusEl) passStatusEl.textContent = t('Введите текущий пароль и новый пароль.');
     setTimeout(() => passCurInp?.focus(), 0);
   };
 
@@ -339,8 +340,8 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     const cur = String(passCurInp?.value || '');
 
     if (!cur) {
-      setPassHint('warn', 'Введите действующий пароль.');
-      api.showMsg('warn', 'Введите действующий пароль.', true);
+      setPassHint('warn', t('Введите действующий пароль.'));
+      api.showMsg('warn', t('Введите действующий пароль.'), true);
       markInvalid(passCurInp, true);
       passCurInp?.focus();
       return;
@@ -350,24 +351,24 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     const n2 = passNew2Inp?.value || '';
 
     if (!/^[\x20-\x7E]*$/.test(n1)) {
-      setPassHint('warn', 'Нельзя использовать рус/укр буквы и любые не-ASCII символы.');
-      api.showMsg('warn', 'Новый пароль должен быть только латиницей (ASCII).', true);
+      setPassHint('warn', t('Нельзя использовать рус/укр буквы и любые не-ASCII символы.'));
+      api.showMsg('warn', t('Новый пароль должен быть только латиницей (ASCII).'), true);
       markInvalid(passNewInp, true);
       passNewInp?.focus();
       return;
     }
 
     if (n1.length < 8) {
-      setPassHint('warn', 'Новый пароль должен быть минимум 8 символов.');
-      api.showMsg('warn', 'Новый пароль должен быть минимум 8 символов.', true);
+      setPassHint('warn', t('Новый пароль должен быть минимум 8 символов.'));
+      api.showMsg('warn', t('Новый пароль должен быть минимум 8 символов.'), true);
       markInvalid(passNewInp, true);
       passNewInp?.focus();
       return;
     }
 
     if (n1 !== n2) {
-      setPassHint('error', 'Новые пароли не совпадают.');
-      api.showMsg('error', 'Новые пароли не совпадают.', true);
+      setPassHint('error', t('Новые пароли не совпадают.'));
+      api.showMsg('error', t('Новые пароли не совпадают.'), true);
       markInvalid(passNewInp, true);
       markInvalid(passNew2Inp, true);
       passNew2Inp?.focus();
@@ -377,8 +378,8 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     const curTrimmed = cur.trim();
     const n1Trimmed = n1.trim();
     if (cur === n1 || (curTrimmed && curTrimmed === n1Trimmed)) {
-      setPassHint('warn', 'Новый пароль должен отличаться от текущего.');
-      api.showMsg('warn', 'Новый пароль должен отличаться от текущего.', true);
+      setPassHint('warn', t('Новый пароль должен отличаться от текущего.'));
+      api.showMsg('warn', t('Новый пароль должен отличаться от текущего.'), true);
       markInvalid(passNewInp, true);
       passNewInp?.focus();
       return;
@@ -386,7 +387,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
 
     (passSaveBtn as HTMLButtonElement).disabled = true;
     const oldText = passSaveBtn.textContent;
-    passSaveBtn.textContent = 'Сохраняю…';
+    passSaveBtn.textContent = t('Сохраняю…');
 
     try {
       const r = await apiCall('/auth/password/change', {
@@ -404,27 +405,27 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
       if (!r.ok) {
         const err = String(d?.error || '');
         if (/same|identical|unchanged|reuse|password_same/i.test(err)) {
-          setPassHint('warn', 'Новый пароль должен отличаться от текущего.');
-          api.showMsg('warn', 'Новый пароль должен отличаться от текущего.', true);
+          setPassHint('warn', t('Новый пароль должен отличаться от текущего.'));
+          api.showMsg('warn', t('Новый пароль должен отличаться от текущего.'), true);
           markInvalid(passNewInp, true);
         } else if (r.status === 401 || err.includes('invalid')) {
-          setPassHint('error', 'Неверный действующий пароль.');
-          api.showMsg('error', 'Неверный действующий пароль.', true);
+          setPassHint('error', t('Неверный действующий пароль.'));
+          api.showMsg('error', t('Неверный действующий пароль.'), true);
           markInvalid(passCurInp, true);
         } else if (r.status === 429) {
-          setPassHint('warn', 'Слишком много попыток. Подожди и попробуй снова.');
-          api.showMsg('warn', 'Слишком много попыток. Подожди и попробуй снова.', true);
+          setPassHint('warn', t('Слишком много попыток. Подожди и попробуй снова.'));
+          api.showMsg('warn', t('Слишком много попыток. Подожди и попробуй снова.'), true);
         } else {
-          setPassHint('error', d?.error ? `Ошибка: ${d.error}` : 'Не удалось изменить пароль.');
+          setPassHint('error', d?.error ? `${t('Ошибка:')} ${d.error}` : t('Не удалось изменить пароль.'));
           api.showMsg(
             'error',
-            d?.error ? `Ошибка: ${d.error}` : 'Не удалось изменить пароль.',
+            d?.error ? `${t('Ошибка:')} ${d.error}` : t('Не удалось изменить пароль.'),
             true
           );
         }
       } else {
-        api.showMsg('ok', 'Пароль успешно изменён ✅');
-        setPassHint('ok', 'Пароль изменён ✅');
+        api.showMsg('ok', t('Пароль успешно изменён ✅'));
+        setPassHint('ok', t('Пароль изменён ✅'));
         closePassPanel();
 
         const passSubEl = passItem?.querySelector('.sec-sub');
@@ -437,12 +438,12 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
             meData.user.passChangedAt ||
             meData.user.pass_changed_at ||
             null;
-          passSubEl.textContent = `Последний раз был изменён: ${fmtTs(passChanged)}`;
+          passSubEl.textContent = `${t('Последний раз был изменён:')} ${fmtTs(passChanged)}`;
         }
       }
     } catch {
-      setPassHint('error', 'Ошибка сети.');
-      api.showMsg('error', 'Ошибка сети.', true);
+      setPassHint('error', t('Ошибка сети.'));
+      api.showMsg('error', t('Ошибка сети.'), true);
     } finally {
       (passSaveBtn as HTMLButtonElement).disabled = false;
       if (oldText) passSaveBtn.textContent = oldText;

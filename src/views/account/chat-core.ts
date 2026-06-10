@@ -1,3 +1,4 @@
+import { getLocale, localeTag } from '@/i18n/locale';
 import { apiCall, escapeHtml } from '@/utils';
 import { copyText } from '@/utils/clipboard';
 import {
@@ -210,7 +211,7 @@ export function createChatCore(deps: ChatCoreDeps) {
             }
 
             <div class="chat-message-time">${escapeHtml(
-              new Date(normalizedCreatedAt).toLocaleTimeString('ru-RU', {
+              new Date(normalizedCreatedAt).toLocaleTimeString(localeTag(getLocale()), {
                 hour: '2-digit',
                 minute: '2-digit',
               })
