@@ -626,9 +626,12 @@ export async function renderPublicProfile(username: string): Promise<void> {
     <style>
       .profile-container {
         max-width: 1280px;
+        width: 100%;
+        box-sizing: border-box;
         margin: 0 auto;
         padding: 24px 16px 28px;
         color: #eef2ff;
+        overflow-x: clip;
       }
       .profile-loading,
       .profile-notfound {
@@ -649,11 +652,14 @@ export async function renderPublicProfile(username: string): Promise<void> {
         border-radius: 14px;
         background: linear-gradient(135deg, rgba(255,255,255,.07) 0%, rgba(255,255,255,.03) 100%);
         padding: 18px;
+        min-width: 0;
+        max-width: 100%;
       }
       .profile-info {
         display: flex;
         gap: 14px;
         min-width: 0;
+        flex: 1;
       }
       .profile-avatar {
         width: 108px;
@@ -861,13 +867,21 @@ export async function renderPublicProfile(username: string): Promise<void> {
         background: linear-gradient(135deg, rgba(96, 165, 250, 0.95) 0%, rgba(59, 130, 246, 0.9) 100%);
         box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
       }
+      .profile-details {
+        min-width: 0;
+        flex: 1;
+      }
       .profile-details h1 {
         margin: 0;
         font-size: 38px;
         line-height: 1.1;
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 8px;
+        min-width: 0;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       .profile-status-badges {
         margin-top: 10px;
@@ -945,6 +959,9 @@ export async function renderPublicProfile(username: string): Promise<void> {
       .profile-dob {
         margin: 10px 0 0;
         color: rgba(238,242,255,.9);
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        white-space: pre-wrap;
       }
       .profile-top-meta {
         margin-top: 12px;
@@ -981,6 +998,15 @@ export async function renderPublicProfile(username: string): Promise<void> {
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
+        align-items: center;
+      }
+      .profile-actions .btn {
+        width: auto;
+        max-width: 100%;
+        margin-top: 0;
+        padding: 9px 16px;
+        font-size: 14px;
+        flex: 0 1 auto;
       }
       .profile-content {
         margin-top: 14px;
@@ -988,6 +1014,10 @@ export async function renderPublicProfile(username: string): Promise<void> {
         border-radius: 12px;
         padding: 14px;
         background: rgba(255,255,255,.03);
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
       .profile-extra {
         margin-top: 14px;
@@ -995,6 +1025,9 @@ export async function renderPublicProfile(username: string): Promise<void> {
         border-radius: 12px;
         padding: 14px;
         background: rgba(255,255,255,.03);
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: clip;
       }
       .profile-extra h3 {
         margin: 0 0 8px;
@@ -1068,10 +1101,20 @@ export async function renderPublicProfile(username: string): Promise<void> {
         transform: translateY(0) scale(1);
       }
       @media (max-width: 900px) {
-        .profile-container { padding: 16px 16px 24px; }
+        .profile-container {
+          padding: 16px 16px 24px;
+          max-width: 100%;
+        }
         .profile-header { flex-direction: column; }
         .profile-details h1 { font-size: 32px; }
         .profile-share { flex-direction: row; }
+        .profile-actions {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .profile-actions .btn {
+          width: 100%;
+        }
         .profile-toast-container {
           top: 12px;
           left: 12px;
