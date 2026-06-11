@@ -5,7 +5,7 @@
 import { localePath, t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { captchaService } from '@/services';
-import { setAppContent, shell } from '@/ui';
+import { setAppContent, shell, showAppAlert } from '@/ui';
 import { getStorage, apiCall } from '@/utils';
 
 export async function renderReset(): Promise<void> {
@@ -81,7 +81,7 @@ function renderPasswordResetForm(token: string): void {
   const msgEl = document.getElementById('msg');
   const showMsg = (type: string, text: string) => {
     if (!msgEl) return;
-    msgEl.style.display = '';
+    msgEl.style.display = 'block';
     msgEl.className = `msg msg--${type}`;
     msgEl.textContent = text;
   };
@@ -129,10 +129,8 @@ function renderPasswordResetForm(token: string): void {
           return;
         }
 
-        showMsg('ok', t('Пароль успешно изменён! Переход к входу...'));
-        setTimeout(() => {
-          Router.navigate('username');
-        }, 2000);
+        await showAppAlert(t('Пароль успешно изменён!'), { tone: 'success' });
+        Router.navigate('username');
       } catch (err) {
         console.error('[RESET] Error:', err);
         showMsg('error', t('Ошибка сети. Попробуйте ещё раз.'));
@@ -175,13 +173,13 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
           <div id="cf-turnstile" class="cf-turnstile"></div>
         </div>
 
-        <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
-
         <div class="row" style="margin-top:10px;">
           <a class="link" href="#" id="back">${t('← Назад')}</a>
         </div>
 
         <button class="btn btn-primary" id="recoverSubmit" type="submit" disabled aria-label="${t('Отправить')}">${t('Отправить')}</button>
+
+        <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
       </form>
     </section>
   `)
@@ -215,15 +213,18 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
   const msgEl = document.getElementById('msg');
   const showMsg = (type: string, text: string) => {
     if (!msgEl) return;
-    msgEl.style.display = '';
+    msgEl.style.display = 'block';
     msgEl.className = `msg msg--${type}`;
     msgEl.textContent = text;
   };
 
   const form = document.getElementById('fRecover') as HTMLFormElement;
   if (form) {
+    let submitting = false;
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (submitting) return;
 
       const emailInput = document.getElementById('email') as HTMLInputElement;
       const email = emailInput.value.trim();
@@ -241,6 +242,7 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
 
       const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
       const oldText = btn.textContent || t('Отправить');
+      submitting = true;
       btn.disabled = true;
       btn.textContent = t('Отправляю...');
 
@@ -258,15 +260,15 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
         const err = String(data?.error || '').toLowerCase();
 
         if (res.ok) {
-          showMsg(
-            'ok',
-            isUsername
-              ? t('Если email зарегистрирован, мы отправили вам логин.')
-              : t('Письмо отправлено! Проверьте свой email.')
-          );
           emailInput.value = '';
           await captchaService.init('cf-turnstile');
           syncSubmitState();
+          await showAppAlert(
+            isUsername
+              ? t('Если email зарегистрирован, мы отправили вам логин.')
+              : t('Письмо отправлено! Проверьте свой email.'),
+            { tone: 'success', title: t('Готово') }
+          );
         } else if (res.status === 429 || err.includes('rate') || err.includes('too_many')) {
           showMsg('warn', t('Слишком много попыток. Подожди немного и попробуй снова.'));
           await captchaService.init('cf-turnstile');
@@ -289,6 +291,7 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
         await captchaService.init('cf-turnstile');
         syncSubmitState();
       } finally {
+        submitting = false;
         btn.textContent = oldText;
         syncSubmitState();
       }
