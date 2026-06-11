@@ -2,8 +2,9 @@
  * Reset password view - восстановление пароля
  */
 
-import { t } from '@/i18n';
+import { localePath, t } from '@/i18n';
 import { Router } from '@/router/Router';
+import { captchaService } from '@/services';
 import { setAppContent, shell } from '@/ui';
 import { getStorage, apiCall } from '@/utils';
 
@@ -22,7 +23,7 @@ export async function renderReset(): Promise<void> {
   }
 
   // Иначе показываем форму запроса восстановления
-  renderRecoveryRequestForm(forcedMode);
+  await renderRecoveryRequestForm(forcedMode);
 }
 
 /**
@@ -71,7 +72,7 @@ function renderPasswordResetForm(token: string): void {
   if (backLink) {
     backLink.onclick = (e) => {
       e.preventDefault();
-      history.replaceState(null, '', '/reset');
+      history.replaceState(null, '', localePath('reset'));
       sessionStorage.removeItem('cyb_recovery_mode');
       Router.navigate('username');
     };
@@ -114,9 +115,9 @@ function renderPasswordResetForm(token: string): void {
       btn.textContent = t('Сохраняю...');
 
       try {
-        const res = await apiCall('/auth/reset-password', {
+        const res = await apiCall('/auth/recovery/finish', {
           method: 'POST',
-          body: JSON.stringify({ token, password: p1 }),
+          body: JSON.stringify({ token, newPassword: p1 }),
         });
 
         const data = await res.json().catch(() => ({}));
@@ -145,7 +146,7 @@ function renderPasswordResetForm(token: string): void {
 /**
  * Форма запроса восстановления
  */
-function renderRecoveryRequestForm(mode: string): void {
+async function renderRecoveryRequestForm(mode: string): Promise<void> {
   const isUsername = mode === 'username';
 
   setAppContent(
@@ -170,6 +171,10 @@ function renderRecoveryRequestForm(mode: string): void {
           <input class="input" id="email" type="email" autocomplete="email" required />
         </div>
 
+        <div class="field" style="margin-top:12px;">
+          <div id="cf-turnstile" class="cf-turnstile"></div>
+        </div>
+
         <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
 
         <div class="row" style="margin-top:10px;">
@@ -181,6 +186,8 @@ function renderRecoveryRequestForm(mode: string): void {
     </section>
   `)
   );
+
+  await captchaService.init('cf-turnstile');
 
   const backLink = document.getElementById('back');
   if (backLink) {
@@ -212,31 +219,47 @@ function renderRecoveryRequestForm(mode: string): void {
         return;
       }
 
+      if (!captchaService.token) {
+        showMsg('warn', t('Подтвердите, что вы не робот'));
+        return;
+      }
+
       const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+      const oldText = btn.textContent || t('Отправить');
       btn.disabled = true;
       btn.textContent = t('Отправляю...');
 
       try {
-        const endpoint = isUsername ? '/auth/recover-username' : '/auth/request-password-reset';
-        const res = await apiCall(endpoint, {
+        const res = await apiCall('/auth/recovery/start', {
           method: 'POST',
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({
+            email,
+            mode: isUsername ? 'username' : 'password',
+            turnstileToken: captchaService.token,
+          }),
         });
 
         const data = await res.json().catch(() => ({}));
 
         if (res.ok) {
-          showMsg('ok', data?.message || t('Письмо отправлено! Проверьте свой email.'));
+          showMsg(
+            'ok',
+            isUsername
+              ? t('Если email зарегистрирован, мы отправили вам логин.')
+              : t('Письмо отправлено! Проверьте свой email.')
+          );
           emailInput.value = '';
         } else {
           showMsg('error', data?.error || t('Ошибка при отправке'));
+          await captchaService.reset();
         }
       } catch (err) {
         console.error('[RESET] Error:', err);
         showMsg('error', t('Ошибка сети. Попробуйте ещё раз.'));
+        await captchaService.reset();
       } finally {
         btn.disabled = false;
-        btn.textContent = t('Отправить');
+        btn.textContent = oldText;
       }
     });
   }

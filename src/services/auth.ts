@@ -115,9 +115,13 @@ export const authService = {
    */
   async requestPasswordReset(email: string, captchaToken: string): Promise<AuthResponse> {
     try {
-      const response = await apiCall('/auth/password-reset-request', {
+      const response = await apiCall('/auth/recovery/start', {
         method: 'POST',
-        body: JSON.stringify({ email, captchaToken }),
+        body: JSON.stringify({
+          email,
+          mode: 'password',
+          turnstileToken: captchaToken,
+        }),
       });
 
       const data: AuthResponse = await response.json();
@@ -132,41 +136,13 @@ export const authService = {
   },
 
   /**
-   * Verify password reset code
+   * Complete password reset (token from email link)
    */
-  async verifyPasswordReset(code: string): Promise<AuthResponse> {
+  async resetPassword(token: string, newPassword: string): Promise<AuthResponse> {
     try {
-      const response = await apiCall(`/auth/password-reset-verify/${code}`, {
-        method: 'GET',
-      });
-
-      const data: AuthResponse = await response.json();
-      return data;
-    } catch (error) {
-      console.error('[AUTH] Password reset verify error:', error);
-      return {
-        ok: false,
-        error: 'Ошибка сети. Попробуйте еще раз.',
-      };
-    }
-  },
-
-  /**
-   * Complete password reset
-   */
-  async resetPassword(
-    code: string,
-    newPassword: string,
-    captchaToken: string
-  ): Promise<AuthResponse> {
-    try {
-      const response = await apiCall('/auth/password-reset', {
+      const response = await apiCall('/auth/recovery/finish', {
         method: 'POST',
-        body: JSON.stringify({
-          code,
-          newPassword,
-          captchaToken,
-        }),
+        body: JSON.stringify({ token, newPassword }),
       });
 
       const data: AuthResponse = await response.json();

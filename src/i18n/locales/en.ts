@@ -75,6 +75,7 @@ export const en: Record<string, string> = {
   "Введите email для получения ссылки на сброс пароля.": "Enter your email to receive a password reset link.",
   "Введите email": "Enter email",
   "Письмо отправлено! Проверьте свой email.": "Email sent! Check your inbox.",
+  "Если email зарегистрирован, мы отправили вам логин.": "If this email is registered, we sent your username.",
   "Ошибка при отправке": "Failed to send",
   "Двухфакторная аутентификация": "Two-factor authentication",
   "Введите код из приложения аутентификатора или резервный код.": "Enter the code from your authenticator app or a backup code.",

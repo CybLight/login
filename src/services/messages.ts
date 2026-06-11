@@ -6,12 +6,9 @@ import { apiCall } from '@/utils';
 import { ChatMessage, ApiResponse } from '@/types';
 
 export const messagesService = {
-  /**
-   * Load chat messages with a friend
-   */
   async loadMessages(friendId: string, limit: number = 50): Promise<ChatMessage[]> {
     try {
-      const response = await apiCall(`/api/messages/chat/${friendId}?limit=${limit}`, {
+      const response = await apiCall(`/messages/${encodeURIComponent(friendId)}?limit=${limit}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -28,12 +25,9 @@ export const messagesService = {
     }
   },
 
-  /**
-   * Send message to friend
-   */
   async sendMessage(recipientId: string, content: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall('/api/messages/send', {
+      const response = await apiCall('/messages/send', {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify({
@@ -53,12 +47,9 @@ export const messagesService = {
     }
   },
 
-  /**
-   * Delete message
-   */
   async deleteMessage(messageId: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall(`/api/messages/${messageId}`, {
+      const response = await apiCall(`/messages/${encodeURIComponent(messageId)}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -74,12 +65,9 @@ export const messagesService = {
     }
   },
 
-  /**
-   * Edit message
-   */
   async editMessage(messageId: string, content: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall(`/api/messages/${messageId}`, {
+      const response = await apiCall(`/messages/${encodeURIComponent(messageId)}`, {
         method: 'PATCH',
         credentials: 'include',
         body: JSON.stringify({ content }),
@@ -96,12 +84,9 @@ export const messagesService = {
     }
   },
 
-  /**
-   * Add reaction to message
-   */
-  async addReaction(messageId: string, emoji: string): Promise<ApiResponse> {
+  async toggleReaction(messageId: string, emoji: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall(`/api/messages/${messageId}/reactions`, {
+      const response = await apiCall(`/messages/${encodeURIComponent(messageId)}/react`, {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify({ emoji }),
@@ -110,7 +95,7 @@ export const messagesService = {
       const data: ApiResponse = await response.json();
       return data;
     } catch (error) {
-      console.error('[MESSAGES] Add reaction error:', error);
+      console.error('[MESSAGES] Reaction error:', error);
       return {
         ok: false,
         error: 'Ошибка сети',
@@ -118,50 +103,22 @@ export const messagesService = {
     }
   },
 
-  /**
-   * Remove reaction from message
-   */
-  async removeReaction(messageId: string, emoji: string): Promise<ApiResponse> {
+  async getUnreadSummary(): Promise<Record<string, unknown>> {
     try {
-      const response = await apiCall(
-        `/api/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        }
-      );
-
-      const data: ApiResponse = await response.json();
-      return data;
-    } catch (error) {
-      console.error('[MESSAGES] Remove reaction error:', error);
-      return {
-        ok: false,
-        error: 'Ошибка сети',
-      };
-    }
-  },
-
-  /**
-   * Get list of conversations
-   */
-  async getConversations(): Promise<Record<string, unknown>[]> {
-    try {
-      const response = await apiCall('/api/messages/conversations', {
+      const response = await apiCall('/messages/unread-summary', {
         method: 'GET',
         credentials: 'include',
       });
 
       if (!response.ok) {
-        return [];
+        return {};
       }
 
-      const data: ApiResponse<{ conversations: Record<string, unknown>[] }> =
-        await response.json();
-      return data.data?.conversations || [];
+      const data: ApiResponse<Record<string, unknown>> = await response.json();
+      return data.data || {};
     } catch (error) {
-      console.error('[MESSAGES] Get conversations error:', error);
-      return [];
+      console.error('[MESSAGES] Unread summary error:', error);
+      return {};
     }
   },
 };

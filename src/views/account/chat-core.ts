@@ -74,20 +74,14 @@ export function createChatCore(deps: ChatCoreDeps) {
         credentials: 'include',
       });
 
-      let data = await response.json().catch(() => ({}));
+      const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.ok) {
-        const fallback = await apiCall(`/messages/chat/${encodeURIComponent(friendId)}?limit=50`, {
-          credentials: 'include',
-        });
-        data = await fallback.json().catch(() => ({}));
-        if (!fallback.ok || !data?.ok) {
-          const hasExistingMessages = container.querySelector('.chat-message') !== null;
-          if (!hasExistingMessages) {
-            container.innerHTML =
-              '<div class="chat-error-text">Не удалось загрузить сообщения</div>';
-          }
-          return;
+        const hasExistingMessages = container.querySelector('.chat-message') !== null;
+        if (!hasExistingMessages) {
+          container.innerHTML =
+            '<div class="chat-error-text">Не удалось загрузить сообщения</div>';
         }
+        return;
       }
 
       const list = Array.isArray(data.messages)

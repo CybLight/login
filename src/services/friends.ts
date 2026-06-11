@@ -6,12 +6,9 @@ import { apiCall } from '@/utils';
 import { Friend, FriendshipStatus, ApiResponse } from '@/types';
 
 export const friendsService = {
-  /**
-   * Get list of friends
-   */
   async getFriends(): Promise<Friend[]> {
     try {
-      const response = await apiCall('/api/friends', {
+      const response = await apiCall('/friends/list', {
         method: 'GET',
         credentials: 'include',
       });
@@ -28,12 +25,9 @@ export const friendsService = {
     }
   },
 
-  /**
-   * Get friend requests
-   */
   async getFriendRequests(): Promise<Friend[]> {
     try {
-      const response = await apiCall('/api/friends/requests', {
+      const response = await apiCall('/friends/pending', {
         method: 'GET',
         credentials: 'include',
       });
@@ -50,12 +44,9 @@ export const friendsService = {
     }
   },
 
-  /**
-   * Check friendship status
-   */
   async getStatus(friendId: string): Promise<FriendshipStatus | null> {
     try {
-      const response = await apiCall(`/api/friends/status/${friendId}`, {
+      const response = await apiCall(`/friends/status/${encodeURIComponent(friendId)}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -72,20 +63,15 @@ export const friendsService = {
     }
   },
 
-  /**
-   * Add friend
-   */
   async addFriend(friendUsername: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall('/api/friends/add', {
+      const response = await apiCall('/friends/add', {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify({ friendUsername }),
       });
 
       const data: ApiResponse = await response.json();
-      console.log('[FRIENDS] Add result:', data);
-
       return data;
     } catch (error) {
       console.error('[FRIENDS] Add error:', error);
@@ -96,14 +82,12 @@ export const friendsService = {
     }
   },
 
-  /**
-   * Accept friend request
-   */
   async acceptRequest(friendId: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall(`/api/friends/requests/${friendId}/accept`, {
+      const response = await apiCall('/friends/accept', {
         method: 'POST',
         credentials: 'include',
+        body: JSON.stringify({ friendId }),
       });
 
       const data: ApiResponse = await response.json();
@@ -117,14 +101,12 @@ export const friendsService = {
     }
   },
 
-  /**
-   * Reject friend request
-   */
   async rejectRequest(friendId: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall(`/api/friends/requests/${friendId}/reject`, {
+      const response = await apiCall('/friends/reject', {
         method: 'POST',
         credentials: 'include',
+        body: JSON.stringify({ friendId }),
       });
 
       const data: ApiResponse = await response.json();
@@ -138,14 +120,12 @@ export const friendsService = {
     }
   },
 
-  /**
-   * Remove friend
-   */
   async removeFriend(friendId: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall(`/api/friends/${friendId}`, {
-        method: 'DELETE',
+      const response = await apiCall('/friends/remove', {
+        method: 'POST',
         credentials: 'include',
+        body: JSON.stringify({ friendId }),
       });
 
       const data: ApiResponse = await response.json();
@@ -159,30 +139,10 @@ export const friendsService = {
     }
   },
 
-  /**
-   * Cancel friend request
-   */
-  async cancelRequest(friendshipId: string): Promise<ApiResponse> {
-    try {
-      const response = await apiCall(`/api/friends/requests/${friendshipId}/cancel`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      const data: ApiResponse = await response.json();
-      return data;
-    } catch (error) {
-      console.error('[FRIENDS] Cancel request error:', error);
-      return {
-        ok: false,
-        error: 'Ошибка сети',
-      };
-    }
+  async cancelRequest(friendId: string): Promise<ApiResponse> {
+    return this.removeFriend(friendId);
   },
 
-  /**
-   * Search users to add as friend
-   */
   async searchUsers(query: string): Promise<Friend[]> {
     try {
       const response = await apiCall(`/search/users?q=${encodeURIComponent(query)}`, {

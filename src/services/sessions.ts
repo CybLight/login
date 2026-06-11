@@ -6,12 +6,9 @@ import { apiCall } from '@/utils';
 import { LoginSession, ApiResponse } from '@/types';
 
 export const sessionsService = {
-  /**
-   * Get list of active sessions
-   */
   async getSessions(): Promise<LoginSession[]> {
     try {
-      const response = await apiCall('/auth/login-history', {
+      const response = await apiCall('/auth/sessions', {
         method: 'GET',
         credentials: 'include',
       });
@@ -28,10 +25,7 @@ export const sessionsService = {
     }
   },
 
-  /**
-   * Get sessions by tab (active, history, etc.)
-   */
-  async getSessionsByTab(tab: string = 'active', limit: number = 20): Promise<LoginSession[]> {
+  async getLoginHistory(tab: string = 'active', limit: number = 20): Promise<LoginSession[]> {
     try {
       const response = await apiCall(`/auth/login-history?tab=${tab}&limit=${limit}`, {
         method: 'GET',
@@ -45,19 +39,17 @@ export const sessionsService = {
       const data: ApiResponse<{ sessions: LoginSession[] }> = await response.json();
       return data.data?.sessions || [];
     } catch (error) {
-      console.error('[SESSIONS] Get by tab error:', error);
+      console.error('[SESSIONS] Get login history error:', error);
       return [];
     }
   },
 
-  /**
-   * Terminate session
-   */
   async terminateSession(sessionId: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall(`/auth/sessions/${sessionId}`, {
-        method: 'DELETE',
+      const response = await apiCall('/auth/sessions/revoke', {
+        method: 'POST',
         credentials: 'include',
+        body: JSON.stringify({ id: sessionId }),
       });
 
       const data: ApiResponse = await response.json();
@@ -71,12 +63,9 @@ export const sessionsService = {
     }
   },
 
-  /**
-   * Terminate all other sessions
-   */
   async terminateOthers(): Promise<ApiResponse> {
     try {
-      const response = await apiCall('/auth/sessions/terminate-others', {
+      const response = await apiCall('/auth/logout-others', {
         method: 'POST',
         credentials: 'include',
       });
@@ -92,9 +81,6 @@ export const sessionsService = {
     }
   },
 
-  /**
-   * Get trusted devices
-   */
   async getTrustedDevices(): Promise<Record<string, unknown>[]> {
     try {
       const response = await apiCall('/auth/trusted-devices', {
@@ -114,12 +100,9 @@ export const sessionsService = {
     }
   },
 
-  /**
-   * Remove trusted device
-   */
   async removeTrustedDevice(deviceId: string): Promise<ApiResponse> {
     try {
-      const response = await apiCall(`/auth/trusted-devices/${deviceId}`, {
+      const response = await apiCall(`/auth/trusted-devices/${encodeURIComponent(deviceId)}`, {
         method: 'DELETE',
         credentials: 'include',
       });

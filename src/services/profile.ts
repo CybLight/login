@@ -6,13 +6,9 @@ import { apiCall } from '@/utils';
 import { UserProfile, EditableProfile, ApiResponse } from '@/types';
 
 export const profileService = {
-  /**
-   * Load user profile by username
-   */
   async loadProfile(username: string): Promise<UserProfile | null> {
     try {
-      console.log('[PROFILE] Loading:', username);
-      const response = await apiCall(`/api/profile/${encodeURIComponent(username)}`, {
+      const response = await apiCall(`/profile/${encodeURIComponent(username)}`, {
         method: 'GET',
       });
 
@@ -21,8 +17,6 @@ export const profileService = {
       }
 
       const data: ApiResponse<{ profile: UserProfile }> = await response.json();
-      console.log('[PROFILE] Loaded:', data);
-
       return data.data?.profile || null;
     } catch (error) {
       console.error('[PROFILE] Load error:', error);
@@ -30,15 +24,12 @@ export const profileService = {
     }
   },
 
-  /**
-   * Check if username is available
-   */
   async checkUsernameAvailability(
     username: string
   ): Promise<{ available: boolean; reason?: string }> {
     try {
       const response = await apiCall(
-        `/api/profile/check-username/${encodeURIComponent(username)}`,
+        `/profile/check-username/${encodeURIComponent(username)}`,
         {
           method: 'GET',
         }
@@ -59,20 +50,15 @@ export const profileService = {
     }
   },
 
-  /**
-   * Update user profile
-   */
   async updateProfile(updates: EditableProfile): Promise<ApiResponse> {
     try {
-      const response = await apiCall('/api/profile/update', {
+      const response = await apiCall('/profile/update', {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify(updates),
       });
 
       const data: ApiResponse = await response.json();
-      console.log('[PROFILE] Update response:', data);
-
       return data;
     } catch (error) {
       console.error('[PROFILE] Update error:', error);
@@ -83,9 +69,6 @@ export const profileService = {
     }
   },
 
-  /**
-   * Get avatar emoji by ID
-   */
   getAvatarEmoji(avatarId: string): string {
     const AVATAR_EMOJI_MAP: Record<string, string> = {
       'avatar-cat': '🐱',
