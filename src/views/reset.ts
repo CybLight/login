@@ -265,9 +265,9 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
           syncSubmitState();
           await showAppAlert(
             isUsername
-              ? t('Если email зарегистрирован, мы отправили вам логин.')
-              : t('Письмо отправлено! Проверьте свой email.'),
-            { tone: 'success', title: t('Готово') }
+              ? t('Если email зарегистрирован, мы отправили вам логин. Проверьте почту (и «Спам»).')
+              : t('Если email зарегистрирован, мы отправили ссылку для сброса пароля. Проверьте почту (и «Спам»).'),
+            { tone: 'success', title: t('Запрос принят') }
           );
         } else if (res.status === 429 || err.includes('rate') || err.includes('too_many')) {
           showMsg('warn', t('Слишком много попыток. Подожди немного и попробуй снова.'));
