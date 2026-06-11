@@ -677,6 +677,12 @@ export const en: Record<string, string> = {
   "Смена запланирована": "Change scheduled",
   "⏳ Email сменится на {email} {time}": "⏳ Email will change to {email} {time}",
   "⏳ Ожидается подтверждение {email}": "⏳ Waiting for confirmation of {email}",
+  "⏳ Ожидается подтверждение": "⏳ Waiting for confirmation of",
+  "Адрес сменится на": "Address will change to",
+  "Запрошена смена на": "Change requested to",
+  "{time} ({date}).": "{time} ({date}).",
+  "Подтвердите письмо на новом адресе, затем начнётся 24-часовое ожидание.":
+    "Confirm the message at the new address, then a 24-hour waiting period begins.",
   "Запланирована смена email": "Email change scheduled",
   "Подтвердите новый email": "Confirm your new email",
   "Адрес сменится на {email} {time} ({date}).":

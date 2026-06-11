@@ -2634,14 +2634,34 @@ body.no-strawberries .strawberry-ring-wave {
   font-size: 13px;
   line-height: 1.55;
   color: var(--muted);
-  word-break: break-word;
-  overflow-wrap: anywhere;
 }
 
-.sec-email-pending-email {
+.sec-email-pending-lead,
+.sec-email-pending-meta {
+  line-height: 1.45;
+}
+
+.sec-email-pending-email-row {
+  max-width: 100%;
+  margin: 3px 0 5px;
+  min-width: 0;
+}
+
+.sec-email-one-line {
+  display: block;
+  max-width: 100%;
   color: #fbbf24;
   font-weight: 600;
-  word-break: break-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sec-status--pending .sec-email-one-line,
+.sec-status-pending .sec-email-one-line {
+  display: inline-block;
+  vertical-align: bottom;
+  max-width: min(100%, 18rem);
 }
 
 .sec-email-pending-countdown {
@@ -2670,22 +2690,35 @@ body.no-strawberries .strawberry-ring-wave {
   white-space: normal;
   overflow: visible;
   text-overflow: unset;
+  min-width: 0;
 }
 
 .sec-sub-current {
   display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sec-sub-next {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
   color: #fbbf24;
   font-size: 12px;
-  word-break: break-all;
 }
 
-.sec-sub-next::before {
-  content: '→ ';
-  opacity: 0.85;
+.sec-sub-arrow {
+  flex: 0 0 auto;
+}
+
+.sec-sub-next .sec-email-one-line {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block;
 }
 
 @media (max-width: 640px) {

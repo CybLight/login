@@ -3,7 +3,7 @@
  */
 
 import { getLocale, localeTag, t } from '@/i18n';
-import { apiCall } from '@/utils';
+import { apiCall, escapeHtml } from '@/utils';
 import { getAvatarInnerHtml } from './avatar';
 import type { User as AppUser } from '@/types';
 
@@ -78,9 +78,43 @@ export function formatRemainingShort(completesAt: number): string {
   return t('{minutes} мин', { minutes: String(minutes) });
 }
 
-/**
- * Проверить, верифицирован ли email
- */
+export function emailOneLineHtml(email: string): string {
+  const safe = escapeHtml(email);
+  return `<span class="sec-email-one-line" title="${safe}">${safe}</span>`;
+}
+
+export function renderPendingCardTextHtml(pending: PendingEmailInfo): string {
+  const emailHtml = emailOneLineHtml(pending.pendingEmail);
+
+  if (pending.pendingVerifiedAt && pending.pendingCompletesAt) {
+    const time = formatRemainingUntil(pending.pendingCompletesAt) || t('скоро');
+    const date = formatPendingDate(pending.pendingCompletesAt);
+    return `<div class="sec-email-pending-lead">${t('Адрес сменится на')}</div>
+<div class="sec-email-pending-email-row">${emailHtml}</div>
+<div class="sec-email-pending-meta">${t('{time} ({date}).', { time, date })}</div>`;
+  }
+
+  return `<div class="sec-email-pending-lead">${t('Запрошена смена на')}</div>
+<div class="sec-email-pending-email-row">${emailHtml}</div>
+<div class="sec-email-pending-meta">${t('Подтвердите письмо на новом адресе, затем начнётся 24-часовое ожидание.')}</div>`;
+}
+
+export function renderPendingStatusHtml(pending: PendingEmailInfo): string {
+  const emailHtml = emailOneLineHtml(pending.pendingEmail);
+
+  if (pending.pendingVerifiedAt) {
+    const time =
+      formatRemainingUntil(pending.pendingCompletesAt) ||
+      formatPendingDate(pending.pendingCompletesAt);
+    return `<span class="sec-status-pending">${t('⏳ Email сменится на')} ${emailHtml} ${escapeHtml(time)}</span>`;
+  }
+
+  return `<span class="sec-status-pending">${t('⏳ Ожидается подтверждение')} ${emailHtml}</span>`;
+}
+
+export function renderPendingSubHtml(currentEmail: string, pendingEmail: string): string {
+  return `<span class="sec-sub-current">${escapeHtml(currentEmail)}</span><span class="sec-sub-next"><span class="sec-sub-arrow" aria-hidden="true">→</span> ${emailOneLineHtml(pendingEmail)}</span>`;
+}
 export function isEmailVerified(user: AppUser): boolean {
   const maybe = user as unknown as Record<string, unknown>;
   return !!(

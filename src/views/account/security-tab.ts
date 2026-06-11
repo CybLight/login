@@ -5,7 +5,7 @@
 import { t } from '@/i18n';
 import { initPasswordEyes } from '@/components/password/password-helpers';
 import type { User as AppUser } from '@/types';
-import { apiCall, escapeHtml } from '@/utils';
+import { apiCall } from '@/utils';
 import { fmtTs } from './device-utils';
 import { createSecurityCore } from './security-core';
 import { updateSecurityIndicator, attachPasswordHints } from './security-ui';
@@ -14,8 +14,10 @@ import { showAccountConfirmModal } from './modals';
 import {
   formatPendingDate,
   formatRemainingShort,
-  formatRemainingUntil,
   getPendingEmailInfo,
+  renderPendingCardTextHtml,
+  renderPendingStatusHtml,
+  renderPendingSubHtml,
 } from './account-utils';
 
 type SecurityUser = AppUser & {
@@ -129,34 +131,6 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   };
 
   const buildPendingTexts = (pending: NonNullable<ReturnType<typeof getPendingEmailInfo>>) => {
-    const remaining =
-      pending.pendingVerifiedAt && pending.pendingCompletesAt
-        ? formatRemainingUntil(pending.pendingCompletesAt)
-        : '';
-    const remainingShort =
-      pending.pendingVerifiedAt && pending.pendingCompletesAt
-        ? formatRemainingShort(pending.pendingCompletesAt)
-        : '';
-    const emailHtml = `<span class="sec-email-pending-email">${escapeHtml(pending.pendingEmail)}</span>`;
-
-    const statusText = pending.pendingVerifiedAt
-      ? t('⏳ Email сменится на {email} {time}', {
-          email: pending.pendingEmail,
-          time: remaining || formatPendingDate(pending.pendingCompletesAt),
-        })
-      : t('⏳ Ожидается подтверждение {email}', { email: pending.pendingEmail });
-
-    const cardText =
-      pending.pendingVerifiedAt && pending.pendingCompletesAt
-        ? t('Адрес сменится на {email} {time} ({date}).', {
-            email: emailHtml,
-            time: remaining || t('скоро'),
-            date: formatPendingDate(pending.pendingCompletesAt),
-          })
-        : t('Запрошена смена на {email}. Подтвердите письмо на новом адресе, затем начнётся 24-часовое ожидание.', {
-            email: emailHtml,
-          });
-
     const bannerText =
       pending.pendingVerifiedAt && pending.pendingCompletesAt
         ? t('Новый адрес {email} подтверждён. Смена завершится {date}.', {
@@ -167,7 +141,11 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
             email: pending.pendingEmail,
           });
 
-    return { remaining, remainingShort, statusText, cardText, bannerText };
+    return {
+      statusHtml: renderPendingStatusHtml(pending),
+      cardHtml: renderPendingCardTextHtml(pending),
+      bannerText,
+    };
   };
 
   const refreshEmailSecurityUi = () => {
@@ -178,8 +156,10 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
 
     if (emailStatusEl) {
       if (pending) {
-        emailStatusEl.textContent = buildPendingTexts(pending).statusText;
+        emailStatusEl.classList.add('sec-status--pending');
+        emailStatusEl.innerHTML = buildPendingTexts(pending).statusHtml;
       } else {
+        emailStatusEl.classList.remove('sec-status--pending');
         emailStatusEl.textContent = state.emailVerified
           ? t('✅ Email подтверждён')
           : user.email
@@ -190,9 +170,9 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
 
     const subEl = document.getElementById('secEmailSub');
     if (subEl) {
-      if (pending) {
+      if (pending && user.email) {
         subEl.classList.add('sec-sub--pending');
-        subEl.innerHTML = `<span class="sec-sub-current">${escapeHtml(currentEmail)}</span><span class="sec-sub-next">${escapeHtml(pending.pendingEmail)}</span>`;
+        subEl.innerHTML = renderPendingSubHtml(user.email, pending.pendingEmail);
       } else {
         subEl.classList.remove('sec-sub--pending');
         subEl.textContent = currentEmail;
@@ -233,7 +213,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
           ? t('Запланирована смена email')
           : t('Подтвердите новый email');
       }
-      if (textEl) textEl.innerHTML = texts.cardText;
+      if (textEl) textEl.innerHTML = texts.cardHtml;
       if (bannerTextEl) bannerTextEl.textContent = texts.bannerText;
       if (bannerEl) bannerEl.style.display = '';
 
@@ -246,10 +226,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
               ? t('Осталось: {time}', { time: left })
               : t('Смена email завершится скоро');
             if (emailStatusEl && pending) {
-              emailStatusEl.textContent = t('⏳ Email сменится на {email} {time}', {
-                email: pending.pendingEmail,
-                time: formatRemainingUntil(pending.pendingCompletesAt) || t('скоро'),
-              });
+              emailStatusEl.innerHTML = renderPendingStatusHtml(pending);
             }
           };
           updateCountdown();
