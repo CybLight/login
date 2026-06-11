@@ -15,6 +15,10 @@ import { showAccountConfirmModal } from './modals';
 type SecurityUser = AppUser & {
   email_verified?: boolean | number | string;
   email_verified_at?: string | number | null;
+  pendingEmail?: string | null;
+  pendingEmailVerifiedAt?: number | null;
+  pendingEmailCompletesAt?: number | null;
+  totp_enabled?: boolean;
 };
 
 type SecurityTabDeps = {
@@ -101,6 +105,8 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   const emailCancelBtn = document.getElementById('secEmailCancelBtn');
   const emailHint = document.getElementById('secEmailHint');
   const emailStatusEl = document.getElementById('secEmailStatus');
+  const emailPassInp = document.getElementById('secEmailPass') as HTMLInputElement | null;
+  const emailTotpInp = document.getElementById('secEmailTotp') as HTMLInputElement | null;
 
   const markInvalid = (input: HTMLInputElement | null, invalid: boolean) => {
     if (!input) return;
@@ -153,12 +159,24 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     }
   });
 
+  const mapEmailSetError = (code?: string): string => {
+    if (code === 'bad_password' || code === 'invalid_password') return t('Неверный пароль');
+    if (code === 'code_required') return t('Введите код 2FA');
+    if (code === 'invalid_code') return t('Неверный 2FA код');
+    if (code === 'password_required') return t('Введите текущий пароль');
+    if (code === 'same_email') return t('Это текущий email. Введите другой адрес.');
+    return code ? `${t('Ошибка:')} ${code}` : t('Не удалось сохранить email.');
+  };
+
   emailSaveBtn?.addEventListener('click', async () => {
     api.clearMsg();
     if (!emailInp) return;
 
     const email = emailInp.value.trim();
     markInvalid(emailInp, false);
+    emailPassInp?.classList.remove('input--invalid');
+    emailTotpInp?.classList.remove('input--invalid');
+
     if (!email) {
       api.showMsg('warn', t('Введите email.'));
       markInvalid(emailInp, true);
@@ -167,10 +185,20 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
 
     const cur = (user.email || '').trim().toLowerCase();
     const next = email.toLowerCase();
+    const requiresAuth = state.emailVerified && !!cur;
 
     if (cur && cur === next) {
       api.showMsg('warn', t('Это текущий email. Введите другой адрес.'));
       markInvalid(emailInp, true);
+      return;
+    }
+
+    const password = emailPassInp?.value || '';
+    const totpCode = emailTotpInp?.value.trim() || '';
+
+    if (requiresAuth && !password) {
+      api.showMsg('warn', t('Введите текущий пароль'));
+      emailPassInp?.classList.add('input--invalid');
       return;
     }
 
@@ -183,14 +211,33 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          ...(requiresAuth ? { password, totpCode } : {}),
+        }),
       });
 
       const d = await r.json().catch(() => ({}));
 
       if (!r.ok) {
-        api.showMsg('error', d?.error ? `${t('Ошибка:')} ${d.error}` : t('Не удалось сохранить email.'));
+        const msg = mapEmailSetError(d?.error);
+        api.showMsg('error', msg);
         markInvalid(emailInp, true);
+        if (d?.error === 'bad_password' || d?.error === 'invalid_password') {
+          emailPassInp?.classList.add('input--invalid');
+        }
+        if (d?.error === 'invalid_code' || d?.error === 'code_required') {
+          emailTotpInp?.classList.add('input--invalid');
+        }
+      } else if (d?.pending) {
+        api.showMsg(
+          'ok',
+          d?.cooldown
+            ? t('Запрос на смену email принят. Письмо уже отправляли недавно — проверьте почту.')
+            : t('Запрос на смену email принят. Подтвердите новый адрес и проверьте текущую почту.')
+        );
+        setSecPanelOpen(emailItem, emailPanel, false);
+        await reloadMeUser();
       } else {
         api.showMsg(
           'ok',
@@ -198,27 +245,64 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
             ? t('Email сохранён ✅ Письмо уже отправляли недавно.')
             : t('Email сохранён ✅ Письмо отправлено.')
         );
-        user.email = email;
-        setSecPanelOpen(emailItem, emailPanel, false);
-
-        const meResp = await apiCall('/auth/me', { credentials: 'include' });
-        const meData = await meResp.json().catch(() => ({}));
-        if (meResp.ok && meData?.user) {
-          user.email = meData.user.email || user.email;
-          user.email_verified = meData.user.email_verified;
-          user.email_verified_at = meData.user.email_verified_at;
-          state.emailVerified = isEmailVerified(user);
-          onEmailVerifiedChanged?.(state.emailVerified);
-          onUserUpdated?.(meData.user);
-          refreshEmailSecurityUi();
-          refreshSecurityIndicator();
+        if (!requiresAuth) {
+          user.email = email;
         }
+        setSecPanelOpen(emailItem, emailPanel, false);
+        await reloadMeUser();
       }
     } catch {
       api.showMsg('error', t('Ошибка сети.'));
     } finally {
       (emailSaveBtn as HTMLButtonElement).disabled = false;
       if (oldText) emailSaveBtn.textContent = oldText;
+    }
+  });
+
+  const reloadMeUser = async () => {
+    const meResp = await apiCall('/auth/me', { credentials: 'include' });
+    const meData = await meResp.json().catch(() => ({}));
+    if (meResp.ok && meData?.user) {
+      Object.assign(user, {
+        email: meData.user.email || user.email,
+        email_verified: meData.user.emailVerified,
+        email_verified_at: meData.user.emailVerifiedAt,
+        pendingEmail: meData.user.pendingEmail,
+        pendingEmailVerifiedAt: meData.user.pendingEmailVerifiedAt,
+        pendingEmailCompletesAt: meData.user.pendingEmailCompletesAt,
+      });
+      state.emailVerified = isEmailVerified(user);
+      onEmailVerifiedChanged?.(state.emailVerified);
+      onUserUpdated?.(meData.user);
+      refreshEmailSecurityUi();
+      refreshSecurityIndicator();
+    }
+  };
+
+  document.getElementById('secEmailCancelPendingBtn')?.addEventListener('click', async () => {
+    api.clearMsg();
+    const btn = document.getElementById('secEmailCancelPendingBtn') as HTMLButtonElement | null;
+    if (!btn) return;
+    btn.disabled = true;
+
+    try {
+      const r = await apiCall('/auth/email/cancel-pending', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        api.showMsg('error', mapEmailSetError(d?.error));
+        return;
+      }
+      api.showMsg('ok', t('Смена email отменена'));
+      await reloadMeUser();
+      location.reload();
+    } catch {
+      api.showMsg('error', t('Ошибка сети.'));
+    } finally {
+      btn.disabled = false;
     }
   });
 

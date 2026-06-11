@@ -8,6 +8,7 @@ export * from './signup';
 export * from './reset';
 export * from './2fa-verify';
 export * from './verify-email';
+export * from './cancel-email-change';
 export * from './account-banned';
 export * from './contact-admin';
 export * from './done';

@@ -23,6 +23,7 @@ import {
   renderReset,
   render2FAVerify,
   renderVerifyEmail,
+  renderCancelEmailChange,
   renderAccountBanned,
   renderContactAdmin,
   renderDone,
@@ -120,6 +121,7 @@ export async function initApp(): Promise<void> {
   Router.on('reset', renderReset);
   Router.on('2fa-verify', render2FAVerify);
   Router.on('verify-email', renderVerifyEmail);
+  Router.on('cancel-email-change', renderCancelEmailChange);
   Router.on('account-banned', renderAccountBanned);
   Router.on('contact-admin', renderContactAdmin);
   Router.on('done', renderDone);

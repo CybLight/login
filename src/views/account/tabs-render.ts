@@ -28,6 +28,12 @@ type User = {
   passChangedAt?: number | string;
   pass_changed_at?: number | string;
   easter?: UserEasterFlags;
+  pendingEmail?: string | null;
+  pending_email?: string | null;
+  pendingEmailVerifiedAt?: number | null;
+  pending_email_verified_at?: number | null;
+  pendingEmailCompletesAt?: number | null;
+  pending_email_completes_at?: number | null;
 };
 
 function isEmailVerified(user: User): boolean {
@@ -299,11 +305,39 @@ function renderSecurityTab(user: User): string {
       ? `<span class="sec-badge sec-badge--warn">${emailBadgeLabel}</span>`
       : `<span class="sec-badge">${emailBadgeLabel}</span>`;
 
-  const emailStatus = emailVerified
-    ? t('✅ Email подтверждён')
-    : user.email
-      ? t('⚠️ Email не подтверждён')
-      : t('Email не указан');
+  const pendingEmail = String(user.pendingEmail || user.pending_email || "").trim();
+  const pendingVerifiedAt = Number(
+    user.pendingEmailVerifiedAt || user.pending_email_verified_at || 0,
+  );
+  const pendingCompletesAt = Number(
+    user.pendingEmailCompletesAt || user.pending_email_completes_at || 0,
+  );
+  const twoFAOn = !!(user.twoFactorEnabled || user.totp_enabled);
+  const requiresAuthToChange = emailVerified && !!user.email;
+
+  const emailStatus = pendingEmail
+    ? pendingVerifiedAt
+      ? t('⏳ Смена email ожидает завершения (24 ч)')
+      : t('⏳ Ожидается подтверждение нового email')
+    : emailVerified
+      ? t('✅ Email подтверждён')
+      : user.email
+        ? t('⚠️ Email не подтверждён')
+        : t('Email не указан');
+
+  const pendingBanner = pendingEmail
+    ? `<div class="sec-hint sec-hint--warn sec-mt-10" id="secEmailPendingBanner">
+        ${pendingVerifiedAt && pendingCompletesAt
+          ? t('Новый адрес {email} подтверждён. Смена завершится {date}.', {
+              email: escapeHtml(pendingEmail),
+              date: formatDate(pendingCompletesAt),
+            })
+          : t('Запрошена смена на {email}. Подтвердите письмо на новом адресе.', {
+              email: escapeHtml(pendingEmail),
+            })}
+        <button class="btn btn-outline sec-mt-10" id="secEmailCancelPendingBtn" type="button">${t('Отменить смену')}</button>
+      </div>`
+    : "";
 
   const passChanged =
     user.password_changed_at ||
@@ -469,16 +503,39 @@ function renderSecurityTab(user: User): string {
       <div class="sec-panel is-hidden" id="secEmailPanel">
         <div class="sec-panel-inner">
           <div class="sec-status" id="secEmailStatus">${emailStatus}</div>
+          ${pendingBanner}
           <div class="sec-form-row">
-            <input class="input" id="secEmailInp" type="email" placeholder="name@example.com" value="${escapeHtml(user.email || "")}" />
+            <input class="input" id="secEmailInp" type="email" placeholder="name@example.com" value="${escapeHtml(user.email || "")}" ${pendingEmail ? "disabled" : ""} />
           </div>
+          ${
+            requiresAuthToChange
+              ? `
+          <div class="sec-form-row sec-mt-10" id="secEmailAuthFields">
+            <label class="sec-label" for="secEmailPass">${t('Текущий пароль')}</label>
+            <div class="pass-wrap">
+              <input class="input" id="secEmailPass" type="password" autocomplete="current-password" />
+              <button type="button" class="pass-eye" data-target="secEmailPass" aria-label="${t('Показать пароль')}"></button>
+            </div>
+          </div>
+          ${
+            twoFAOn
+              ? `
+          <div class="sec-form-row sec-mt-10">
+            <label class="sec-label" for="secEmailTotp">${t('Код 2FA')}</label>
+            <input class="input" id="secEmailTotp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" />
+          </div>`
+              : ""
+          }
+          <p class="sec-hint sec-mt-10">${t('Смена подтверждённого email требует пароль{twoFA}. Новый адрес вступит в силу через 24 часа после подтверждения.', { twoFA: twoFAOn ? t(' и код 2FA') : '' })}</p>`
+              : ""
+          }
           <div class="sec-actions">
             <button class="btn btn-outline" id="secEmailCancelBtn" type="button" aria-label="${t('Отменить')}">${t('Отменить')}</button>
-            <button class="btn btn-primary" id="secEmailSaveBtn" type="button" aria-label="${t('Сохранить')}">${t('Сохранить')}</button>
+            <button class="btn btn-primary" id="secEmailSaveBtn" type="button" aria-label="${t('Сохранить')}" ${pendingEmail ? "disabled" : ""}>${t('Сохранить')}</button>
           </div>
           <div class="sec-hint is-hidden" id="secEmailHint"></div>
           ${
-            !emailVerified && user.email
+            (!emailVerified && user.email) || (pendingEmail && !pendingVerifiedAt)
               ? `<button class="btn btn-outline sec-mt-10" id="secEmailResendBtn" type="button" aria-label="${t('Отправить письмо ещё раз')}">${t('Отправить письмо ещё раз')}</button>`
               : ``
           }

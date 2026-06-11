@@ -101,14 +101,19 @@ async function performVerification(token: string): Promise<void> {
     if (!contentEl || !actionsEl) return;
 
     if (res.ok) {
-      // Успешная верификация
+      const pendingMsg = data?.emailFinalized
+        ? t('Новый email активирован. Все сессии завершены — войдите снова.')
+        : data?.pendingVerified
+          ? t('Новый email подтверждён. Смена завершится через 24 часа; до этого действует текущий адрес.')
+          : t('Теперь вы можете войти в аккаунт');
+
       contentEl.innerHTML = `
         <div style="font-size: 64px; margin-bottom: 16px; color: #10b981;">✓</div>
         <p style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">
-          ${t('Email успешно подтверждён!')}
+          ${data?.pendingVerified ? t('Новый email подтверждён') : t('Email успешно подтверждён!')}
         </p>
         <p style="font-size: 14px; color: var(--muted);">
-          ${t('Теперь вы можете войти в аккаунт')}
+          ${pendingMsg}
         </p>
       `;
       actionsEl.innerHTML = `

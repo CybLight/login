@@ -8,6 +8,7 @@ export function shell(contentHtml: string): string {
   const locale = getLocale();
   const homeUrl = sitePath('', locale);
   const privacyUrl = `${sitePath('privacy', locale)}`;
+  const contactAdminUrl = sitePath('contact-admin', locale);
   const langHref = (code: Locale) => localePath(stripLocalePrefix().path, code);
 
   return `
@@ -47,6 +48,7 @@ export function shell(contentHtml: string): string {
 
             <a href="#" data-noop>${t('Условия использования')}</a>
             <a href="${privacyUrl}" target="_blank" rel="noopener">${t('Политика конфиденциальности')}</a>
+            <a href="${contactAdminUrl}">${t('Взломали аккаунт?')}</a>
             <a href="#" data-noop>${t('Настройки конфиденциальности')}</a>
           </div>
         </div>

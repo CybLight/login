@@ -637,4 +637,35 @@ export const en: Record<string, string> = {
   "Был(а) {count} мин назад": "Last seen {count} min ago",
   "Был(а) {count} ч назад": "Last seen {count} h ago",
   "Был(а) {count} дн назад": "Last seen {count} d ago",
+  "Взломали аккаунт?": "Account hacked?",
+  "Отмена смены email": "Cancel email change",
+  "Отсутствует токен. Проверьте ссылку из письма.": "Missing token. Check the link from your email.",
+  "Отменяем смену email...": "Cancelling email change...",
+  "Смена email отменена": "Email change cancelled",
+  "Ваш текущий адрес электронной почты сохранён. Рекомендуем сменить пароль и включить 2FA.":
+    "Your current email address is kept. We recommend changing your password and enabling 2FA.",
+  "Не удалось отменить": "Could not cancel",
+  "Связаться с администрацией": "Contact administration",
+  "Текущий пароль": "Current password",
+  "Код 2FA": "2FA code",
+  "Смена подтверждённого email требует пароль{twoFA}. Новый адрес вступит в силу через 24 часа после подтверждения.":
+    "Changing a verified email requires your password{twoFA}. The new address takes effect 24 hours after confirmation.",
+  " и код 2FA": " and a 2FA code",
+  "Введите текущий пароль": "Enter your current password",
+  "Запрос на смену email принят. Письмо уже отправляли недавно — проверьте почту.":
+    "Email change requested. A message was sent recently — check your inbox.",
+  "Запрос на смену email принят. Подтвердите новый адрес и проверьте текущую почту.":
+    "Email change requested. Confirm the new address and check your current inbox.",
+  "⏳ Смена email ожидает завершения (24 ч)": "⏳ Email change pending (24 h)",
+  "⏳ Ожидается подтверждение нового email": "⏳ Waiting for new email confirmation",
+  "Новый адрес {email} подтверждён. Смена завершится {date}.":
+    "New address {email} confirmed. Change completes on {date}.",
+  "Запрошена смена на {email}. Подтвердите письмо на новом адресе.":
+    "Change to {email} requested. Confirm the message sent to the new address.",
+  "Отменить смену": "Cancel change",
+  "Новый email подтверждён. Смена завершится через 24 часа; до этого действует текущий адрес.":
+    "New email confirmed. Change completes in 24 hours; your current address stays active until then.",
+  "Новый email активирован. Все сессии завершены — войдите снова.":
+    "New email is active. All sessions ended — please sign in again.",
+  "Новый email подтверждён": "New email confirmed",
 };
