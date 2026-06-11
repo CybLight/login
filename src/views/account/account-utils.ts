@@ -58,6 +58,26 @@ export function formatRemainingUntil(completesAt: number): string {
   return t('через {minutes} мин', { minutes: String(minutes) });
 }
 
+/** Короткий формат для «Осталось: …» без слова «через». */
+export function formatRemainingShort(completesAt: number): string {
+  if (!Number.isFinite(completesAt) || completesAt <= 0) return '';
+  const ms = completesAt - Date.now();
+  if (ms <= 0) return t('скоро');
+
+  const totalMin = Math.max(1, Math.ceil(ms / 60_000));
+  const hours = Math.floor(totalMin / 60);
+  const minutes = totalMin % 60;
+
+  if (hours >= 48) return formatPendingDate(completesAt);
+  if (hours > 0) {
+    return t('{hours} ч {minutes} мин', {
+      hours: String(hours),
+      minutes: String(minutes),
+    });
+  }
+  return t('{minutes} мин', { minutes: String(minutes) });
+}
+
 /**
  * Проверить, верифицирован ли email
  */

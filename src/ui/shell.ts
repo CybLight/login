@@ -8,7 +8,7 @@ export function shell(contentHtml: string): string {
   const locale = getLocale();
   const homeUrl = sitePath('', locale);
   const privacyUrl = `${sitePath('privacy', locale)}`;
-  const contactAdminUrl = sitePath('contact-admin', locale);
+  const contactAdminUrl = localePath('contact-admin', locale);
   const langHref = (code: Locale) => localePath(stripLocalePrefix().path, code);
 
   return `

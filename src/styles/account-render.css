@@ -2075,6 +2075,11 @@ body.account-nav-open .profile-mobile-nav {
     margin: 16px auto 20px;
   }
 
+  .account-page .account-main .account-body .sec-email-pending {
+    width: 100%;
+    max-width: 100%;
+  }
+
   /* На профиле выпадающее меню — компактная панель справа под шапкой */
   .profile-mobile-nav {
     left: auto;

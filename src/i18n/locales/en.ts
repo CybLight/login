@@ -688,4 +688,6 @@ export const en: Record<string, string> = {
   "через {hours} ч {minutes} мин": "in {hours} h {minutes} min",
   "через {minutes} мин": "in {minutes} min",
   "Смена email завершится скоро": "Email change will complete soon",
+  "{hours} ч {minutes} мин": "{hours} h {minutes} min",
+  "{minutes} мин": "{minutes} min",
 };

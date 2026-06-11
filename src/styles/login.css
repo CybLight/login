@@ -2586,10 +2586,12 @@ body.no-strawberries .strawberry-ring-wave {
 
 .sec-email-pending {
   display: flex;
+  flex-direction: column;
   gap: 14px;
-  align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
   margin: 0 0 16px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border-radius: 14px;
   border: 1px solid rgba(251, 191, 36, 0.35);
   background: rgba(251, 191, 36, 0.08);
@@ -2600,48 +2602,105 @@ body.no-strawberries .strawberry-ring-wave {
   display: none !important;
 }
 
+.sec-email-pending-main {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  min-width: 0;
+  width: 100%;
+}
+
 .sec-email-pending-icon {
   font-size: 28px;
   line-height: 1;
   flex: 0 0 auto;
+  margin-top: 2px;
 }
 
 .sec-email-pending-body {
   flex: 1 1 auto;
   min-width: 0;
+  width: 100%;
 }
 
 .sec-email-pending-title {
   font-size: 15px;
   font-weight: 600;
   margin-bottom: 6px;
+  line-height: 1.35;
 }
 
 .sec-email-pending-text {
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--muted);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.sec-email-pending-email {
+  color: #fbbf24;
+  font-weight: 600;
+  word-break: break-all;
 }
 
 .sec-email-pending-countdown {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 14px;
   font-weight: 600;
   color: #fbbf24;
+  line-height: 1.4;
 }
 
-.sec-email-pending .btn {
-  flex: 0 0 auto;
-  align-self: center;
+.sec-email-pending-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-left: 42px;
+}
+
+.sec-email-pending-actions .btn {
+  min-width: 148px;
+}
+
+.sec-sub--pending {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.35;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.sec-sub-current {
+  display: block;
+}
+
+.sec-sub-next {
+  display: block;
+  color: #fbbf24;
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.sec-sub-next::before {
+  content: '→ ';
+  opacity: 0.85;
 }
 
 @media (max-width: 640px) {
   .sec-email-pending {
-    flex-direction: column;
+    padding: 14px;
   }
 
-  .sec-email-pending .btn {
-    align-self: stretch;
+  .sec-email-pending-actions {
+    padding-left: 0;
+    justify-content: stretch;
+  }
+
+  .sec-email-pending-actions .btn {
+    width: 100%;
+    min-width: 0;
   }
 }
 

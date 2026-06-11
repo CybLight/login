@@ -185,7 +185,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
 
             <a href="#" data-noop>${t('Условия использования')}</a>
             <a href="${privacyUrl}" target="_blank" rel="noopener">${t('Политика конфиденциальности')}</a>
-            <a href="${sitePath('contact-admin', getLocale())}">${t('Взломали аккаунт?')}</a>
+            <a href="${localePath('contact-admin', getLocale())}">${t('Взломали аккаунт?')}</a>
             <a href="#" data-noop>${t('Настройки конфиденциальности')}</a>
           </div>
         </div>
