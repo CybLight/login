@@ -181,13 +181,27 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
           <a class="link" href="#" id="back">${t('← Назад')}</a>
         </div>
 
-        <button class="btn btn-primary" type="submit" aria-label="${t('Отправить')}">${t('Отправить')}</button>
+        <button class="btn btn-primary" id="recoverSubmit" type="submit" disabled aria-label="${t('Отправить')}">${t('Отправить')}</button>
       </form>
     </section>
   `)
   );
 
+  const submitBtn = document.getElementById('recoverSubmit') as HTMLButtonElement | null;
+
+  const syncSubmitState = () => {
+    if (submitBtn) {
+      submitBtn.disabled = !captchaService.isTokenValid();
+    }
+  };
+
+  const onCaptchaChange = () => syncSubmitState();
+  window.addEventListener('captcha:success', onCaptchaChange);
+  window.addEventListener('captcha:expired', onCaptchaChange);
+  window.addEventListener('captcha:error', onCaptchaChange);
+
   await captchaService.init('cf-turnstile');
+  syncSubmitState();
 
   const backLink = document.getElementById('back');
   if (backLink) {
@@ -219,7 +233,8 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
         return;
       }
 
-      if (!captchaService.token) {
+      const turnstileToken = captchaService.getToken();
+      if (!turnstileToken) {
         showMsg('warn', t('Подтвердите, что вы не робот'));
         return;
       }
@@ -235,11 +250,12 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
           body: JSON.stringify({
             email,
             mode: isUsername ? 'username' : 'password',
-            turnstileToken: captchaService.token,
+            turnstileToken,
           }),
         });
 
         const data = await res.json().catch(() => ({}));
+        const err = String(data?.error || '').toLowerCase();
 
         if (res.ok) {
           showMsg(
@@ -249,17 +265,32 @@ async function renderRecoveryRequestForm(mode: string): Promise<void> {
               : t('Письмо отправлено! Проверьте свой email.')
           );
           emailInput.value = '';
+          await captchaService.init('cf-turnstile');
+          syncSubmitState();
+        } else if (res.status === 429 || err.includes('rate') || err.includes('too_many')) {
+          showMsg('warn', t('Слишком много попыток. Подожди немного и попробуй снова.'));
+          await captchaService.init('cf-turnstile');
+          syncSubmitState();
+        } else if (err.includes('turnstile')) {
+          showMsg(
+            'warn',
+            t('Проверка Turnstile не прошла. Обнови капчу и попробуй снова.')
+          );
+          await captchaService.init('cf-turnstile');
+          syncSubmitState();
         } else {
           showMsg('error', data?.error || t('Ошибка при отправке'));
-          await captchaService.reset();
+          await captchaService.init('cf-turnstile');
+          syncSubmitState();
         }
       } catch (err) {
         console.error('[RESET] Error:', err);
         showMsg('error', t('Ошибка сети. Попробуйте ещё раз.'));
-        await captchaService.reset();
+        await captchaService.init('cf-turnstile');
+        syncSubmitState();
       } finally {
-        btn.disabled = false;
         btn.textContent = oldText;
+        syncSubmitState();
       }
     });
   }
