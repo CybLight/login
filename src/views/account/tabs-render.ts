@@ -1,6 +1,7 @@
 import { t, getLocale, localeTag, sitePath } from '@/i18n';
 import type { UserEasterFlags } from "@/types";
 import { escapeHtml } from "@/utils";
+import { formatPendingDate, formatRemainingUntil, getPendingEmailInfo } from "./account-utils";
 import { getAvatarInnerHtml } from "./avatar";
 
 type User = {
@@ -305,37 +306,83 @@ function renderSecurityTab(user: User): string {
       ? `<span class="sec-badge sec-badge--warn">${emailBadgeLabel}</span>`
       : `<span class="sec-badge">${emailBadgeLabel}</span>`;
 
-  const pendingEmail = String(user.pendingEmail || user.pending_email || "").trim();
-  const pendingVerifiedAt = Number(
-    user.pendingEmailVerifiedAt || user.pending_email_verified_at || 0,
-  );
-  const pendingCompletesAt = Number(
-    user.pendingEmailCompletesAt || user.pending_email_completes_at || 0,
-  );
+  const pending = getPendingEmailInfo(user as Record<string, unknown>);
+  const pendingEmail = pending?.pendingEmail || "";
+  const pendingVerifiedAt = pending?.pendingVerifiedAt || 0;
+  const pendingCompletesAt = pending?.pendingCompletesAt || 0;
   const twoFAOn = !!(user.twoFactorEnabled || user.totp_enabled);
   const requiresAuthToChange = emailVerified && !!user.email;
 
+  const pendingRemaining =
+    pendingVerifiedAt && pendingCompletesAt ? formatRemainingUntil(pendingCompletesAt) : "";
+
+  const emailSubText = pendingEmail
+    ? t('{current} → {next}', {
+        current: emailText,
+        next: escapeHtml(pendingEmail),
+      })
+    : emailText;
+
+  const emailBadgePending = pendingEmail
+    ? `<span class="sec-badge sec-badge--warn" id="secEmailBadge">${t('Смена запланирована')}</span>`
+    : emailBadge;
+
   const emailStatus = pendingEmail
     ? pendingVerifiedAt
-      ? t('⏳ Смена email ожидает завершения (24 ч)')
-      : t('⏳ Ожидается подтверждение нового email')
+      ? t('⏳ Email сменится на {email} {time}', {
+          email: escapeHtml(pendingEmail),
+          time: pendingRemaining || formatPendingDate(pendingCompletesAt),
+        })
+      : t('⏳ Ожидается подтверждение {email}', { email: escapeHtml(pendingEmail) })
     : emailVerified
       ? t('✅ Email подтверждён')
       : user.email
         ? t('⚠️ Email не подтверждён')
         : t('Email не указан');
 
+  const pendingCard = pendingEmail
+    ? `<div class="sec-email-pending" id="secEmailPendingCard">
+        <div class="sec-email-pending-icon" aria-hidden="true">⏳</div>
+        <div class="sec-email-pending-body">
+          <div class="sec-email-pending-title" id="secEmailPendingTitle">
+            ${pendingVerifiedAt
+              ? t('Запланирована смена email')
+              : t('Подтвердите новый email')}
+          </div>
+          <div class="sec-email-pending-text" id="secEmailPendingText">
+            ${pendingVerifiedAt && pendingCompletesAt
+              ? t('Адрес сменится на {email} {time} ({date}).', {
+                  email: escapeHtml(pendingEmail),
+                  time: pendingRemaining || t('скоро'),
+                  date: formatPendingDate(pendingCompletesAt),
+                })
+              : t('Запрошена смена на {email}. Подтвердите письмо на новом адресе, затем начнётся 24-часовое ожидание.', {
+                  email: escapeHtml(pendingEmail),
+                })}
+          </div>
+          <div class="sec-email-pending-countdown" id="secEmailPendingCountdown" ${pendingVerifiedAt ? "" : 'style="display:none"'}>
+            ${pendingRemaining
+              ? t('Осталось: {time}', { time: pendingRemaining })
+              : ""}
+          </div>
+        </div>
+        <button class="btn btn-outline" type="button" data-cancel-pending-email>${t('Отменить смену')}</button>
+      </div>`
+    : `<div class="sec-email-pending is-hidden" id="secEmailPendingCard" hidden></div>`;
+
   const pendingBanner = pendingEmail
     ? `<div class="sec-hint sec-hint--warn sec-mt-10" id="secEmailPendingBanner">
+        <span id="secEmailPendingBannerText">
         ${pendingVerifiedAt && pendingCompletesAt
           ? t('Новый адрес {email} подтверждён. Смена завершится {date}.', {
               email: escapeHtml(pendingEmail),
-              date: formatDate(pendingCompletesAt),
+              date: formatPendingDate(pendingCompletesAt),
             })
           : t('Запрошена смена на {email}. Подтвердите письмо на новом адресе.', {
               email: escapeHtml(pendingEmail),
             })}
-        <button class="btn btn-outline sec-mt-10" id="secEmailCancelPendingBtn" type="button">${t('Отменить смену')}</button>
+        </span>
+        <button class="btn btn-outline sec-mt-10" type="button" data-cancel-pending-email>${t('Отменить смену')}</button>
       </div>`
     : "";
 
@@ -400,6 +447,7 @@ function renderSecurityTab(user: User): string {
   const securityAriaLabel = `${securityItemTitle}. ${securityItemSubtitle}. ${securityStatusLabel}`;
 
   return `
+    ${pendingCard}
     <div class="sec-list">
       <button class="sec-item" id="secSecurityCheckItem" type="button" aria-label="${securityAriaLabel}">
         <div class="sec-left">
@@ -490,10 +538,10 @@ function renderSecurityTab(user: User): string {
             </div>
             <div class="sec-title">${t('Адрес электронной почты')}</div>
           </div>
-          <div class="sec-sub">${emailText}</div>
+          <div class="sec-sub" id="secEmailSub">${emailSubText}</div>
         </div>
         <div class="sec-right">
-          ${emailBadge}
+          ${emailBadgePending}
           <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
             <g><path fill="currentColor" d="M8.809,23.588l-1.617-1.176L14.764,12L7.191,1.588l1.617-1.176l8,11c0.255,0.351,0.255,0.825,0,1.176 L8.809,23.588z"></path></g>
           </svg>

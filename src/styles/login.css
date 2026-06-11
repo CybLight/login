@@ -2584,6 +2584,67 @@ body.no-strawberries .strawberry-ring-wave {
   padding: 10px 2px 0;
 }
 
+.sec-email-pending {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  background: rgba(251, 191, 36, 0.08);
+}
+
+.sec-email-pending.is-hidden,
+.sec-email-pending[hidden] {
+  display: none !important;
+}
+
+.sec-email-pending-icon {
+  font-size: 28px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+.sec-email-pending-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sec-email-pending-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.sec-email-pending-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.sec-email-pending-countdown {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
+.sec-email-pending .btn {
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+@media (max-width: 640px) {
+  .sec-email-pending {
+    flex-direction: column;
+  }
+
+  .sec-email-pending .btn {
+    align-self: stretch;
+  }
+}
+
 /* SESSIONS */
 
 .sessions-head {

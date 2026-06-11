@@ -11,6 +11,11 @@ import { createSecurityCore } from './security-core';
 import { updateSecurityIndicator, attachPasswordHints } from './security-ui';
 import { loadLoginHistory, loadTrustedDevices } from './security-extras';
 import { showAccountConfirmModal } from './modals';
+import {
+  formatPendingDate,
+  formatRemainingUntil,
+  getPendingEmailInfo,
+} from './account-utils';
 
 type SecurityUser = AppUser & {
   email_verified?: boolean | number | string;
@@ -113,32 +118,149 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     input.classList.toggle('input--invalid', invalid);
   };
 
+  let pendingCountdownTimer: number | undefined;
+
+  const stopPendingCountdown = () => {
+    if (pendingCountdownTimer) {
+      window.clearInterval(pendingCountdownTimer);
+      pendingCountdownTimer = undefined;
+    }
+  };
+
+  const buildPendingTexts = (pending: NonNullable<ReturnType<typeof getPendingEmailInfo>>) => {
+    const remaining =
+      pending.pendingVerifiedAt && pending.pendingCompletesAt
+        ? formatRemainingUntil(pending.pendingCompletesAt)
+        : '';
+
+    const statusText = pending.pendingVerifiedAt
+      ? t('⏳ Email сменится на {email} {time}', {
+          email: pending.pendingEmail,
+          time: remaining || formatPendingDate(pending.pendingCompletesAt),
+        })
+      : t('⏳ Ожидается подтверждение {email}', { email: pending.pendingEmail });
+
+    const cardText =
+      pending.pendingVerifiedAt && pending.pendingCompletesAt
+        ? t('Адрес сменится на {email} {time} ({date}).', {
+            email: pending.pendingEmail,
+            time: remaining || t('скоро'),
+            date: formatPendingDate(pending.pendingCompletesAt),
+          })
+        : t('Запрошена смена на {email}. Подтвердите письмо на новом адресе, затем начнётся 24-часовое ожидание.', {
+            email: pending.pendingEmail,
+          });
+
+    const bannerText =
+      pending.pendingVerifiedAt && pending.pendingCompletesAt
+        ? t('Новый адрес {email} подтверждён. Смена завершится {date}.', {
+            email: pending.pendingEmail,
+            date: formatPendingDate(pending.pendingCompletesAt),
+          })
+        : t('Запрошена смена на {email}. Подтвердите письмо на новом адресе.', {
+            email: pending.pendingEmail,
+          });
+
+    return { remaining, statusText, cardText, bannerText };
+  };
+
   const refreshEmailSecurityUi = () => {
+    stopPendingCountdown();
+
+    const pending = getPendingEmailInfo(user as unknown as Record<string, unknown>);
+    const currentEmail = user.email || '—';
+
     if (emailStatusEl) {
-      emailStatusEl.textContent = state.emailVerified
-        ? t('✅ Email подтверждён')
-        : user.email
-          ? t('⚠️ Email не подтверждён')
-          : t('— Email не указан');
+      if (pending) {
+        emailStatusEl.textContent = buildPendingTexts(pending).statusText;
+      } else {
+        emailStatusEl.textContent = state.emailVerified
+          ? t('✅ Email подтверждён')
+          : user.email
+            ? t('⚠️ Email не подтверждён')
+            : t('— Email не указан');
+      }
     }
 
-    if (emailItem) {
-      const sub = emailItem.querySelector('.sec-sub');
-      if (sub) sub.textContent = user.email || '—';
+    const subEl = document.getElementById('secEmailSub');
+    if (subEl) {
+      subEl.textContent = pending
+        ? t('{current} → {next}', { current: currentEmail, next: pending.pendingEmail })
+        : currentEmail;
+    }
 
-      const badge = emailItem.querySelector('.sec-badge');
-      if (badge) {
-        if (state.emailVerified) {
-          badge.className = 'sec-badge sec-badge--ok';
-          badge.textContent = t('Подтверждён');
-        } else if (user.email) {
-          badge.className = 'sec-badge sec-badge--warn';
-          badge.textContent = t('Не подтверждён');
+    const badge = document.getElementById('secEmailBadge') || emailItem?.querySelector('.sec-badge');
+    if (badge) {
+      if (pending) {
+        badge.className = 'sec-badge sec-badge--warn';
+        badge.textContent = t('Смена запланирована');
+      } else if (state.emailVerified) {
+        badge.className = 'sec-badge sec-badge--ok';
+        badge.textContent = t('Подтверждён');
+      } else if (user.email) {
+        badge.className = 'sec-badge sec-badge--warn';
+        badge.textContent = t('Не подтверждён');
+      } else {
+        badge.className = 'sec-badge';
+        badge.textContent = '—';
+      }
+    }
+
+    const card = document.getElementById('secEmailPendingCard');
+    const titleEl = document.getElementById('secEmailPendingTitle');
+    const textEl = document.getElementById('secEmailPendingText');
+    const countdownEl = document.getElementById('secEmailPendingCountdown');
+    const bannerEl = document.getElementById('secEmailPendingBanner');
+    const bannerTextEl = document.getElementById('secEmailPendingBannerText');
+
+    if (pending && card) {
+      card.classList.remove('is-hidden');
+      card.hidden = false;
+      const texts = buildPendingTexts(pending);
+
+      if (titleEl) {
+        titleEl.textContent = pending.pendingVerifiedAt
+          ? t('Запланирована смена email')
+          : t('Подтвердите новый email');
+      }
+      if (textEl) textEl.textContent = texts.cardText;
+      if (bannerTextEl) bannerTextEl.textContent = texts.bannerText;
+      if (bannerEl) bannerEl.style.display = '';
+
+      if (countdownEl) {
+        if (pending.pendingVerifiedAt && pending.pendingCompletesAt) {
+          countdownEl.style.display = '';
+          const updateCountdown = () => {
+            const left = formatRemainingUntil(pending.pendingCompletesAt);
+            countdownEl.textContent = left
+              ? t('Осталось: {time}', { time: left })
+              : t('Смена email завершится скоро');
+            if (emailStatusEl && pending) {
+              emailStatusEl.textContent = t('⏳ Email сменится на {email} {time}', {
+                email: pending.pendingEmail,
+                time: left || t('скоро'),
+              });
+            }
+          };
+          updateCountdown();
+          pendingCountdownTimer = window.setInterval(updateCountdown, 60_000);
         } else {
-          badge.className = 'sec-badge';
-          badge.textContent = '—';
+          countdownEl.style.display = 'none';
+          countdownEl.textContent = '';
         }
       }
+    } else if (card) {
+      card.classList.add('is-hidden');
+      card.hidden = true;
+      if (bannerEl) bannerEl.style.display = 'none';
+    }
+
+    if (emailInp) {
+      emailInp.disabled = !!pending;
+      if (!pending) emailInp.value = user.email || '';
+    }
+    if (emailSaveBtn) {
+      (emailSaveBtn as HTMLButtonElement).disabled = !!pending;
     }
   };
 
@@ -279,10 +401,8 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     }
   };
 
-  document.getElementById('secEmailCancelPendingBtn')?.addEventListener('click', async () => {
+  const cancelPendingEmail = async (btn: HTMLButtonElement) => {
     api.clearMsg();
-    const btn = document.getElementById('secEmailCancelPendingBtn') as HTMLButtonElement | null;
-    if (!btn) return;
     btn.disabled = true;
 
     try {
@@ -297,14 +417,26 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
         return;
       }
       api.showMsg('ok', t('Смена email отменена'));
+      user.pendingEmail = null;
+      user.pendingEmailVerifiedAt = null;
+      user.pendingEmailCompletesAt = null;
+      refreshEmailSecurityUi();
       await reloadMeUser();
-      location.reload();
     } catch {
       api.showMsg('error', t('Ошибка сети.'));
     } finally {
       btn.disabled = false;
     }
+  };
+
+  document.getElementById('accBody')?.addEventListener('click', (event) => {
+    const btn = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-cancel-pending-email]');
+    if (!btn) return;
+    event.preventDefault();
+    void cancelPendingEmail(btn);
   });
+
+  void reloadMeUser();
 
   const resendBtn = document.getElementById('secEmailResendBtn') as HTMLButtonElement | null;
   resendBtn?.addEventListener('click', async () => {

@@ -673,4 +673,19 @@ export const en: Record<string, string> = {
   "Новый email активирован. Все сессии завершены — войдите снова.":
     "New email is active. All sessions ended — please sign in again.",
   "Новый email подтверждён": "New email confirmed",
+  "{current} → {next}": "{current} → {next}",
+  "Смена запланирована": "Change scheduled",
+  "⏳ Email сменится на {email} {time}": "⏳ Email will change to {email} {time}",
+  "⏳ Ожидается подтверждение {email}": "⏳ Waiting for confirmation of {email}",
+  "Запланирована смена email": "Email change scheduled",
+  "Подтвердите новый email": "Confirm your new email",
+  "Адрес сменится на {email} {time} ({date}).":
+    "Address will change to {email} {time} ({date}).",
+  "Запрошена смена на {email}. Подтвердите письмо на новом адресе, затем начнётся 24-часовое ожидание.":
+    "Change to {email} requested. Confirm the message at the new address, then a 24-hour waiting period begins.",
+  "Осталось: {time}": "Time left: {time}",
+  "скоро": "soon",
+  "через {hours} ч {minutes} мин": "in {hours} h {minutes} min",
+  "через {minutes} мин": "in {minutes} min",
+  "Смена email завершится скоро": "Email change will complete soon",
 };
