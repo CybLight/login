@@ -88,7 +88,7 @@ async function performVerification(token: string): Promise<void> {
   );
 
   try {
-    const res = await apiCall('/auth/verify-email', {
+    const res = await apiCall('/auth/email/verify', {
       method: 'POST',
       body: JSON.stringify({ token }),
     });

@@ -38,15 +38,16 @@ export function t(text: string, params?: TParams): string {
 
 export function initLocaleRouting(): void {
   const pathname = location.pathname;
+  const suffixQuery = `${location.search}${location.hash}`;
 
   if (pathname === '/' || pathname === '') {
-    location.replace(`/${detectPreferredLocale()}/`);
+    location.replace(`/${detectPreferredLocale()}/${suffixQuery}`);
     return;
   }
 
   if (!/^\/(ru|uk|en)(\/|$)/.test(pathname)) {
     const suffix = pathname.startsWith('/') ? pathname : `/${pathname}`;
-    location.replace(`/${detectPreferredLocale()}${suffix}`);
+    location.replace(`/${detectPreferredLocale()}${suffix}${suffixQuery}`);
     return;
   }
 
