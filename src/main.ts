@@ -9,7 +9,7 @@ import '@/styles/accessibility.css';
 
 import { initLocaleRouting, t } from '@/i18n';
 import { Router } from '@/router/Router';
-import { initErrorHandlers, logger } from '@/utils';
+import { initDevFooterPin, initErrorHandlers, logger } from '@/utils';
 import { authService } from '@/services';
 import { NotificationManager } from '@/components/notification/NotificationManager';
 import { initStrawberryBackground } from '@/components/strawberry';
@@ -151,6 +151,8 @@ export async function initApp(): Promise<void> {
   // Initialize router (this will call render() for the first time)
   Router.init();
   logger.info('Router initialized');
+
+  initDevFooterPin();
 
   // Initialize strawberry background
   initStrawberryBackground();

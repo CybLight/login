@@ -617,6 +617,7 @@ export const en: Record<string, string> = {
   "👤 Профиль": "👤 Profile",
   "Ловец света": "Light catcher",
   "Мобильные пасхалки": "Mobile Easter eggs",
+  "Скачать приложение": "Download app",
   "Свет спрятан в мобильном приложении CybLight": "The light is hidden in the CybLight mobile app",
   "Ты поймал свет в приложении CybLight! Быстрые пальцы ⚡": "You caught the light in the CybLight app! Quick fingers ⚡",
   "💡 Подсказка: загляни в свой профиль и посмотри на себя чаще...": "💡 Hint: check your profile and look at yourself more often...",

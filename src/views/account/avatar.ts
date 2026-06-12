@@ -71,7 +71,7 @@ function wrapAvatarWithPresence(
   const online = isUserOnline(options.presence);
   const label = formatPresenceLabel(options.presence);
 
-  return `<span class="avatar-wrap">${innerHtml}<span class="presence-dot ${online ? 'presence-dot--online' : 'presence-dot--offline'}" title="${escapeHtml(label)}" aria-hidden="true"></span></span>`;
+  return `<span class="avatar-wrap">${innerHtml}</span><span class="presence-dot ${online ? 'presence-dot--online' : 'presence-dot--offline'}" title="${escapeHtml(label)}" aria-hidden="true"></span>`;
 }
 
 export function getAvatarListHtml(

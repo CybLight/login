@@ -779,6 +779,19 @@ function renderEasterTab(user: User): string {
     user.easter,
   );
 
+  const downloadsUrl = sitePath("downloads", getLocale());
+  const androidDownloadLink = `
+    <a
+      href="${downloadsUrl}"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="btn btn-outline easter-action-btn easter-action-link"
+    >
+      <span class="easter-action-icon">📲</span>
+      <span>${t("Скачать приложение")}</span>
+    </a>
+  `;
+
   return `
     <div>
       <div class="easter-intro">
@@ -887,6 +900,7 @@ function renderEasterTab(user: User): string {
               ? `<div class="easter-hint">${t('🎊 Свет пойман — секрет сохранён!')}</div>`
               : `<div class="easter-hint">${t('💡 Подсказка: проверь на прочность версию Android приложения')}</div>`
           }
+          ${androidDownloadLink}
         </div>
       </div>
 

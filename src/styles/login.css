@@ -3432,31 +3432,43 @@ body.no-strawberries .strawberry-ring-wave {
   }
 }
 
-/* Активация F12 только для десктопов */
+/* F12: футер над панелью разработчика */
+html.dev-footer-pinned .auth-footer,
+html.dev-footer-pinned .account-page > .auth-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9990;
+  margin-top: 0;
+  box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.35);
+}
 
-@media (max-height: 700px) and (min-width: 1024px) {
-  .cyb-dev-footer-strip::before {
-    opacity: 1;
-    animation: devModeScroll 14s linear infinite;
-  }
+html.dev-footer-pinned body {
+  padding-bottom: var(--dev-footer-height, 0px);
+}
 
-  .cyb-dev-footer-strip::after {
-    height: 6px;
+html.dev-footer-pinned .cyb-dev-footer-strip::before {
+  opacity: 1;
+  animation: devModeScroll 14s linear infinite;
+}
 
-    background: linear-gradient(
-      180deg,
-      transparent,
-      rgba(34, 240, 230, 0.6),
-      rgba(34, 240, 230, 0.95)
-    );
+html.dev-footer-pinned .cyb-dev-footer-strip::after {
+  height: 6px;
 
-    box-shadow:
-      0 0 12px rgba(34, 240, 230, 0.9),
-      0 0 28px rgba(34, 240, 230, 0.6),
-      0 0 46px rgba(34, 240, 230, 0.4);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(34, 240, 230, 0.6),
+    rgba(34, 240, 230, 0.95)
+  );
 
-    opacity: 1;
-  }
+  box-shadow:
+    0 0 12px rgba(34, 240, 230, 0.9),
+    0 0 28px rgba(34, 240, 230, 0.6),
+    0 0 46px rgba(34, 240, 230, 0.4);
+
+  opacity: 1;
 }
 
 /* 

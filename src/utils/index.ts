@@ -13,5 +13,6 @@ export * from './helpers';
 export * from './focus';
 export * from './keyboard';
 export * from './presence';
+export * from './devFooterPin';
 export * from './roles';
 export * from './roleNotice';

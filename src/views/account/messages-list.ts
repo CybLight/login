@@ -82,13 +82,13 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
               <button class="chat-card" data-action="open-chat" data-id="${escapeHtml(String(friend.id || ''))}" data-username="${escapeHtml(String(friend.username || ''))}" data-presence-user-id="${escapeHtml(String(friend.id || ''))}" type="button" aria-label="${escapeHtml(String(friend.username || 'Unknown'))} ${escapeHtml(formatPresenceLabel(friend))}">
                 <div class="chat-avatar">${avatarHtml(friend)}</div>
                 <div class="chat-info">
-                  <button
+                  <span
                     class="chat-username chat-username-link"
                     data-action="profile"
                     data-username="${escapeHtml(String(friend.username || ''))}"
-                    type="button"
-                    aria-label="${t('👤 Профиль')} ${escapeHtml(String(friend.username || 'Unknown'))}"
-                  >${escapeHtml(String(friend.username || 'Unknown'))}</button>
+                    role="link"
+                    tabindex="0"
+                  >${escapeHtml(String(friend.username || 'Unknown'))}</span>
                   ${chatPreviewHtml(friend)}
                 </div>
                 <div class="chat-unread-badge is-hidden" data-unread-badge="${escapeHtml(String(friend.id || ''))}"></div>
@@ -100,14 +100,28 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
       }
     `;
 
+    const openProfileFromTarget = (target: HTMLElement | null): void => {
+      const profileEl = target?.closest('[data-action="profile"]') as HTMLElement | null;
+      if (!profileEl) return;
+      const username = profileEl.getAttribute('data-username') || '';
+      if (username) Router.navigate(username);
+    };
+
+    container.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const target = event.target as HTMLElement | null;
+      if (!target?.closest('[data-action="profile"]')) return;
+      event.preventDefault();
+      event.stopPropagation();
+      openProfileFromTarget(target);
+    });
+
     container.addEventListener('click', (event) => {
       const target = event.target as HTMLElement | null;
-      const profileButton = target?.closest('[data-action="profile"]') as HTMLElement | null;
-      if (profileButton) {
+      if (target?.closest('[data-action="profile"]')) {
         event.preventDefault();
         event.stopPropagation();
-        const username = profileButton.getAttribute('data-username') || '';
-        if (username) Router.navigate(username);
+        openProfileFromTarget(target);
         return;
       }
 
