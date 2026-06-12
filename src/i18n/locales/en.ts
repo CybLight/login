@@ -82,6 +82,8 @@ export const en: Record<string, string> = {
   "Запрос принят": "Request received",
   "Если email зарегистрирован, мы отправили вам логин.": "If this email is registered, we sent your username.",
   "Ошибка при отправке": "Failed to send",
+  "Отправлено": "Sent",
+  "Прочитано": "Read",
   "Двухфакторная аутентификация": "Two-factor authentication",
   "Введите код из приложения аутентификатора или резервный код.": "Enter the code from your authenticator app or a backup code.",
   "Код подтверждения": "Verification code",

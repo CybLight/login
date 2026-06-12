@@ -1363,6 +1363,76 @@
   --easter-glow: rgba(255, 204, 128, 0.16);
 }
 
+.easter-card--night-guard {
+  --easter-bg: #1a2744;
+  --easter-bg-hover: #203052;
+  --easter-bg-locked: #222830;
+  --easter-text: #9fa8da;
+  --easter-text-muted: rgba(159, 168, 218, 0.82);
+  --easter-text-locked: #949aa8;
+  --easter-text-muted-locked: rgba(148, 154, 168, 0.78);
+  --easter-border: rgba(159, 168, 218, 0.35);
+  --easter-border-hover: rgba(159, 168, 218, 0.5);
+  --easter-border-locked: rgba(148, 154, 168, 0.22);
+  --easter-glow: rgba(159, 168, 218, 0.16);
+}
+
+.easter-card--trusted-fingerprint {
+  --easter-bg: #263238;
+  --easter-bg-hover: #2f3d44;
+  --easter-bg-locked: #242a2e;
+  --easter-text: #80deea;
+  --easter-text-muted: rgba(128, 222, 234, 0.82);
+  --easter-text-locked: #90a4a8;
+  --easter-text-muted-locked: rgba(144, 164, 168, 0.78);
+  --easter-border: rgba(128, 222, 234, 0.35);
+  --easter-border-hover: rgba(128, 222, 234, 0.5);
+  --easter-border-locked: rgba(144, 164, 168, 0.22);
+  --easter-glow: rgba(128, 222, 234, 0.16);
+}
+
+.easter-card--bridge {
+  --easter-bg: #3e2723;
+  --easter-bg-hover: #4a2f2a;
+  --easter-bg-locked: #2a2422;
+  --easter-text: #ffab91;
+  --easter-text-muted: rgba(255, 171, 145, 0.82);
+  --easter-text-locked: #b0a090;
+  --easter-text-muted-locked: rgba(176, 160, 144, 0.78);
+  --easter-border: rgba(255, 171, 145, 0.35);
+  --easter-border-hover: rgba(255, 171, 145, 0.5);
+  --easter-border-locked: rgba(176, 160, 144, 0.22);
+  --easter-glow: rgba(255, 171, 145, 0.16);
+}
+
+.easter-card--echo {
+  --easter-bg: #311b92;
+  --easter-bg-hover: #3a219f;
+  --easter-bg-locked: #262230;
+  --easter-text: #b39ddb;
+  --easter-text-muted: rgba(179, 157, 219, 0.82);
+  --easter-text-locked: #9e95ab;
+  --easter-text-muted-locked: rgba(158, 149, 171, 0.78);
+  --easter-border: rgba(179, 157, 219, 0.35);
+  --easter-border-hover: rgba(179, 157, 219, 0.5);
+  --easter-border-locked: rgba(158, 149, 171, 0.22);
+  --easter-glow: rgba(179, 157, 219, 0.16);
+}
+
+.easter-card--archivist {
+  --easter-bg: #37474f;
+  --easter-bg-hover: #40535c;
+  --easter-bg-locked: #262b2e;
+  --easter-text: #b0bec5;
+  --easter-text-muted: rgba(176, 190, 197, 0.82);
+  --easter-text-locked: #939aa0;
+  --easter-text-muted-locked: rgba(147, 154, 160, 0.78);
+  --easter-border: rgba(176, 190, 197, 0.35);
+  --easter-border-hover: rgba(176, 190, 197, 0.5);
+  --easter-border-locked: rgba(147, 154, 160, 0.22);
+  --easter-glow: rgba(176, 190, 197, 0.16);
+}
+
 .easter-card-icon {
   font-size: 48px;
   margin-bottom: 12px;

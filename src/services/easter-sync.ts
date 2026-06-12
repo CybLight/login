@@ -20,6 +20,11 @@ type ResolvedEasterFlags = {
   lightCatcher?: boolean;
   postmaster?: boolean;
   developerMode?: boolean;
+  nightGuard?: boolean;
+  trustedFingerprint?: boolean;
+  bridge?: boolean;
+  echo?: boolean;
+  archivist?: boolean;
 };
 
 const EASTER_SYNC_TARGETS = [
@@ -120,6 +125,16 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
     lightCatcher: lightCatcherFromEaster ?? (lightCatcherFromFlags ? true : undefined),
     postmaster: postmasterFromEaster ?? (postmasterFromFlags ? true : undefined),
     developerMode: developerModeFromEaster ?? (developerModeFromFlags ? true : undefined),
+    nightGuard: typeof easter?.nightGuard === 'boolean' ? easter.nightGuard : undefined,
+    trustedFingerprint:
+      typeof easter?.trustedFingerprint === 'boolean'
+        ? easter.trustedFingerprint
+        : typeof easter?.trusted_fingerprint === 'boolean'
+          ? easter.trusted_fingerprint
+          : undefined,
+    bridge: typeof easter?.bridge === 'boolean' ? easter.bridge : undefined,
+    echo: typeof easter?.echo === 'boolean' ? easter.echo : undefined,
+    archivist: typeof easter?.archivist === 'boolean' ? easter.archivist : undefined,
   };
 }
 

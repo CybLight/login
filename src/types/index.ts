@@ -89,6 +89,7 @@ export interface ChatMessage {
   createdAt: string;
   updatedAt: string;
   editedAt?: string;
+  readAt?: number | string | null;
   deleted?: boolean;
 }
 
@@ -222,6 +223,13 @@ export interface UserEasterFlags {
   postmaster?: boolean;
   developerMode?: boolean;
   developer_mode?: boolean;
+  nightGuard?: boolean;
+  night_guard?: boolean;
+  trustedFingerprint?: boolean;
+  trusted_fingerprint?: boolean;
+  bridge?: boolean;
+  echo?: boolean;
+  archivist?: boolean;
 }
 
 export interface EasterLoginPayload {

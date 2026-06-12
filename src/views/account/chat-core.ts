@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { getLocale, localeTag } from '@/i18n/locale';
 import { apiCall, escapeHtml } from '@/utils';
 import { copyText } from '@/utils/clipboard';
@@ -20,6 +21,32 @@ type PinnedMessageState = {
   messageId: string;
   text: string;
 };
+
+function isMessageRead(readAt: unknown): boolean {
+  if (readAt == null || readAt === '') return false;
+  const value = Number(readAt);
+  return Number.isFinite(value) && value > 0;
+}
+
+function renderMessageReadStatus(readAt: unknown): string {
+  const isRead = isMessageRead(readAt);
+  const label = isRead ? t('Прочитано') : t('Отправлено');
+  const statusClass = isRead ? 'chat-read-status--read' : 'chat-read-status--sent';
+
+  if (isRead) {
+    return `<span class="chat-read-status ${statusClass}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+      <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+        <path fill="currentColor" d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.05 11.56l-1.41 1.41 6.24 6.24 11.66-11.66-1.42-1.41zM.41 13.41 6 19l1.41-1.41L1.83 12 .41 13.41z"/>
+      </svg>
+    </span>`;
+  }
+
+  return `<span class="chat-read-status ${statusClass}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">
+      <path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+    </svg>
+  </span>`;
+}
 
 export type ChatLoadOptions = {
   hydrateLinkPreviews?: boolean;
@@ -158,6 +185,11 @@ export function createChatCore(deps: ChatCoreDeps) {
           const linkPreview = buildChatLinkPreview(rawContent);
           const reactions = normalizeReactions(msg.reactions);
           const edited = Boolean(msg.editedAt ?? msg.edited_at);
+          const readAt = msg.readAt ?? msg.read_at;
+          const timeLabel = new Date(normalizedCreatedAt).toLocaleTimeString(localeTag(getLocale()), {
+            hour: '2-digit',
+            minute: '2-digit',
+          });
 
           const emojiPopupButtons = deps.quickReactions
             .slice(0, 6)
@@ -204,12 +236,10 @@ export function createChatCore(deps: ChatCoreDeps) {
                 : ''
             }
 
-            <div class="chat-message-time">${escapeHtml(
-              new Date(normalizedCreatedAt).toLocaleTimeString(localeTag(getLocale()), {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-            )}</div>
+            <div class="chat-message-meta">
+              <span class="chat-message-time">${escapeHtml(timeLabel)}</span>
+              ${isSent ? renderMessageReadStatus(readAt) : ''}
+            </div>
 
             <div class="chat-quick-reactions">
               <div class="chat-emoji-popup" data-emoji-popup-for="${escapeHtml(messageId)}">

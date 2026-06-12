@@ -771,6 +771,11 @@ function renderEasterTab(user: User): string {
   const hasDeveloperMode =
     localStorage.getItem("cyb_developer_mode_unlocked") === "1" ||
     !!user.easter?.developerMode;
+  const hasNightGuard = !!user.easter?.nightGuard;
+  const hasTrustedFingerprint = !!user.easter?.trustedFingerprint;
+  const hasBridge = !!user.easter?.bridge;
+  const hasEcho = !!user.easter?.echo;
+  const hasArchivist = !!user.easter?.archivist;
 
   console.log(
     "[EASTER] hasStrawberry:",
@@ -809,8 +814,85 @@ function renderEasterTab(user: User): string {
       </div>
 
       <h3 class="easter-section-title">
-        <span>🎁</span>
-        <span>${t('Обычные пасхалки')}</span>
+        <span>📱</span>
+        <span>${t('В приложении')}</span>
+      </h3>
+
+      <div class="easter-grid">
+        <div class="easter-card easter-card--light-catcher ${hasLightCatcher ? "" : "locked"}">
+          ${
+            hasLightCatcher
+              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+          }
+          <span class="easter-card-icon">💡</span>
+          <div class="easter-card-title">${t('Ловец света')}</div>
+          <div class="easter-card-desc">
+            ${
+              hasLightCatcher
+                ? t('Ты поймал свет в приложении CybLight! Быстрые пальцы ⚡')
+                : t('Свет спрятан в мобильном приложении CybLight')
+            }
+          </div>
+          ${
+            hasLightCatcher
+              ? `<div class="easter-hint">${t('🎊 Свет пойман — секрет сохранён!')}</div>`
+              : `<div class="easter-hint">${t('💡 Подсказка: проверь на прочность версию Android приложения')}</div>`
+          }
+          ${androidDownloadLink}
+        </div>
+
+        <div class="easter-card easter-card--night-guard ${hasNightGuard ? "" : "locked"}">
+          ${hasNightGuard ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>` : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`}
+          <span class="easter-card-icon">🌙</span>
+          <div class="easter-card-title">${t('Ночной страж')}</div>
+          <div class="easter-card-desc">${hasNightGuard ? t('Ты бодрствуешь в тёмной теме после полуночи') : t('Ночь, тёмная тема и 30 секунд терпения')}</div>
+          ${hasNightGuard ? "" : `<div class="easter-hint">${t('💡 Подсказка: включи тёмную тему после 00:00 и останься в приложении')}</div>`}
+        </div>
+
+        <div class="easter-card easter-card--trusted-fingerprint ${hasTrustedFingerprint ? "" : "locked"}">
+          ${hasTrustedFingerprint ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>` : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`}
+          <span class="easter-card-icon">👆</span>
+          <div class="easter-card-title">${t('Отпечаток доверия')}</div>
+          <div class="easter-card-desc">${hasTrustedFingerprint ? t('Сто раз подтвердил вход биометрией') : t('Биометрия должна узнать тебя наизусть')}</div>
+          ${hasTrustedFingerprint ? "" : `<div class="easter-hint">${t('💡 Подсказка: разблокируй приложение отпечатком 100 раз')}</div>`}
+        </div>
+
+        <div class="easter-card easter-card--echo ${hasEcho ? "" : "locked"}">
+          ${hasEcho ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>` : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`}
+          <span class="easter-card-icon">🔔</span>
+          <div class="easter-card-title">${t('Эхо')}</div>
+          <div class="easter-card-desc">${hasEcho ? t('Сообщение ушло в полночь — эхо услышано') : t('Отправь сообщение ровно в 23:59')}</div>
+          ${hasEcho ? "" : `<div class="easter-hint">${t('💡 Подсказка: поймай минуту перед полуночью в чате')}</div>`}
+        </div>
+
+        <div class="easter-card easter-card--archivist ${hasArchivist ? "" : "locked"}">
+          ${hasArchivist ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>` : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`}
+          <span class="easter-card-icon">📚</span>
+          <div class="easter-card-title">${t('Архивариус')}</div>
+          <div class="easter-card-desc">${hasArchivist ? t('Закрепил, изменил, отреагировал и переслал в одном чате') : t('Освой все инструменты сообщений в одном диалоге')}</div>
+          ${hasArchivist ? "" : `<div class="easter-hint">${t('💡 Подсказка: закрепи, измени, поставь реакцию и перешли в одном чате')}</div>`}
+        </div>
+      </div>
+
+      <h3 class="easter-section-title">
+        <span>🌉</span>
+        <span>${t('Связующие')}</span>
+      </h3>
+
+      <div class="easter-grid">
+        <div class="easter-card easter-card--bridge ${hasBridge ? "" : "locked"}">
+          ${hasBridge ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>` : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`}
+          <span class="easter-card-icon">🌉</span>
+          <div class="easter-card-title">${t('Мост')}</div>
+          <div class="easter-card-desc">${hasBridge ? t('В один день открыл секрет на сайте и в приложении') : t('Найди пасхалки и на сайте, и в приложении в один день')}</div>
+          ${hasBridge ? `<div class="easter-hint">${t('🎊 CybLight на обоих берегах!')}</div>` : `<div class="easter-hint">${t('💡 Подсказка: исследуй сайт и приложение в один день')}</div>`}
+        </div>
+      </div>
+
+      <h3 class="easter-section-title">
+        <span>🌐</span>
+        <span>${t('На сайте')}</span>
       </h3>
 
       <div class="easter-grid">
@@ -879,38 +961,6 @@ function renderEasterTab(user: User): string {
               : `<div class="easter-hint">${t('💡 Подсказка: загляни в свой профиль и посмотри на себя чаще...')}</div>`
           }
           ${hasProfileMirror ? `<div class="easter-hint">${t('🎊 Ты заглянул в своё отражение!')}</div>` : ""}
-        </div>
-      </div>
-
-      <h3 class="easter-section-title">
-        <span>📱</span>
-        <span>${t('Мобильные пасхалки')}</span>
-      </h3>
-
-      <div class="easter-grid">
-        <div class="easter-card easter-card--light-catcher ${hasLightCatcher ? "" : "locked"}">
-          ${
-            hasLightCatcher
-              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
-              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
-          }
-          <span class="easter-card-icon">💡</span>
-          <div class="easter-card-title">
-            ${t('Ловец света')}
-          </div>
-          <div class="easter-card-desc">
-            ${
-              hasLightCatcher
-                ? t('Ты поймал свет в приложении CybLight! Быстрые пальцы ⚡')
-                : t('Свет спрятан в мобильном приложении CybLight')
-            }
-          </div>
-          ${
-            hasLightCatcher
-              ? `<div class="easter-hint">${t('🎊 Свет пойман — секрет сохранён!')}</div>`
-              : `<div class="easter-hint">${t('💡 Подсказка: проверь на прочность версию Android приложения')}</div>`
-          }
-          ${androidDownloadLink}
         </div>
       </div>
 

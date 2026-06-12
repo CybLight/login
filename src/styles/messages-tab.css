@@ -402,6 +402,42 @@
   color: rgba(231, 236, 255, 0.72);
 }
 
+.chat-message-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-end;
+  max-width: 100%;
+}
+
+.chat-read-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.chat-read-status svg {
+  display: block;
+}
+
+.chat-read-status--sent {
+  color: rgba(231, 236, 255, 0.62);
+}
+
+.chat-read-status--read {
+  color: #7dd3fc;
+}
+
+.chat-message.sent .chat-read-status--sent {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.chat-message.sent .chat-read-status--read {
+  color: #bae6fd;
+}
+
 .chat-reply-snippet {
   margin: 0 0 8px;
   padding: 8px 10px;
