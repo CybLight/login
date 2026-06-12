@@ -16,3 +16,4 @@ export * from './presence';
 export * from './devFooterPin';
 export * from './roles';
 export * from './roleNotice';
+export * from './easter-log';

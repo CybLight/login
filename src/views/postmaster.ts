@@ -3,10 +3,11 @@
  */
 
 import { Router } from '@/router/Router';
-import { apiCall, getStorage, setStorage } from '@/utils';
+import { apiCall, getStorage, setStorage, maybeLogBridgeEaster, sendEasterLog } from '@/utils';
 import { POSTMASTER_KEY } from '@/config/constants';
 import { t } from '@/i18n';
 import { setAppContent, shell } from '@/ui';
+import { authService, extractEasterFlags } from '@/services';
 
 export function hasPostmasterAccess(): boolean {
   return getStorage(POSTMASTER_KEY) === '1';
@@ -77,6 +78,33 @@ async function savePostmasterToServer(): Promise<boolean> {
   }
 }
 
+async function logPostmasterUnlock(): Promise<void> {
+  try {
+    const user = await authService.checkSession();
+    if (!user?.username) return;
+
+    const hadBridge = user.easter?.bridge === true;
+
+    sendEasterLog({
+      type: 'postmaster',
+      userName: user.username,
+      source: 'password_recovery_email_link',
+      alex: 10,
+    });
+
+    const meRes = await apiCall('/auth/me', {
+      method: 'GET',
+      credentials: 'include',
+    });
+    if (!meRes.ok) return;
+
+    const meData = await meRes.json().catch(() => ({}));
+    maybeLogBridgeEaster(user.username, hadBridge, extractEasterFlags(meData).bridge === true);
+  } catch {
+    // fire-and-forget
+  }
+}
+
 export async function unlockPostmasterEaster(): Promise<boolean> {
   if (hasPostmasterAccess()) {
     return true;
@@ -88,6 +116,7 @@ export async function unlockPostmasterEaster(): Promise<boolean> {
   }
 
   setPostmasterAccess();
+  void logPostmasterUnlock();
   await showPostmasterModal();
   return true;
 }

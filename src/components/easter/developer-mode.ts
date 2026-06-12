@@ -2,9 +2,10 @@
  * Developer Mode easter egg — open DevTools, then click the footer marquee.
  */
 
-import { apiCall, getStorage, setStorage } from '@/utils';
+import { apiCall, getStorage, setStorage, maybeLogBridgeEaster, sendEasterLog } from '@/utils';
 import { DEVELOPER_MODE_KEY } from '@/config/constants';
 import { t } from '@/i18n';
+import { authService, extractEasterFlags } from '@/services';
 
 let isUnlocking = false;
 let bound = false;
@@ -95,6 +96,33 @@ function pulseDevStrip(): void {
   });
 }
 
+async function logDeveloperModeUnlock(): Promise<void> {
+  try {
+    const user = await authService.checkSession();
+    if (!user?.username) return;
+
+    const hadBridge = user.easter?.bridge === true;
+
+    sendEasterLog({
+      type: 'developer_mode',
+      userName: user.username,
+      source: 'devtools_footer_marquee_click',
+      alex: 11,
+    });
+
+    const meRes = await apiCall('/auth/me', {
+      method: 'GET',
+      credentials: 'include',
+    });
+    if (!meRes.ok) return;
+
+    const meData = await meRes.json().catch(() => ({}));
+    maybeLogBridgeEaster(user.username, hadBridge, extractEasterFlags(meData).bridge === true);
+  } catch {
+    // fire-and-forget
+  }
+}
+
 async function unlockDeveloperModeEaster(): Promise<void> {
   if (isUnlocking || hasDeveloperModeAccess()) {
     if (hasDeveloperModeAccess()) pulseDevStrip();
@@ -109,6 +137,7 @@ async function unlockDeveloperModeEaster(): Promise<void> {
     console.warn('[DEV MODE] Saved locally; sync on next login');
   }
 
+  void logDeveloperModeUnlock();
   pulseDevStrip();
   await showDeveloperModeModal();
   isUnlocking = false;
