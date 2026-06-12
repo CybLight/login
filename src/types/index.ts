@@ -219,6 +219,7 @@ export interface UserEasterFlags {
   profile_mirror?: boolean;
   lightCatcher?: boolean;
   light_catcher?: boolean;
+  postmaster?: boolean;
 }
 
 export interface EasterLoginPayload {

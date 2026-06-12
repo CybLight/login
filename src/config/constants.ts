@@ -13,6 +13,7 @@ export const EASTER_KEY = 'cyb_strawberry_unlocked';
 export const DARK_TRIGGER_KEY = 'cyb_dark_trigger_unlocked';
 export const PROFILE_MIRROR_KEY = 'cyb_profile_mirror_unlocked';
 export const LIGHT_CATCHER_KEY = 'cyb_light_catcher_unlocked';
+export const POSTMASTER_KEY = 'cyb_postmaster_unlocked';
 export const HISTORY_FROM_KEY = 'cyb_history_from';
 
 // API configuration

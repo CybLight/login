@@ -9,6 +9,7 @@ import {
   DARK_TRIGGER_KEY,
   PROFILE_MIRROR_KEY,
   LIGHT_CATCHER_KEY,
+  POSTMASTER_KEY,
 } from '@/config/constants';
 
 type ResolvedEasterFlags = {
@@ -16,6 +17,7 @@ type ResolvedEasterFlags = {
   darkTrigger?: boolean;
   profileMirror?: boolean;
   lightCatcher?: boolean;
+  postmaster?: boolean;
 };
 
 const EASTER_SYNC_TARGETS = [
@@ -34,6 +36,11 @@ const EASTER_SYNC_TARGETS = [
     storageKey: LIGHT_CATCHER_KEY,
     flag: 'lightCatcher' as const,
     endpoint: '/auth/easter/light-catcher',
+  },
+  {
+    storageKey: POSTMASTER_KEY,
+    flag: 'postmaster' as const,
+    endpoint: '/auth/easter/postmaster',
   },
 ] as const;
 
@@ -65,6 +72,8 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
       : typeof easter?.light_catcher === 'boolean'
         ? easter.light_catcher
         : undefined;
+  const postmasterFromEaster =
+    typeof easter?.postmaster === 'boolean' ? easter.postmaster : undefined;
 
   const strawberryFromFlags =
     flags.includes('strawberry') ||
@@ -82,12 +91,17 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
     flags.includes('light_catcher') ||
     flags.includes('light_catcher_unlocked') ||
     flags.includes('easter_light_catcher');
+  const postmasterFromFlags =
+    flags.includes('postmaster') ||
+    flags.includes('postmaster_unlocked') ||
+    flags.includes('easter_postmaster');
 
   return {
     strawberry: strawberryFromEaster ?? (strawberryFromFlags ? true : undefined),
     darkTrigger: darkTriggerFromEaster ?? (darkTriggerFromFlags ? true : undefined),
     profileMirror: profileMirrorFromEaster ?? (profileMirrorFromFlags ? true : undefined),
     lightCatcher: lightCatcherFromEaster ?? (lightCatcherFromFlags ? true : undefined),
+    postmaster: postmasterFromEaster ?? (postmasterFromFlags ? true : undefined),
   };
 }
 
@@ -106,6 +120,10 @@ function pullEasterFlagsToStorage(source: ResolvedEasterFlags): void {
 
   if (source.lightCatcher === true) {
     localStorage.setItem(LIGHT_CATCHER_KEY, '1');
+  }
+
+  if (source.postmaster === true) {
+    localStorage.setItem(POSTMASTER_KEY, '1');
   }
 }
 

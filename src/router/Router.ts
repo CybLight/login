@@ -27,6 +27,7 @@ export class Router {
     'account-banned',
     'contact-admin',
     'strawberry-history',
+    'postmaster',
     'profile',
     '2fa',
   ]);
@@ -55,6 +56,7 @@ export class Router {
     'account-banned': 'Аккаунт заблокирован',
     'contact-admin': 'Связь с администрацией',
     'strawberry-history': 'Клубничная история',
+    postmaster: 'Postmaster',
     profile: 'Профиль',
   };
 

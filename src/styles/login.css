@@ -3807,3 +3807,82 @@ html.dev-footer-pinned .cyb-dev-footer-strip::after {
     transform: rotate(0deg);
   }
 }
+
+/* Postmaster easter egg modal */
+.postmaster-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(5, 8, 18, 0.72);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+
+.postmaster-overlay.is-visible {
+  opacity: 1;
+}
+
+.postmaster-modal {
+  position: relative;
+  width: min(100%, 420px);
+  padding: 28px 24px 24px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #1a2238 0%, #12182b 100%);
+  border: 1px solid rgba(231, 236, 255, 0.12);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  transform: translateY(8px) scale(0.98);
+  transition: transform 0.28s ease;
+}
+
+.postmaster-overlay.is-visible .postmaster-modal {
+  transform: translateY(0) scale(1);
+}
+
+.postmaster-modal__glow {
+  position: absolute;
+  inset: -40% auto auto 50%;
+  width: 220px;
+  height: 220px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.28) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.postmaster-modal__icon {
+  font-size: 2.4rem;
+  margin-bottom: 10px;
+}
+
+.postmaster-modal__title {
+  margin: 0 0 12px;
+  font-size: 1.35rem;
+  color: #e7ecff;
+}
+
+.postmaster-modal__text {
+  margin: 0 0 20px;
+  color: rgba(231, 236, 255, 0.78);
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+.postmaster-modal__btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 22px;
+  background: #ff6b35;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.postmaster-modal__btn:hover {
+  filter: brightness(1.05);
+}
+

@@ -765,6 +765,9 @@ function renderEasterTab(user: User): string {
   const hasLightCatcher =
     localStorage.getItem("cyb_light_catcher_unlocked") === "1" ||
     !!user.easter?.lightCatcher;
+  const hasPostmaster =
+    localStorage.getItem("cyb_postmaster_unlocked") === "1" ||
+    !!user.easter?.postmaster;
 
   console.log(
     "[EASTER] hasStrawberry:",
@@ -775,6 +778,8 @@ function renderEasterTab(user: User): string {
     hasProfileMirror,
     "hasLightCatcher:",
     hasLightCatcher,
+    "hasPostmaster:",
+    hasPostmaster,
     "user.easter:",
     user.easter,
   );
@@ -944,6 +949,30 @@ function renderEasterTab(user: User): string {
             hasDarkTrigger
               ? `<div class="easter-hint">${t('🎊 Конгратулейшн, ты настоящий детектив!')}</div>`
               : ""
+          }
+        </div>
+
+        <div class="easter-card ${hasPostmaster ? "easter-card-rare" : "locked"}">
+          ${
+            hasPostmaster
+              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+          }
+          <span class="easter-card-icon">📬</span>
+          <div class="easter-card-title">
+            Postmaster
+          </div>
+          <div class="easter-card-desc">
+            ${
+              hasPostmaster
+                ? t('Ты прочитал письмо до самого конца — настоящий почтовый детектив')
+                : t('Секрет спрятан там, где заканчиваются автоматические письма')
+            }
+          </div>
+          ${
+            hasPostmaster
+              ? `<div class="easter-hint">${t('🎊 Секрет из ящика входящих пойман!')}</div>`
+              : `<div class="easter-hint">${t('💡 Подсказка: загляни в письмо о восстановлении пароля...')}</div>`
           }
         </div>
       </div>

@@ -31,6 +31,7 @@ import {
   renderStrawberryHistory,
   renderPublicProfile,
   renderEditProfile,
+  renderPostmaster,
 } from '@/views';
 
 function initGlobalUiDelegation(): void {
@@ -134,6 +135,7 @@ export async function initApp(): Promise<void> {
   Router.on('account-friends', () => renderAccount('friends'));
   Router.on('account-messages', () => renderAccount('messages'));
   Router.on('strawberry-history', renderStrawberryHistory);
+  Router.on('postmaster', renderPostmaster);
   Router.on('profile', (params) => {
     const maybeFromParams = params && (params as Record<string, unknown>).username;
     const usernameFromParams = typeof maybeFromParams === 'string' ? maybeFromParams : undefined;
