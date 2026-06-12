@@ -76,10 +76,12 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     setTwoFAEnabled: (value) => {
       state.twoFAEnabled = value;
       onTwoFAChanged?.(value);
+      refreshSecurityIndicator();
     },
     setPasskeyCount: (value) => {
       state.passkeyCount = value;
       onPasskeyCountChanged?.(value);
+      refreshSecurityIndicator();
     },
     setEmailVerified: (value) => {
       state.emailVerified = value;
@@ -673,7 +675,10 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   if (itemPasskeys && panelPasskeys) {
     panelPasskeys.style.display = 'none';
     itemPasskeys.onclick = () => {
-      toggleSecPanel(itemPasskeys, panelPasskeys);
+      const opened = toggleSecPanel(itemPasskeys, panelPasskeys);
+      if (opened && contentPasskeys) {
+        void loadPasskeys(contentPasskeys, api);
+      }
     };
   }
 

@@ -56,8 +56,14 @@ export function updateSecurityIndicator(
           <div class="security-check-label">${t('Ключ доступа (Passkey) добавлен')}</div>
           <div class="security-check-status">${t('Выполнено')}</div>
         `;
-        checkPasskey.classList.add('disabled');
+        checkPasskey.classList.add('disabled', 'is-done');
       }
+    } else if (checkPasskey) {
+      checkPasskey.innerHTML = `
+        <div class="security-check-icon">🔑</div>
+        <div class="security-check-text">${t('Добавьте ключ доступа (Passkey)')}</div>
+      `;
+      checkPasskey.classList.remove('disabled', 'is-done');
     }
 
     const levelClass =

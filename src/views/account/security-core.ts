@@ -564,8 +564,6 @@ export function createSecurityCore(deps: SecurityCoreDeps) {
         };
 
         document.getElementById('addPasskeyBtn')?.addEventListener('click', registerPasskey);
-
-        deps.updateSecurityIndicator();
       } else {
         container.innerHTML = `<div class="sec-error-text">${t('Ошибка загрузки')}</div>`;
       }
