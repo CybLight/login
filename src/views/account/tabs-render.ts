@@ -1,4 +1,4 @@
-import { t, getLocale, localeTag, sitePath } from '@/i18n';
+import { t, getLocale, localeTag, sitePath, siteRootPath } from '@/i18n';
 import type { UserEasterFlags } from "@/types";
 import { escapeHtml } from "@/utils";
 import {
@@ -777,6 +777,9 @@ function renderEasterTab(user: User): string {
   const hasDeveloperMode =
     localStorage.getItem("cyb_developer_mode_unlocked") === "1" ||
     !!user.easter?.developerMode;
+  const hasThemeFlux =
+    localStorage.getItem("cyb_theme_flux_unlocked") === "1" ||
+    !!user.easter?.themeFlux;
   const hasNightGuard = !!user.easter?.nightGuard;
   const hasTrustedFingerprint = !!user.easter?.trustedFingerprint;
   const hasBridge = !!user.easter?.bridge;
@@ -801,6 +804,8 @@ function renderEasterTab(user: User): string {
     hasPostmaster,
     "hasDeveloperMode:",
     hasDeveloperMode,
+    "hasThemeFlux:",
+    hasThemeFlux,
     "user.easter:",
     user.easter,
   );
@@ -965,7 +970,7 @@ function renderEasterTab(user: User): string {
           ${
             hasDarkTrigger
               ? `<a 
-                  href="${sitePath('dark/trig/c4...77/media/dark-trigger.jpg', getLocale())}" 
+                  href="${siteRootPath('dark/trig/c4...77/media/dark-trigger.jpg')}" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   class="btn btn-outline easter-action-btn easter-action-link"
@@ -1027,6 +1032,30 @@ function renderEasterTab(user: User): string {
             hasDeveloperMode
               ? `<div class="easter-hint">${t('🎊 console.log("found") — секрет под капотом!')}</div>`
               : `<div class="easter-hint">${t('💡 Подсказка: Загляни под капот сайта')}</div>`
+          }
+        </div>
+
+        <div class="easter-card easter-card--theme-flux ${hasThemeFlux ? "" : "locked"}">
+          ${
+            hasThemeFlux
+              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+          }
+          <span class="easter-card-icon">🌗</span>
+          <div class="easter-card-title">
+            ${t('Маятник')}
+          </div>
+          <div class="easter-card-desc">
+            ${
+              hasThemeFlux
+                ? t('Ты раскачал сайт между светом и тьмой — настроение поймано')
+                : t('Секрет для тех, кто не может выбрать одну тему')
+            }
+          </div>
+          ${
+            hasThemeFlux
+              ? `<div class="easter-hint">${t('🎊 Свет ↔ тьма — и секрет ваш!')}</div>`
+              : `<div class="easter-hint">${t('💡 Подсказка: покачай настроение сайта — свет, тьма, свет...')}</div>`
           }
         </div>
       </div>

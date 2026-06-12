@@ -223,6 +223,8 @@ export interface UserEasterFlags {
   postmaster?: boolean;
   developerMode?: boolean;
   developer_mode?: boolean;
+  themeFlux?: boolean;
+  theme_flux?: boolean;
   nightGuard?: boolean;
   night_guard?: boolean;
   trustedFingerprint?: boolean;

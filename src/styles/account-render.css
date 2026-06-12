@@ -1479,6 +1479,20 @@
   --easter-glow: rgba(255, 204, 128, 0.16);
 }
 
+.easter-card--theme-flux {
+  --easter-bg: #2a3550;
+  --easter-bg-hover: #324060;
+  --easter-bg-locked: #242830;
+  --easter-text: #b39ddb;
+  --easter-text-muted: rgba(179, 157, 219, 0.82);
+  --easter-text-locked: #949aa8;
+  --easter-text-muted-locked: rgba(148, 154, 168, 0.78);
+  --easter-border: rgba(179, 157, 219, 0.35);
+  --easter-border-hover: rgba(179, 157, 219, 0.5);
+  --easter-border-locked: rgba(148, 154, 168, 0.22);
+  --easter-glow: rgba(179, 157, 219, 0.16);
+}
+
 .easter-card--night-guard {
   --easter-bg: #1a2744;
   --easter-bg-hover: #203052;

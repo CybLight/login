@@ -10,6 +10,7 @@ import {
   localeTag,
   persistLocale,
   sitePath,
+  siteRootPath,
   stripLocalePrefix,
   type Locale,
   LOCALES,
@@ -67,6 +68,7 @@ export {
   localeTag,
   persistLocale,
   sitePath,
+  siteRootPath,
   stripLocalePrefix,
   type Locale,
 };

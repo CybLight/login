@@ -42,9 +42,26 @@ export function localePath(route: string, locale: Locale = getLocale()): string 
   return `/${locale}/${clean}`;
 }
 
+function looksLikeFile(path: string): boolean {
+  const last = path.split('/').pop() || '';
+  return /\.[a-z0-9]{2,5}$/i.test(last);
+}
+
+function buildSiteUrl(prefix: string, path: string): string {
+  const clean = path.replace(/^\/+/, '').replace(/\/+$/, '');
+  if (!clean) return `${prefix}/`;
+  const base = `${prefix}/${clean}`;
+  return looksLikeFile(clean) ? base : `${base}/`;
+}
+
+/** Localized CybLight page (ru/uk/en/...) */
 export function sitePath(path = '', locale: Locale = getLocale()): string {
-  const clean = path.replace(/^\/+/, '');
-  return `https://cyblight.org/${locale}/${clean}`.replace(/\/$/, '') + (clean ? '/' : '/');
+  return buildSiteUrl(`https://cyblight.org/${locale}`, path);
+}
+
+/** Root-level CybLight asset (e.g. /dark/..., not under locale prefix) */
+export function siteRootPath(path = ''): string {
+  return buildSiteUrl('https://cyblight.org', path);
 }
 
 export function detectPreferredLocale(): Locale {

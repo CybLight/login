@@ -11,6 +11,7 @@ import {
   LIGHT_CATCHER_KEY,
   POSTMASTER_KEY,
   DEVELOPER_MODE_KEY,
+  THEME_FLUX_KEY,
 } from '@/config/constants';
 
 type ResolvedEasterFlags = {
@@ -20,6 +21,7 @@ type ResolvedEasterFlags = {
   lightCatcher?: boolean;
   postmaster?: boolean;
   developerMode?: boolean;
+  themeFlux?: boolean;
   nightGuard?: boolean;
   trustedFingerprint?: boolean;
   bridge?: boolean;
@@ -55,6 +57,11 @@ const EASTER_SYNC_TARGETS = [
     storageKey: DEVELOPER_MODE_KEY,
     flag: 'developerMode' as const,
     endpoint: '/auth/easter/developer-mode',
+  },
+  {
+    storageKey: THEME_FLUX_KEY,
+    flag: 'themeFlux' as const,
+    endpoint: '/auth/easter/theme-flux',
   },
 ] as const;
 
@@ -94,6 +101,12 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
       : typeof easter?.developer_mode === 'boolean'
         ? easter.developer_mode
         : undefined;
+  const themeFluxFromEaster =
+    typeof easter?.themeFlux === 'boolean'
+      ? easter.themeFlux
+      : typeof easter?.theme_flux === 'boolean'
+        ? easter.theme_flux
+        : undefined;
 
   const strawberryFromFlags =
     flags.includes('strawberry') ||
@@ -119,6 +132,10 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
     flags.includes('developer_mode') ||
     flags.includes('developer_mode_unlocked') ||
     flags.includes('easter_developer_mode');
+  const themeFluxFromFlags =
+    flags.includes('theme_flux') ||
+    flags.includes('theme_flux_unlocked') ||
+    flags.includes('easter_theme_flux');
 
   return {
     strawberry: strawberryFromEaster ?? (strawberryFromFlags ? true : undefined),
@@ -127,6 +144,7 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
     lightCatcher: lightCatcherFromEaster ?? (lightCatcherFromFlags ? true : undefined),
     postmaster: postmasterFromEaster ?? (postmasterFromFlags ? true : undefined),
     developerMode: developerModeFromEaster ?? (developerModeFromFlags ? true : undefined),
+    themeFlux: themeFluxFromEaster ?? (themeFluxFromFlags ? true : undefined),
     nightGuard: typeof easter?.nightGuard === 'boolean' ? easter.nightGuard : undefined,
     trustedFingerprint:
       typeof easter?.trustedFingerprint === 'boolean'
@@ -175,6 +193,10 @@ function pullEasterFlagsToStorage(source: ResolvedEasterFlags): void {
 
   if (source.developerMode === true) {
     localStorage.setItem(DEVELOPER_MODE_KEY, '1');
+  }
+
+  if (source.themeFlux === true) {
+    localStorage.setItem(THEME_FLUX_KEY, '1');
   }
 }
 
