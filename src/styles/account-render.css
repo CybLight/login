@@ -1156,12 +1156,70 @@
 .easter-intro {
   opacity: 0.85;
   line-height: 1.6;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   padding: 12px 16px;
   background: rgba(255, 255, 255, 0.03);
   border-left: 3px solid rgba(59, 130, 246, 0.5);
   border-radius: 4px;
   font-size: 14px;
+}
+
+.easter-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.easter-subtab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(231, 236, 255, 0.78);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.easter-subtab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(231, 236, 255, 0.95);
+}
+
+.easter-subtab.active {
+  background: rgba(251, 146, 60, 0.14);
+  border-color: rgba(251, 146, 60, 0.55);
+  color: #ffd7a8;
+  box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.18) inset;
+}
+
+.easter-subpanel[hidden] {
+  display: none !important;
+}
+
+.easter-subpanel.active {
+  display: block;
+}
+
+.easter-subpanel .easter-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.easter-app-download {
+  margin: 0 0 16px;
+}
+
+.easter-app-download .easter-action-link {
+  display: inline-flex;
 }
 
 .easter-section-title {
@@ -1258,6 +1316,64 @@
 .easter-card[class*="easter-card--"].locked {
   background: var(--easter-bg-locked);
   border-color: var(--easter-border-locked);
+  box-shadow: none;
+  animation: none;
+}
+
+.easter-card[class*="easter-card--"]:not(.locked):not(.easter-card-rare) {
+  box-shadow:
+    0 0 18px var(--easter-glow),
+    0 0 0 1px var(--easter-border);
+  animation: easterFoundPulse 3s ease-in-out infinite;
+}
+
+.easter-card[class*="easter-card--"]:not(.locked)::before {
+  background: radial-gradient(
+    circle at 50% 0%,
+    var(--easter-glow) 0%,
+    transparent 68%
+  );
+  opacity: 1.35;
+}
+
+.easter-card[class*="easter-card--"].easter-card-rare:not(.locked) {
+  border-color: #8b5cf6;
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.14) 0%,
+    var(--easter-bg) 52%,
+    rgba(99, 102, 241, 0.08) 100%
+  );
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.3),
+    inset 0 0 20px rgba(139, 92, 246, 0.1);
+  animation: neonPulse 3s ease-in-out infinite;
+}
+
+.easter-card[class*="easter-card--"].easter-card-rare:not(.locked)::after {
+  display: block;
+}
+
+.easter-card[class*="easter-card--"].easter-card-rare:not(.locked):hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow:
+    0 0 40px rgba(139, 92, 246, 0.7),
+    inset 0 0 30px rgba(139, 92, 246, 0.2);
+}
+
+@keyframes easterFoundPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 14px var(--easter-glow),
+      0 0 0 1px var(--easter-border);
+  }
+
+  50% {
+    box-shadow:
+      0 0 28px var(--easter-glow),
+      0 0 0 1px var(--easter-border-hover);
+  }
 }
 
 .easter-card[class*="easter-card--"] .easter-card-title {
@@ -1633,9 +1749,28 @@
   font-size: 13px;
   opacity: 0.75;
   line-height: 1.5;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   position: relative;
   z-index: 1;
+}
+
+.easter-card-progress {
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  position: relative;
+  z-index: 1;
+}
+
+.easter-card-progress--muted {
+  opacity: 0.7;
+  font-weight: 500;
 }
 
 .easter-card-badge {

@@ -363,6 +363,8 @@ export function bindAccountHandlers(
 function bindEasterHandlers(): void {
   console.log('[EASTER] Tab loaded');
 
+  bindEasterSubTabs();
+
   // Кнопка "Открыть стенографию" для Strawberry Hunt
   const toHistoryBtn = document.getElementById('toHistoryBtn') as HTMLButtonElement;
   if (toHistoryBtn && !toHistoryBtn.disabled) {
@@ -372,4 +374,41 @@ function bindEasterHandlers(): void {
       Router.navigate('strawberry-history');
     };
   }
+}
+
+function bindEasterSubTabs(): void {
+  const root = document.querySelector('.easter-page');
+  if (!root) return;
+
+  const tabs = root.querySelectorAll<HTMLButtonElement>('[data-easter-tab]');
+  const panels = root.querySelectorAll<HTMLElement>('[data-easter-panel]');
+  if (!tabs.length || !panels.length) return;
+
+  const activate = (tabId: string) => {
+    tabs.forEach((tab) => {
+      const active = tab.dataset.easterTab === tabId;
+      tab.classList.toggle('active', active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    panels.forEach((panel) => {
+      const active = panel.dataset.easterPanel === tabId;
+      panel.classList.toggle('active', active);
+      panel.hidden = !active;
+    });
+
+    sessionStorage.setItem('cyb_easter_subtab', tabId);
+  };
+
+  const saved = sessionStorage.getItem('cyb_easter_subtab');
+  if (saved === 'site' || saved === 'app' || saved === 'bridge') {
+    activate(saved);
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const tabId = tab.dataset.easterTab;
+      if (tabId) activate(tabId);
+    });
+  });
 }

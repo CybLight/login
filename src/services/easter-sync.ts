@@ -23,6 +23,8 @@ type ResolvedEasterFlags = {
   nightGuard?: boolean;
   trustedFingerprint?: boolean;
   bridge?: boolean;
+  bridgeWebToday?: boolean;
+  bridgeAppToday?: boolean;
   echo?: boolean;
   archivist?: boolean;
 };
@@ -133,6 +135,18 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
           ? easter.trusted_fingerprint
           : undefined,
     bridge: typeof easter?.bridge === 'boolean' ? easter.bridge : undefined,
+    bridgeWebToday:
+      typeof easter?.bridgeWebToday === 'boolean'
+        ? easter.bridgeWebToday
+        : typeof easter?.bridge_web_today === 'boolean'
+          ? easter.bridge_web_today
+          : undefined,
+    bridgeAppToday:
+      typeof easter?.bridgeAppToday === 'boolean'
+        ? easter.bridgeAppToday
+        : typeof easter?.bridge_app_today === 'boolean'
+          ? easter.bridge_app_today
+          : undefined,
     echo: typeof easter?.echo === 'boolean' ? easter.echo : undefined,
     archivist: typeof easter?.archivist === 'boolean' ? easter.archivist : undefined,
   };

@@ -228,6 +228,10 @@ export interface UserEasterFlags {
   trustedFingerprint?: boolean;
   trusted_fingerprint?: boolean;
   bridge?: boolean;
+  bridgeWebToday?: boolean;
+  bridge_web_today?: boolean;
+  bridgeAppToday?: boolean;
+  bridge_app_today?: boolean;
   echo?: boolean;
   archivist?: boolean;
 }

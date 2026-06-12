@@ -626,6 +626,10 @@ export const en: Record<string, string> = {
   "👤 Профиль": "👤 Profile",
   "Ловец света": "Light catcher",
   "Мобильные пасхалки": "Mobile Easter eggs",
+  "На сайте": "On the site",
+  "В приложении": "In the app",
+  "Связующие": "Connecting",
+  "Категории пасхалок": "Easter egg categories",
   "Скачать приложение": "Download app",
   "Свет спрятан в мобильном приложении CybLight": "The light is hidden in the CybLight mobile app",
   "Ты поймал свет в приложении CybLight! Быстрые пальцы ⚡": "You caught the light in the CybLight app! Quick fingers ⚡",
@@ -713,4 +717,5 @@ export const en: Record<string, string> = {
   "Смена email завершится скоро": "Email change will complete soon",
   "{hours} ч {minutes} мин": "{hours} h {minutes} min",
   "{minutes} мин": "{minutes} min",
+  "{current} из {total}": "{current} of {total}",
 };
