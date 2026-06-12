@@ -51,7 +51,8 @@ export async function apiCall(
       !endpoint.includes('/auth/login') &&
       !endpoint.includes('/auth/register') &&
       !endpoint.includes('/auth/login-history') &&
-      !endpoint.includes('/auth/trusted-devices')
+      !endpoint.includes('/auth/trusted-devices') &&
+      !endpoint.includes('/auth/easter/')
     ) {
       console.log('401 detected, redirecting to username');
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));

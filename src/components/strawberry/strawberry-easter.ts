@@ -3,9 +3,9 @@
  */
 
 import { Router } from '@/router/Router';
-import { getStorage, setStorage, apiCall } from '@/utils';
+import { getStorage, setStorage } from '@/utils';
 import { EASTER_KEY } from '@/config/constants';
-import { authService } from '@/services';
+import { authService, extractEasterFlags, pushLocalEasterFlagsToServer } from '@/services';
 import { customPrompt, showCongratsModal } from './modal';
 import { launchAllEffects, flashModal } from './effects';
 
@@ -82,29 +82,7 @@ export async function triggerStrawberryEaster(): Promise<void> {
 
     if (user) {
       console.log('🍓 User is logged in, saving to server...');
-      try {
-        const response = await apiCall('/auth/easter/strawberry', {
-          method: 'POST',
-          credentials: 'include',
-        });
-
-        const data = await response.json().catch(() => ({}));
-        console.log('🍓 Server response:', {
-          ok: response.ok,
-          status: response.status,
-          data,
-        });
-
-        if (!response.ok) {
-          console.error('❌ Failed to save strawberry on server:', data);
-          console.warn('⚠️ Strawberry saved locally, will sync after login');
-        } else {
-          console.log('✅ Strawberry saved to server successfully!');
-        }
-      } catch (e) {
-        console.error('❌ Error saving strawberry to server:', e);
-        console.warn('⚠️ Strawberry saved locally, will sync after login');
-      }
+      await pushLocalEasterFlagsToServer(extractEasterFlags({ user }));
     } else {
       console.log('⚠️ User not logged in, strawberry saved locally only');
       console.log('📌 Will be synced to server automatically after login');

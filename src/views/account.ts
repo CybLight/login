@@ -5,7 +5,7 @@
 
 import { Router } from '@/router/Router';
 import { setAppContent } from '@/ui';
-import { authService } from '@/services';
+import { authService, extractEasterFlags, pushLocalEasterFlagsToServer } from '@/services';
 import '@/styles/account.css';
 import '@/styles/account-render.css';
 import { renderAccountPage } from './account/account-render';
@@ -51,6 +51,8 @@ export async function renderAccount(tab: string = 'profile'): Promise<void> {
     Router.navigate('username');
     return;
   }
+
+  void pushLocalEasterFlagsToServer(extractEasterFlags({ user }));
 
   // Initialize emailVerified from user data
   emailVerified = isEmailVerified(user);

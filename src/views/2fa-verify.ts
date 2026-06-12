@@ -6,6 +6,7 @@ import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { getStorage, apiCall } from '@/utils';
+import { syncEasterAfterLogin } from '@/services';
 
 export async function render2FAVerify(): Promise<void> {
   const userId = getStorage('cyb_2fa_userId', '', sessionStorage);
@@ -145,6 +146,8 @@ export async function render2FAVerify(): Promise<void> {
         if (data.deviceToken) {
           localStorage.setItem('cyb_device_token', data.deviceToken);
         }
+
+        await syncEasterAfterLogin(data);
 
         setTimeout(() => {
           Router.navigate('account-profile');

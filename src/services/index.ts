@@ -8,3 +8,4 @@ export * from './captcha';
 export * from './friends';
 export * from './messages';
 export * from './sessions';
+export * from './easter-sync';

@@ -8,6 +8,7 @@ import { setAppContent, shell } from '@/ui';
 import { getStorage, escapeHtml, apiCall } from '@/utils';
 import { HISTORY_FROM_KEY } from '@/config/constants';
 import { hasStrawberryAccess, setStrawberryAccess } from '@/components/strawberry';
+import { pushLocalEasterFlagsToServer } from '@/services';
 import { StrawberryLightbox } from '@/components/lightbox';
 
 export async function renderStrawberryHistory(): Promise<void> {
@@ -40,6 +41,8 @@ export async function renderStrawberryHistory(): Promise<void> {
       Router.navigate('account');
       return;
     }
+  } else {
+    void pushLocalEasterFlagsToServer();
   }
 
   const from = String(getStorage(HISTORY_FROM_KEY, '', sessionStorage) || '');

@@ -6,7 +6,7 @@ import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell, showAppAlert } from '@/ui';
 import { setStorage, apiCall } from '@/utils';
-import { authService, captchaService } from '@/services';
+import { authService, captchaService, pushLocalEasterFlagsToServer } from '@/services';
 import { initPasswordEyes } from '@/components/password/password-helpers';
 import { attachPasswordHints } from '@/components/password/password-hints';
 
@@ -191,7 +191,7 @@ export async function renderSignup(): Promise<void> {
           return;
         }
 
-        // TODO: Синхронизация Easter eggs (strawberry, dark_trigger)
+        await pushLocalEasterFlagsToServer();
 
         // Показываем успех
         const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
