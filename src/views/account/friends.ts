@@ -101,7 +101,7 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
                 <div class="friend-card" data-presence-user-id="${escapeHtml(String(friend.id || ''))}">
                   <div class="friend-avatar">${avatarHtml(friend)}</div>
                   <div class="friend-info">
-                    <div class="friend-username">${escapeHtml(String(friend.username || 'Unknown'))}</div>
+                    <button class="friend-username friend-username-link" data-action="profile" data-username="${escapeHtml(String(friend.username || ''))}" type="button" aria-label="${t('👤 Профиль')} ${escapeHtml(String(friend.username || 'Unknown'))}">${escapeHtml(String(friend.username || 'Unknown'))}</button>
                     ${presenceMetaHtml(friend)}
                   </div>
                   <div class="friend-actions">
@@ -127,7 +127,7 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
                 <div class="friend-card">
                   <div class="friend-avatar">${avatarHtml(request)}</div>
                   <div class="friend-info">
-                    <div class="friend-username">${escapeHtml(String(request.username || 'Unknown'))}</div>
+                    <button class="friend-username friend-username-link" data-action="profile" data-username="${escapeHtml(String(request.username || ''))}" type="button" aria-label="${t('👤 Профиль')} ${escapeHtml(String(request.username || 'Unknown'))}">${escapeHtml(String(request.username || 'Unknown'))}</button>
                     <div class="friend-meta">${t('📬 Запрос в друзья')} ${escapeHtml(
                       new Date(request.createdAt || Date.now()).toLocaleDateString(localeTag(getLocale()))
                     )}</div>
@@ -154,7 +154,7 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
                 <div class="friend-card">
                   <div class="friend-avatar">${avatarHtml(request)}</div>
                   <div class="friend-info">
-                    <div class="friend-username">${escapeHtml(String(request.username || 'Unknown'))}</div>
+                    <button class="friend-username friend-username-link" data-action="profile" data-username="${escapeHtml(String(request.username || ''))}" type="button" aria-label="${t('👤 Профиль')} ${escapeHtml(String(request.username || 'Unknown'))}">${escapeHtml(String(request.username || 'Unknown'))}</button>
                     <div class="friend-meta">${t('⏳ Ожидание ответа')} ${escapeHtml(
                       new Date(request.createdAt || Date.now()).toLocaleDateString(localeTag(getLocale()))
                     )}</div>
@@ -221,7 +221,7 @@ async function loadFriendsTab(api: ApiMessage, deps: FriendsDeps): Promise<void>
             <div class="search-result-item">
               <div class="search-result-avatar">${avatarHtml(foundUser)}</div>
               <div class="search-result-info">
-                <div class="search-result-username">${escapeHtml(String(foundUser.username || 'Unknown'))}</div>
+                <button class="search-result-username friend-username-link" data-action="profile" data-username="${escapeHtml(String(foundUser.username || ''))}" type="button" aria-label="${t('👤 Профиль')} ${escapeHtml(String(foundUser.username || 'Unknown'))}">${escapeHtml(String(foundUser.username || 'Unknown'))}</button>
                 ${presenceMetaHtml(foundUser)}
               </div>
               <div class="search-result-actions">

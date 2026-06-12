@@ -271,7 +271,15 @@
     inset 0 0 6px rgba(34, 240, 230, 0.15);
 }
 
-.auth-footer::after {
+.cyb-dev-footer-strip {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 6;
+}
+
+.cyb-dev-footer-strip::after {
   content: "";
   position: absolute;
   left: 0;
@@ -287,7 +295,7 @@
     height 0.2s ease;
 }
 
-.auth-footer::before {
+.cyb-dev-footer-strip::before {
   content: "DEVELOPER MODE • DEVELOPER MODE • DEVELOPER MODE";
   position: absolute;
   left: 0;
@@ -351,8 +359,14 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
+  gap: 0;
   white-space: nowrap;
+}
+
+.footer-links > * + * {
+  margin-left: 14px;
+  padding-left: 14px;
+  border-left: 1px solid rgba(231, 236, 255, 0.22);
 }
 
 .footer-links a {
@@ -460,6 +474,35 @@
 
 .report-btn:focus {
   outline: 2px solid rgba(70, 200, 255, 0.12);
+  outline-offset: 2px;
+}
+
+.hacked-btn {
+  color: rgba(255, 175, 80, 0.92);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.hacked-icon {
+  width: 24px;
+  height: 24px;
+  display: inline-block;
+  flex: 0 0 24px;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.25));
+}
+
+.hacked-btn:hover .hacked-icon {
+  transform: translateY(-1px);
+}
+
+.hacked-btn:hover {
+  color: var(--accent);
+}
+
+.hacked-btn:focus {
+  outline: 2px solid rgba(255, 159, 26, 0.2);
   outline-offset: 2px;
 }
 
@@ -3178,9 +3221,19 @@ body.no-strawberries .strawberry-ring-wave {
   .footer-links {
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 0;
     width: 100%;
     text-align: center;
+  }
+
+  .footer-links > * + * {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(231, 236, 255, 0.16);
+    width: min(100%, 280px);
   }
 
   /* mobile: sidebar hidden, opened via burger in account-render.css */
@@ -3382,12 +3435,12 @@ body.no-strawberries .strawberry-ring-wave {
 /* Активация F12 только для десктопов */
 
 @media (max-height: 700px) and (min-width: 1024px) {
-  .auth-footer::before {
+  .cyb-dev-footer-strip::before {
     opacity: 1;
     animation: devModeScroll 14s linear infinite;
   }
 
-  .auth-footer::after {
+  .cyb-dev-footer-strip::after {
     height: 6px;
 
     background: linear-gradient(

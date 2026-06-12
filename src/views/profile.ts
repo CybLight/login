@@ -366,6 +366,7 @@ function buildProfileFooter(): string {
   const privacyUrl = sitePath('privacy', locale);
   return `
     <footer class="auth-footer">
+      <div class="cyb-dev-footer-strip" aria-hidden="true"></div>
       <div class="footer-row">
         <div class="footer-copy">
           <p class="footer-text" dir="ltr" lang="en">

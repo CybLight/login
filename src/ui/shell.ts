@@ -20,6 +20,7 @@ export function shell(contentHtml: string): string {
       </main>
 
       <footer class="auth-footer">
+        <div class="cyb-dev-footer-strip" aria-hidden="true"></div>
         <div class="footer-row">
           <div class="footer-copy">
           <p class="footer-text" dir="ltr" lang="en">
@@ -46,9 +47,12 @@ export function shell(contentHtml: string): string {
               ${t('Сообщить о проблеме')}
             </a>
 
+            <a class="hacked-btn" href="${contactAdminUrl}">
+              <img src="/assets/img/account-alert.svg" alt="" class="hacked-icon" aria-hidden="true" />
+              ${t('Взломали аккаунт?')}
+            </a>
             <a href="#" data-noop>${t('Условия использования')}</a>
             <a href="${privacyUrl}" target="_blank" rel="noopener">${t('Политика конфиденциальности')}</a>
-            <a href="${contactAdminUrl}">${t('Взломали аккаунт?')}</a>
             <a href="#" data-noop>${t('Настройки конфиденциальности')}</a>
           </div>
         </div>

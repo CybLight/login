@@ -3,6 +3,7 @@
  */
 
 import { t } from '@/i18n';
+import { Router } from '@/router/Router';
 import { apiCall, escapeHtml, formatPresenceLabel, hasPresenceData, isUserOnline } from '@/utils';
 import { setupAccessibleModal } from '@/utils/keyboard';
 import type { ApiOkResponse, FriendListItem } from '@/types';
@@ -112,7 +113,13 @@ export function openChatInMessagesTab(
       </div>
       <div class="chat-header">
         <div class="chat-header-main">
-          <div class="chat-header-title">💬 ${escapeHtml(friendUsername)}</div>
+          <button
+            type="button"
+            class="chat-header-title chat-header-title-btn"
+            id="chatHeaderProfileBtn"
+            data-username="${escapeHtml(friendUsername)}"
+            aria-label="${t('👤 Профиль')} ${escapeHtml(friendUsername)}"
+          >💬 ${escapeHtml(friendUsername)}</button>
           <div class="chat-header-presence" id="chatHeaderPresence" data-presence-user-id="${escapeHtml(friendId)}"></div>
         </div>
         <div id="chatPinnedBar" class="chat-pinned-bar is-hidden"></div>
@@ -152,6 +159,10 @@ export function openChatInMessagesTab(
       </div>
     </div>
   `;
+
+  document.getElementById('chatHeaderProfileBtn')?.addEventListener('click', () => {
+    if (friendUsername) Router.navigate(friendUsername);
+  });
 
   const chatBackBtn = document.getElementById('chatBackBtn') as HTMLButtonElement | null;
   const chatBackRow = document.getElementById('chatBackRow') as HTMLElement | null;

@@ -1,4 +1,5 @@
 import { t } from '@/i18n';
+import { Router } from '@/router/Router';
 import type { FriendListItem } from '@/types';
 import { apiCall, escapeHtml, formatPresenceLabel, isUserOnline } from '@/utils';
 import { getAvatarListHtml } from './avatar';
@@ -81,7 +82,13 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
               <button class="chat-card" data-action="open-chat" data-id="${escapeHtml(String(friend.id || ''))}" data-username="${escapeHtml(String(friend.username || ''))}" data-presence-user-id="${escapeHtml(String(friend.id || ''))}" type="button" aria-label="${escapeHtml(String(friend.username || 'Unknown'))} ${escapeHtml(formatPresenceLabel(friend))}">
                 <div class="chat-avatar">${avatarHtml(friend)}</div>
                 <div class="chat-info">
-                  <div class="chat-username">${escapeHtml(String(friend.username || 'Unknown'))}</div>
+                  <button
+                    class="chat-username chat-username-link"
+                    data-action="profile"
+                    data-username="${escapeHtml(String(friend.username || ''))}"
+                    type="button"
+                    aria-label="${t('👤 Профиль')} ${escapeHtml(String(friend.username || 'Unknown'))}"
+                  >${escapeHtml(String(friend.username || 'Unknown'))}</button>
                   ${chatPreviewHtml(friend)}
                 </div>
                 <div class="chat-unread-badge is-hidden" data-unread-badge="${escapeHtml(String(friend.id || ''))}"></div>
@@ -95,6 +102,15 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
 
     container.addEventListener('click', (event) => {
       const target = event.target as HTMLElement | null;
+      const profileButton = target?.closest('[data-action="profile"]') as HTMLElement | null;
+      if (profileButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        const username = profileButton.getAttribute('data-username') || '';
+        if (username) Router.navigate(username);
+        return;
+      }
+
       const chatButton = target?.closest('[data-action="open-chat"]') as HTMLElement | null;
       if (!chatButton) return;
 
