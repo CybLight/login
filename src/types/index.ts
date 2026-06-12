@@ -220,6 +220,8 @@ export interface UserEasterFlags {
   lightCatcher?: boolean;
   light_catcher?: boolean;
   postmaster?: boolean;
+  developerMode?: boolean;
+  developer_mode?: boolean;
 }
 
 export interface EasterLoginPayload {

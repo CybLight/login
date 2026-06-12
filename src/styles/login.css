@@ -3448,6 +3448,16 @@ html.dev-footer-pinned body {
   padding-bottom: var(--dev-footer-height, 0px);
 }
 
+html.dev-footer-pinned .cyb-dev-footer-strip {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+html.dev-footer-pinned .footer-row {
+  position: relative;
+  z-index: 7;
+}
+
 html.dev-footer-pinned .cyb-dev-footer-strip::before {
   opacity: 1;
   animation: devModeScroll 14s linear infinite;
@@ -3883,6 +3893,105 @@ html.dev-footer-pinned .cyb-dev-footer-strip::after {
 }
 
 .postmaster-modal__btn:hover {
+  filter: brightness(1.05);
+}
+
+@keyframes devStripPulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.35);
+  }
+}
+
+html.dev-footer-pinned .cyb-dev-footer-strip--found::before {
+  animation:
+    devModeScroll 14s linear infinite,
+    devStripPulse 0.65s ease-in-out 2;
+}
+
+/* Developer Mode easter egg modal */
+.developer-mode-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(5, 8, 18, 0.72);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+
+.developer-mode-overlay.is-visible {
+  opacity: 1;
+}
+
+.developer-mode-modal {
+  position: relative;
+  width: min(100%, 420px);
+  padding: 28px 24px 24px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #1a2238 0%, #12182b 100%);
+  border: 1px solid rgba(34, 240, 230, 0.22);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.45),
+    0 0 32px rgba(34, 240, 230, 0.12);
+  text-align: center;
+  transform: translateY(8px) scale(0.98);
+  transition: transform 0.28s ease;
+}
+
+.developer-mode-overlay.is-visible .developer-mode-modal {
+  transform: translateY(0) scale(1);
+}
+
+.developer-mode-modal__glow {
+  position: absolute;
+  inset: -40% auto auto 50%;
+  width: 220px;
+  height: 220px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34, 240, 230, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.developer-mode-modal__icon {
+  font-size: 2.4rem;
+  margin-bottom: 10px;
+}
+
+.developer-mode-modal__title {
+  margin: 0 0 12px;
+  font-size: 1.35rem;
+  color: #e7ecff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.developer-mode-modal__text {
+  margin: 0 0 20px;
+  color: rgba(231, 236, 255, 0.78);
+  line-height: 1.55;
+  font-size: 0.95rem;
+}
+
+.developer-mode-modal__btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 11px 22px;
+  background: linear-gradient(180deg, #22f0e6 0%, #0ea5a0 100%);
+  color: #041018;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.developer-mode-modal__btn:hover {
   filter: brightness(1.05);
 }
 

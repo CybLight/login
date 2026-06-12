@@ -10,6 +10,7 @@ import {
   PROFILE_MIRROR_KEY,
   LIGHT_CATCHER_KEY,
   POSTMASTER_KEY,
+  DEVELOPER_MODE_KEY,
 } from '@/config/constants';
 
 type ResolvedEasterFlags = {
@@ -18,6 +19,7 @@ type ResolvedEasterFlags = {
   profileMirror?: boolean;
   lightCatcher?: boolean;
   postmaster?: boolean;
+  developerMode?: boolean;
 };
 
 const EASTER_SYNC_TARGETS = [
@@ -41,6 +43,11 @@ const EASTER_SYNC_TARGETS = [
     storageKey: POSTMASTER_KEY,
     flag: 'postmaster' as const,
     endpoint: '/auth/easter/postmaster',
+  },
+  {
+    storageKey: DEVELOPER_MODE_KEY,
+    flag: 'developerMode' as const,
+    endpoint: '/auth/easter/developer-mode',
   },
 ] as const;
 
@@ -74,6 +81,12 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
         : undefined;
   const postmasterFromEaster =
     typeof easter?.postmaster === 'boolean' ? easter.postmaster : undefined;
+  const developerModeFromEaster =
+    typeof easter?.developerMode === 'boolean'
+      ? easter.developerMode
+      : typeof easter?.developer_mode === 'boolean'
+        ? easter.developer_mode
+        : undefined;
 
   const strawberryFromFlags =
     flags.includes('strawberry') ||
@@ -95,6 +108,10 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
     flags.includes('postmaster') ||
     flags.includes('postmaster_unlocked') ||
     flags.includes('easter_postmaster');
+  const developerModeFromFlags =
+    flags.includes('developer_mode') ||
+    flags.includes('developer_mode_unlocked') ||
+    flags.includes('easter_developer_mode');
 
   return {
     strawberry: strawberryFromEaster ?? (strawberryFromFlags ? true : undefined),
@@ -102,6 +119,7 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
     profileMirror: profileMirrorFromEaster ?? (profileMirrorFromFlags ? true : undefined),
     lightCatcher: lightCatcherFromEaster ?? (lightCatcherFromFlags ? true : undefined),
     postmaster: postmasterFromEaster ?? (postmasterFromFlags ? true : undefined),
+    developerMode: developerModeFromEaster ?? (developerModeFromFlags ? true : undefined),
   };
 }
 
@@ -124,6 +142,10 @@ function pullEasterFlagsToStorage(source: ResolvedEasterFlags): void {
 
   if (source.postmaster === true) {
     localStorage.setItem(POSTMASTER_KEY, '1');
+  }
+
+  if (source.developerMode === true) {
+    localStorage.setItem(DEVELOPER_MODE_KEY, '1');
   }
 }
 

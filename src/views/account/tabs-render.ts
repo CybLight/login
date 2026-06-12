@@ -768,6 +768,9 @@ function renderEasterTab(user: User): string {
   const hasPostmaster =
     localStorage.getItem("cyb_postmaster_unlocked") === "1" ||
     !!user.easter?.postmaster;
+  const hasDeveloperMode =
+    localStorage.getItem("cyb_developer_mode_unlocked") === "1" ||
+    !!user.easter?.developerMode;
 
   console.log(
     "[EASTER] hasStrawberry:",
@@ -780,6 +783,8 @@ function renderEasterTab(user: User): string {
     hasLightCatcher,
     "hasPostmaster:",
     hasPostmaster,
+    "hasDeveloperMode:",
+    hasDeveloperMode,
     "user.easter:",
     user.easter,
   );
@@ -809,7 +814,7 @@ function renderEasterTab(user: User): string {
       </h3>
 
       <div class="easter-grid">
-        <div class="easter-card ${hasStrawberry ? "" : "locked"}">
+        <div class="easter-card easter-card--strawberry ${hasStrawberry ? "" : "locked"}">
           ${
             hasStrawberry
               ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
@@ -843,7 +848,7 @@ function renderEasterTab(user: User): string {
           ${hasStrawberry ? `<div class="easter-hint">${t('🎊 Поздравляем с находкой!')}</div>` : ""}
         </div>
 
-        <div class="easter-card ${hasProfileMirror ? "" : "locked"}">
+        <div class="easter-card easter-card--profile-mirror ${hasProfileMirror ? "" : "locked"}">
           ${
             hasProfileMirror
               ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
@@ -883,7 +888,7 @@ function renderEasterTab(user: User): string {
       </h3>
 
       <div class="easter-grid">
-        <div class="easter-card ${hasLightCatcher ? "" : "locked"}">
+        <div class="easter-card easter-card--light-catcher ${hasLightCatcher ? "" : "locked"}">
           ${
             hasLightCatcher
               ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
@@ -915,7 +920,7 @@ function renderEasterTab(user: User): string {
       </h3>
 
       <div class="easter-grid">
-        <div class="easter-card ${hasDarkTrigger ? "easter-card-rare" : "locked"}">
+        <div class="easter-card easter-card--dark-trigger ${hasDarkTrigger ? "" : "locked"}">
           ${
             hasDarkTrigger
               ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
@@ -952,7 +957,7 @@ function renderEasterTab(user: User): string {
           }
         </div>
 
-        <div class="easter-card ${hasPostmaster ? "easter-card-rare" : "locked"}">
+        <div class="easter-card easter-card--postmaster ${hasPostmaster ? "" : "locked"}">
           ${
             hasPostmaster
               ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
@@ -973,6 +978,30 @@ function renderEasterTab(user: User): string {
             hasPostmaster
               ? `<div class="easter-hint">${t('🎊 Секрет из ящика входящих пойман!')}</div>`
               : `<div class="easter-hint">${t('💡 Подсказка: загляни в письмо о восстановлении пароля...')}</div>`
+          }
+        </div>
+
+        <div class="easter-card easter-card--developer-mode ${hasDeveloperMode ? "" : "locked"}">
+          ${
+            hasDeveloperMode
+              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+          }
+          <span class="easter-card-icon">🛠️</span>
+          <div class="easter-card-title">
+            Developer Mode
+          </div>
+          <div class="easter-card-desc">
+            ${
+              hasDeveloperMode
+                ? t('Ты открыл DevTools и поймал бегущую строку в футере')
+                : t('Редкий секрет для самых внимательных')
+            }
+          </div>
+          ${
+            hasDeveloperMode
+              ? `<div class="easter-hint">${t('🎊 console.log("found") — секрет под капотом!')}</div>`
+              : `<div class="easter-hint">${t('💡 Подсказка: Загляни под капот сайта')}</div>`
           }
         </div>
       </div>

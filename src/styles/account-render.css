@@ -1229,6 +1229,140 @@
   opacity: 0.7;
 }
 
+/* Уникальные цвета карточек пасхалок (как в Android-приложении) */
+.easter-card[class*="easter-card--"] {
+  background: var(--easter-bg);
+  border-color: var(--easter-border);
+  box-shadow: none;
+  animation: none;
+}
+
+.easter-card[class*="easter-card--"]::before {
+  background: radial-gradient(
+    circle at top-right,
+    var(--easter-glow) 0%,
+    transparent 72%
+  );
+}
+
+.easter-card[class*="easter-card--"]::after {
+  display: none;
+}
+
+.easter-card[class*="easter-card--"]:hover {
+  background: var(--easter-bg-hover);
+  border-color: var(--easter-border-hover);
+  transform: translateY(-2px);
+}
+
+.easter-card[class*="easter-card--"].locked {
+  background: var(--easter-bg-locked);
+  border-color: var(--easter-border-locked);
+}
+
+.easter-card[class*="easter-card--"] .easter-card-title {
+  color: var(--easter-text);
+}
+
+.easter-card[class*="easter-card--"] .easter-card-desc,
+.easter-card[class*="easter-card--"] .easter-hint {
+  color: var(--easter-text-muted);
+  opacity: 1;
+}
+
+.easter-card[class*="easter-card--"].locked .easter-card-title {
+  color: var(--easter-text-locked);
+}
+
+.easter-card[class*="easter-card--"].locked .easter-card-desc,
+.easter-card[class*="easter-card--"].locked .easter-hint {
+  color: var(--easter-text-muted-locked);
+}
+
+.easter-card--strawberry {
+  --easter-bg: #5a1f2b;
+  --easter-bg-hover: #6d2734;
+  --easter-bg-locked: #302226;
+  --easter-text: #ff8a9b;
+  --easter-text-muted: rgba(255, 138, 155, 0.82);
+  --easter-text-locked: #b09098;
+  --easter-text-muted-locked: rgba(176, 144, 152, 0.78);
+  --easter-border: rgba(255, 138, 155, 0.35);
+  --easter-border-hover: rgba(255, 138, 155, 0.5);
+  --easter-border-locked: rgba(176, 144, 152, 0.22);
+  --easter-glow: rgba(255, 138, 155, 0.16);
+}
+
+.easter-card--profile-mirror {
+  --easter-bg: #1a3558;
+  --easter-bg-hover: #204068;
+  --easter-bg-locked: #222b38;
+  --easter-text: #90caf9;
+  --easter-text-muted: rgba(144, 202, 249, 0.82);
+  --easter-text-locked: #93a4b8;
+  --easter-text-muted-locked: rgba(147, 164, 184, 0.78);
+  --easter-border: rgba(144, 202, 249, 0.35);
+  --easter-border-hover: rgba(144, 202, 249, 0.5);
+  --easter-border-locked: rgba(147, 164, 184, 0.22);
+  --easter-glow: rgba(144, 202, 249, 0.16);
+}
+
+.easter-card--light-catcher {
+  --easter-bg: #4a3b12;
+  --easter-bg-hover: #574615;
+  --easter-bg-locked: #2b261c;
+  --easter-text: #ffe082;
+  --easter-text-muted: rgba(255, 224, 130, 0.82);
+  --easter-text-locked: #b0a48a;
+  --easter-text-muted-locked: rgba(176, 164, 138, 0.78);
+  --easter-border: rgba(255, 224, 130, 0.35);
+  --easter-border-hover: rgba(255, 224, 130, 0.5);
+  --easter-border-locked: rgba(176, 164, 138, 0.22);
+  --easter-glow: rgba(255, 224, 130, 0.16);
+}
+
+.easter-card--dark-trigger {
+  --easter-bg: #352452;
+  --easter-bg-hover: #402c61;
+  --easter-bg-locked: #262230;
+  --easter-text: #ce93d8;
+  --easter-text-muted: rgba(206, 147, 216, 0.82);
+  --easter-text-locked: #9e95ab;
+  --easter-text-muted-locked: rgba(158, 149, 171, 0.78);
+  --easter-border: rgba(206, 147, 216, 0.35);
+  --easter-border-hover: rgba(206, 147, 216, 0.5);
+  --easter-border-locked: rgba(158, 149, 171, 0.22);
+  --easter-glow: rgba(206, 147, 216, 0.16);
+}
+
+.easter-card--postmaster {
+  --easter-bg: #1a4540;
+  --easter-bg-hover: #20524c;
+  --easter-bg-locked: #222e2c;
+  --easter-text: #80cbc4;
+  --easter-text-muted: rgba(128, 203, 196, 0.82);
+  --easter-text-locked: #90a8a4;
+  --easter-text-muted-locked: rgba(144, 168, 164, 0.78);
+  --easter-border: rgba(128, 203, 196, 0.35);
+  --easter-border-hover: rgba(128, 203, 196, 0.5);
+  --easter-border-locked: rgba(144, 168, 164, 0.22);
+  --easter-glow: rgba(128, 203, 196, 0.16);
+}
+
+.easter-card--developer-mode {
+  --easter-bg: #4a3318;
+  --easter-bg-hover: #573d1d;
+  --easter-bg-locked: #2e2a22;
+  --easter-text: #ffcc80;
+  --easter-text-muted: rgba(255, 204, 128, 0.82);
+  --easter-text-locked: #b0a090;
+  --easter-text-muted-locked: rgba(176, 160, 144, 0.78);
+  --easter-border: rgba(255, 204, 128, 0.35);
+  --easter-border-hover: rgba(255, 204, 128, 0.5);
+  --easter-border-locked: rgba(176, 160, 144, 0.22);
+  --easter-glow: rgba(255, 204, 128, 0.16);
+}
+
 .easter-card-icon {
   font-size: 48px;
   margin-bottom: 12px;

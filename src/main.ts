@@ -13,6 +13,7 @@ import { initDevFooterPin, initErrorHandlers, logger } from '@/utils';
 import { authService } from '@/services';
 import { NotificationManager } from '@/components/notification/NotificationManager';
 import { initStrawberryBackground } from '@/components/strawberry';
+import { initDeveloperModeEaster } from '@/components/easter/developer-mode';
 import { initReportModalTriggers } from '@/ui/report-modal';
 
 // Import all views
@@ -155,6 +156,7 @@ export async function initApp(): Promise<void> {
   logger.info('Router initialized');
 
   initDevFooterPin();
+  initDeveloperModeEaster();
 
   // Initialize strawberry background
   initStrawberryBackground();
