@@ -6,6 +6,7 @@ import { Router } from '@/router/Router';
 import { apiCall, getStorage, setStorage } from '@/utils';
 import { POSTMASTER_KEY } from '@/config/constants';
 import { t } from '@/i18n';
+import { setAppContent, shell } from '@/ui';
 
 export function hasPostmasterAccess(): boolean {
   return getStorage(POSTMASTER_KEY) === '1';
@@ -92,32 +93,36 @@ export async function unlockPostmasterEaster(): Promise<boolean> {
 }
 
 export async function renderPostmaster(): Promise<void> {
-  const root = document.getElementById('app');
-  if (!root) return;
-
-  root.innerHTML = `
-    <div class="auth-shell">
-      <div class="auth-card">
+  setAppContent(
+    shell(`
+      <section class="auth-card">
         <div class="loading-spinner loading-spinner--centered">
           <div class="spinner loading-spinner__icon"></div>
           <p class="loading-spinner__text">${t('Проверяем секрет...')}</p>
         </div>
-      </div>
-    </div>
-  `;
+      </section>
+    `)
+  );
 
   const ok = await unlockPostmasterEaster();
 
   if (!ok) {
-    root.innerHTML = `
-      <div class="auth-shell">
-        <div class="auth-card">
-          <h1>${t('Postmaster')}</h1>
+    setAppContent(
+      shell(`
+        <section class="auth-card">
+          <div class="auth-head">
+            <div class="brand-logo">
+              <img src="/assets/img/logo.svg" alt="CybLight" />
+            </div>
+            <div class="auth-title">
+              <h1>${t('Postmaster')}</h1>
+            </div>
+          </div>
           <p>${t('Войди в аккаунт, чтобы сохранить эту пасхалку.')}</p>
           <button type="button" class="btn btn-primary" id="postmasterLoginBtn">${t('Войти')}</button>
-        </div>
-      </div>
-    `;
+        </section>
+      `)
+    );
     document.getElementById('postmasterLoginBtn')?.addEventListener('click', () => {
       Router.navigate('password');
     });
