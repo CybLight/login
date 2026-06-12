@@ -879,7 +879,7 @@ function renderEasterTab(user: User): string {
             ${
               hasLightCatcher
                 ? t('Ты поймал свет в приложении CybLight! Быстрые пальцы ⚡')
-                : t('Семь касаний версии в приложении — и свет откроет мини-игру')
+                : t('Свет спрятан в мобильном приложении CybLight')
             }
           </div>
           ${
