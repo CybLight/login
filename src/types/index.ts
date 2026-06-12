@@ -15,6 +15,7 @@ export interface User {
   twoFactorEnabled: boolean;
   createdAt: string;
   updatedAt: string;
+  easter?: UserEasterFlags;
 }
 
 export interface UserProfile {
@@ -216,6 +217,8 @@ export interface UserEasterFlags {
   dark_trigger?: boolean;
   profileMirror?: boolean;
   profile_mirror?: boolean;
+  lightCatcher?: boolean;
+  light_catcher?: boolean;
 }
 
 export interface EasterLoginPayload {

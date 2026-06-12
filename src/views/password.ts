@@ -7,7 +7,12 @@ import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import type { EasterLoginPayload } from '@/types';
 import { getStorage, setStorage, escapeHtml, apiCall } from '@/utils';
-import { EASTER_KEY, DARK_TRIGGER_KEY, PROFILE_MIRROR_KEY } from '@/config/constants';
+import {
+  EASTER_KEY,
+  DARK_TRIGGER_KEY,
+  PROFILE_MIRROR_KEY,
+  LIGHT_CATCHER_KEY,
+} from '@/config/constants';
 import { captchaService } from '@/services';
 import { initPasswordEyes, shakeElement } from '@/components/password/password-helpers';
 
@@ -15,6 +20,7 @@ function extractEasterFlags(payload: EasterLoginPayload): {
   strawberry?: boolean;
   darkTrigger?: boolean;
   profileMirror?: boolean;
+  lightCatcher?: boolean;
 } {
   const easter = payload?.easter ?? payload?.user?.easter;
   const flags = Array.isArray(payload?.flags)
@@ -37,6 +43,12 @@ function extractEasterFlags(payload: EasterLoginPayload): {
       : typeof easter?.profile_mirror === 'boolean'
         ? easter.profile_mirror
         : undefined;
+  const lightCatcherFromEaster =
+    typeof easter?.lightCatcher === 'boolean'
+      ? easter.lightCatcher
+      : typeof easter?.light_catcher === 'boolean'
+        ? easter.light_catcher
+        : undefined;
 
   const strawberryFromFlags =
     flags.includes('strawberry') ||
@@ -50,11 +62,16 @@ function extractEasterFlags(payload: EasterLoginPayload): {
     flags.includes('profile_mirror') ||
     flags.includes('profile_mirror_unlocked') ||
     flags.includes('easter_profile_mirror');
+  const lightCatcherFromFlags =
+    flags.includes('light_catcher') ||
+    flags.includes('light_catcher_unlocked') ||
+    flags.includes('easter_light_catcher');
 
   return {
     strawberry: strawberryFromEaster ?? (strawberryFromFlags ? true : undefined),
     darkTrigger: darkTriggerFromEaster ?? (darkTriggerFromFlags ? true : undefined),
     profileMirror: profileMirrorFromEaster ?? (profileMirrorFromFlags ? true : undefined),
+    lightCatcher: lightCatcherFromEaster ?? (lightCatcherFromFlags ? true : undefined),
   };
 }
 
@@ -62,6 +79,7 @@ function syncEasterFlagsToStorage(source: {
   strawberry?: boolean;
   darkTrigger?: boolean;
   profileMirror?: boolean;
+  lightCatcher?: boolean;
 }): void {
   if (source.strawberry === true) {
     localStorage.setItem(EASTER_KEY, '1');
@@ -73,6 +91,10 @@ function syncEasterFlagsToStorage(source: {
 
   if (source.profileMirror === true) {
     localStorage.setItem(PROFILE_MIRROR_KEY, '1');
+  }
+
+  if (source.lightCatcher === true) {
+    localStorage.setItem(LIGHT_CATCHER_KEY, '1');
   }
 }
 

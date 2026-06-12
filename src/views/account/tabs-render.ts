@@ -762,6 +762,9 @@ function renderEasterTab(user: User): string {
   const hasProfileMirror =
     localStorage.getItem("cyb_profile_mirror_unlocked") === "1" ||
     !!user.easter?.profileMirror;
+  const hasLightCatcher =
+    localStorage.getItem("cyb_light_catcher_unlocked") === "1" ||
+    !!user.easter?.lightCatcher;
 
   console.log(
     "[EASTER] hasStrawberry:",
@@ -770,6 +773,8 @@ function renderEasterTab(user: User): string {
     hasDarkTrigger,
     "hasProfileMirror:",
     hasProfileMirror,
+    "hasLightCatcher:",
+    hasLightCatcher,
     "user.easter:",
     user.easter,
   );
@@ -777,7 +782,7 @@ function renderEasterTab(user: User): string {
   return `
     <div>
       <div class="easter-intro">
-        ${t('🎯 Пасхалки открываются, когда ты находишь секреты на сайте')}
+        ${t('🎯 Пасхалки открываются, когда ты находишь секреты на сайте и в приложении')}
       </div>
 
       <h3 class="easter-section-title">
@@ -851,6 +856,37 @@ function renderEasterTab(user: User): string {
               : `<div class="easter-hint">${t('💡 Подсказка: загляни в свой профиль и посмотри на себя чаще...')}</div>`
           }
           ${hasProfileMirror ? `<div class="easter-hint">${t('🎊 Ты заглянул в своё отражение!')}</div>` : ""}
+        </div>
+      </div>
+
+      <h3 class="easter-section-title">
+        <span>📱</span>
+        <span>${t('Мобильные пасхалки')}</span>
+      </h3>
+
+      <div class="easter-grid">
+        <div class="easter-card ${hasLightCatcher ? "" : "locked"}">
+          ${
+            hasLightCatcher
+              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+          }
+          <span class="easter-card-icon">💡</span>
+          <div class="easter-card-title">
+            ${t('Ловец света')}
+          </div>
+          <div class="easter-card-desc">
+            ${
+              hasLightCatcher
+                ? t('Ты поймал свет в приложении CybLight! Быстрые пальцы ⚡')
+                : t('Семь касаний версии в приложении — и свет откроет мини-игру')
+            }
+          </div>
+          ${
+            hasLightCatcher
+              ? `<div class="easter-hint">${t('🎊 Свет пойман — секрет сохранён!')}</div>`
+              : `<div class="easter-hint">${t('💡 Подсказка: проверь на прочность версию Android приложения')}</div>`
+          }
         </div>
       </div>
 
