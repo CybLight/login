@@ -7,6 +7,7 @@ import {
 } from '@privacyresearch/libsignal-protocol-typescript';
 import { apiCall } from '@/utils';
 import { ensureLibsignalInitialized } from './libsignal-init';
+import { generateKyberPreKeyForUpload, type KyberPreKeyUpload } from './kyber-prekey';
 import { SignalProtocolStore } from './store';
 import {
   arrayBufferToBase64,
@@ -119,6 +120,7 @@ async function uploadKeyRegistration(
   registrationId: number,
   identityKeyPair: Awaited<ReturnType<typeof KeyHelper.generateIdentityKeyPair>>,
   signedPreKey: Awaited<ReturnType<typeof KeyHelper.generateSignedPreKey>>,
+  kyberPreKey: KyberPreKeyUpload,
   oneTimePreKeys: Array<{ keyId: number; publicKey: string }>,
 ): Promise<void> {
   const response = await apiCall('/crypto/keys/register', {
@@ -133,6 +135,7 @@ async function uploadKeyRegistration(
         publicKey: arrayBufferToBase64(signedPreKey.keyPair.pubKey),
         signature: arrayBufferToBase64(signedPreKey.signature),
       },
+      kyberPreKey,
       oneTimePreKeys,
     }),
   });
@@ -172,6 +175,34 @@ async function generateOneTimePreKeyBatch(
   return out;
 }
 
+async function publishRegistrationKeys(store: SignalProtocolStore): Promise<void> {
+  const registrationId = await store.getLocalRegistrationId();
+  const identityKeyPair = await store.getIdentityKeyPair();
+  if (!registrationId || !identityKeyPair) {
+    throw new Error('local_keys_missing');
+  }
+
+  const signedPreKeyId = makeKeyId();
+  const signedPreKey = await KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId);
+  await store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
+
+  const kyberPreKeyId = makeKeyId();
+  const { upload: kyberPreKey, record: kyberRecord } = await generateKyberPreKeyForUpload(
+    identityKeyPair,
+    kyberPreKeyId,
+  );
+  await store.storeKyberPreKey(kyberPreKeyId, kyberRecord);
+
+  const oneTimePreKeys = await generateOneTimePreKeyBatch(store, ONE_TIME_PREKEY_BATCH);
+  await uploadKeyRegistration(
+    registrationId,
+    identityKeyPair,
+    signedPreKey,
+    kyberPreKey,
+    oneTimePreKeys,
+  );
+}
+
 export async function ensureSignalKeysRegistered(userId: string): Promise<void> {
   await ensureLibsignalReady();
   const store = getStore(userId);
@@ -186,6 +217,11 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
   const localIdentity = await store.getIdentityKeyPair();
 
   if (status.registered && localRegistrationId && localIdentity) {
+    if (!(await store.hasKyberPreKey())) {
+      await publishRegistrationKeys(store);
+      return;
+    }
+
     const unused = Number(status.unusedOneTimePreKeys || 0);
     if (unused < REPLENISH_THRESHOLD) {
       const batch = await generateOneTimePreKeyBatch(store, ONE_TIME_PREKEY_BATCH);
@@ -194,16 +230,16 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
     return;
   }
 
+  if (localRegistrationId && localIdentity) {
+    await publishRegistrationKeys(store);
+    return;
+  }
+
   const registrationId = KeyHelper.generateRegistrationId();
   const identityKeyPair = await KeyHelper.generateIdentityKeyPair();
   await store.writeIdentityMeta(registrationId, identityKeyPair);
 
-  const signedPreKeyId = makeKeyId();
-  const signedPreKey = await KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId);
-  await store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
-
-  const oneTimePreKeys = await generateOneTimePreKeyBatch(store, ONE_TIME_PREKEY_BATCH);
-  await uploadKeyRegistration(registrationId, identityKeyPair, signedPreKey, oneTimePreKeys);
+  await publishRegistrationKeys(store);
 }
 
 function binaryBodyToBase64(body: string | ArrayBuffer): string {

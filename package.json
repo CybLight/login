@@ -11,6 +11,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@noble/post-quantum": "^0.6.1",
     "@privacyresearch/curve25519-typescript": "^0.0.12",
     "@privacyresearch/libsignal-protocol-typescript": "^0.0.16",
     "minimatch": "^9.0.9",

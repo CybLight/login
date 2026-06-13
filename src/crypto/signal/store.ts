@@ -1,6 +1,7 @@
 import type { Direction, KeyPairType, SessionRecordType, StorageType } from '@privacyresearch/libsignal-protocol-typescript';
 import { SignalProtocolAddress } from '@privacyresearch/libsignal-protocol-typescript';
 import { deserializeStoreValue, serializeStoreValue } from './buffer';
+import type { KyberPreKeyRecord } from './kyber-prekey';
 
 const DB_NAME = 'cyblight-signal-store';
 const DB_VERSION = 1;
@@ -166,6 +167,30 @@ export class SignalProtocolStore implements StorageType {
 
   async storeSignedPreKey(keyId: number | string, keyPair: KeyPairType): Promise<void> {
     await this.write(`25519KeysignedKey${keyId}`, keyPair);
+  }
+
+  async loadKyberPreKey(keyId: number | string): Promise<KyberPreKeyRecord | undefined> {
+    const res = await this.read(`kyberPreKey${keyId}`);
+    if (res && typeof res === 'object' && 'serializedPublic' in (res as KyberPreKeyRecord)) {
+      return res as KyberPreKeyRecord;
+    }
+    return undefined;
+  }
+
+  async storeKyberPreKey(keyId: number | string, record: KyberPreKeyRecord): Promise<void> {
+    await this.write(`kyberPreKey${keyId}`, record);
+    await this.write('latestKyberPreKeyId', keyId);
+  }
+
+  async getLatestKyberPreKeyId(): Promise<number | undefined> {
+    const keyId = await this.read('latestKyberPreKeyId');
+    return typeof keyId === 'number' ? keyId : undefined;
+  }
+
+  async hasKyberPreKey(): Promise<boolean> {
+    const keyId = await this.getLatestKyberPreKeyId();
+    if (keyId === undefined) return false;
+    return !!(await this.loadKyberPreKey(keyId));
   }
 
   async removeSignedPreKey(keyId: number | string): Promise<void> {
