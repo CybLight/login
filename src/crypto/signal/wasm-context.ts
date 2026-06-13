@@ -164,6 +164,15 @@ export async function loadWasmContext(userId: string): Promise<WasmSignalContext
     await sessionStore.import_session(address, toUint8Array(base64ToArrayBuffer(raw)));
   }
 
+  if (manifest.latestSignedPreKeyId !== undefined) {
+    const signed = await signedPreKeyStore.export_signed_pre_key(manifest.latestSignedPreKeyId);
+    if (!signed) return null;
+  }
+  if (manifest.latestKyberPreKeyId !== undefined) {
+    const kyber = await kyberPreKeyStore.export_kyber_pre_key(manifest.latestKyberPreKeyId);
+    if (!kyber) return null;
+  }
+
   return {
     userId,
     registrationId: manifest.registrationId,

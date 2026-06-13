@@ -130,11 +130,14 @@ export function createChatCore(deps: ChatCoreDeps) {
         userId,
         list.map((message: Record<string, unknown>) => ({
           ...message,
+          id: String(message.id || ''),
           content: String(message.content || ''),
           senderId: String(message.senderId || message.sender_id || ''),
           encryption: (message.encryption as string | null | undefined) ?? 'plaintext',
           signalType: (message.signalType as number | null | undefined) ?? null,
           registrationId: (message.registrationId as number | null | undefined) ?? null,
+          createdAt:
+            Number(message.createdAt ?? message.created_at ?? 0) || null,
         })),
       );
 
@@ -142,6 +145,7 @@ export function createChatCore(deps: ChatCoreDeps) {
       if (pinnedPayload?.messageId) {
         try {
           pinnedText = await decryptIncomingMessage(userId, {
+            id: String(pinnedPayload.messageId || pinnedPayload.message_id || ''),
             content: String(pinnedPayload.content || ''),
             senderId: String(pinnedPayload.senderId || pinnedPayload.sender_id || ''),
             encryption: String(pinnedPayload.encryption || 'plaintext'),
@@ -149,6 +153,8 @@ export function createChatCore(deps: ChatCoreDeps) {
             registrationId:
               Number(pinnedPayload.registrationId ?? pinnedPayload.signal_registration_id ?? 0) ||
               null,
+            createdAt:
+              Number(pinnedPayload.createdAt ?? pinnedPayload.created_at ?? 0) || null,
           });
         } catch {
           pinnedText = '🔒 Закреплённое сообщение';

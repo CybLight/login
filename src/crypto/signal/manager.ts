@@ -30,6 +30,7 @@ import {
   trackSignedPreKey,
   type WasmSignalContext,
 } from './wasm-context';
+import { readDecryptCache, writeDecryptCache } from './decrypt-cache';
 
 const ONE_TIME_PREKEY_BATCH = 100;
 const REPLENISH_THRESHOLD = 20;
@@ -42,11 +43,13 @@ export type EncryptedMessagePayload = {
 };
 
 export type WireMessage = {
+  id?: string;
   content: string;
   encryption?: string | null;
   signalType?: number | null;
   registrationId?: number | null;
   senderId: string;
+  createdAt?: number | null;
 };
 
 type KeyBundleResponse = {
@@ -167,6 +170,9 @@ async function generateOneTimePreKeyBatch(
 ): Promise<Array<{ keyId: number; publicKey: string }>> {
   const startId = makeKeyId();
   const records = await generatePreKeys(startId, count, ctx.preKeyStore);
+  if (records.length > 0) {
+    nextPreKeyId = Math.max(nextPreKeyId, records[records.length - 1].id);
+  }
   const out: Array<{ keyId: number; publicKey: string }> = [];
   for (const record of records) {
     trackPreKey(ctx, record.id);
@@ -336,6 +342,13 @@ export async function decryptIncomingMessage(userId: string, message: WireMessag
     return message.content;
   }
 
+  if (message.id) {
+    const cached = await readDecryptCache(userId, message.id);
+    if (cached !== null) {
+      return cached;
+    }
+  }
+
   await ensureSignalKeysRegistered(userId);
   const ctx = await requireContext(userId);
   const sender = peerAddress(message.senderId);
@@ -346,37 +359,70 @@ export async function decryptIncomingMessage(userId: string, message: WireMessag
     throw new Error('unsupported_signal_type');
   }
 
-  const plaintext = await decryptMessage(
-    body,
-    signalType,
-    sender,
-    ctx.localAddress,
-    ctx.sessionStore,
-    ctx.identityStore,
-    ctx.preKeyStore,
-    ctx.signedPreKeyStore,
-    ctx.kyberPreKeyStore,
-  );
+  let plaintext: Uint8Array;
+  try {
+    plaintext = await decryptMessage(
+      body,
+      signalType,
+      sender,
+      ctx.localAddress,
+      ctx.sessionStore,
+      ctx.identityStore,
+      ctx.preKeyStore,
+      ctx.signedPreKeyStore,
+      ctx.kyberPreKeyStore,
+    );
+  } catch (error) {
+    const hasSession = await ctx.sessionStore.has_session(sender);
+    console.error('[Signal] decrypt failed:', {
+      error,
+      signalType,
+      hasSession,
+      senderId: message.senderId,
+      messageId: message.id ?? null,
+    });
+    throw error;
+  }
 
   await trackSession(ctx, sender);
   await persistWasmContext(ctx);
 
-  return arrayBufferToUtf8(bytesToArrayBuffer(plaintext));
+  const text = arrayBufferToUtf8(bytesToArrayBuffer(plaintext));
+  if (message.id) {
+    await writeDecryptCache(userId, message.id, text);
+  }
+  return text;
+}
+
+function messageSortKey(message: WireMessage): number {
+  const raw = Number(message.createdAt ?? 0);
+  if (!Number.isFinite(raw) || raw <= 0) return 0;
+  return raw > 10_000_000_000 ? raw : raw * 1000;
 }
 
 export async function decryptMessageList<T extends WireMessage>(
   userId: string,
   messages: T[],
 ): Promise<Array<T & { content: string }>> {
-  const out: Array<T & { content: string }> = [];
-  for (const message of messages) {
+  const decryptOrder = [...messages].sort((a, b) => messageSortKey(a) - messageSortKey(b));
+  const decryptedById = new Map<string, string>();
+
+  for (const message of decryptOrder) {
+    const key = message.id ?? `${message.senderId}:${message.content}`;
+    if (decryptedById.has(key)) continue;
     try {
       const content = await decryptIncomingMessage(userId, message);
-      out.push({ ...message, content });
-    } catch (error) {
-      console.error('[Signal] decrypt failed:', error);
-      out.push({ ...message, content: '🔒 Не удалось расшифровать сообщение' });
+      decryptedById.set(key, content);
+    } catch {
+      decryptedById.set(key, '🔒 Не удалось расшифровать сообщение');
     }
   }
-  return out;
+
+  return messages.map((message) => {
+    const key = message.id ?? `${message.senderId}:${message.content}`;
+    return {
+      ...message,
+      content: decryptedById.get(key) ?? '🔒 Не удалось расшифровать сообщение',
+    };
+  });
 }
