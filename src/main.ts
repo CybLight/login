@@ -16,7 +16,7 @@ import { initStrawberryBackground } from '@/components/strawberry';
 import { initDeveloperModeEaster } from '@/components/easter/developer-mode';
 import { initReportModalTriggers } from '@/ui/report-modal';
 import { initPrivacySettings } from '@/ui/privacy-settings';
-import { ensureSignalKeysRegistered, setSignalUserId } from '@/crypto/signal';
+import { setSignalUserId } from '@/crypto/signal/session-context';
 
 /** Удаляем legacy-токен устройства из localStorage (теперь HttpOnly cookie). */
 try {
@@ -177,9 +177,11 @@ export async function initApp(): Promise<void> {
   if (user) {
     logger.info('User logged in', { username: user.username });
     setSignalUserId(user.id);
-    void ensureSignalKeysRegistered(user.id).catch((error) => {
-      console.error('[Signal] key registration failed:', error);
-    });
+    void import('@/crypto/signal/manager')
+      .then((m) => m.ensureSignalKeysRegistered(user.id))
+      .catch((error) => {
+        console.error('[Signal] key registration failed:', error);
+      });
   } else {
     setSignalUserId(null);
     logger.info('User not logged in');

@@ -2,8 +2,8 @@ import { t, getLocale, localeTag } from '@/i18n';
 import type { PasskeyItem, WebAuthnCredentialDescriptorInput } from '@/types';
 import { showAppConfirm, showAppPrompt } from '@/ui';
 import { apiCall, escapeHtml } from '@/utils';
+import { ensureQRCodeLoaded } from '@/utils/load-qrcode';
 import { fmtTs } from './device-utils';
-import 'qrcodejs/qrcode.min.js';
 
 type ApiMessage = {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -184,13 +184,20 @@ export function createSecurityCore(deps: SecurityCoreDeps) {
             <div class="sec-hint is-hidden" id="hint2FA"></div>
           `;
 
-          const qrCtor = window.QRCode;
           const qrEl = document.getElementById('qrcode');
-          if (qrCtor && qrData && qrEl) {
-            new qrCtor(qrEl, { text: qrData, width: 200, height: 200 });
-          } else if (qrEl) {
-            qrEl.innerHTML =
-              `<p class="sec-fallback-note">${t('QR библиотека не загружена. Используй секретный ключ.')}</p>`;
+          try {
+            await ensureQRCodeLoaded();
+            const qrCtor = window.QRCode;
+            if (qrCtor && qrData && qrEl) {
+              new qrCtor(qrEl, { text: qrData, width: 200, height: 200 });
+            } else if (qrEl) {
+              throw new Error('QRCode unavailable');
+            }
+          } catch {
+            if (qrEl) {
+              qrEl.innerHTML =
+                `<p class="sec-fallback-note">${t('QR библиотека не загружена. Используй секретный ключ.')}</p>`;
+            }
           }
 
           const copySecret = async () => {
