@@ -8,6 +8,8 @@ export type KeyStatusSnapshot = {
   signedPreKeyId?: number | null;
   kyberPreKeyId?: number | null;
   unusedOneTimePreKeys?: number;
+  oldestUnusedPreKeyId?: number | null;
+  newestUnusedPreKeyId?: number | null;
 };
 
 export type LocalKeyAudit = {
@@ -126,6 +128,22 @@ export function peekPreKeyMessageIds(ciphertext: Uint8Array): {
   }
 
   return out;
+}
+
+export async function serverHasPrekeysOutsideLocal(
+  ctx: WasmSignalContext,
+  status: KeyStatusSnapshot,
+): Promise<boolean> {
+  const unused = Number(status.unusedOneTimePreKeys || 0);
+  if (unused <= 0) return false;
+
+  const oldest = status.oldestUnusedPreKeyId;
+  const newest = status.newestUnusedPreKeyId;
+  if (oldest == null || newest == null) return false;
+
+  const oldestPresent = await hasLocalPreKeyId(ctx, oldest);
+  const newestPresent = await hasLocalPreKeyId(ctx, newest);
+  return !oldestPresent || !newestPresent;
 }
 
 export async function hasLocalPreKeyId(ctx: WasmSignalContext, keyId: number): Promise<boolean> {

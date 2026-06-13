@@ -36,6 +36,7 @@ import {
   hasLocalPreKeyId,
   isServerLocalKeySync,
   peekPreKeyMessageIds,
+  serverHasPrekeysOutsideLocal,
 } from './key-sync';
 
 const ONE_TIME_PREKEY_BATCH = 100;
@@ -90,6 +91,8 @@ type KeyStatusResponse = {
   identityKeyPublic?: string | null;
   signedPreKeyId?: number | null;
   kyberPreKeyId?: number | null;
+  oldestUnusedPreKeyId?: number | null;
+  newestUnusedPreKeyId?: number | null;
   unusedOneTimePreKeys?: number;
 };
 
@@ -278,6 +281,15 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
 
   const unused = Number(status.unusedOneTimePreKeys || 0);
   if (unused < REPLENISH_THRESHOLD) {
+    const batch = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
+    await uploadOneTimePreKeys(batch);
+    await persistWasmContext(ctx);
+    return;
+  }
+
+  // Server may still list unused prekey IDs from an old browser session we no longer store.
+  const serverHasUnknownPrekeys = await serverHasPrekeysOutsideLocal(ctx, status);
+  if (serverHasUnknownPrekeys) {
     const batch = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
     await uploadOneTimePreKeys(batch);
     await persistWasmContext(ctx);
