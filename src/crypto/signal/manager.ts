@@ -280,16 +280,12 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
   }
 
   const unused = Number(status.unusedOneTimePreKeys || 0);
-  if (unused < REPLENISH_THRESHOLD) {
-    const batch = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
-    await uploadOneTimePreKeys(batch);
-    await persistWasmContext(ctx);
-    return;
-  }
-
-  // Server may still list unused prekey IDs from an old browser session we no longer store.
+  const oldestUnused = status.oldestUnusedPreKeyId;
+  const oldestMissingLocally =
+    oldestUnused != null && !(await hasLocalPreKeyId(ctx, oldestUnused));
   const serverHasUnknownPrekeys = await serverHasPrekeysOutsideLocal(ctx, status);
-  if (serverHasUnknownPrekeys) {
+
+  if (unused < REPLENISH_THRESHOLD || serverHasUnknownPrekeys || oldestMissingLocally) {
     const batch = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
     await uploadOneTimePreKeys(batch);
     await persistWasmContext(ctx);
@@ -357,9 +353,28 @@ export async function encryptOutgoingMessage(
   };
 }
 
+export async function cacheSentPlaintext(
+  userId: string,
+  messageId: string,
+  plaintext: string,
+): Promise<void> {
+  if (!messageId) return;
+  await writeDecryptCache(userId, messageId, plaintext);
+}
+
 export async function decryptIncomingMessage(userId: string, message: WireMessage): Promise<string> {
   if (!message.encryption || message.encryption === 'plaintext') {
     return message.content;
+  }
+
+  if (message.senderId === userId) {
+    if (message.id) {
+      const cached = await readDecryptCache(userId, message.id);
+      if (cached !== null) {
+        return cached;
+      }
+    }
+    return '🔒 Сообщение отправлено';
   }
 
   if (message.id) {

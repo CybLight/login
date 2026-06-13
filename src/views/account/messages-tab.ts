@@ -9,7 +9,7 @@ import { setupAccessibleModal } from '@/utils/keyboard';
 import type { ApiOkResponse, FriendListItem } from '@/types';
 import { createChatCore, type ChatLoadOptions } from './chat-core';
 import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
-import { encryptOutgoingMessage, getSignalUserId } from '@/crypto/signal';
+import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId } from '@/crypto/signal';
 import { extractFirstUrl } from './chat-format';
 import { loadMessagesTab as loadMessagesListTab } from './messages-list';
 import type { UnreadSummary } from './unread';
@@ -291,6 +291,11 @@ export function openChatInMessagesTab(
         if (!response.ok || !payload?.ok) {
           api.showMsg('error', payload?.error || t('Не удалось переслать сообщение'));
           return;
+        }
+
+        const forwardedId = String(payload?.message?.id || payload?.messageId || '');
+        if (forwardedId) {
+          await cacheSentPlaintext(getSignalUserId(), forwardedId, messageText);
         }
 
         api.showMsg('success', t('Сообщение переслано'));
@@ -781,6 +786,17 @@ export function openChatInMessagesTab(
       }
 
       if (response.ok && data?.ok) {
+        const sendPayload = data as ApiOkResponse & {
+          message?: { id?: string };
+          messageId?: string;
+        };
+        const savedId = String(
+          sendPayload.message?.id || sendPayload.messageId || editingId || '',
+        );
+        if (savedId) {
+          await cacheSentPlaintext(userId, savedId, content);
+        }
+
         if (!editingId) {
           clearChatDraft(friendId);
           composeDraftHolder.draft = '';

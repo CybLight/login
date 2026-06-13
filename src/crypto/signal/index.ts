@@ -1,4 +1,5 @@
 export {
+  cacheSentPlaintext,
   decryptIncomingMessage,
   decryptMessageList,
   encryptOutgoingMessage,
