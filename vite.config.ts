@@ -6,6 +6,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   publicDir: 'public',
+  assetsInclude: ['**/*.wasm'],
+  optimizeDeps: {
+    exclude: ['@getmaapp/signal-wasm'],
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

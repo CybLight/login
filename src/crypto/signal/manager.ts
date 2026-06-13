@@ -1,22 +1,36 @@
 import {
-  DeviceType,
-  KeyHelper,
-  SessionBuilder,
-  SessionCipher,
-  SignalProtocolAddress,
-} from '@privacyresearch/libsignal-protocol-typescript';
+  encryptMessage,
+  decryptMessage,
+  generateKyberPreKey,
+  generatePreKeys,
+  generateRegistrationId,
+  generateSignedPreKey,
+  message_type_pre_key,
+  message_type_signal,
+  processPreKeyBundle,
+  WasmPublicKey,
+} from '@getmaapp/signal-wasm';
 import { apiCall } from '@/utils';
 import { ensureLibsignalInitialized } from './libsignal-init';
-import { generateKyberPreKeyForUpload, type KyberPreKeyUpload } from './kyber-prekey';
-import { SignalProtocolStore, type SignedPreKeyRecord } from './store';
 import {
   arrayBufferToBase64,
   arrayBufferToUtf8,
   base64ToArrayBuffer,
+  bytesToArrayBuffer,
   utf8ToArrayBuffer,
 } from './buffer';
+import {
+  createWasmContext,
+  loadWasmContext,
+  peerAddress,
+  persistWasmContext,
+  trackKyberPreKey,
+  trackPreKey,
+  trackSession,
+  trackSignedPreKey,
+  type WasmSignalContext,
+} from './wasm-context';
 
-const DEVICE_ID = 1;
 const ONE_TIME_PREKEY_BATCH = 100;
 const REPLENISH_THRESHOLD = 20;
 
@@ -47,6 +61,11 @@ type KeyBundleResponse = {
       publicKey: string;
       signature: string;
     };
+    kyberPreKey: {
+      keyId: number;
+      publicKey: string;
+      signature: string;
+    };
     oneTimePreKey?: {
       keyId: number;
       publicKey: string;
@@ -62,49 +81,35 @@ type KeyStatusResponse = {
 };
 
 let activeUserId: string | null = null;
-let activeStore: SignalProtocolStore | null = null;
+let activeContext: WasmSignalContext | null = null;
 let nextPreKeyId = Math.floor(Date.now() / 1000);
-
-async function ensureLibsignalReady(): Promise<void> {
-  await ensureLibsignalInitialized();
-}
 
 function makeKeyId(): number {
   nextPreKeyId += 1;
   return nextPreKeyId;
 }
 
-function getStore(userId: string): SignalProtocolStore {
-  if (!activeStore || activeUserId !== userId) {
-    activeStore = new SignalProtocolStore(userId);
-    activeUserId = userId;
+async function getContext(userId: string): Promise<WasmSignalContext | null> {
+  if (activeContext && activeUserId === userId) {
+    return activeContext;
   }
-  return activeStore;
+  const loaded = await loadWasmContext(userId);
+  if (loaded) {
+    activeUserId = userId;
+    activeContext = loaded;
+  }
+  return loaded;
 }
 
-function peerAddress(peerUserId: string): SignalProtocolAddress {
-  return new SignalProtocolAddress(peerUserId, DEVICE_ID);
+async function requireContext(userId: string): Promise<WasmSignalContext> {
+  const ctx = await getContext(userId);
+  if (!ctx) {
+    throw new Error('local_keys_missing');
+  }
+  return ctx;
 }
 
-function bundleToDevice(bundle: NonNullable<KeyBundleResponse['bundle']>): DeviceType {
-  return {
-    identityKey: base64ToArrayBuffer(bundle.identityKey),
-    registrationId: bundle.registrationId,
-    signedPreKey: {
-      keyId: bundle.signedPreKey.keyId,
-      publicKey: base64ToArrayBuffer(bundle.signedPreKey.publicKey),
-      signature: base64ToArrayBuffer(bundle.signedPreKey.signature),
-    },
-    preKey: bundle.oneTimePreKey
-      ? {
-          keyId: bundle.oneTimePreKey.keyId,
-          publicKey: base64ToArrayBuffer(bundle.oneTimePreKey.publicKey),
-        }
-      : undefined,
-  };
-}
-
-async function fetchKeyBundle(peerUserId: string): Promise<DeviceType> {
+async function fetchKeyBundle(peerUserId: string): Promise<NonNullable<KeyBundleResponse['bundle']>> {
   const response = await apiCall(`/crypto/keys/bundle/${encodeURIComponent(peerUserId)}`, {
     method: 'GET',
     credentials: 'include',
@@ -113,14 +118,16 @@ async function fetchKeyBundle(peerUserId: string): Promise<DeviceType> {
   if (!response.ok || !data.ok || !data.bundle) {
     throw new Error(data.error || 'key_bundle_failed');
   }
-  return bundleToDevice(data.bundle);
+  if (!data.bundle.kyberPreKey) {
+    throw new Error('kyber_prekey_missing');
+  }
+  return data.bundle;
 }
 
 async function uploadKeyRegistration(
-  registrationId: number,
-  identityKeyPair: Awaited<ReturnType<typeof KeyHelper.generateIdentityKeyPair>>,
-  signedPreKey: SignedPreKeyRecord,
-  kyberPreKey: KyberPreKeyUpload,
+  ctx: WasmSignalContext,
+  signedPreKey: { keyId: number; publicKey: string; signature: string },
+  kyberPreKey: { keyId: number; publicKey: string; signature: string },
   oneTimePreKeys: Array<{ keyId: number; publicKey: string }>,
 ): Promise<void> {
   const response = await apiCall('/crypto/keys/register', {
@@ -128,13 +135,9 @@ async function uploadKeyRegistration(
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      registrationId,
-      identityKey: arrayBufferToBase64(identityKeyPair.pubKey),
-      signedPreKey: {
-        keyId: signedPreKey.keyId,
-        publicKey: arrayBufferToBase64(signedPreKey.keyPair.pubKey),
-        signature: arrayBufferToBase64(signedPreKey.signature),
-      },
+      registrationId: ctx.registrationId,
+      identityKey: arrayBufferToBase64(bytesToArrayBuffer(ctx.identityKeyPair.public_key.serialize())),
+      signedPreKey,
       kyberPreKey,
       oneTimePreKeys,
     }),
@@ -159,97 +162,78 @@ async function uploadOneTimePreKeys(oneTimePreKeys: Array<{ keyId: number; publi
 }
 
 async function generateOneTimePreKeyBatch(
-  store: SignalProtocolStore,
+  ctx: WasmSignalContext,
   count: number,
 ): Promise<Array<{ keyId: number; publicKey: string }>> {
+  const startId = makeKeyId();
+  const records = await generatePreKeys(startId, count, ctx.preKeyStore);
   const out: Array<{ keyId: number; publicKey: string }> = [];
-  for (let i = 0; i < count; i++) {
-    const keyId = makeKeyId();
-    const preKey = await KeyHelper.generatePreKey(keyId);
-    await store.storePreKey(keyId, preKey.keyPair);
+  for (const record of records) {
+    trackPreKey(ctx, record.id);
     out.push({
-      keyId,
-      publicKey: arrayBufferToBase64(preKey.keyPair.pubKey),
+      keyId: record.id,
+      publicKey: arrayBufferToBase64(bytesToArrayBuffer(record.public_key)),
     });
   }
   return out;
 }
 
 async function resolveSignedPreKeyForUpload(
-  store: SignalProtocolStore,
-  identityKeyPair: Awaited<ReturnType<typeof KeyHelper.generateIdentityKeyPair>>,
-): Promise<SignedPreKeyRecord> {
-  const existing = await store.getLatestSignedPreKeyRecord();
-  if (existing?.keyPair && existing.signature) {
-    return existing;
-  }
-
-  const latestId = await store.getLatestSignedPreKeyId();
+  ctx: WasmSignalContext,
+): Promise<{ keyId: number; publicKey: string; signature: string }> {
+  const latestId = ctx.manifest.latestSignedPreKeyId;
   if (latestId !== undefined) {
-    const legacyPair = await store.loadSignedPreKey(latestId);
-    if (legacyPair) {
-      await ensureLibsignalInitialized();
-      const { crypto } = await import('@privacyresearch/libsignal-protocol-typescript/lib/internal/crypto.js');
-      const signature = await crypto.Ed25519Sign(identityKeyPair.privKey, legacyPair.pubKey);
-      const record: SignedPreKeyRecord = {
-        keyId: latestId,
-        keyPair: legacyPair,
-        signature,
-      };
-      await store.storeSignedPreKeyRecord(record);
-      return record;
+    const exported = await ctx.signedPreKeyStore.export_signed_pre_key(latestId);
+    if (exported && ctx.manifest.latestSignedPreKeyUpload) {
+      return ctx.manifest.latestSignedPreKeyUpload;
     }
   }
 
-  const signedPreKeyId = makeKeyId();
-  const generated = await KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId);
-  const record: SignedPreKeyRecord = {
-    keyId: generated.keyId,
-    keyPair: generated.keyPair,
-    signature: generated.signature,
+  const keyId = makeKeyId();
+  const signed = await generateSignedPreKey(keyId, ctx.identityKeyPair, ctx.signedPreKeyStore);
+  trackSignedPreKey(ctx, signed.id);
+  const upload = {
+    keyId: signed.id,
+    publicKey: arrayBufferToBase64(bytesToArrayBuffer(signed.public_key)),
+    signature: arrayBufferToBase64(bytesToArrayBuffer(signed.signature)),
   };
-  await store.storeSignedPreKeyRecord(record);
-  return record;
+  ctx.manifest.latestSignedPreKeyUpload = upload;
+  return upload;
 }
 
-async function publishRegistrationKeys(store: SignalProtocolStore): Promise<void> {
-  const registrationId = await store.getLocalRegistrationId();
-  const identityKeyPair = await store.getIdentityKeyPair();
-  if (!registrationId || !identityKeyPair) {
-    throw new Error('local_keys_missing');
+async function resolveKyberPreKeyForUpload(
+  ctx: WasmSignalContext,
+): Promise<{ keyId: number; publicKey: string; signature: string }> {
+  const latestId = ctx.manifest.latestKyberPreKeyId;
+  if (latestId !== undefined) {
+    const exported = await ctx.kyberPreKeyStore.export_kyber_pre_key(latestId);
+    if (exported && ctx.manifest.latestKyberPreKeyUpload) {
+      return ctx.manifest.latestKyberPreKeyUpload;
+    }
   }
 
-  const signedPreKey = await resolveSignedPreKeyForUpload(store, identityKeyPair);
+  const keyId = makeKeyId();
+  const kyber = await generateKyberPreKey(keyId, ctx.identityKeyPair, ctx.kyberPreKeyStore);
+  trackKyberPreKey(ctx, kyber.id);
+  const upload = {
+    keyId: kyber.id,
+    publicKey: arrayBufferToBase64(bytesToArrayBuffer(kyber.public_key)),
+    signature: arrayBufferToBase64(bytesToArrayBuffer(kyber.signature)),
+  };
+  ctx.manifest.latestKyberPreKeyUpload = upload;
+  return upload;
+}
 
-  let kyberPreKey: KyberPreKeyUpload;
-  const latestKyberId = await store.getLatestKyberPreKeyId();
-  const existingKyber = latestKyberId !== undefined ? await store.loadKyberPreKey(latestKyberId) : undefined;
-  if (existingKyber) {
-    kyberPreKey = {
-      keyId: existingKyber.keyId,
-      publicKey: arrayBufferToBase64(existingKyber.serializedPublic),
-      signature: arrayBufferToBase64(existingKyber.signature),
-    };
-  } else {
-    const kyberPreKeyId = makeKeyId();
-    const generated = await generateKyberPreKeyForUpload(identityKeyPair, kyberPreKeyId);
-    await store.storeKyberPreKey(kyberPreKeyId, generated.record);
-    kyberPreKey = generated.upload;
-  }
-
-  const oneTimePreKeys = await generateOneTimePreKeyBatch(store, ONE_TIME_PREKEY_BATCH);
-  await uploadKeyRegistration(
-    registrationId,
-    identityKeyPair,
-    signedPreKey,
-    kyberPreKey,
-    oneTimePreKeys,
-  );
+async function publishRegistrationKeys(ctx: WasmSignalContext): Promise<void> {
+  const signedPreKey = await resolveSignedPreKeyForUpload(ctx);
+  const kyberPreKey = await resolveKyberPreKeyForUpload(ctx);
+  const oneTimePreKeys = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
+  await uploadKeyRegistration(ctx, signedPreKey, kyberPreKey, oneTimePreKeys);
+  await persistWasmContext(ctx);
 }
 
 export async function ensureSignalKeysRegistered(userId: string): Promise<void> {
-  await ensureLibsignalReady();
-  const store = getStore(userId);
+  await ensureLibsignalInitialized();
 
   const statusRes = await apiCall('/crypto/keys/status', {
     method: 'GET',
@@ -257,58 +241,66 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
   });
   const status = (await statusRes.json().catch(() => ({}))) as KeyStatusResponse;
 
-  const localRegistrationId = await store.getLocalRegistrationId();
-  const localIdentity = await store.getIdentityKeyPair();
+  let ctx = await getContext(userId);
 
-  if (status.registered && localRegistrationId && localIdentity) {
-    if (!(await store.hasKyberPreKey())) {
-      await publishRegistrationKeys(store);
+  if (status.registered && ctx) {
+    if (!ctx.manifest.latestKyberPreKeyId) {
+      await publishRegistrationKeys(ctx);
       return;
     }
 
     const unused = Number(status.unusedOneTimePreKeys || 0);
     if (unused < REPLENISH_THRESHOLD) {
-      const batch = await generateOneTimePreKeyBatch(store, ONE_TIME_PREKEY_BATCH);
+      const batch = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
       await uploadOneTimePreKeys(batch);
+      await persistWasmContext(ctx);
     }
     return;
   }
 
-  if (localRegistrationId && localIdentity) {
-    await publishRegistrationKeys(store);
+  if (ctx) {
+    await publishRegistrationKeys(ctx);
     return;
   }
 
-  const registrationId = KeyHelper.generateRegistrationId();
-  const identityKeyPair = await KeyHelper.generateIdentityKeyPair();
-  await store.writeIdentityMeta(registrationId, identityKeyPair);
-
-  await publishRegistrationKeys(store);
+  const registrationId = generateRegistrationId();
+  ctx = await createWasmContext(userId, registrationId);
+  activeUserId = userId;
+  activeContext = ctx;
+  await publishRegistrationKeys(ctx);
 }
 
-function binaryBodyToBase64(body: string | ArrayBuffer): string {
-  if (body instanceof ArrayBuffer) {
-    return arrayBufferToBase64(body);
-  }
-  const bytes = new Uint8Array(body.length);
-  for (let i = 0; i < body.length; i++) {
-    bytes[i] = body.charCodeAt(i) & 0xff;
-  }
-  return arrayBufferToBase64(bytes.buffer);
-}
-
-async function ensureSession(userId: string, peerUserId: string): Promise<SessionCipher> {
-  const store = getStore(userId);
+async function ensureSession(ctx: WasmSignalContext, peerUserId: string): Promise<void> {
   const address = peerAddress(peerUserId);
-  const sessionCipher = new SessionCipher(store, address);
-  if (await sessionCipher.hasOpenSession()) {
-    return sessionCipher;
+  if (await ctx.sessionStore.has_session(address)) {
+    return;
   }
 
   const bundle = await fetchKeyBundle(peerUserId);
-  const sessionBuilder = new SessionBuilder(store, address);
-  await sessionBuilder.processPreKey(bundle);
-  return sessionCipher;
+  const preKeyId = bundle.oneTimePreKey?.keyId ?? null;
+  const preKeyBytes = bundle.oneTimePreKey
+    ? new Uint8Array(base64ToArrayBuffer(bundle.oneTimePreKey.publicKey))
+    : null;
+
+  await processPreKeyBundle(
+    address,
+    ctx.localAddress,
+    bundle.registrationId,
+    WasmPublicKey.deserialize(new Uint8Array(base64ToArrayBuffer(bundle.identityKey))),
+    bundle.signedPreKey.keyId,
+    WasmPublicKey.deserialize(new Uint8Array(base64ToArrayBuffer(bundle.signedPreKey.publicKey))),
+    new Uint8Array(base64ToArrayBuffer(bundle.signedPreKey.signature)),
+    preKeyId,
+    preKeyBytes,
+    bundle.kyberPreKey.keyId,
+    new Uint8Array(base64ToArrayBuffer(bundle.kyberPreKey.publicKey)),
+    new Uint8Array(base64ToArrayBuffer(bundle.kyberPreKey.signature)),
+    ctx.sessionStore,
+    ctx.identityStore,
+  );
+
+  await trackSession(ctx, address);
+  await persistWasmContext(ctx);
 }
 
 export async function encryptOutgoingMessage(
@@ -317,23 +309,24 @@ export async function encryptOutgoingMessage(
   plaintext: string,
 ): Promise<EncryptedMessagePayload> {
   await ensureSignalKeysRegistered(userId);
-  const sessionCipher = await ensureSession(userId, recipientId);
-  const ciphertext = await sessionCipher.encrypt(utf8ToArrayBuffer(plaintext));
+  const ctx = await requireContext(userId);
+  await ensureSession(ctx, recipientId);
 
-  if (!ciphertext.body || typeof ciphertext.type !== 'number') {
-    throw new Error('encrypt_failed');
-  }
+  const ciphertext = await encryptMessage(
+    new Uint8Array(utf8ToArrayBuffer(plaintext)),
+    peerAddress(recipientId),
+    ctx.localAddress,
+    ctx.sessionStore,
+    ctx.identityStore,
+  );
 
-  const registrationId =
-    ciphertext.registrationId ?? (await getStore(userId).getLocalRegistrationId()) ?? 0;
-  if (!registrationId) {
-    throw new Error('registration_id_missing');
-  }
+  await trackSession(ctx, peerAddress(recipientId));
+  await persistWasmContext(ctx);
 
   return {
-    content: binaryBodyToBase64(ciphertext.body),
-    signalType: ciphertext.type,
-    registrationId,
+    content: arrayBufferToBase64(bytesToArrayBuffer(ciphertext.body)),
+    signalType: ciphertext.message_type,
+    registrationId: ctx.registrationId,
     encryption: 'signal_v1',
   };
 }
@@ -344,22 +337,31 @@ export async function decryptIncomingMessage(userId: string, message: WireMessag
   }
 
   await ensureSignalKeysRegistered(userId);
-  const store = getStore(userId);
-  const address = peerAddress(message.senderId);
-  const sessionCipher = new SessionCipher(store, address);
-  const body = base64ToArrayBuffer(message.content);
+  const ctx = await requireContext(userId);
+  const sender = peerAddress(message.senderId);
+  const body = new Uint8Array(base64ToArrayBuffer(message.content));
   const signalType = Number(message.signalType);
 
-  let plaintext: ArrayBuffer;
-  if (signalType === 3) {
-    plaintext = await sessionCipher.decryptPreKeyWhisperMessage(body, 'binary');
-  } else if (signalType === 1) {
-    plaintext = await sessionCipher.decryptWhisperMessage(body, 'binary');
-  } else {
+  if (signalType !== message_type_pre_key() && signalType !== message_type_signal()) {
     throw new Error('unsupported_signal_type');
   }
 
-  return arrayBufferToUtf8(plaintext);
+  const plaintext = await decryptMessage(
+    body,
+    signalType,
+    sender,
+    ctx.localAddress,
+    ctx.sessionStore,
+    ctx.identityStore,
+    ctx.preKeyStore,
+    ctx.signedPreKeyStore,
+    ctx.kyberPreKeyStore,
+  );
+
+  await trackSession(ctx, sender);
+  await persistWasmContext(ctx);
+
+  return arrayBufferToUtf8(bytesToArrayBuffer(plaintext));
 }
 
 export async function decryptMessageList<T extends WireMessage>(
