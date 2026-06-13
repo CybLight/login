@@ -66,6 +66,19 @@ function ensureReportModal(): HTMLElement {
 }
 
 function openReportModal(): void {
+  if (window.CybPrivacy && !window.CybPrivacy.allows('diagnostic')) {
+    const modal = ensureReportModal();
+    const warning = modal.querySelector('#reportWarning') as HTMLElement | null;
+    if (warning) {
+      warning.textContent = t(
+        'Отправка отключена в настройках конфиденциальности. Включите «Отправлять диагностические данные».',
+      );
+      warning.style.display = 'block';
+    }
+    modal.classList.add('is-open');
+    return;
+  }
+
   const modal = ensureReportModal();
   const form = modal.querySelector('#reportForm') as HTMLFormElement | null;
   const warning = modal.querySelector('#reportWarning') as HTMLElement | null;
@@ -109,6 +122,14 @@ async function handleReportSubmit(event: Event): Promise<void> {
   const success = modal.querySelector('#reportSuccess') as HTMLElement | null;
 
   if (!emailInput || !categorySelect || !messageInput || !submitBtn || !warning || !success) return;
+
+  if (window.CybPrivacy && !window.CybPrivacy.allows('diagnostic')) {
+    warning.textContent = t(
+      'Отправка отключена в настройках конфиденциальности. Включите «Отправлять диагностические данные».',
+    );
+    warning.style.display = 'block';
+    return;
+  }
 
   const email = emailInput.value.trim();
   const category = categorySelect.value;

@@ -20,7 +20,7 @@ import {
   insertChatCode,
 } from './chat-editor';
 import { showAccountConfirmModal } from './modals';
-import { CYBLIGHT_EMOJI_CATEGORIES, getEmojiCategoryTitle } from './emoji-categories';
+import { CYBLIGHT_EMOJI_CATEGORIES, CYBLIGHT_EMOJI_QUICK, getEmojiCategoryTitle } from './emoji-categories';
 import '@/styles/messages-tab.css';
 
 type ReplyMessageState = {
@@ -481,20 +481,7 @@ export function openChatInMessagesTab(
     new Set(CYBLIGHT_EMOJI_CATEGORIES.flatMap((category) => category.emojis))
   );
 
-  const quickSearchEmojis = [
-    '😀',
-    '😍',
-    '😂',
-    '😭',
-    '😎',
-    '🥰',
-    '😮',
-    '👍',
-    '🔥',
-    '🎉',
-    '❤️',
-    '💯',
-  ];
+  const quickSearchEmojis = [...CYBLIGHT_EMOJI_QUICK];
 
   const normalizeEmojiSearch = (value: string) =>
     value

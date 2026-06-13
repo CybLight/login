@@ -3,6 +3,7 @@
  */
 
 import { getLocale, getLocaleLabel, localePath, sitePath, t } from '@/i18n';
+import { buildAuthFooter } from '@/ui/auth-footer';
 import { formatPublicId, getTabTitle, getUserStatus, renderTabContent } from './tabs-render';
 import { getAvatarInnerHtml } from './avatar';
 import { escapeHtml } from '@/utils';
@@ -21,7 +22,6 @@ function accountRouteForTab(tab: string): string {
 export function renderAccountPage(tab: string, user: AppUser): string {
   const locale = getLocale();
   const homeUrl = sitePath('', locale);
-  const privacyUrl = sitePath('privacy', locale);
   const accountRoute = accountRouteForTab(tab);
   const tabTitle = getTabTitle(tab);
   const maybe = user as unknown as Record<string, unknown>;
@@ -164,36 +164,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
         </main>
       </div>
 
-      <!-- Футер -->
-      <footer class="auth-footer">
-        <div class="cyb-dev-footer-strip" aria-hidden="true"></div>
-        <div class="footer-row">
-          <div class="footer-copy">
-            <p class="footer-text" dir="ltr" lang="en">
-              © ${new Date().getFullYear()} CybLight
-            </p>
-          </div>
-          <div class="footer-links">
-            <a class="footer-brand" href="${homeUrl}" aria-label="${t('Главная страница')}" target="_blank" rel="noopener">
-              <img src="/assets/img/logo.svg" class="footer-logo" alt="CybLight" />
-              <span>CybLight.org</span>
-            </a>
-
-            <a class="report-btn" href="#" data-report-modal-open>
-              <img src="/assets/img/report.svg" alt="Report" class="report-icon" />
-              ${t('Сообщить о проблеме')}
-            </a>
-
-            <a class="hacked-btn" href="${localePath('contact-admin', getLocale())}">
-              <img src="/assets/img/account-alert.svg" alt="" class="hacked-icon" aria-hidden="true" />
-              ${t('Взломали аккаунт?')}
-            </a>
-            <a href="#" data-noop>${t('Условия использования')}</a>
-            <a href="${privacyUrl}" target="_blank" rel="noopener">${t('Политика конфиденциальности')}</a>
-            <a href="#" data-noop>${t('Настройки конфиденциальности')}</a>
-          </div>
-        </div>
-      </footer>
+      ${buildAuthFooter({ showLangSwitcher: false })}
     </div>
   `;
 }

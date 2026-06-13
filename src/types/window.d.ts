@@ -20,5 +20,16 @@ declare global {
     __history_scroll_handler?: () => void;
     showProfileToast?: (message: string) => void;
     QRCode?: QRCodeConstructor;
+    CybPrivacy?: {
+      getConsent: () => {
+        functional: boolean;
+        diagnostic: boolean;
+        usage: boolean;
+        decided: boolean;
+      };
+      allows: (category: 'necessary' | 'functional' | 'diagnostic' | 'usage') => boolean;
+      open: () => void;
+      apply: () => void;
+    };
   }
 }

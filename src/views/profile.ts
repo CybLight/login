@@ -7,6 +7,7 @@ import { t, sitePath, getLocale, getLocaleLabel, localePath, localeTag, type Loc
 import { apiCall, escapeHtml, renderPresenceChip } from '@/utils';
 import { Router } from '@/router/Router';
 import { showAppConfirm, showAppPrompt } from '@/ui';
+import { buildAuthFooter } from '@/ui/auth-footer';
 
 interface PublicProfile {
   id?: string;
@@ -361,36 +362,7 @@ function buildProfileHeader(profileRoute: string, isLoggedIn: boolean, subtitle?
 }
 
 function buildProfileFooter(): string {
-  const locale = getLocale();
-  const homeUrl = sitePath('', locale);
-  const privacyUrl = sitePath('privacy', locale);
-  return `
-    <footer class="auth-footer">
-      <div class="cyb-dev-footer-strip" aria-hidden="true"></div>
-      <div class="footer-row">
-        <div class="footer-copy">
-          <p class="footer-text" dir="ltr" lang="en">
-            © ${new Date().getFullYear()} CybLight
-          </p>
-        </div>
-        <div class="footer-links">
-          <a class="footer-brand" href="${homeUrl}" aria-label="${t('Главная страница')}" target="_blank" rel="noopener">
-            <img src="/assets/img/logo.svg" class="footer-logo" alt="CybLight" />
-            <span>CybLight.org</span>
-          </a>
-
-          <a class="report-btn" href="#" data-report-modal-open>
-            <img src="/assets/img/report.svg" alt="Report" class="report-icon" />
-            ${t('Сообщить о проблеме')}
-          </a>
-
-          <a href="#" data-noop>${t('Условия использования')}</a>
-          <a href="${privacyUrl}" target="_blank" rel="noopener">${t('Политика конфиденциальности')}</a>
-          <a href="#" data-noop>${t('Настройки конфиденциальности')}</a>
-        </div>
-      </div>
-    </footer>
-  `;
+  return buildAuthFooter({ showLangSwitcher: false, showHackedLink: false });
 }
 
 let profileLangMenuBound = false;

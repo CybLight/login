@@ -886,8 +886,8 @@
   position: fixed;
   top: 140px;
   right: 24px;
-  width: 340px;
-  max-height: 540px;
+  width: 360px;
+  max-height: 580px;
   overflow: hidden;
   display: none;
   flex-direction: column;
@@ -992,11 +992,11 @@
 }
 
 .chat-input-emoji-grid {
-  max-height: 300px;
+  max-height: 360px;
   overflow-y: auto;
   display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 6px;
   padding-right: 2px;
 }
 

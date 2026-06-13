@@ -263,6 +263,66 @@ const triples = [
     'Реєстрація пройшла, але сесію не встановлено (cookie заблоковано). Перевір CORS / credentials.',
     'Registration succeeded but session was not set (cookie blocked). Check CORS / credentials.',
   ],
+  ['Закрыть', 'Закрити', 'Close'],
+  [
+    'Мы используем cookie и похожие технологии для работы сайта и улучшения вашего опыта. Подробнее — в разделе ',
+    'Ми використовуємо cookie та подібні технології для роботи сайту та покращення вашого досвіду. Докладніше — у розділі ',
+    'We use cookies and similar technologies to run the site and improve your experience. Learn more in the ',
+  ],
+  ['«Cookies и локальное хранилище»', '«Cookies та локальне сховище»', 'Cookies and local storage'],
+  [' политики конфиденциальности.', ' політики конфіденційності.', ' section of the privacy policy.'],
+  ['Разрешить все cookie', 'Дозволити всі cookie', 'Allow all cookies'],
+  ['Отклонить все cookie', 'Відхилити всі cookie', 'Reject all cookies'],
+  ['ПРИМЕЧАНИЕ.', 'ПРИМІТКА.', 'NOTE.'],
+  [
+    'CybLight не продаёт ваши данные и не использует их для таргетированной рекламы.',
+    'CybLight не продає ваші дані та не використовує їх для таргетованої реклами.',
+    'CybLight does not sell your data or use it for targeted advertising.',
+  ],
+  ['Персональные настройки', 'Персональні налаштування', 'Personal settings'],
+  ['Строго необходимые cookie', 'Обовʼязково необхідні cookie', 'Strictly necessary cookies'],
+  [
+    'Нужны для базовой работы login.cyblight.org, безопасности Cloudflare, входа в аккаунт и сохранения этих настроек. Их нельзя отключить.',
+    'Потрібні для базової роботи login.cyblight.org, безпеки Cloudflare, входу в акаунт і збереження цих налаштувань. Їх не можна вимкнути.',
+    'Required for basic operation of login.cyblight.org, Cloudflare security, account sign-in, and saving these settings. They cannot be turned off.',
+  ],
+  ['Разрешить функциональные cookie', 'Дозволити функціональні cookie', 'Allow functional cookies'],
+  [
+    'Сохраняют выбранный язык интерфейса и другие настройки для удобства.',
+    'Зберігають обрану мову інтерфейсу та інші налаштування для зручності.',
+    'Save your interface language and other preferences for convenience.',
+  ],
+  ['Отправлять диагностические данные', 'Надсилати діагностичні дані', 'Send diagnostic data'],
+  [
+    'Позволяет отправлять отчёты «Сообщить о проблеме» и технические события (например, срабатывание пасхалок) для исправления ошибок.',
+    'Дозволяє надсилати звіти «Повідомити про проблему» та технічні події (наприклад, спрацювання пасхалок) для виправлення помилок.',
+    'Allows sending "Report a problem" messages and technical events (for example, easter egg triggers) to fix issues.',
+  ],
+  ['Отправлять данные об использовании', 'Надсилати дані про використання', 'Send usage data'],
+  [
+    'Включает сторонние виджеты и статистику на основном сайте CybLight.org при переходе по ссылкам.',
+    'Включає сторонні віджети та статистику на основному сайті CybLight.org під час переходу за посиланнями.',
+    'Includes third-party widgets and statistics on the main CybLight.org site when following links.',
+  ],
+  [
+    'Отправка отключена в настройках конфиденциальности. Включите «Отправлять диагностические данные».',
+    'Надсилання вимкнено в налаштуваннях конфіденційності. Увімкніть «Надсилати діагностичні дані».',
+    'Sending is disabled in privacy settings. Enable "Send diagnostic data".',
+  ],
+  [
+    'Наш сайт использует cookie и похожие технологии для работы и улучшения вашего опыта. Некоторые необходимы для работы сайта, другие помогают сохранять ваши настройки.',
+    'Наш сайт використовує cookie та подібні технології для роботи та покращення вашого досвіду. Деякі необхідні для роботи сайту, інші допомагають зберігати ваші налаштування.',
+    'Our site uses cookies and similar technologies to run the site and improve your experience. Some are required; others help save your preferences.',
+  ],
+  [
+    ' Если нажать «Принять», будут сохранены все cookie. Если «Отклонить» — будут заблокированы все необязательные cookie.',
+    ' Якщо натиснути «Прийняти», будуть збережені всі cookie. Якщо «Відхилити» — будуть заблоковані всі необовʼязкові cookie.',
+    ' If you click Accept, all cookies will be saved. If you click Reject, all non-essential cookies will be blocked.',
+  ],
+  [' Подробнее — в разделе ', ' Докладніше — у розділі ', ' Learn more in the '],
+  [' и в ', ' та в ', ' and '],
+  ['«Политике конфиденциальности»', '«Політиці конфіденційності»', 'Privacy Policy'],
+  ['Настроить', 'Налаштувати', 'Customize'],
 ];
 
 const allTriples = [...triples, ...supplementalTriples];

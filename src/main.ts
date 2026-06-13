@@ -15,6 +15,7 @@ import { NotificationManager } from '@/components/notification/NotificationManag
 import { initStrawberryBackground } from '@/components/strawberry';
 import { initDeveloperModeEaster } from '@/components/easter/developer-mode';
 import { initReportModalTriggers } from '@/ui/report-modal';
+import { initPrivacySettings } from '@/ui/privacy-settings';
 
 // Import all views
 import {
@@ -110,6 +111,7 @@ export async function initApp(): Promise<void> {
   }
 
   initReportModalTriggers();
+  initPrivacySettings();
   initGlobalUiDelegation();
 
   // Initialize error handlers

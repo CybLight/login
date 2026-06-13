@@ -6,6 +6,16 @@ type ReplyMeta = {
   text: string;
 };
 
+function decodeChatToken(value: string): string {
+  if (!value) return '';
+  const normalized = value.replace(/\+/g, '%20');
+  try {
+    return decodeURIComponent(normalized);
+  } catch {
+    return value.replace(/\+/g, ' ');
+  }
+}
+
 export function parseFormattedChatText(text: string): string {
   if (!text) return '';
 
@@ -46,11 +56,7 @@ export function extractNoPreviewUrls(text: string): string[] {
   while (match) {
     const encoded = String(match[1] || '').trim();
     if (encoded) {
-      try {
-        urls.push(decodeURIComponent(encoded));
-      } catch {
-        urls.push(encoded);
-      }
+      urls.push(decodeChatToken(encoded));
     }
     match = regex.exec(text);
   }
@@ -58,23 +64,14 @@ export function extractNoPreviewUrls(text: string): string[] {
 }
 
 export function extractReplyMeta(text: string): ReplyMeta | null {
-  const decodeSafe = (value: string): string => {
-    if (!value) return '';
-    try {
-      return decodeURIComponent(value);
-    } catch {
-      return value;
-    }
-  };
-
   const newFormat = text.match(/\[\[CYBLIGHT_REPLY:([^:\]]+):([^:\]]*):([^\]]*)\]\]/);
   if (newFormat) {
     const messageId = String(newFormat[1] || '').trim();
     if (!messageId) return null;
     return {
       messageId,
-      author: decodeSafe(String(newFormat[2] || '').trim()) || 'Собеседник',
-      text: decodeSafe(String(newFormat[3] || '').trim()),
+      author: decodeChatToken(String(newFormat[2] || '').trim()) || 'Собеседник',
+      text: decodeChatToken(String(newFormat[3] || '').trim()),
     };
   }
 
@@ -87,7 +84,7 @@ export function extractReplyMeta(text: string): ReplyMeta | null {
   return {
     messageId,
     author: 'Собеседник',
-    text: decodeSafe(String(oldFormat[2] || '').trim()),
+    text: decodeChatToken(String(oldFormat[2] || '').trim()),
   };
 }
 

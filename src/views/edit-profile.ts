@@ -3,6 +3,7 @@
  */
 
 import { t, localeTag, getLocale } from '@/i18n';
+import { buildAuthFooter } from '@/ui/auth-footer';
 import { apiCall, escapeHtml } from '@/utils';
 import { Router } from '@/router/Router';
 
@@ -277,6 +278,7 @@ export async function renderEditProfile(): Promise<void> {
     : t('Не указано');
 
   app.innerHTML = `
+    <div class="edit-profile-page">
     <div class="edit-profile-container">
       <div class="edit-profile-header">
         <button class="btn-back" type="button" data-route="account-profile" aria-label="${t('← Назад')}">${t('← Назад')}</button>
@@ -468,6 +470,8 @@ export async function renderEditProfile(): Promise<void> {
         </div>
       </div>
     </div>
+    ${buildAuthFooter({ showLangSwitcher: false })}
+    </div>
   `;
 
   // Добавляем стили
@@ -498,10 +502,17 @@ function addEditProfileStyles(): void {
   const style = document.createElement('style');
   style.id = 'edit-profile-styles';
   style.textContent = `
+    .edit-profile-page {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
     .edit-profile-container {
       max-width: 800px;
       margin: 0 auto;
       padding: 20px;
+      flex: 1 0 auto;
     }
     
     .edit-profile-header {

@@ -249,9 +249,10 @@
   flex-shrink: 0;
   margin-top: auto;
   width: 100%;
-  height: 44px;
+  min-height: 44px;
+  height: auto;
   display: flex;
-  align-items: center;
+  align-items: stretch;
 
   background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(6px);
@@ -262,7 +263,6 @@
 
   /* НЕОНОВАЯ РАМКА */
   border: 1px solid rgba(34, 240, 230, 0.45);
-  overflow: hidden;
 
   /* НЕОНОВОЕ СВЕЧЕНИЕ */
   box-shadow:
@@ -336,13 +336,50 @@
 
 .footer-row {
   width: 100%;
-  height: 100%;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 6px 24px;
   margin: 0;
   max-width: none;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.footer-main {
+  position: relative;
+  z-index: 7;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 14px;
+  padding: 6px 24px 8px;
+  border-top: 1px solid rgba(231, 236, 255, 0.12);
+  font-size: 13px;
+}
+
+.footer-legal a {
+  color: rgba(231, 236, 255, 0.78);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.footer-legal a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.footer-legal > * + * {
+  padding-left: 14px;
+  border-left: 1px solid rgba(231, 236, 255, 0.22);
 }
 
 .footer-copy {
@@ -3236,6 +3273,23 @@ body.no-strawberries .strawberry-ring-wave {
     width: min(100%, 280px);
   }
 
+  .footer-legal {
+    flex-direction: column;
+    gap: 0;
+    padding: 8px 16px 10px;
+  }
+
+  .footer-legal > * + * {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(231, 236, 255, 0.16);
+    width: min(100%, 280px);
+    text-align: center;
+  }
+
   /* mobile: sidebar hidden, opened via burger in account-render.css */
   .account-wrap {
     flex-direction: column;
@@ -3454,6 +3508,11 @@ html.dev-footer-pinned .cyb-dev-footer-strip {
 }
 
 html.dev-footer-pinned .footer-row {
+  position: relative;
+  z-index: 7;
+}
+
+html.dev-footer-pinned .footer-main {
   position: relative;
   z-index: 7;
 }
@@ -3993,5 +4052,317 @@ html.dev-footer-pinned .cyb-dev-footer-strip--found::before {
 
 .developer-mode-modal__btn:hover {
   filter: brightness(1.05);
+}
+
+/* ============================
+   Privacy settings (cookie consent)
+   ============================ */
+
+.cyb-privacy-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 10000;
+}
+
+.cyb-privacy-modal.is-open {
+  display: block;
+}
+
+body.cyb-privacy-modal-open {
+  overflow: hidden;
+}
+
+.cyb-privacy-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 4, 12, 0.72);
+  backdrop-filter: blur(5px);
+}
+
+.cyb-privacy-modal__card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(640px, calc(100vw - 28px));
+  max-height: min(90vh, 860px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #151b2e 0%, #101626 100%);
+  border: 1px solid rgba(255, 155, 79, 0.35);
+  border-radius: 16px;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 18px 50px rgba(0, 0, 0, 0.75);
+  text-align: left;
+}
+
+.cyb-privacy-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(90deg, #ff7f27 0%, #ff9b4f 100%);
+  color: #fff;
+}
+
+.cyb-privacy-modal__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.cyb-privacy-modal__close {
+  border: 0;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cyb-privacy-modal__close:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.cyb-privacy-modal__body {
+  padding: 20px 22px 24px;
+  overflow-y: auto;
+}
+
+.cyb-privacy-modal__intro {
+  margin: 0 0 18px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: #e5ecff;
+}
+
+.cyb-privacy-modal__intro a {
+  color: #93c5fd;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cyb-privacy-modal__quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.cyb-privacy-modal__btn {
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  font-family: inherit;
+}
+
+.cyb-privacy-modal__btn--primary {
+  background: linear-gradient(180deg, #ff8f3f 0%, #ff7f27 100%);
+  color: #fff;
+  border-color: rgba(255, 127, 39, 0.5);
+}
+
+.cyb-privacy-modal__btn--primary:hover {
+  filter: brightness(1.05);
+}
+
+.cyb-privacy-modal__btn--outline {
+  background: transparent;
+  color: #ff9b4f;
+  border-color: rgba(255, 155, 79, 0.45);
+}
+
+.cyb-privacy-modal__btn--outline:hover {
+  background: rgba(255, 127, 39, 0.08);
+}
+
+.cyb-privacy-modal__note {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #cbd5e1;
+}
+
+.cyb-privacy-modal__section-title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f3f4f6;
+}
+
+.cyb-privacy-modal__divider {
+  border: 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  margin: 0 0 16px;
+}
+
+.cyb-privacy-option {
+  margin-bottom: 18px;
+}
+
+.cyb-privacy-option__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f3f4f6;
+  cursor: pointer;
+}
+
+.cyb-privacy-option__head input {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  accent-color: #ff7f27;
+  flex-shrink: 0;
+}
+
+.cyb-privacy-option--locked .cyb-privacy-option__head {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.cyb-privacy-option__desc {
+  margin: 8px 0 0 26px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+.cyb-privacy-modal__footer {
+  margin-top: 8px;
+}
+
+.cyb-privacy-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--cyb-privacy-footer-offset, 44px);
+  z-index: 10001;
+  display: none;
+  padding: 0 16px 0;
+  pointer-events: none;
+}
+
+.cyb-privacy-banner.is-visible {
+  display: block;
+  pointer-events: auto;
+}
+
+.cyb-privacy-banner__inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 20px 22px 18px;
+  max-height: min(calc(100dvh - var(--cyb-privacy-footer-offset, 44px) - 16px), 420px);
+  overflow-y: auto;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(180deg, #151b2e 0%, #101626 100%);
+  border: 1px solid rgba(255, 155, 79, 0.35);
+  border-bottom: 0;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.55);
+  text-align: left;
+}
+
+.cyb-privacy-banner__title {
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f3f4f6;
+}
+
+.cyb-privacy-banner__text {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.65;
+  color: #cbd5e1;
+}
+
+.cyb-privacy-banner__text a {
+  color: #93c5fd;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cyb-privacy-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.cyb-privacy-banner__btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.cyb-privacy-banner__btn--primary {
+  background: linear-gradient(180deg, #ff8f3f 0%, #ff7f27 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255, 127, 39, 0.35);
+}
+
+.cyb-privacy-banner__btn--primary:hover {
+  filter: brightness(1.05);
+}
+
+.cyb-privacy-banner__btn--link {
+  background: transparent;
+  color: #ff9b4f;
+  padding: 10px 4px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+html.dev-footer-pinned .cyb-privacy-banner {
+  bottom: var(--dev-footer-height, var(--cyb-privacy-footer-offset, 44px));
+}
+
+@media (max-width: 640px) {
+  .cyb-privacy-banner {
+    padding: 0;
+  }
+
+  .cyb-privacy-banner__inner {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    padding: 16px;
+  }
+
+  .cyb-privacy-banner__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cyb-privacy-banner__btn--primary {
+    width: 100%;
+  }
+
+  .cyb-privacy-banner__btn--link {
+    align-self: flex-start;
+  }
+
+  .cyb-privacy-modal__quick {
+    grid-template-columns: 1fr;
+  }
 }
 
