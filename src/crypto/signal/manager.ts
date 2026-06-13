@@ -1,4 +1,4 @@
-import initLibsignal, {
+import {
   DeviceType,
   KeyHelper,
   SessionBuilder,
@@ -6,6 +6,7 @@ import initLibsignal, {
   SignalProtocolAddress,
 } from '@privacyresearch/libsignal-protocol-typescript';
 import { apiCall } from '@/utils';
+import { ensureLibsignalInitialized } from './libsignal-init';
 import { SignalProtocolStore } from './store';
 import {
   arrayBufferToBase64,
@@ -59,16 +60,12 @@ type KeyStatusResponse = {
   unusedOneTimePreKeys?: number;
 };
 
-let initPromise: Promise<void> | null = null;
 let activeUserId: string | null = null;
 let activeStore: SignalProtocolStore | null = null;
 let nextPreKeyId = Math.floor(Date.now() / 1000);
 
 async function ensureLibsignalReady(): Promise<void> {
-  if (!initPromise) {
-    initPromise = initLibsignal().then(() => undefined);
-  }
-  await initPromise;
+  await ensureLibsignalInitialized();
 }
 
 function makeKeyId(): number {
