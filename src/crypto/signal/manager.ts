@@ -8,7 +8,7 @@ import {
 import { apiCall } from '@/utils';
 import { ensureLibsignalInitialized } from './libsignal-init';
 import { generateKyberPreKeyForUpload, type KyberPreKeyUpload } from './kyber-prekey';
-import { SignalProtocolStore } from './store';
+import { SignalProtocolStore, type SignedPreKeyRecord } from './store';
 import {
   arrayBufferToBase64,
   arrayBufferToUtf8,
@@ -119,7 +119,7 @@ async function fetchKeyBundle(peerUserId: string): Promise<DeviceType> {
 async function uploadKeyRegistration(
   registrationId: number,
   identityKeyPair: Awaited<ReturnType<typeof KeyHelper.generateIdentityKeyPair>>,
-  signedPreKey: Awaited<ReturnType<typeof KeyHelper.generateSignedPreKey>>,
+  signedPreKey: SignedPreKeyRecord,
   kyberPreKey: KyberPreKeyUpload,
   oneTimePreKeys: Array<{ keyId: number; publicKey: string }>,
 ): Promise<void> {
@@ -175,6 +175,43 @@ async function generateOneTimePreKeyBatch(
   return out;
 }
 
+async function resolveSignedPreKeyForUpload(
+  store: SignalProtocolStore,
+  identityKeyPair: Awaited<ReturnType<typeof KeyHelper.generateIdentityKeyPair>>,
+): Promise<SignedPreKeyRecord> {
+  const existing = await store.getLatestSignedPreKeyRecord();
+  if (existing?.keyPair && existing.signature) {
+    return existing;
+  }
+
+  const latestId = await store.getLatestSignedPreKeyId();
+  if (latestId !== undefined) {
+    const legacyPair = await store.loadSignedPreKey(latestId);
+    if (legacyPair) {
+      await ensureLibsignalInitialized();
+      const { crypto } = await import('@privacyresearch/libsignal-protocol-typescript/lib/internal/crypto.js');
+      const signature = await crypto.Ed25519Sign(identityKeyPair.privKey, legacyPair.pubKey);
+      const record: SignedPreKeyRecord = {
+        keyId: latestId,
+        keyPair: legacyPair,
+        signature,
+      };
+      await store.storeSignedPreKeyRecord(record);
+      return record;
+    }
+  }
+
+  const signedPreKeyId = makeKeyId();
+  const generated = await KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId);
+  const record: SignedPreKeyRecord = {
+    keyId: generated.keyId,
+    keyPair: generated.keyPair,
+    signature: generated.signature,
+  };
+  await store.storeSignedPreKeyRecord(record);
+  return record;
+}
+
 async function publishRegistrationKeys(store: SignalProtocolStore): Promise<void> {
   const registrationId = await store.getLocalRegistrationId();
   const identityKeyPair = await store.getIdentityKeyPair();
@@ -182,16 +219,23 @@ async function publishRegistrationKeys(store: SignalProtocolStore): Promise<void
     throw new Error('local_keys_missing');
   }
 
-  const signedPreKeyId = makeKeyId();
-  const signedPreKey = await KeyHelper.generateSignedPreKey(identityKeyPair, signedPreKeyId);
-  await store.storeSignedPreKey(signedPreKeyId, signedPreKey.keyPair);
+  const signedPreKey = await resolveSignedPreKeyForUpload(store, identityKeyPair);
 
-  const kyberPreKeyId = makeKeyId();
-  const { upload: kyberPreKey, record: kyberRecord } = await generateKyberPreKeyForUpload(
-    identityKeyPair,
-    kyberPreKeyId,
-  );
-  await store.storeKyberPreKey(kyberPreKeyId, kyberRecord);
+  let kyberPreKey: KyberPreKeyUpload;
+  const latestKyberId = await store.getLatestKyberPreKeyId();
+  const existingKyber = latestKyberId !== undefined ? await store.loadKyberPreKey(latestKyberId) : undefined;
+  if (existingKyber) {
+    kyberPreKey = {
+      keyId: existingKyber.keyId,
+      publicKey: arrayBufferToBase64(existingKyber.serializedPublic),
+      signature: arrayBufferToBase64(existingKyber.signature),
+    };
+  } else {
+    const kyberPreKeyId = makeKeyId();
+    const generated = await generateKyberPreKeyForUpload(identityKeyPair, kyberPreKeyId);
+    await store.storeKyberPreKey(kyberPreKeyId, generated.record);
+    kyberPreKey = generated.upload;
+  }
 
   const oneTimePreKeys = await generateOneTimePreKeyBatch(store, ONE_TIME_PREKEY_BATCH);
   await uploadKeyRegistration(
@@ -299,7 +343,7 @@ export async function decryptIncomingMessage(userId: string, message: WireMessag
     return message.content;
   }
 
-  await ensureLibsignalReady();
+  await ensureSignalKeysRegistered(userId);
   const store = getStore(userId);
   const address = peerAddress(message.senderId);
   const sessionCipher = new SessionCipher(store, address);

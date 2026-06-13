@@ -3,6 +3,12 @@ import { SignalProtocolAddress } from '@privacyresearch/libsignal-protocol-types
 import { deserializeStoreValue, serializeStoreValue } from './buffer';
 import type { KyberPreKeyRecord } from './kyber-prekey';
 
+export type SignedPreKeyRecord = {
+  keyId: number;
+  keyPair: KeyPairType;
+  signature: ArrayBuffer;
+};
+
 const DB_NAME = 'cyblight-signal-store';
 const DB_VERSION = 1;
 const STORE_NAME = 'kv';
@@ -158,15 +164,66 @@ export class SignalProtocolStore implements StorageType {
   }
 
   async loadSignedPreKey(keyId: number | string): Promise<KeyPairType | undefined> {
+    const record = await this.loadSignedPreKeyRecord(keyId);
+    if (record?.keyPair) return record.keyPair;
+
     const res = await this.read(`25519KeysignedKey${keyId}`);
-    if (res && typeof res === 'object' && 'pubKey' in (res as KeyPairType)) {
+    if (!res || typeof res !== 'object') return undefined;
+
+    const wrapped = res as Partial<SignedPreKeyRecord>;
+    if (wrapped.keyPair && 'pubKey' in wrapped.keyPair) {
+      return wrapped.keyPair;
+    }
+    if ('pubKey' in (res as KeyPairType)) {
       return res as KeyPairType;
     }
     return undefined;
   }
 
+  async loadSignedPreKeyRecord(keyId: number | string): Promise<SignedPreKeyRecord | undefined> {
+    const res = await this.read(`25519KeysignedKey${keyId}`);
+    if (!res || typeof res !== 'object') return undefined;
+
+    const record = res as Partial<SignedPreKeyRecord>;
+    if (record.keyPair && record.signature instanceof ArrayBuffer && typeof record.keyId === 'number') {
+      return record as SignedPreKeyRecord;
+    }
+    if (record.keyPair && typeof record.keyId === 'number') {
+      return undefined;
+    }
+
+    return undefined;
+  }
+
+  async storeSignedPreKeyRecord(record: SignedPreKeyRecord): Promise<void> {
+    await this.write(`25519KeysignedKey${record.keyId}`, record);
+    await this.write('latestSignedPreKeyId', record.keyId);
+  }
+
   async storeSignedPreKey(keyId: number | string, keyPair: KeyPairType): Promise<void> {
-    await this.write(`25519KeysignedKey${keyId}`, keyPair);
+    const existing = await this.loadSignedPreKeyRecord(keyId);
+    if (existing) {
+      await this.storeSignedPreKeyRecord({ ...existing, keyPair });
+      return;
+    }
+    await this.write(`25519KeysignedKey${keyId}`, { keyId: Number(keyId), keyPair });
+    await this.write('latestSignedPreKeyId', Number(keyId));
+  }
+
+  async getLatestSignedPreKeyId(): Promise<number | undefined> {
+    const keyId = await this.read('latestSignedPreKeyId');
+    return typeof keyId === 'number' ? keyId : undefined;
+  }
+
+  async getLatestSignedPreKeyRecord(): Promise<SignedPreKeyRecord | undefined> {
+    const keyId = await this.getLatestSignedPreKeyId();
+    if (keyId === undefined) return undefined;
+    return this.loadSignedPreKeyRecord(keyId);
+  }
+
+  async hasSignedPreKey(): Promise<boolean> {
+    const record = await this.getLatestSignedPreKeyRecord();
+    return !!(record?.keyPair && record.signature);
   }
 
   async loadKyberPreKey(keyId: number | string): Promise<KyberPreKeyRecord | undefined> {
