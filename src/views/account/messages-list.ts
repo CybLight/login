@@ -3,17 +3,13 @@ import { Router } from '@/router/Router';
 import type { FriendListItem } from '@/types';
 import { apiCall, escapeHtml, formatPresenceLabel, isUserOnline } from '@/utils';
 import { getAvatarListHtml } from './avatar';
+import type { UnreadSummary } from './unread';
 
 type ApiMessage = {
   showMsg: (type: string, text: string, persist?: boolean) => void;
   clearMsg: () => void;
 };
 
-type UnreadSummary = {
-  totalPending: number;
-  totalUnread: number;
-  unreadByUser: Record<string, number>;
-};
 
 type MessagesDeps = {
   stopAccountChatAutoRefresh: () => void;
@@ -37,7 +33,10 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
   document.querySelector('.account-main')?.classList.remove('is-chat-view');
 
   try {
-    const friendsRes = await apiCall('/friends/list', { credentials: 'include' });
+    const [friendsRes, summary] = await Promise.all([
+      apiCall('/friends/list', { credentials: 'include' }),
+      deps.fetchUnreadSummaryData(),
+    ]);
     const friendsData = await friendsRes.json().catch(() => ({}));
 
     if (!friendsData?.ok) {
@@ -46,6 +45,23 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
     }
 
     const friends = Array.isArray(friendsData.friends) ? friendsData.friends : [];
+    const conversationPreviews = summary?.conversationPreviews ?? {};
+
+    const sortedFriends = [...friends].sort((left: FriendListItem, right: FriendListItem) => {
+      const leftId = String(left.id || '');
+      const rightId = String(right.id || '');
+      const leftLatest = Number(conversationPreviews[leftId]?.latestAt || 0);
+      const rightLatest = Number(conversationPreviews[rightId]?.latestAt || 0);
+      if (rightLatest !== leftLatest) return rightLatest - leftLatest;
+
+      const leftUnread = Number(summary?.unreadByUser?.[leftId] || 0);
+      const rightUnread = Number(summary?.unreadByUser?.[rightId] || 0);
+      if (rightUnread !== leftUnread) return rightUnread - leftUnread;
+
+      return String(left.username || '').localeCompare(String(right.username || ''), 'ru', {
+        sensitivity: 'base',
+      });
+    });
 
     const avatarHtml = (friend: FriendListItem) =>
       getAvatarListHtml(
@@ -59,6 +75,11 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
       );
 
     const chatPreviewHtml = (friend: FriendListItem) => {
+      const friendId = String(friend.id || '');
+      const preview = conversationPreviews[friendId]?.preview?.trim();
+      if (preview) {
+        return `<div class="chat-preview">${escapeHtml(preview)}</div>`;
+      }
       if (friend.isOnline || friend.lastSeenAt != null || friend.last_seen_at != null) {
         const online = isUserOnline(friend);
         const label = formatPresenceLabel(friend);
@@ -76,7 +97,7 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
 
       ${
         friends.length > 0
-          ? `<div class="chat-list">${friends
+          ? `<div class="chat-list">${sortedFriends
               .map(
                 (friend: FriendListItem) => `
               <button class="chat-card" data-action="open-chat" data-id="${escapeHtml(String(friend.id || ''))}" data-username="${escapeHtml(String(friend.username || ''))}" data-presence-user-id="${escapeHtml(String(friend.id || ''))}" type="button" aria-label="${escapeHtml(String(friend.username || 'Unknown'))} ${escapeHtml(formatPresenceLabel(friend))}">
@@ -154,9 +175,6 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
     }
 
     void deps.updateChatUnreadBadges();
-    console.log('[loadMessagesTab] Fetching unread summary...');
-    const summary = await deps.fetchUnreadSummaryData();
-    console.log('[loadMessagesTab] Summary received:', summary);
     if (summary) {
       console.log(
         '[loadMessagesTab] Setting badges - unread:',

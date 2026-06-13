@@ -56,6 +56,7 @@ export type ChatLoadOptions = {
   onPinStateChanged?: () => void;
   onForwardRequest?: (text: string) => Promise<void> | void;
   peerUsername?: string;
+  composeDraftHolder?: { draft: string };
 };
 
 type ChatCoreDeps = {
@@ -69,7 +70,8 @@ type ChatCoreDeps = {
     input: HTMLTextAreaElement,
     sendBtn: HTMLButtonElement | null,
     editIndicator: HTMLElement | null,
-    editingIdInput: HTMLInputElement | null
+    editingIdInput: HTMLInputElement | null,
+    composeDraftHolder?: { draft: string },
   ) => void;
 };
 
@@ -722,7 +724,8 @@ export function createChatCore(deps: ChatCoreDeps) {
                 chatInput,
                 chatSendBtn,
                 chatEditIndicator,
-                chatEditingIdInput
+                chatEditingIdInput,
+                options?.composeDraftHolder,
               );
               closeChatContextMenu();
               return;

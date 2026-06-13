@@ -758,6 +758,20 @@ function easterProgressHtml(current: number, total: number): string {
   )}</div>`;
 }
 
+const EASTER_EGGS_TOTAL = 12;
+
+function easterCollectionSummaryHtml(found: number, total: number = EASTER_EGGS_TOTAL): string {
+  const isComplete = found >= total;
+  const text = isComplete
+    ? t("Все получено! 👑")
+    : t("{found} из {total} получено", {
+        found: String(found),
+        total: String(total),
+      });
+  const completeClass = isComplete ? " easter-collection-summary--complete" : "";
+  return `<div class="easter-collection-summary${completeClass}">${escapeHtml(text)}</div>`;
+}
+
 function renderEasterTab(user: User): string {
   const hasStrawberry =
     localStorage.getItem("cyb_strawberry_unlocked") === "1" ||
@@ -790,6 +804,20 @@ function renderEasterTab(user: User): string {
   const bridgeAppToday =
     user.easter?.bridgeAppToday === true || user.easter?.bridge_app_today === true;
   const bridgePlatformsToday = (bridgeWebToday ? 1 : 0) + (bridgeAppToday ? 1 : 0);
+  const easterFoundCount = [
+    hasStrawberry,
+    hasProfileMirror,
+    hasDarkTrigger,
+    hasPostmaster,
+    hasDeveloperMode,
+    hasThemeFlux,
+    hasLightCatcher,
+    hasNightGuard,
+    hasTrustedFingerprint,
+    hasEcho,
+    hasArchivist,
+    hasBridge,
+  ].filter(Boolean).length;
 
   console.log(
     "[EASTER] hasStrawberry:",
@@ -828,6 +856,8 @@ function renderEasterTab(user: User): string {
       <div class="easter-intro">
         ${t('🎯 Пасхалки открываются, когда ты находишь секреты на сайте и в приложении')}
       </div>
+
+      ${easterCollectionSummaryHtml(easterFoundCount)}
 
       <div class="easter-subtabs" role="tablist" aria-label="${t('Категории пасхалок')}">
         <button

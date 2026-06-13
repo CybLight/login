@@ -723,4 +723,6 @@ export const uk: Record<string, string> = {
   "{hours} ч {minutes} мин": "{hours} год {minutes} хв",
   "{minutes} мин": "{minutes} хв",
   "{current} из {total}": "{current} з {total}",
+  "{found} из {total} получено": "{found} з {total} отримано",
+  "Все получено! 👑": "Все отримано! 👑",
 };

@@ -1,10 +1,17 @@
 import type { UnreadMapRow } from '@/types';
 import { apiCall } from '@/utils';
 
+export type ConversationPreviewEntry = {
+  preview: string;
+  latestAt: number;
+  kind?: 'message' | 'reaction';
+};
+
 export type UnreadSummary = {
   totalPending: number;
   totalUnread: number;
   unreadByUser: Record<string, number>;
+  conversationPreviews: Record<string, ConversationPreviewEntry>;
 };
 
 export function setNavBadge(type: 'pending-requests' | 'unread-messages', count: number): void {
@@ -82,13 +89,37 @@ export async function fetchUnreadSummaryData(): Promise<UnreadSummary | null> {
           Object.values(unreadByUser).reduce((sum, value) => sum + Number(value || 0), 0)
       );
 
+      const rawConversationPreviews =
+        data?.conversationPreviews ?? data?.conversation_previews ?? {};
+      const conversationPreviews: Record<string, ConversationPreviewEntry> = {};
+
+      if (rawConversationPreviews && typeof rawConversationPreviews === 'object') {
+        Object.entries(rawConversationPreviews as Record<string, unknown>).forEach(
+          ([friendId, value]) => {
+            if (!value || typeof value !== 'object') return;
+            const row = value as Record<string, unknown>;
+            const preview = String(row.preview ?? row.text ?? '').trim();
+            if (!preview) return;
+            conversationPreviews[friendId] = {
+              preview,
+              latestAt: Number(row.latestAt ?? row.latest_at ?? 0),
+              kind:
+                row.kind === 'reaction' || row.kind === 'message'
+                  ? row.kind
+                  : undefined,
+            };
+          }
+        );
+      }
+
       console.log('[fetchUnreadSummaryData] Final result:', {
         totalPending,
         totalUnread,
         unreadByUser,
+        conversationPreviews,
       });
 
-      return { totalPending, totalUnread, unreadByUser };
+      return { totalPending, totalUnread, unreadByUser, conversationPreviews };
     } catch (err) {
       console.error(
         '[fetchUnreadSummaryData] Unread summary request failed for endpoint:',
@@ -183,7 +214,7 @@ async function fetchUnreadSummaryFallback(): Promise<UnreadSummary | null> {
       [];
     const totalPending = Number(pendingRequests.length || 0);
 
-    return { totalPending, totalUnread: 0, unreadByUser: {} };
+    return { totalPending, totalUnread: 0, unreadByUser: {}, conversationPreviews: {} };
   } catch (err) {
     console.warn('Unread summary fallback failed:', err);
     return null;

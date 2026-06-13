@@ -7,7 +7,8 @@ import { Router } from '@/router/Router';
 import { apiCall, escapeHtml, formatPresenceLabel, hasPresenceData, isUserOnline } from '@/utils';
 import { setupAccessibleModal } from '@/utils/keyboard';
 import type { ApiOkResponse, FriendListItem } from '@/types';
-import { createChatCore } from './chat-core';
+import { createChatCore, type ChatLoadOptions } from './chat-core';
+import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
 import { extractFirstUrl } from './chat-format';
 import { loadMessagesTab as loadMessagesListTab } from './messages-list';
 import type { UnreadSummary } from './unread';
@@ -185,6 +186,7 @@ export function openChatInMessagesTab(
   const chatEditingIdInput = document.getElementById(
     'chatEditingMessageId'
   ) as HTMLInputElement | null;
+  const composeDraftHolder = { draft: loadChatDraft(friendId) };
   let currentInputEmojiCategory = CYBLIGHT_EMOJI_CATEGORIES[0].key;
   let currentInputEmojiSearch = '';
   let suppressedInputPreviewUrl: string | null = null;
@@ -296,14 +298,10 @@ export function openChatInMessagesTab(
             chatSendBtn,
             chatEditIndicator,
             chatEditingIdInput,
-            {
+            chatLoadOptions({
               hydrateLinkPreviews: true,
               forceScrollToBottom: true,
-              onReplySelect: setReplyState,
-              onPinStateChanged: renderPinnedBar,
-              onForwardRequest: forwardMessageFromPicker,
-              peerUsername: friendUsername,
-            }
+            })
           );
         }
       });
@@ -423,14 +421,10 @@ export function openChatInMessagesTab(
           chatSendBtn,
           chatEditIndicator,
           chatEditingIdInput,
-          {
+          chatLoadOptions({
             hydrateLinkPreviews: false,
             preserveScrollPosition: true,
-            onReplySelect: setReplyState,
-            onPinStateChanged: renderPinnedBar,
-            onForwardRequest: forwardMessageFromPicker,
-            peerUsername: friendUsername,
-          }
+          })
         );
       }
     });
@@ -568,6 +562,27 @@ export function openChatInMessagesTab(
       chatInput.focus();
     });
   };
+
+  const chatLoadOptions = (overrides: Partial<ChatLoadOptions> = {}): ChatLoadOptions => ({
+    onReplySelect: setReplyState,
+    onPinStateChanged: renderPinnedBar,
+    onForwardRequest: forwardMessageFromPicker,
+    peerUsername: friendUsername,
+    composeDraftHolder,
+    ...overrides,
+  });
+
+  const restoreComposeDraft = () => {
+    if (!chatInput) return;
+    chatInput.value = composeDraftHolder.draft;
+    chatInput.style.height = 'auto';
+    chatInput.style.height = chatInput.value
+      ? `${Math.min(chatInput.scrollHeight, 150)}px`
+      : 'auto';
+    renderInputLinkPreview();
+  };
+
+  restoreComposeDraft();
 
   const renderInputEmojiPicker = () => {
     if (!chatInputEmojiPicker) return;
@@ -761,12 +776,25 @@ export function openChatInMessagesTab(
       }
 
       if (response.ok && data?.ok) {
-        chatInput.value = '';
-        chatInput.style.height = 'auto';
+        if (!editingId) {
+          clearChatDraft(friendId);
+          composeDraftHolder.draft = '';
+          if (chatInput) {
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+          }
+        } else {
+          resetChatEditingState(
+            chatInput,
+            chatSendBtn,
+            chatEditIndicator,
+            chatEditingIdInput,
+            composeDraftHolder,
+          );
+        }
         suppressedInputPreviewUrl = null;
         renderInputLinkPreview();
         clearReplyState();
-        resetChatEditingState(chatInput, chatSendBtn, chatEditIndicator, chatEditingIdInput);
         await loadChatMessagesInAccount(
           friendId,
           messagesEl,
@@ -775,14 +803,10 @@ export function openChatInMessagesTab(
           chatSendBtn,
           chatEditIndicator,
           chatEditingIdInput,
-          {
+          chatLoadOptions({
             hydrateLinkPreviews: true,
             forceScrollToBottom: true,
-            onReplySelect: setReplyState,
-            onPinStateChanged: renderPinnedBar,
-            onForwardRequest: forwardMessageFromPicker,
-            peerUsername: friendUsername,
-          }
+          })
         );
         // Update badge counters after sending message
         void updateNavBadges();
@@ -816,6 +840,10 @@ export function openChatInMessagesTab(
     if (!chatInput) return;
     chatInput.style.height = 'auto';
     chatInput.style.height = `${Math.min(chatInput.scrollHeight, 150)}px`;
+    if (!chatEditingIdInput?.value) {
+      composeDraftHolder.draft = chatInput.value;
+      saveChatDraft(friendId, chatInput.value);
+    }
     renderInputLinkPreview();
   });
 
@@ -837,12 +865,24 @@ export function openChatInMessagesTab(
     }
     if (event.key === 'Escape') {
       event.preventDefault();
-      resetChatEditingState(chatInput, chatSendBtn, chatEditIndicator, chatEditingIdInput);
+      resetChatEditingState(
+        chatInput,
+        chatSendBtn,
+        chatEditIndicator,
+        chatEditingIdInput,
+        composeDraftHolder,
+      );
     }
   });
 
   chatCancelEditBtn?.addEventListener('click', () => {
-    resetChatEditingState(chatInput, chatSendBtn, chatEditIndicator, chatEditingIdInput);
+    resetChatEditingState(
+      chatInput,
+      chatSendBtn,
+      chatEditIndicator,
+      chatEditingIdInput,
+      composeDraftHolder,
+    );
     suppressedInputPreviewUrl = null;
     renderInputLinkPreview();
   });
@@ -870,12 +910,7 @@ export function openChatInMessagesTab(
     chatSendBtn,
     chatEditIndicator,
     chatEditingIdInput,
-    {
-      onReplySelect: setReplyState,
-      onPinStateChanged: renderPinnedBar,
-      onForwardRequest: forwardMessageFromPicker,
-      peerUsername: friendUsername,
-    }
+    chatLoadOptions()
   );
 
   renderPinnedBar();
@@ -937,14 +972,10 @@ export function openChatInMessagesTab(
         chatSendBtn,
         chatEditIndicator,
         chatEditingIdInput,
-        {
+        chatLoadOptions({
           hydrateLinkPreviews: false,
           preserveScrollPosition: true,
-          onReplySelect: setReplyState,
-          onPinStateChanged: renderPinnedBar,
-          onForwardRequest: forwardMessageFromPicker,
-          peerUsername: friendUsername,
-        }
+        })
       );
     }, 5000)
   );
@@ -1081,14 +1112,10 @@ export function openChatInMessagesTab(
         chatSendBtn,
         chatEditIndicator,
         chatEditingIdInput,
-        {
+        chatLoadOptions({
           hydrateLinkPreviews: false,
           preserveScrollPosition: true,
-          onReplySelect: setReplyState,
-          onPinStateChanged: renderPinnedBar,
-          onForwardRequest: forwardMessageFromPicker,
-          peerUsername: friendUsername,
-        }
+        })
       );
     }
   });

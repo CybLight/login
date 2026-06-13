@@ -64,8 +64,13 @@ export function startEditMessageInAccount(
   input: HTMLTextAreaElement,
   sendBtn: HTMLButtonElement | null,
   editIndicator: HTMLElement | null,
-  editingIdInput: HTMLInputElement | null
+  editingIdInput: HTMLInputElement | null,
+  composeDraftHolder?: { draft: string },
 ): void {
+  if (composeDraftHolder && !editingIdInput?.value) {
+    composeDraftHolder.draft = input.value;
+  }
+
   if (editingIdInput) editingIdInput.value = messageId;
 
   input.value = stripNoPreviewTokens(currentContent);
@@ -86,13 +91,17 @@ export function resetChatEditingState(
   input: HTMLTextAreaElement | null,
   sendBtn: HTMLButtonElement | null,
   editIndicator: HTMLElement | null,
-  editingIdInput: HTMLInputElement | null
+  editingIdInput: HTMLInputElement | null,
+  composeDraftHolder?: { draft: string },
 ): void {
   if (editingIdInput) editingIdInput.value = '';
 
   if (input) {
-    input.value = '';
+    input.value = composeDraftHolder?.draft ?? '';
     input.style.height = 'auto';
+    if (input.value) {
+      input.style.height = `${Math.min(input.scrollHeight, 150)}px`;
+    }
   }
 
   if (sendBtn) {
