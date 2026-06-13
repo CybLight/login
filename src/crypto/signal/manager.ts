@@ -99,6 +99,9 @@ type KeyStatusResponse = {
 let activeUserId: string | null = null;
 let activeContext: WasmSignalContext | null = null;
 let nextPreKeyId = Math.floor(Date.now() / 1000);
+let ensureKeysInflight: Promise<void> | null = null;
+let ensureKeysForUser: string | null = null;
+let prekeysAlignedForUser: string | null = null;
 
 function makeKeyId(): number {
   nextPreKeyId += 1;
@@ -243,15 +246,22 @@ async function resolveKyberPreKeyForUpload(
   return upload;
 }
 
+async function replenishOneTimePreKeys(ctx: WasmSignalContext): Promise<void> {
+  const batch = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
+  await uploadOneTimePreKeys(batch);
+  await persistWasmContext(ctx);
+}
+
 async function publishRegistrationKeys(ctx: WasmSignalContext): Promise<void> {
   const signedPreKey = await resolveSignedPreKeyForUpload(ctx);
   const kyberPreKey = await resolveKyberPreKeyForUpload(ctx);
   const oneTimePreKeys = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
   await uploadKeyRegistration(ctx, signedPreKey, kyberPreKey, oneTimePreKeys);
   await persistWasmContext(ctx);
+  prekeysAlignedForUser = ctx.userId;
 }
 
-export async function ensureSignalKeysRegistered(userId: string): Promise<void> {
+async function ensureSignalKeysRegisteredInner(userId: string): Promise<void> {
   await ensureLibsignalInitialized();
 
   const statusRes = await apiCall('/crypto/keys/status', {
@@ -279,6 +289,12 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
     return;
   }
 
+  if (prekeysAlignedForUser !== userId) {
+    await replenishOneTimePreKeys(ctx);
+    prekeysAlignedForUser = userId;
+    return;
+  }
+
   const unused = Number(status.unusedOneTimePreKeys || 0);
   const oldestUnused = status.oldestUnusedPreKeyId;
   const oldestMissingLocally =
@@ -286,10 +302,19 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
   const serverHasUnknownPrekeys = await serverHasPrekeysOutsideLocal(ctx, status);
 
   if (unused < REPLENISH_THRESHOLD || serverHasUnknownPrekeys || oldestMissingLocally) {
-    const batch = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
-    await uploadOneTimePreKeys(batch);
-    await persistWasmContext(ctx);
+    await replenishOneTimePreKeys(ctx);
   }
+}
+
+export async function ensureSignalKeysRegistered(userId: string): Promise<void> {
+  if (ensureKeysInflight && ensureKeysForUser === userId) {
+    return ensureKeysInflight;
+  }
+  ensureKeysForUser = userId;
+  ensureKeysInflight = ensureSignalKeysRegisteredInner(userId).finally(() => {
+    ensureKeysInflight = null;
+  });
+  return ensureKeysInflight;
 }
 
 async function ensureSession(ctx: WasmSignalContext, peerUserId: string): Promise<void> {
@@ -409,7 +434,6 @@ export async function decryptIncomingMessage(userId: string, message: WireMessag
     );
   } catch (error) {
     const hasSession = await ctx.sessionStore.has_session(sender);
-    const localAudit = await auditLocalKeys(ctx);
     const preKeyIds =
       signalType === message_type_pre_key() ? peekPreKeyMessageIds(body) : {};
     const preKeyPresent =
@@ -417,23 +441,14 @@ export async function decryptIncomingMessage(userId: string, message: WireMessag
         ? await hasLocalPreKeyId(ctx, preKeyIds.preKeyId)
         : null;
 
-    console.error('[Signal] decrypt failed:', {
+    console.warn('[Signal] decrypt failed:', {
       error: String(error),
       signalType,
       hasSession,
       senderId: message.senderId,
       messageId: message.id ?? null,
-      localAudit,
       preKeyIds,
       preKeyPresent,
-      signedPreKeyMatch:
-        preKeyIds.signedPreKeyId !== undefined
-          ? preKeyIds.signedPreKeyId === localAudit.signedPreKeyId
-          : null,
-      kyberPreKeyMatch:
-        preKeyIds.kyberPreKeyId !== undefined
-          ? preKeyIds.kyberPreKeyId === localAudit.kyberPreKeyId
-          : null,
     });
     throw error;
   }
@@ -458,6 +473,7 @@ export async function decryptMessageList<T extends WireMessage>(
   userId: string,
   messages: T[],
 ): Promise<Array<T & { content: string }>> {
+  await ensureSignalKeysRegistered(userId);
   const decryptOrder = [...messages].sort((a, b) => messageSortKey(a) - messageSortKey(b));
   const decryptedById = new Map<string, string>();
 
