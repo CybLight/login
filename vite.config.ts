@@ -9,6 +9,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      path: path.resolve(__dirname, './src/shims/node-empty.ts'),
+      fs: path.resolve(__dirname, './src/shims/node-empty.ts'),
     },
   },
   build: {
