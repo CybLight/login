@@ -11,6 +11,7 @@ import { createSecurityCore } from './security-core';
 import { updateSecurityIndicator, attachPasswordHints } from './security-ui';
 import { loadLoginHistory, loadTrustedDevices } from './security-extras';
 import { bindBackupHandlers } from './security-backup';
+import { openPendingSecuritySection } from './encryption-reminder';
 import { showAccountConfirmModal } from './modals';
 import {
   formatPendingDate,
@@ -739,4 +740,6 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   if (contentPasskeys) {
     loadPasskeys(contentPasskeys, api);
   }
+
+  openPendingSecuritySection();
 }

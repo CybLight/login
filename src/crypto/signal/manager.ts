@@ -11,6 +11,7 @@ import {
   WasmPublicKey,
 } from '@getmaapp/signal-wasm';
 import { apiCall } from '@/utils';
+import { t } from '@/i18n';
 import { ensureLibsignalInitialized } from './libsignal-init';
 import {
   arrayBufferToBase64,
@@ -117,10 +118,14 @@ export function getSignalKeyIssue(): SignalKeyIssue | null {
 
 export function getSignalKeyIssueMessage(issue: SignalKeyIssue | null = lastSignalKeyIssue): string {
   if (issue === 'local_missing') {
-    return 'Ключи шифрования сохранены на другом устройстве. Откройте чат в приложении или в том же браузере, где уже входили.';
+    return t(
+      'Ключи шифрования сохранены на другом устройстве. Откройте чат в приложении или в том же браузере, где уже входили.',
+    );
   }
   if (issue === 'identity_conflict') {
-    return 'Конфликт ключей шифрования в этом браузере. Очистите данные сайта или сбросьте ключи в настройках.';
+    return t(
+      'Конфликт ключей шифрования в этом браузере. Очистите данные сайта или сбросьте ключи в настройках.',
+    );
   }
   return '';
 }
@@ -445,7 +450,7 @@ export async function decryptIncomingMessage(userId: string, message: WireMessag
         return cached;
       }
     }
-    return '🔒 Сообщение отправлено';
+    return t('🔒 Сообщение отправлено');
   }
 
   if (message.id) {
@@ -534,7 +539,7 @@ export async function decryptMessageList<T extends WireMessage>(
       if (issueMessage && message.encryption === 'signal_v1' && message.senderId !== userId) {
         decryptedById.set(key, `🔒 ${issueMessage}`);
       } else {
-        decryptedById.set(key, '🔒 Не удалось расшифровать сообщение');
+        decryptedById.set(key, t('🔒 Не удалось расшифровать сообщение'));
       }
       if (issue) {
         console.warn('[Signal] decrypt skipped:', issue, message.id ?? null);
@@ -548,7 +553,7 @@ export async function decryptMessageList<T extends WireMessage>(
     const key = message.id ?? `${message.senderId}:${message.content}`;
     return {
       ...message,
-      content: decryptedById.get(key) ?? '🔒 Не удалось расшифровать сообщение',
+      content: decryptedById.get(key) ?? t('🔒 Не удалось расшифровать сообщение'),
     };
   });
 }

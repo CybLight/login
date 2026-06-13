@@ -52,7 +52,7 @@ export function bindBackupHandlers(deps: BackupDeps): void {
       api.showMsg('success', t('Резервная копия сохранена.'));
     } catch (error) {
       const code = error instanceof Error ? error.message : 'backup_failed';
-      api.showMsg('error', t(backupErrorMessage(code)));
+      api.showMsg('error', backupErrorMessage(code));
     } finally {
       setBackupBusy(false);
     }
@@ -82,7 +82,7 @@ export function bindBackupHandlers(deps: BackupDeps): void {
       api.showMsg('success', t('Ключи шифрования восстановлены. Обновите страницу сообщений.'));
     } catch (error) {
       const code = error instanceof Error ? error.message : 'backup_failed';
-      api.showMsg('error', t(backupErrorMessage(code)));
+      api.showMsg('error', backupErrorMessage(code));
     } finally {
       setBackupBusy(false);
     }

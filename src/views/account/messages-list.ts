@@ -4,6 +4,10 @@ import type { FriendListItem } from '@/types';
 import { apiCall, escapeHtml, formatPresenceLabel, isUserOnline } from '@/utils';
 import { getAvatarListHtml } from './avatar';
 import type { UnreadSummary } from './unread';
+import {
+  bindEncryptionReminderHandlers,
+  renderMessagesEncryptionReminder,
+} from './encryption-reminder';
 
 type ApiMessage = {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -95,6 +99,8 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
         <p class="messages-info-hint">${t('Выберите друга, чтобы начать переписку')}</p>
       </div>
 
+      ${renderMessagesEncryptionReminder()}
+
       ${
         friends.length > 0
           ? `<div class="chat-list">${sortedFriends
@@ -120,6 +126,8 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
           : `<div class="messages-empty"><div class="messages-empty-icon">💬</div><p>${t('Нет доступных чатов')}</p><p class="messages-empty-sub">${t('Добавьте друзей, чтобы начать общение')}</p></div>`
       }
     `;
+
+    bindEncryptionReminderHandlers(container);
 
     const openProfileFromTarget = (target: HTMLElement | null): void => {
       const profileEl = target?.closest('[data-action="profile"]') as HTMLElement | null;

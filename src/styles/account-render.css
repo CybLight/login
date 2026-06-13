@@ -922,6 +922,95 @@
   color: rgba(231, 236, 255, 0.96);
 }
 
+.messages-encryption-reminder {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(139, 92, 246, 0.32);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.14), rgba(59, 130, 246, 0.08));
+  color: rgba(231, 236, 255, 0.96);
+}
+
+.messages-encryption-reminder--compact {
+  margin: 0 0 12px;
+  padding: 12px 36px 12px 14px;
+  gap: 10px;
+}
+
+.messages-encryption-reminder__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  padding: 5px 7px;
+}
+
+.messages-encryption-reminder__close:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.messages-encryption-reminder__icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.messages-encryption-reminder--compact .messages-encryption-reminder__icon {
+  font-size: 18px;
+}
+
+.messages-encryption-reminder__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.messages-encryption-reminder__body strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.messages-encryption-reminder__body p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.messages-encryption-reminder--compact .messages-encryption-reminder__body p {
+  margin-bottom: 8px;
+}
+
+.messages-encryption-reminder__link {
+  appearance: none;
+  border: none;
+  padding: 0;
+  background: none;
+  color: #c4b5fd;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.messages-encryption-reminder__link:hover {
+  color: #ddd6fe;
+}
+
 .chat-list {
   display: flex;
   flex-direction: column;

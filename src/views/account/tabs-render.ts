@@ -684,7 +684,7 @@ function renderSecurityTab(user: User): string {
         <div class="sec-panel-inner" id="secPasskeysContent"></div>
       </div>
 
-      <button class="sec-item" id="secBackupItem" type="button" aria-label="${t('Резервная копия шифрования')} ${t('Экспорт и импорт ключей Signal между устройствами')}">
+      <button class="sec-item" id="secBackupItem" type="button" aria-label="${t('Резервная копия шифрования')} ${t('Экспорт и импорт ключей шифрования между устройствами')}">
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
@@ -704,24 +704,51 @@ function renderSecurityTab(user: User): string {
       </button>
 
       <div class="sec-panel is-hidden" id="secBackupPanel">
-        <div class="sec-panel-inner">
+        <div class="sec-panel-inner sec-backup-panel">
           <div class="sec-status sec-status-muted">
-            ${t('Создайте зашифрованную копию ключей Signal. Один и тот же файл можно восстановить в браузере или в приложении CybLight.')}
+            ${t('Создайте зашифрованную копию ключей шифрования. Один и тот же файл можно восстановить в браузере или в приложении CybLight.')}
           </div>
-          <div class="sec-form-block">
-            <div class="sec-form-title">${t('Экспорт')}</div>
-            <label class="sec-label" for="secBackupExportPassword">${t('Пароль резервной копии')}</label>
-            <input class="sec-input" id="secBackupExportPassword" type="password" autocomplete="new-password" />
-            <label class="sec-label" for="secBackupExportPasswordConfirm">${t('Повторите пароль')}</label>
-            <input class="sec-input" id="secBackupExportPasswordConfirm" type="password" autocomplete="new-password" />
-            <button class="sec-btn" id="secBackupExportBtn" type="button">${t('Скачать .cyblight-backup')}</button>
+
+          <div class="sec-form-block sec-form-block--export">
+            <div class="sec-form-block-head">
+              <span class="sec-form-block-icon" aria-hidden="true">📤</span>
+              <div class="sec-form-title">${t('Экспорт')}</div>
+            </div>
+            <div class="sec-form-row">
+              <label class="label sec-label" for="secBackupExportPassword">${t('Пароль резервной копии')}</label>
+              <div class="pass-wrap">
+                <input class="input" id="secBackupExportPassword" type="password" autocomplete="new-password" placeholder="${t('Длина минимум 8 символов')}" />
+                <button type="button" class="pass-eye" data-target="secBackupExportPassword" aria-label="${t('Показать пароль')}"></button>
+              </div>
+            </div>
+            <div class="sec-form-row sec-mt-10">
+              <label class="label sec-label" for="secBackupExportPasswordConfirm">${t('Повторите пароль')}</label>
+              <div class="pass-wrap">
+                <input class="input" id="secBackupExportPasswordConfirm" type="password" autocomplete="new-password" placeholder="${t('Повторите пароль')}" />
+                <button type="button" class="pass-eye" data-target="secBackupExportPasswordConfirm" aria-label="${t('Показать пароль')}"></button>
+              </div>
+            </div>
+            <div class="sec-actions sec-mt-12">
+              <button class="btn btn-primary" id="secBackupExportBtn" type="button">${t('Скачать .cyblight-backup')}</button>
+            </div>
           </div>
-          <div class="sec-form-block">
-            <div class="sec-form-title">${t('Импорт')}</div>
-            <label class="sec-label" for="secBackupImportPassword">${t('Пароль резервной копии')}</label>
-            <input class="sec-input" id="secBackupImportPassword" type="password" autocomplete="current-password" />
+
+          <div class="sec-form-block sec-form-block--import">
+            <div class="sec-form-block-head">
+              <span class="sec-form-block-icon" aria-hidden="true">📥</span>
+              <div class="sec-form-title">${t('Импорт')}</div>
+            </div>
+            <div class="sec-form-row">
+              <label class="label sec-label" for="secBackupImportPassword">${t('Пароль резервной копии')}</label>
+              <div class="pass-wrap">
+                <input class="input" id="secBackupImportPassword" type="password" autocomplete="current-password" placeholder="${t('Пароль от файла резервной копии')}" />
+                <button type="button" class="pass-eye" data-target="secBackupImportPassword" aria-label="${t('Показать пароль')}"></button>
+              </div>
+            </div>
             <input class="is-hidden" id="secBackupFileInput" type="file" accept=".cyblight-backup,application/json" />
-            <button class="sec-btn sec-btn-secondary" id="secBackupImportBtn" type="button">${t('Выбрать файл и восстановить')}</button>
+            <div class="sec-actions sec-mt-12">
+              <button class="btn btn-outline" id="secBackupImportBtn" type="button">${t('Выбрать файл и восстановить')}</button>
+            </div>
           </div>
         </div>
       </div>

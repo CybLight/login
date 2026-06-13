@@ -2633,6 +2633,101 @@ body.no-strawberries .strawberry-ring-wave {
   gap: 10px;
 }
 
+.sec-backup-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.sec-form-block {
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sec-form-block--export {
+  border-color: rgba(139, 92, 246, 0.28);
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.1), rgba(255, 255, 255, 0.02));
+}
+
+.sec-form-block--import {
+  border-color: rgba(59, 130, 246, 0.24);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.sec-form-block-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.sec-form-block-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.sec-form-block--export .sec-form-block-icon {
+  background: rgba(139, 92, 246, 0.18);
+}
+
+.sec-form-block--import .sec-form-block-icon {
+  background: rgba(59, 130, 246, 0.16);
+}
+
+.sec-form-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.sec-form-block .sec-label {
+  display: block;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.88;
+}
+
+.sec-form-block .pass-wrap {
+  width: 100%;
+}
+
+.sec-form-block .input {
+  min-height: 44px;
+}
+
+.sec-form-block .input::placeholder {
+  color: rgba(231, 236, 255, 0.38);
+}
+
+.sec-form-block .sec-actions {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
+.sec-form-block .btn {
+  min-width: 220px;
+}
+
+@media (max-width: 560px) {
+  .sec-form-block {
+    padding: 14px;
+  }
+
+  .sec-form-block .btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 .sec-actions {
   display: flex;
   gap: 10px;

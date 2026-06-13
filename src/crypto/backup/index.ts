@@ -1,3 +1,4 @@
+import { t } from '@/i18n';
 import { collectBackupPayload } from './collect';
 import { decryptBackupPayload, encryptBackupPayload, parseBackupFile, serializeBackupFile } from './crypto';
 import { restoreBackupPayload } from './restore';
@@ -45,16 +46,18 @@ export function downloadBackupFile(content: string, login: string): void {
 export function backupErrorMessage(code: string): string {
   switch (code) {
     case 'backup_no_local_keys':
-      return 'Нет локальных ключей шифрования для резервной копии.';
+      return t('Нет локальных ключей шифрования для резервной копии.');
     case 'backup_password_invalid':
-      return 'Неверный пароль резервной копии.';
+      return t('Неверный пароль резервной копии.');
     case 'backup_user_mismatch':
-      return 'Эта копия создана для другого аккаунта.';
+      return t('Эта копия создана для другого аккаунта.');
+    case 'backup_kdf_unsupported':
+      return t('Неподдерживаемый формат шифрования резервной копии.');
     case 'backup_file_invalid':
     case 'backup_payload_invalid':
     case 'backup_format_unsupported':
-      return 'Некорректный файл резервной копии.';
+      return t('Некорректный файл резервной копии.');
     default:
-      return 'Не удалось обработать резервную копию.';
+      return t('Не удалось обработать резервную копию.');
   }
 }

@@ -22,6 +22,10 @@ import {
 } from './chat-editor';
 import { showAccountConfirmModal } from './modals';
 import { CYBLIGHT_EMOJI_CATEGORIES, CYBLIGHT_EMOJI_QUICK, getEmojiCategoryTitle } from './emoji-categories';
+import {
+  bindEncryptionReminderHandlers,
+  renderMessagesEncryptionReminder,
+} from './encryption-reminder';
 import '@/styles/messages-tab.css';
 
 type ReplyMessageState = {
@@ -105,6 +109,7 @@ export function openChatInMessagesTab(
       <div class="chat-back-row" id="chatBackRow">
         <button id="chatBackBtn" class="chat-close-btn" type="button" aria-label="${t('← Назад')}">${t('← Назад')}</button>
       </div>
+      ${renderMessagesEncryptionReminder(true)}
       <div class="chat-selection-bar" id="chatSelectionBar">
         <div class="chat-selection-info" id="chatSelectionInfo">${t('Выбрано: {count}', { count: 0 })}</div>
         <div class="chat-selection-actions">
@@ -161,6 +166,8 @@ export function openChatInMessagesTab(
       </div>
     </div>
   `;
+
+  bindEncryptionReminderHandlers(container);
 
   document.getElementById('chatHeaderProfileBtn')?.addEventListener('click', () => {
     if (friendUsername) Router.navigate(friendUsername);
