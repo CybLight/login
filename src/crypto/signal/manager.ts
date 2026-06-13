@@ -98,10 +98,41 @@ type KeyStatusResponse = {
 
 let activeUserId: string | null = null;
 let activeContext: WasmSignalContext | null = null;
+
+export function resetActiveSignalContext(): void {
+  activeUserId = null;
+  activeContext = null;
+}
 let nextPreKeyId = Math.floor(Date.now() / 1000);
 let ensureKeysInflight: Promise<void> | null = null;
 let ensureKeysForUser: string | null = null;
 let prekeysAlignedForUser: string | null = null;
+
+export type SignalKeyIssue = 'local_missing' | 'identity_conflict';
+let lastSignalKeyIssue: SignalKeyIssue | null = null;
+
+export function getSignalKeyIssue(): SignalKeyIssue | null {
+  return lastSignalKeyIssue;
+}
+
+export function getSignalKeyIssueMessage(issue: SignalKeyIssue | null = lastSignalKeyIssue): string {
+  if (issue === 'local_missing') {
+    return 'Ключи шифрования сохранены на другом устройстве. Откройте чат в приложении или в том же браузере, где уже входили.';
+  }
+  if (issue === 'identity_conflict') {
+    return 'Конфликт ключей шифрования в этом браузере. Очистите данные сайта или сбросьте ключи в настройках.';
+  }
+  return '';
+}
+
+function setSignalKeyIssue(issue: SignalKeyIssue | null): void {
+  lastSignalKeyIssue = issue;
+}
+
+function throwSignalKeyIssue(issue: SignalKeyIssue, code: string): never {
+  setSignalKeyIssue(issue);
+  throw new Error(code);
+}
 
 function makeKeyId(): number {
   nextPreKeyId += 1;
@@ -263,6 +294,7 @@ async function publishRegistrationKeys(ctx: WasmSignalContext): Promise<void> {
 
 async function ensureSignalKeysRegisteredInner(userId: string): Promise<void> {
   await ensureLibsignalInitialized();
+  setSignalKeyIssue(null);
 
   const statusRes = await apiCall('/crypto/keys/status', {
     method: 'GET',
@@ -273,6 +305,10 @@ async function ensureSignalKeysRegisteredInner(userId: string): Promise<void> {
   let ctx = await getContext(userId);
 
   if (!ctx) {
+    if (status.ok && status.registered) {
+      throwSignalKeyIssue('local_missing', 'signal_keys_local_missing');
+    }
+
     const registrationId = generateRegistrationId();
     ctx = await createWasmContext(userId, registrationId);
     activeUserId = userId;
@@ -282,9 +318,19 @@ async function ensureSignalKeysRegisteredInner(userId: string): Promise<void> {
   }
 
   const localAudit = await auditLocalKeys(ctx);
+
+  if (
+    status.ok &&
+    status.registered &&
+    status.identityKeyPublic &&
+    status.identityKeyPublic !== localAudit.identityKeyPublic
+  ) {
+    throwSignalKeyIssue('identity_conflict', 'signal_keys_identity_conflict');
+  }
+
   const synced = isServerLocalKeySync(status, localAudit);
 
-  if (!synced || !localAudit.signedPreKeyPresent || !localAudit.kyberPreKeyPresent) {
+  if (!localAudit.signedPreKeyPresent || !localAudit.kyberPreKeyPresent || !synced) {
     await publishRegistrationKeys(ctx);
     return;
   }
@@ -473,7 +519,6 @@ export async function decryptMessageList<T extends WireMessage>(
   userId: string,
   messages: T[],
 ): Promise<Array<T & { content: string }>> {
-  await ensureSignalKeysRegistered(userId);
   const decryptOrder = [...messages].sort((a, b) => messageSortKey(a) - messageSortKey(b));
   const decryptedById = new Map<string, string>();
 
@@ -483,8 +528,19 @@ export async function decryptMessageList<T extends WireMessage>(
     try {
       const content = await decryptIncomingMessage(userId, message);
       decryptedById.set(key, content);
-    } catch {
-      decryptedById.set(key, '🔒 Не удалось расшифровать сообщение');
+    } catch (error) {
+      const issue = getSignalKeyIssue();
+      const issueMessage = getSignalKeyIssueMessage(issue);
+      if (issueMessage && message.encryption === 'signal_v1' && message.senderId !== userId) {
+        decryptedById.set(key, `🔒 ${issueMessage}`);
+      } else {
+        decryptedById.set(key, '🔒 Не удалось расшифровать сообщение');
+      }
+      if (issue) {
+        console.warn('[Signal] decrypt skipped:', issue, message.id ?? null);
+      } else {
+        console.warn('[Signal] decrypt failed:', error, message.id ?? null);
+      }
     }
   }
 

@@ -10,6 +10,7 @@ import { fmtTs } from './device-utils';
 import { createSecurityCore } from './security-core';
 import { updateSecurityIndicator, attachPasswordHints } from './security-ui';
 import { loadLoginHistory, loadTrustedDevices } from './security-extras';
+import { bindBackupHandlers } from './security-backup';
 import { showAccountConfirmModal } from './modals';
 import {
   formatPendingDate,
@@ -680,6 +681,22 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
         void loadPasskeys(contentPasskeys, api);
       }
     };
+  }
+
+  // ==================== ENCRYPTION BACKUP ====================
+  const itemBackup = document.getElementById('secBackupItem');
+  const panelBackup = document.getElementById('secBackupPanel');
+
+  if (itemBackup && panelBackup) {
+    panelBackup.style.display = 'none';
+    itemBackup.onclick = () => {
+      toggleSecPanel(itemBackup, panelBackup);
+    };
+    bindBackupHandlers({
+      userId: String(user.id),
+      login: user.username || String(user.id),
+      api,
+    });
   }
 
   // ==================== TRUSTED DEVICES ====================

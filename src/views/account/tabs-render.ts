@@ -684,6 +684,48 @@ function renderSecurityTab(user: User): string {
         <div class="sec-panel-inner" id="secPasskeysContent"></div>
       </div>
 
+      <button class="sec-item" id="secBackupItem" type="button" aria-label="${t('Резервная копия шифрования')} ${t('Экспорт и импорт ключей Signal между устройствами')}">
+        <div class="sec-left">
+          <div class="sec-head-row">
+            <div class="sec-icon-box">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04ZM12 13L16 17H13V21H11V17H8L12 13Z" fill="#8b5cf6" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="sec-title">${t('Резервная копия шифрования')}</div>
+          </div>
+          <div class="sec-sub">${t('Файл .cyblight-backup для переноса ключей между браузером и приложением')}</div>
+        </div>
+        <div class="sec-right">
+          <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
+            <g><path fill="currentColor" d="M8.809,23.588l-1.617-1.176L14.764,12L7.191,1.588l1.617-1.176l8,11c0.255,0.351,0.255,0.825,0,1.176 L8.809,23.588z"></path></g>
+          </svg>
+        </div>
+      </button>
+
+      <div class="sec-panel is-hidden" id="secBackupPanel">
+        <div class="sec-panel-inner">
+          <div class="sec-status sec-status-muted">
+            ${t('Создайте зашифрованную копию ключей Signal. Один и тот же файл можно восстановить в браузере или в приложении CybLight.')}
+          </div>
+          <div class="sec-form-block">
+            <div class="sec-form-title">${t('Экспорт')}</div>
+            <label class="sec-label" for="secBackupExportPassword">${t('Пароль резервной копии')}</label>
+            <input class="sec-input" id="secBackupExportPassword" type="password" autocomplete="new-password" />
+            <label class="sec-label" for="secBackupExportPasswordConfirm">${t('Повторите пароль')}</label>
+            <input class="sec-input" id="secBackupExportPasswordConfirm" type="password" autocomplete="new-password" />
+            <button class="sec-btn" id="secBackupExportBtn" type="button">${t('Скачать .cyblight-backup')}</button>
+          </div>
+          <div class="sec-form-block">
+            <div class="sec-form-title">${t('Импорт')}</div>
+            <label class="sec-label" for="secBackupImportPassword">${t('Пароль резервной копии')}</label>
+            <input class="sec-input" id="secBackupImportPassword" type="password" autocomplete="current-password" />
+            <input class="is-hidden" id="secBackupFileInput" type="file" accept=".cyblight-backup,application/json" />
+            <button class="sec-btn sec-btn-secondary" id="secBackupImportBtn" type="button">${t('Выбрать файл и восстановить')}</button>
+          </div>
+        </div>
+      </div>
+
       <button class="sec-item" id="secDevicesItem" type="button" aria-label="${t('Доверенные устройства')} ${t('Управление устройствами для входа с 2FA')}">
         <div class="sec-left">
           <div class="sec-head-row">

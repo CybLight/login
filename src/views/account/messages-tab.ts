@@ -9,7 +9,7 @@ import { setupAccessibleModal } from '@/utils/keyboard';
 import type { ApiOkResponse, FriendListItem } from '@/types';
 import { createChatCore, type ChatLoadOptions } from './chat-core';
 import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
-import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId } from '@/crypto/signal';
+import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId, getSignalKeyIssueMessage } from '@/crypto/signal';
 import { extractFirstUrl } from './chat-format';
 import { loadMessagesTab as loadMessagesListTab } from './messages-list';
 import type { UnreadSummary } from './unread';
@@ -840,7 +840,8 @@ export function openChatInMessagesTab(
         );
       }
     } catch {
-      api.showMsg('error', t('Ошибка при отправке'));
+      const keyIssue = getSignalKeyIssueMessage();
+      api.showMsg('error', keyIssue || t('Ошибка при отправке'));
     } finally {
       if (chatSendBtn) chatSendBtn.disabled = false;
     }
