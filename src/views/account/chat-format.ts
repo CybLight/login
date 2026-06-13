@@ -1,4 +1,5 @@
 import { escapeHtml } from '@/utils';
+import { sanitizeHttpUrl } from '@/utils/sanitize-url';
 
 type ReplyMeta = {
   messageId: string;
@@ -16,6 +17,12 @@ function decodeChatToken(value: string): string {
   }
 }
 
+function chatLinkHtml(href: string, label: string): string {
+  const safeHref = sanitizeHttpUrl(href);
+  if (!safeHref) return label;
+  return `<a href="${escapeHtml(safeHref)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+}
+
 export function parseFormattedChatText(text: string): string {
   if (!text) return '';
 
@@ -24,21 +31,22 @@ export function parseFormattedChatText(text: string): string {
   let html = escapeHtml(cleanText);
 
   html = html.replace(/```(\w*)\n([\s\S]*?)\n```/g, (_match, lang, code) => {
-    return `<pre><code class="language-${lang}">${code}</code></pre>`;
+    const safeLang = String(lang || '').replace(/[^\w-]/g, '');
+    return `<pre><code class="language-${safeLang}">${code}</code></pre>`;
   });
   html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
   html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
   html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
   html = html.replace(/\|\|([^|]+)\|\|/g, '<span class="spoiler">$1</span>');
-  html = html.replace(
-    /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, href) =>
+    chatLinkHtml(String(href), String(label)),
   );
-  html = html.replace(
-    /(^|\s)(https?:\/\/[^\s<]+)/g,
-    '$1<a href="$2" target="_blank" rel="noopener noreferrer">$2</a>'
-  );
+  html = html.replace(/(^|\s)(https?:\/\/[^\s<]+)/g, (match, prefix, href) => {
+    const linked = chatLinkHtml(String(href), String(href));
+    if (linked === String(href)) return match;
+    return `${prefix}${linked}`;
+  });
 
   return html.replace(/\n/g, '<br>');
 }
@@ -46,7 +54,8 @@ export function parseFormattedChatText(text: string): string {
 export function extractFirstUrl(text: string): string | null {
   const match = text.match(/https?:\/\/[^\s<]+/i);
   if (!match) return null;
-  return match[0].replace(/[),.!?]+$/, '');
+  const raw = match[0].replace(/[),.!?]+$/, '');
+  return sanitizeHttpUrl(raw);
 }
 
 export function extractNoPreviewUrls(text: string): string[] {

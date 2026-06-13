@@ -1,5 +1,7 @@
 import type { MicrolinkData } from '@/types';
 import { escapeHtml } from '@/utils';
+import { allowsUsageConsent } from '@/utils/privacy-guard';
+import { sanitizeHttpUrl } from '@/utils/sanitize-url';
 
 type RichLinkPreview = {
   url: string;
@@ -13,6 +15,7 @@ const accountLinkPreviewCache = new Map<string, RichLinkPreview | null>();
 const accountLinkPreviewLoading = new Map<string, Promise<RichLinkPreview | null>>();
 
 export function renderRichLinkPreview(url: string, preview: RichLinkPreview | null): string {
+  const safeUrl = sanitizeHttpUrl(url) || '#';
   if (!preview) {
     let fallbackHost = url;
     let fallbackDisplay = url;
@@ -25,7 +28,7 @@ export function renderRichLinkPreview(url: string, preview: RichLinkPreview | nu
     }
 
     return `
-      <a class="chat-link-preview" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">
+      <a class="chat-link-preview" href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer">
         <div class="chat-link-preview-main">
           <div class="chat-link-preview-title">${escapeHtml(fallbackHost)}</div>
           <div class="chat-link-preview-url">${escapeHtml(fallbackDisplay)}</div>
@@ -34,7 +37,7 @@ export function renderRichLinkPreview(url: string, preview: RichLinkPreview | nu
     `;
   }
 
-  const previewUrl = preview.url || url;
+  const previewUrl = sanitizeHttpUrl(preview.url || url) || safeUrl;
   const displayUrl = (() => {
     try {
       const parsed = new URL(previewUrl);
@@ -64,6 +67,8 @@ export function renderCachedChatLinkPreview(url: string): string {
 }
 
 async function fetchRichLinkPreview(url: string): Promise<RichLinkPreview | null> {
+  if (!allowsUsageConsent()) return null;
+
   if (accountLinkPreviewCache.has(url)) {
     return accountLinkPreviewCache.get(url) || null;
   }
@@ -106,6 +111,8 @@ async function fetchRichLinkPreview(url: string): Promise<RichLinkPreview | null
 }
 
 export async function hydrateChatLinkPreviews(container: HTMLElement): Promise<void> {
+  if (!allowsUsageConsent()) return;
+
   const placeholders = Array.from(
     container.querySelectorAll<HTMLElement>('[data-link-preview-url]')
   );

@@ -1,4 +1,5 @@
 import { Router } from '@/router/Router';
+import { allowsDiagnosticConsent } from './privacy-guard';
 
 const LOG_URL = 'https://cyblight.org/e-log';
 
@@ -13,6 +14,8 @@ export interface EasterLogPayload {
 }
 
 export function sendEasterLog(payload: EasterLogPayload): void {
+  if (!allowsDiagnosticConsent()) return;
+
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   fetch(LOG_URL, {

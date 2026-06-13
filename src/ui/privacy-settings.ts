@@ -1,6 +1,29 @@
 import { getLocale, sitePath, t } from '@/i18n';
+import {
+  CHAT_DRAFT_PREFIX,
+  DARK_TRIGGER_KEY,
+  DEVELOPER_MODE_KEY,
+  EASTER_KEY,
+  HISTORY_FROM_KEY,
+  LIGHT_CATCHER_KEY,
+  POSTMASTER_KEY,
+  PROFILE_MIRROR_KEY,
+  THEME_FLUX_KEY,
+} from '@/config/constants';
 
 const STORAGE_KEY = 'cyblight-privacy-consent';
+
+const OPTIONAL_STORAGE_KEYS = [
+  'cyblight-lang',
+  EASTER_KEY,
+  DARK_TRIGGER_KEY,
+  PROFILE_MIRROR_KEY,
+  LIGHT_CATCHER_KEY,
+  POSTMASTER_KEY,
+  DEVELOPER_MODE_KEY,
+  THEME_FLUX_KEY,
+  HISTORY_FROM_KEY,
+] as const;
 
 type OptionalConsent = {
   functional: boolean;
@@ -64,6 +87,32 @@ function writeStored(consent: OptionalConsent): void {
   );
 }
 
+function clearOptionalStorage(): void {
+  for (const key of OPTIONAL_STORAGE_KEYS) {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  try {
+    const draftPrefix = CHAT_DRAFT_PREFIX;
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(draftPrefix)) keysToRemove.push(key);
+    }
+    for (const key of keysToRemove) localStorage.removeItem(key);
+  } catch {
+    /* ignore */
+  }
+}
+
+function allOptionalRejected(consent: OptionalConsent): boolean {
+  return !consent.functional && !consent.diagnostic && !consent.usage;
+}
+
 function getConsent(): Consent {
   const stored = readStored();
   if (stored) return stored;
@@ -104,7 +153,9 @@ function showBanner(): void {
 }
 
 function saveConsent(partial: Partial<OptionalConsent>): void {
-  writeStored({ ...defaultOptional(), ...partial });
+  const consent = { ...defaultOptional(), ...partial };
+  writeStored(consent);
+  if (allOptionalRejected(consent)) clearOptionalStorage();
   dispatchChange();
   hideBanner();
 }

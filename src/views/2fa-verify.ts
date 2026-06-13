@@ -142,10 +142,7 @@ export async function render2FAVerify(): Promise<void> {
         // Очищаем временный userId
         sessionStorage.removeItem('cyb_2fa_userId');
 
-        // Если получили deviceToken, сохраняем
-        if (data.deviceToken) {
-          localStorage.setItem('cyb_device_token', data.deviceToken);
-        }
+        // Trusted device token устанавливается сервером через HttpOnly cookie
 
         await syncEasterAfterLogin(data);
 

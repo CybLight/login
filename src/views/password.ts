@@ -169,9 +169,6 @@ export async function renderPassword(): Promise<void> {
       try {
         console.log('[PASSWORD] Attempting login for:', login);
 
-        // Проверяем наличие токена устройства
-        const deviceToken = localStorage.getItem('cyb_device_token') || '';
-
         const res = await apiCall('/auth/login', {
           method: 'POST',
           credentials: 'include',
@@ -179,7 +176,6 @@ export async function renderPassword(): Promise<void> {
             login,
             password: pass,
             turnstileToken: captchaService.token,
-            deviceToken,
           }),
         });
 

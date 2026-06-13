@@ -5,6 +5,7 @@
 import { bindProfileMirrorEaster } from '@/components/easter/profile-mirror';
 import { t, sitePath, getLocale, getLocaleLabel, localePath, localeTag, type Locale } from '@/i18n';
 import { apiCall, escapeHtml, renderPresenceChip } from '@/utils';
+import { allowsFunctionalConsent } from '@/utils/privacy-guard';
 import { Router } from '@/router/Router';
 import { showAppConfirm, showAppPrompt } from '@/ui';
 import { buildAuthFooter } from '@/ui/auth-footer';
@@ -392,10 +393,12 @@ function bindProfileLangMenu(): void {
   langMenu.querySelectorAll('a[hreflang]').forEach((link) => {
     link.addEventListener('click', () => {
       const loc = link.getAttribute('hreflang');
-      if (loc) {
-        try {
-          localStorage.setItem('cyblight-lang', loc);
-        } catch {
+        if (loc) {
+          try {
+            if (allowsFunctionalConsent()) {
+              localStorage.setItem('cyblight-lang', loc);
+            }
+          } catch {
           /* ignore */
         }
       }

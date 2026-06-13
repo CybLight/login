@@ -1,6 +1,11 @@
 import { t } from '@/i18n';
 import { getLocale, localeTag } from '@/i18n/locale';
 import { apiCall, escapeHtml } from '@/utils';
+import {
+  decryptIncomingMessage,
+  decryptMessageList,
+  getSignalUserId,
+} from '@/crypto/signal';
 import { copyText } from '@/utils/clipboard';
 import {
   buildChatLinkPreview,
@@ -120,27 +125,54 @@ export function createChatCore(deps: ChatCoreDeps) {
           : [];
 
       const pinnedPayload = data?.pinned || data?.data?.pinned || null;
+      const userId = getSignalUserId();
+      const decryptedList = await decryptMessageList(
+        userId,
+        list.map((message: Record<string, unknown>) => ({
+          ...message,
+          content: String(message.content || ''),
+          senderId: String(message.senderId || message.sender_id || ''),
+          encryption: (message.encryption as string | null | undefined) ?? 'plaintext',
+          signalType: (message.signalType as number | null | undefined) ?? null,
+          registrationId: (message.registrationId as number | null | undefined) ?? null,
+        })),
+      );
+
+      let pinnedText = '';
+      if (pinnedPayload?.messageId) {
+        try {
+          pinnedText = await decryptIncomingMessage(userId, {
+            content: String(pinnedPayload.content || ''),
+            senderId: String(pinnedPayload.senderId || pinnedPayload.sender_id || ''),
+            encryption: String(pinnedPayload.encryption || 'plaintext'),
+            signalType: Number(pinnedPayload.signalType ?? pinnedPayload.signal_type ?? 0) || null,
+            registrationId:
+              Number(pinnedPayload.registrationId ?? pinnedPayload.signal_registration_id ?? 0) ||
+              null,
+          });
+        } catch {
+          pinnedText = '🔒 Закреплённое сообщение';
+        }
+      }
+
       if (pinnedPayload?.messageId) {
         deps.accountPinnedMessageByChat.set(friendId, {
           messageId: String(pinnedPayload.messageId),
-          text: stripNoPreviewTokens(String(pinnedPayload.content || ''))
-            .replace(/\s+/g, ' ')
-            .trim(),
+          text: stripNoPreviewTokens(pinnedText).replace(/\s+/g, ' ').trim(),
         });
       } else {
         deps.accountPinnedMessageByChat.delete(friendId);
       }
       options?.onPinStateChanged?.();
 
-      if (list.length === 0) {
+      if (decryptedList.length === 0) {
         container.innerHTML = '<div class="chat-empty">Сообщений пока нет</div>';
         return;
       }
 
       deps.accountChatMessageMap.clear();
-      list.forEach((message: unknown) => {
-        const msg = message as Record<string, unknown>;
-        deps.accountChatMessageMap.set(String(msg.id || ''), msg);
+      decryptedList.forEach((message: Record<string, unknown>) => {
+        deps.accountChatMessageMap.set(String(message.id || ''), message);
       });
 
       const normalizeReactions = (input: unknown): Array<{ emoji: string; count: number }> => {
@@ -165,9 +197,9 @@ export function createChatCore(deps: ChatCoreDeps) {
         return [];
       };
 
-      container.innerHTML = list
-        .map((message: unknown) => {
-          const msg = message as Record<string, unknown>;
+      container.innerHTML = decryptedList
+        .map((message: Record<string, unknown>) => {
+          const msg = message;
           const messageId = String(msg.id ?? '');
           const senderId = String(
             msg.senderId ?? msg.sender_id ?? (msg.sender as Record<string, unknown> | undefined)?.id ?? ''

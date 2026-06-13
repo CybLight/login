@@ -11,6 +11,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@privacyresearch/curve25519-typescript": "^0.0.12",
+    "@privacyresearch/libsignal-protocol-typescript": "^0.0.16",
     "minimatch": "^9.0.9",
     "qrcodejs": "^1.0.0"
   },

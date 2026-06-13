@@ -1,4 +1,5 @@
 import { getLocale, getLocaleLabel, localePath, sitePath, stripLocalePrefix, t, type Locale } from '@/i18n';
+import { allowsFunctionalConsent } from '@/utils/privacy-guard';
 
 export type AuthFooterOptions = {
   showLangSwitcher?: boolean;
@@ -136,7 +137,9 @@ export function initFooterLangSwitcher(): void {
         const loc = link.getAttribute('data-locale-link');
         if (loc) {
           try {
-            localStorage.setItem('cyblight-lang', loc);
+            if (allowsFunctionalConsent()) {
+              localStorage.setItem('cyblight-lang', loc);
+            }
           } catch {
             /* ignore */
           }

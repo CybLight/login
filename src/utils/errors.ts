@@ -3,6 +3,7 @@
  */
 
 import { apiCall } from './api';
+import { allowsDiagnosticConsent } from './privacy-guard';
 
 const errorCache = new Set<string>();
 const MAX_ERRORS_PER_MINUTE = 10;
@@ -68,6 +69,8 @@ export function initErrorHandlers(): void {
 }
 
 export function reportError(errorData: Record<string, unknown>): void {
+  if (!allowsDiagnosticConsent()) return;
+
   apiCall('/error/report', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

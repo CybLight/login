@@ -64,10 +64,14 @@ export function siteRootPath(path = ''): string {
   return buildSiteUrl('https://cyblight.org', path);
 }
 
+import { allowsFunctionalConsent } from '../utils/privacy-guard';
+
 export function detectPreferredLocale(): Locale {
   try {
-    const saved = localStorage.getItem('cyblight-lang');
-    if (saved && isLocale(saved)) return saved;
+    if (allowsFunctionalConsent()) {
+      const saved = localStorage.getItem('cyblight-lang');
+      if (saved && isLocale(saved)) return saved;
+    }
   } catch {
     /* ignore */
   }
@@ -79,6 +83,7 @@ export function detectPreferredLocale(): Locale {
 }
 
 export function persistLocale(locale: Locale): void {
+  if (!allowsFunctionalConsent()) return;
   try {
     localStorage.setItem('cyblight-lang', locale);
   } catch {

@@ -9,6 +9,7 @@ import { setupAccessibleModal } from '@/utils/keyboard';
 import type { ApiOkResponse, FriendListItem } from '@/types';
 import { createChatCore, type ChatLoadOptions } from './chat-core';
 import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
+import { encryptOutgoingMessage, getSignalUserId } from '@/crypto/signal';
 import { extractFirstUrl } from './chat-format';
 import { loadMessagesTab as loadMessagesListTab } from './messages-list';
 import type { UnreadSummary } from './unread';
@@ -273,11 +274,17 @@ export function openChatInMessagesTab(
         const targetId = (buttonEl as HTMLElement).getAttribute('data-forward-id') || '';
         if (!targetId) return;
 
+        const encrypted = await encryptOutgoingMessage(getSignalUserId(), targetId, messageText);
         const response = await apiCall('/messages/send', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recipientId: targetId, content: messageText }),
+          body: JSON.stringify({
+            recipientId: targetId,
+            content: encrypted.content,
+            signalType: encrypted.signalType,
+            registrationId: encrypted.registrationId,
+          }),
         });
         const payload = await response.json().catch(() => ({}));
 
@@ -743,13 +750,19 @@ export function openChatInMessagesTab(
     try {
       let response: Response;
       let data: ApiOkResponse;
+      const userId = getSignalUserId();
+      const encrypted = await encryptOutgoingMessage(userId, friendId, content);
 
       if (editingId) {
         response = await apiCall(`/messages/${encodeURIComponent(editingId)}`, {
           method: 'PATCH',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content }),
+          body: JSON.stringify({
+            content: encrypted.content,
+            signalType: encrypted.signalType,
+            registrationId: encrypted.registrationId,
+          }),
         });
         data = await response.json().catch(() => ({}));
       } else {
@@ -757,7 +770,12 @@ export function openChatInMessagesTab(
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ recipientId: friendId, content }),
+          body: JSON.stringify({
+            recipientId: friendId,
+            content: encrypted.content,
+            signalType: encrypted.signalType,
+            registrationId: encrypted.registrationId,
+          }),
         });
         data = await response.json().catch(() => ({}));
       }

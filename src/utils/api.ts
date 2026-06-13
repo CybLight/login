@@ -1,5 +1,7 @@
 import { API_BASE, API_TIMEOUT_MS, CACHE_DURATION } from '@/config/constants';
 
+const isDev = typeof import.meta !== 'undefined' && Boolean((import.meta as ImportMeta & { env?: { DEV?: boolean } }).env?.DEV);
+
 /**
  * Enhanced API call handler with timeout, error handling, and caching
  */
@@ -22,7 +24,9 @@ export async function apiCall(
 
   try {
     const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
-    console.log('apiCall:', options.method || 'GET', url);
+    if (isDev) {
+      console.log('apiCall:', options.method || 'GET', url);
+    }
 
     const response = await fetch(url, {
       ...options,
@@ -36,13 +40,9 @@ export async function apiCall(
 
     clearTimeout(timeoutId);
 
-    // Log response details
-    console.log('apiCall response:', { url, ok: response.ok, status: response.status });
-    const setCookie = response.headers.get('set-cookie');
-    if (setCookie) {
-      console.log('Set-Cookie header:', setCookie);
+    if (isDev) {
+      console.log('apiCall response:', { url, ok: response.ok, status: response.status });
     }
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
     // Auto redirect on 401 if not an auth endpoint
     if (
@@ -54,7 +54,9 @@ export async function apiCall(
       !endpoint.includes('/auth/trusted-devices') &&
       !endpoint.includes('/auth/easter/')
     ) {
-      console.log('401 detected, redirecting to username');
+      if (isDev) {
+        console.log('401 detected, redirecting to username');
+      }
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
 

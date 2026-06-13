@@ -3,6 +3,7 @@
  */
 
 import { apiCall, getStorage } from '@/utils';
+import { allowsFunctionalConsent } from '@/utils/privacy-guard';
 import type { EasterLoginPayload } from '@/types';
 import {
   EASTER_KEY,
@@ -171,6 +172,8 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
 }
 
 function pullEasterFlagsToStorage(source: ResolvedEasterFlags): void {
+  if (!allowsFunctionalConsent()) return;
+
   if (source.strawberry === true) {
     localStorage.setItem(EASTER_KEY, '1');
   }

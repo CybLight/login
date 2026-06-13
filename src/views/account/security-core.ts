@@ -3,6 +3,7 @@ import type { PasskeyItem, WebAuthnCredentialDescriptorInput } from '@/types';
 import { showAppConfirm, showAppPrompt } from '@/ui';
 import { apiCall, escapeHtml } from '@/utils';
 import { fmtTs } from './device-utils';
+import 'qrcodejs/qrcode.min.js';
 
 type ApiMessage = {
   showMsg: (type: string, text: string, persist?: boolean) => void;

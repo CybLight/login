@@ -16,6 +16,14 @@ import { initStrawberryBackground } from '@/components/strawberry';
 import { initDeveloperModeEaster } from '@/components/easter/developer-mode';
 import { initReportModalTriggers } from '@/ui/report-modal';
 import { initPrivacySettings } from '@/ui/privacy-settings';
+import { ensureSignalKeysRegistered, setSignalUserId } from '@/crypto/signal';
+
+/** Удаляем legacy-токен устройства из localStorage (теперь HttpOnly cookie). */
+try {
+  localStorage.removeItem('cyb_device_token');
+} catch {
+  /* ignore */
+}
 
 // Import all views
 import {
@@ -77,6 +85,7 @@ function initGlobalUiDelegation(): void {
 (window as unknown as { CybRouter?: typeof Router }).CybRouter = Router;
 
 export async function initApp(): Promise<void> {
+  initPrivacySettings();
   initLocaleRouting();
 
   console.log('📱 CybLight Login - Initializing...');
@@ -111,7 +120,6 @@ export async function initApp(): Promise<void> {
   }
 
   initReportModalTriggers();
-  initPrivacySettings();
   initGlobalUiDelegation();
 
   // Initialize error handlers
@@ -168,7 +176,12 @@ export async function initApp(): Promise<void> {
   const user = await authService.checkSession();
   if (user) {
     logger.info('User logged in', { username: user.username });
+    setSignalUserId(user.id);
+    void ensureSignalKeysRegistered(user.id).catch((error) => {
+      console.error('[Signal] key registration failed:', error);
+    });
   } else {
+    setSignalUserId(null);
     logger.info('User not logged in');
   }
 

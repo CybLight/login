@@ -6,6 +6,7 @@
 import { Router } from '@/router/Router';
 import { setAppContent } from '@/ui';
 import { authService, extractEasterFlags, pushLocalEasterFlagsToServer } from '@/services';
+import { ensureSignalKeysRegistered, setSignalUserId } from '@/crypto/signal';
 import '@/styles/account.css';
 import '@/styles/account-render.css';
 import { renderAccountPage } from './account/account-render';
@@ -51,6 +52,11 @@ export async function renderAccount(tab: string = 'profile'): Promise<void> {
     Router.navigate('username');
     return;
   }
+
+  setSignalUserId(user.id);
+  void ensureSignalKeysRegistered(user.id).catch((error) => {
+    console.error('[Signal] key registration failed:', error);
+  });
 
   void pushLocalEasterFlagsToServer(extractEasterFlags({ user }));
 
