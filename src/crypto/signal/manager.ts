@@ -31,6 +31,12 @@ import {
   type WasmSignalContext,
 } from './wasm-context';
 import { readDecryptCache, writeDecryptCache } from './decrypt-cache';
+import {
+  auditLocalKeys,
+  hasLocalPreKeyId,
+  isServerLocalKeySync,
+  peekPreKeyMessageIds,
+} from './key-sync';
 
 const ONE_TIME_PREKEY_BATCH = 100;
 const REPLENISH_THRESHOLD = 20;
@@ -80,6 +86,10 @@ type KeyBundleResponse = {
 type KeyStatusResponse = {
   ok: boolean;
   registered?: boolean;
+  registrationId?: number | null;
+  identityKeyPublic?: string | null;
+  signedPreKeyId?: number | null;
+  kyberPreKeyId?: number | null;
   unusedOneTimePreKeys?: number;
 };
 
@@ -249,31 +259,29 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
 
   let ctx = await getContext(userId);
 
-  if (status.registered && ctx) {
-    if (!ctx.manifest.latestKyberPreKeyId) {
-      await publishRegistrationKeys(ctx);
-      return;
-    }
-
-    const unused = Number(status.unusedOneTimePreKeys || 0);
-    if (unused < REPLENISH_THRESHOLD) {
-      const batch = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
-      await uploadOneTimePreKeys(batch);
-      await persistWasmContext(ctx);
-    }
-    return;
-  }
-
-  if (ctx) {
+  if (!ctx) {
+    const registrationId = generateRegistrationId();
+    ctx = await createWasmContext(userId, registrationId);
+    activeUserId = userId;
+    activeContext = ctx;
     await publishRegistrationKeys(ctx);
     return;
   }
 
-  const registrationId = generateRegistrationId();
-  ctx = await createWasmContext(userId, registrationId);
-  activeUserId = userId;
-  activeContext = ctx;
-  await publishRegistrationKeys(ctx);
+  const localAudit = await auditLocalKeys(ctx);
+  const synced = isServerLocalKeySync(status, localAudit);
+
+  if (!synced || !localAudit.signedPreKeyPresent || !localAudit.kyberPreKeyPresent) {
+    await publishRegistrationKeys(ctx);
+    return;
+  }
+
+  const unused = Number(status.unusedOneTimePreKeys || 0);
+  if (unused < REPLENISH_THRESHOLD) {
+    const batch = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
+    await uploadOneTimePreKeys(batch);
+    await persistWasmContext(ctx);
+  }
 }
 
 async function ensureSession(ctx: WasmSignalContext, peerUserId: string): Promise<void> {
@@ -374,12 +382,31 @@ export async function decryptIncomingMessage(userId: string, message: WireMessag
     );
   } catch (error) {
     const hasSession = await ctx.sessionStore.has_session(sender);
+    const localAudit = await auditLocalKeys(ctx);
+    const preKeyIds =
+      signalType === message_type_pre_key() ? peekPreKeyMessageIds(body) : {};
+    const preKeyPresent =
+      preKeyIds.preKeyId !== undefined
+        ? await hasLocalPreKeyId(ctx, preKeyIds.preKeyId)
+        : null;
+
     console.error('[Signal] decrypt failed:', {
-      error,
+      error: String(error),
       signalType,
       hasSession,
       senderId: message.senderId,
       messageId: message.id ?? null,
+      localAudit,
+      preKeyIds,
+      preKeyPresent,
+      signedPreKeyMatch:
+        preKeyIds.signedPreKeyId !== undefined
+          ? preKeyIds.signedPreKeyId === localAudit.signedPreKeyId
+          : null,
+      kyberPreKeyMatch:
+        preKeyIds.kyberPreKeyId !== undefined
+          ? preKeyIds.kyberPreKeyId === localAudit.kyberPreKeyId
+          : null,
     });
     throw error;
   }
