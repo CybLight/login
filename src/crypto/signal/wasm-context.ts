@@ -69,30 +69,42 @@ function openDb(): Promise<IDBDatabase> {
   });
 }
 
-async function readValue(userId: string, key: string): Promise<unknown> {
+async function readAllValuesForUser(userId: string): Promise<Map<string, unknown>> {
   const db = await openDb();
-  const value = await new Promise<unknown>((resolve, reject) => {
+  const values = new Map<string, unknown>();
+
+  await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
     const store = tx.objectStore(STORE_NAME);
-    const req = store.get([userId, key]);
+    const req = store.getAll();
     req.onsuccess = () => {
-      const row = req.result as StoredRecord | undefined;
-      resolve(row?.value);
+      for (const row of (req.result as StoredRecord[]) || []) {
+        if (row.userId === userId) {
+          values.set(row.key, row.value);
+        }
+      }
     };
     req.onerror = () => reject(req.error || new Error('indexeddb_read_failed'));
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('indexeddb_read_failed'));
   });
+
   db.close();
-  return value;
+  return values;
 }
 
-async function writeValue(userId: string, key: string, value: unknown): Promise<void> {
+async function writeValuesBatch(userId: string, entries: Array<[string, unknown]>): Promise<void> {
+  if (entries.length === 0) return;
+
   const db = await openDb();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    const req = store.put({ userId, key, value } satisfies StoredRecord);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error || new Error('indexeddb_write_failed'));
+    for (const [key, value] of entries) {
+      store.put({ userId, key, value } satisfies StoredRecord);
+    }
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error || new Error('indexeddb_write_failed'));
   });
   db.close();
 }
@@ -112,7 +124,8 @@ function toUint8Array(buffer: ArrayBuffer): Uint8Array {
 export async function loadWasmContext(userId: string): Promise<WasmSignalContext | null> {
   await ensureLibsignalInitialized();
 
-  const rawManifest = await readValue(userId, 'wasmManifest');
+  const storedValues = await readAllValuesForUser(userId);
+  const rawManifest = storedValues.get('wasmManifest');
   if (!rawManifest || typeof rawManifest !== 'object') {
     return null;
   }
@@ -134,28 +147,28 @@ export async function loadWasmContext(userId: string): Promise<WasmSignalContext
   const sessionStore = new WasmInMemSessionStore();
 
   for (const keyId of manifest.preKeyIds) {
-    const raw = await readValue(userId, `wasmPreKey:${keyId}`);
+    const raw = storedValues.get(`wasmPreKey:${keyId}`);
     if (typeof raw === 'string') {
       await preKeyStore.import_pre_key(keyId, toUint8Array(base64ToArrayBuffer(raw)));
     }
   }
 
   for (const keyId of manifest.signedPreKeyIds) {
-    const raw = await readValue(userId, `wasmSignedPreKey:${keyId}`);
+    const raw = storedValues.get(`wasmSignedPreKey:${keyId}`);
     if (typeof raw === 'string') {
       await signedPreKeyStore.import_signed_pre_key(keyId, toUint8Array(base64ToArrayBuffer(raw)));
     }
   }
 
   for (const keyId of manifest.kyberPreKeyIds) {
-    const raw = await readValue(userId, `wasmKyberPreKey:${keyId}`);
+    const raw = storedValues.get(`wasmKyberPreKey:${keyId}`);
     if (typeof raw === 'string') {
       await kyberPreKeyStore.import_kyber_pre_key(keyId, toUint8Array(base64ToArrayBuffer(raw)));
     }
   }
 
   for (const key of manifest.sessionKeys) {
-    const raw = await readValue(userId, `wasmSession:${key}`);
+    const raw = storedValues.get(`wasmSession:${key}`);
     if (typeof raw !== 'string') continue;
     const [name, deviceIdRaw] = key.split(':');
     const deviceId = Number(deviceIdRaw);
@@ -223,13 +236,17 @@ export async function createWasmContext(userId: string, registrationId: number):
 
 export async function persistWasmContext(ctx: WasmSignalContext): Promise<void> {
   const { userId, manifest, preKeyStore, signedPreKeyStore, kyberPreKeyStore, sessionStore } = ctx;
+  const writes: Array<[string, unknown]> = [];
 
   const nextPreKeyIds: number[] = [];
   for (const keyId of manifest.preKeyIds) {
     const exported = await preKeyStore.export_pre_key(keyId);
     if (!exported) continue;
     nextPreKeyIds.push(keyId);
-    await writeValue(userId, `wasmPreKey:${keyId}`, arrayBufferToBase64(bytesToArrayBuffer(exported)));
+    writes.push([
+      `wasmPreKey:${keyId}`,
+      arrayBufferToBase64(bytesToArrayBuffer(exported)),
+    ]);
   }
   manifest.preKeyIds = nextPreKeyIds;
 
@@ -238,7 +255,10 @@ export async function persistWasmContext(ctx: WasmSignalContext): Promise<void> 
     const exported = await signedPreKeyStore.export_signed_pre_key(keyId);
     if (!exported) continue;
     nextSignedPreKeyIds.push(keyId);
-    await writeValue(userId, `wasmSignedPreKey:${keyId}`, arrayBufferToBase64(bytesToArrayBuffer(exported)));
+    writes.push([
+      `wasmSignedPreKey:${keyId}`,
+      arrayBufferToBase64(bytesToArrayBuffer(exported)),
+    ]);
   }
   manifest.signedPreKeyIds = nextSignedPreKeyIds;
 
@@ -247,7 +267,10 @@ export async function persistWasmContext(ctx: WasmSignalContext): Promise<void> 
     const exported = await kyberPreKeyStore.export_kyber_pre_key(keyId);
     if (!exported) continue;
     nextKyberPreKeyIds.push(keyId);
-    await writeValue(userId, `wasmKyberPreKey:${keyId}`, arrayBufferToBase64(bytesToArrayBuffer(exported)));
+    writes.push([
+      `wasmKyberPreKey:${keyId}`,
+      arrayBufferToBase64(bytesToArrayBuffer(exported)),
+    ]);
   }
   manifest.kyberPreKeyIds = nextKyberPreKeyIds;
 
@@ -260,11 +283,15 @@ export async function persistWasmContext(ctx: WasmSignalContext): Promise<void> 
     const exported = await sessionStore.export_session(address);
     if (!exported) continue;
     nextSessionKeys.push(key);
-    await writeValue(userId, `wasmSession:${key}`, arrayBufferToBase64(bytesToArrayBuffer(exported)));
+    writes.push([
+      `wasmSession:${key}`,
+      arrayBufferToBase64(bytesToArrayBuffer(exported)),
+    ]);
   }
   manifest.sessionKeys = nextSessionKeys;
 
-  await writeValue(userId, 'wasmManifest', manifest);
+  writes.push(['wasmManifest', manifest]);
+  await writeValuesBatch(userId, writes);
 }
 
 export function trackPreKey(ctx: WasmSignalContext, keyId: number): void {

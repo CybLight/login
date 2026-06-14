@@ -1,10 +1,21 @@
 import type { UnreadMapRow } from '@/types';
 import { apiCall } from '@/utils';
 
+export type ConversationPreviewWireMessage = {
+  id: string;
+  content: string;
+  senderId: string;
+  encryption: string;
+  signalType?: number | null;
+  registrationId?: number | null;
+  createdAt?: number | null;
+};
+
 export type ConversationPreviewEntry = {
   preview: string;
   latestAt: number;
   kind?: 'message' | 'reaction';
+  lastMessage?: ConversationPreviewWireMessage;
 };
 
 export type UnreadSummary = {
@@ -100,6 +111,43 @@ export async function fetchUnreadSummaryData(): Promise<UnreadSummary | null> {
             const row = value as Record<string, unknown>;
             const preview = String(row.preview ?? row.text ?? '').trim();
             if (!preview) return;
+
+            const rawLastMessage = row.lastMessage ?? row.last_message;
+            let lastMessage: ConversationPreviewWireMessage | undefined;
+            if (rawLastMessage && typeof rawLastMessage === 'object') {
+              const wire = rawLastMessage as Record<string, unknown>;
+              const id = String(wire.id ?? '').trim();
+              const content = String(wire.content ?? '');
+              const senderId = String(wire.senderId ?? wire.sender_id ?? '').trim();
+              const encryption = String(wire.encryption ?? 'plaintext');
+              if (id && senderId) {
+                lastMessage = {
+                  id,
+                  content,
+                  senderId,
+                  encryption,
+                  signalType:
+                    wire.signalType != null
+                      ? Number(wire.signalType)
+                      : wire.signal_type != null
+                        ? Number(wire.signal_type)
+                        : null,
+                  registrationId:
+                    wire.registrationId != null
+                      ? Number(wire.registrationId)
+                      : wire.registration_id != null
+                        ? Number(wire.registration_id)
+                        : null,
+                  createdAt:
+                    wire.createdAt != null
+                      ? Number(wire.createdAt)
+                      : wire.created_at != null
+                        ? Number(wire.created_at)
+                        : null,
+                };
+              }
+            }
+
             conversationPreviews[friendId] = {
               preview,
               latestAt: Number(row.latestAt ?? row.latest_at ?? 0),
@@ -107,6 +155,7 @@ export async function fetchUnreadSummaryData(): Promise<UnreadSummary | null> {
                 row.kind === 'reaction' || row.kind === 'message'
                   ? row.kind
                   : undefined,
+              lastMessage,
             };
           }
         );

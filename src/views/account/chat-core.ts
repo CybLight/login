@@ -13,6 +13,12 @@ import {
   parseFormattedChatText,
   stripNoPreviewTokens,
 } from './chat-format';
+import { cacheConversationPreview } from './conversation-preview';
+import {
+  getLocalDayKey,
+  normalizeMessageTimestamp,
+  renderChatDateSeparatorHtml,
+} from './chat-date';
 import { hydrateChatLinkPreviews, renderCachedChatLinkPreview } from './link-preview';
 import { addReactionToMessageInAccount, deleteMessageInAccount } from './chat-actions';
 import { showAccountConfirmModal, showAccountPinScopeModal } from './modals';
@@ -181,6 +187,23 @@ export function createChatCore(deps: ChatCoreDeps) {
         deps.accountChatMessageMap.set(String(message.id || ''), message);
       });
 
+      const latestMessage = decryptedList.reduce<Record<string, unknown> | null>((latest, message) => {
+        const msg = message as Record<string, unknown>;
+        const createdAt = normalizeMessageTimestamp(msg.createdAt ?? msg.created_at);
+        if (!latest) return msg;
+        const latestAt = normalizeMessageTimestamp(latest.createdAt ?? latest.created_at);
+        return createdAt >= latestAt ? msg : latest;
+      }, null);
+
+      if (latestMessage) {
+        cacheConversationPreview(
+          friendId,
+          String(latestMessage.senderId ?? latestMessage.sender_id ?? ''),
+          String(latestMessage.content ?? ''),
+          normalizeMessageTimestamp(latestMessage.createdAt ?? latestMessage.created_at),
+        );
+      }
+
       const normalizeReactions = (input: unknown): Array<{ emoji: string; count: number }> => {
         if (!input) return [];
         if (Array.isArray(input)) {
@@ -203,46 +226,48 @@ export function createChatCore(deps: ChatCoreDeps) {
         return [];
       };
 
-      container.innerHTML = decryptedList
-        .map((message: Record<string, unknown>) => {
-          const msg = message;
-          const messageId = String(msg.id ?? '');
-          const senderId = String(
-            msg.senderId ?? msg.sender_id ?? (msg.sender as Record<string, unknown> | undefined)?.id ?? ''
-          );
-          const isSent = senderId !== String(friendId);
-          const messageTimeRaw = msg.createdAt ?? msg.created_at ?? Date.now();
-          const createdAtMs = Number(messageTimeRaw);
-          const normalizedCreatedAt = Number.isFinite(createdAtMs)
-            ? createdAtMs > 10000000000
-              ? createdAtMs
-              : createdAtMs * 1000
-            : Date.now();
+      const messageHtmlParts: string[] = [];
+      let lastDayKey = '';
 
-          const rawContent = String(msg.content ?? '');
-          const replyMeta = extractReplyMeta(rawContent);
-          const parsedContent = parseFormattedChatText(rawContent);
-          const linkPreview = buildChatLinkPreview(rawContent);
-          const reactions = normalizeReactions(msg.reactions);
-          const edited = Boolean(msg.editedAt ?? msg.edited_at);
-          const readAt = msg.readAt ?? msg.read_at;
-          const timeLabel = new Date(normalizedCreatedAt).toLocaleTimeString(localeTag(getLocale()), {
-            hour: '2-digit',
-            minute: '2-digit',
-          });
+      for (const message of decryptedList) {
+        const msg = message as Record<string, unknown>;
+        const messageId = String(msg.id ?? '');
+        const senderId = String(
+          msg.senderId ?? msg.sender_id ?? (msg.sender as Record<string, unknown> | undefined)?.id ?? ''
+        );
+        const isSent = senderId !== String(friendId);
+        const normalizedCreatedAt = normalizeMessageTimestamp(msg.createdAt ?? msg.created_at);
+        const dayKey = getLocalDayKey(normalizedCreatedAt);
 
-          const emojiPopupButtons = deps.quickReactions
-            .slice(0, 6)
-            .map((emoji) =>
-              `<button class="chat-emoji-popup-btn" data-action="quick-react" data-message-id="${escapeHtml(
-                messageId
-              )}" data-emoji="${escapeHtml(emoji)}" type="button" title="${escapeHtml(
-                emoji
-              )}" aria-label="${escapeHtml(emoji)}">${emoji}</button>`
-            )
-            .join('');
+        if (dayKey !== lastDayKey) {
+          messageHtmlParts.push(renderChatDateSeparatorHtml(normalizedCreatedAt));
+          lastDayKey = dayKey;
+        }
 
-          return `
+        const rawContent = String(msg.content ?? '');
+        const replyMeta = extractReplyMeta(rawContent);
+        const parsedContent = parseFormattedChatText(rawContent);
+        const linkPreview = buildChatLinkPreview(rawContent);
+        const reactions = normalizeReactions(msg.reactions);
+        const edited = Boolean(msg.editedAt ?? msg.edited_at);
+        const readAt = msg.readAt ?? msg.read_at;
+        const timeLabel = new Date(normalizedCreatedAt).toLocaleTimeString(localeTag(getLocale()), {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+
+        const emojiPopupButtons = deps.quickReactions
+          .slice(0, 6)
+          .map((emoji) =>
+            `<button class="chat-emoji-popup-btn" data-action="quick-react" data-message-id="${escapeHtml(
+              messageId
+            )}" data-emoji="${escapeHtml(emoji)}" type="button" title="${escapeHtml(
+              emoji
+            )}" aria-label="${escapeHtml(emoji)}">${emoji}</button>`
+          )
+          .join('');
+
+        messageHtmlParts.push(`
           <div class="chat-message ${isSent ? 'sent' : 'received'} ${deps.accountPinnedMessageByChat.get(friendId)?.messageId === messageId ? 'is-pinned' : ''}" data-message-id="${escapeHtml(messageId)}">
             <div class="chat-message-content">
               ${
@@ -290,9 +315,10 @@ export function createChatCore(deps: ChatCoreDeps) {
               </div>
             </div>
           </div>
-        `;
-        })
-        .join('');
+        `);
+      }
+
+      container.innerHTML = messageHtmlParts.join('');
 
       container.querySelectorAll('.spoiler').forEach((spoilerEl) => {
         spoilerEl.addEventListener('click', () => {
@@ -549,12 +575,7 @@ export function createChatCore(deps: ChatCoreDeps) {
           const cleanContent = stripNoPreviewTokens(rawContent);
           const contextReplyAuthor = isSent ? 'Вы' : options?.peerUsername || 'Собеседник';
           const messageTimeRaw = message.createdAt || message.created_at || Date.now();
-          const createdAtMs = Number(messageTimeRaw);
-          const normalizedCreatedAt = Number.isFinite(createdAtMs)
-            ? createdAtMs > 10000000000
-              ? createdAtMs
-              : createdAtMs * 1000
-            : Date.now();
+          const normalizedCreatedAt = normalizeMessageTimestamp(messageTimeRaw);
           const canEditMessage = isSent && Date.now() - normalizedCreatedAt < deps.editTimeLimit;
           const editTimeLeft = canEditMessage
             ? Math.max(

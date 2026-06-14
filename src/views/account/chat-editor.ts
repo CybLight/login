@@ -46,6 +46,30 @@ export async function insertChatLink(input: HTMLTextAreaElement): Promise<void> 
   input.focus();
 }
 
+export function insertChatBlockquote(input: HTMLTextAreaElement): void {
+  const selectionStart = input.selectionStart;
+  const selectionEnd = input.selectionEnd;
+  const text = input.value;
+  const selectedText = text.substring(selectionStart, selectionEnd);
+
+  if (selectedText) {
+    const quoted = selectedText
+      .split('\n')
+      .map((line) => (line ? `> ${line}` : '>'))
+      .join('\n');
+
+    input.value = text.substring(0, selectionStart) + quoted + text.substring(selectionEnd);
+    input.setSelectionRange(selectionStart, selectionStart + quoted.length);
+    input.focus();
+    return;
+  }
+
+  const lineStart = text.lastIndexOf('\n', selectionStart - 1) + 1;
+  input.value = `${text.substring(0, lineStart)}> ${text.substring(lineStart)}`;
+  input.setSelectionRange(selectionStart + 2, selectionStart + 2);
+  input.focus();
+}
+
 export async function insertChatCode(input: HTMLTextAreaElement): Promise<void> {
   const selectionStart = input.selectionStart;
   const selectionEnd = input.selectionEnd;

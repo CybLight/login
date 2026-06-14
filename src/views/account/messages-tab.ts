@@ -11,11 +11,14 @@ import { createChatCore, type ChatLoadOptions } from './chat-core';
 import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
 import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId, getSignalKeyIssueMessage } from '@/crypto/signal';
 import { extractFirstUrl } from './chat-format';
+import { renderChatFormatToolbarRowHtml, bindChatFormatToolbarToggle } from './chat-formatting-settings';
 import { loadMessagesTab as loadMessagesListTab } from './messages-list';
+import { cacheConversationPreview } from './conversation-preview';
 import type { UnreadSummary } from './unread';
 import { updateNavBadges } from './unread';
 import {
   resetChatEditingState,
+  insertChatBlockquote,
   insertChatFormatting,
   insertChatLink,
   insertChatCode,
@@ -145,15 +148,7 @@ export function openChatInMessagesTab(
 
         <div id="chatInputPreviewWrap" class="chat-input-preview-wrap"></div>
 
-        <div class="chat-formatting-toolbar">
-          <button class="chat-format-btn" data-format="bold" type="button" title="${t('Жирный (Ctrl+B)')}" aria-label="${t('Жирный (Ctrl+B)')}"><b>B</b></button>
-          <button class="chat-format-btn" data-format="italic" type="button" title="${t('Курсив (Ctrl+I)')}" aria-label="${t('Курсив (Ctrl+I)')}"><i>I</i></button>
-          <button class="chat-format-btn" data-format="mono" type="button" title="${t('Моноширинный')}" aria-label="${t('Моноширинный')}"><code>M</code></button>
-          <button class="chat-format-btn" data-format="strike" type="button" title="${t('Зачёркнутый')}" aria-label="${t('Зачёркнутый')}"><s>S</s></button>
-          <button class="chat-format-btn" data-format="link" type="button" title="${t('Вставить ссылку')}" aria-label="${t('Вставить ссылку')}">🔗</button>
-          <button class="chat-format-btn" data-format="spoiler" type="button" title="${t('Спойлер')}" aria-label="${t('Спойлер')}">||</button>
-          <button class="chat-format-btn" data-format="code" type="button" title="${t('Блок кода')}" aria-label="${t('Блок кода')}">{ }</button>
-        </div>
+        ${renderChatFormatToolbarRowHtml()}
 
         <div class="chat-input-wrapper">
           <textarea id="chatInput" placeholder="${t('Напишите сообщение...')}" rows="1" maxlength="2000"></textarea>
@@ -168,6 +163,7 @@ export function openChatInMessagesTab(
   `;
 
   bindEncryptionReminderHandlers(container);
+  bindChatFormatToolbarToggle(container);
 
   document.getElementById('chatHeaderProfileBtn')?.addEventListener('click', () => {
     if (friendUsername) Router.navigate(friendUsername);
@@ -802,6 +798,7 @@ export function openChatInMessagesTab(
         );
         if (savedId) {
           await cacheSentPlaintext(userId, savedId, content);
+          cacheConversationPreview(friendId, userId, content, Date.now());
         }
 
         if (!editingId) {
@@ -887,6 +884,11 @@ export function openChatInMessagesTab(
       insertChatFormatting('_', '_', chatInput);
       return;
     }
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'u') {
+      event.preventDefault();
+      insertChatFormatting('__', '__', chatInput);
+      return;
+    }
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
       event.preventDefault();
       void insertChatLink(chatInput);
@@ -923,9 +925,11 @@ export function openChatInMessagesTab(
       const format = btn.getAttribute('data-format');
       if (format === 'bold') insertChatFormatting('**', '**', chatInput);
       else if (format === 'italic') insertChatFormatting('_', '_', chatInput);
-      else if (format === 'mono') insertChatFormatting('`', '`', chatInput);
+      else if (format === 'underline') insertChatFormatting('__', '__', chatInput);
       else if (format === 'strike') insertChatFormatting('~~', '~~', chatInput);
+      else if (format === 'mono') insertChatFormatting('`', '`', chatInput);
       else if (format === 'spoiler') insertChatFormatting('||', '||', chatInput);
+      else if (format === 'quote') insertChatBlockquote(chatInput);
       else if (format === 'link') void insertChatLink(chatInput);
       else if (format === 'code') void insertChatCode(chatInput);
     });

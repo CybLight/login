@@ -8,7 +8,7 @@
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
+npm run dev      # http://localhost:3000 (passkeys: use localhost, not 127.0.0.1)
 ```
 
 Продакшен-сборка:

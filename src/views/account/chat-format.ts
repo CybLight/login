@@ -23,32 +23,83 @@ function chatLinkHtml(href: string, label: string): string {
   return `<a href="${escapeHtml(safeHref)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
 }
 
-export function parseFormattedChatText(text: string): string {
-  if (!text) return '';
+type QuoteChunk = {
+  quoted: boolean;
+  text: string;
+};
 
-  const cleanText = stripNoPreviewTokens(text);
+function splitQuoteChunks(text: string): QuoteChunk[] {
+  const lines = text.split('\n');
+  const chunks: QuoteChunk[] = [];
+  let current: { quoted: boolean; lines: string[] } | null = null;
 
-  let html = escapeHtml(cleanText);
+  for (const line of lines) {
+    const quoted = line.startsWith('> ');
+    const content = quoted ? line.slice(2) : line;
+
+    if (!current || current.quoted !== quoted) {
+      if (current) {
+        chunks.push({ quoted: current.quoted, text: current.lines.join('\n') });
+      }
+      current = { quoted, lines: [content] };
+      continue;
+    }
+
+    current.lines.push(content);
+  }
+
+  if (current) {
+    chunks.push({ quoted: current.quoted, text: current.lines.join('\n') });
+  }
+
+  return chunks;
+}
+
+function applyInlineFormatting(html: string): string {
+  let next = html;
+  next = next.replace(/`([^`]+)`/g, '<code>$1</code>');
+  next = next.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  next = next.replace(/__([^_]+)__/g, '<u>$1</u>');
+  next = next.replace(/_([^_]+)_/g, '<em>$1</em>');
+  next = next.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  next = next.replace(/\|\|([^|]+)\|\|/g, '<span class="spoiler">$1</span>');
+  next = next.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, href) =>
+    chatLinkHtml(String(href), String(label)),
+  );
+  next = next.replace(/(^|\s)(https?:\/\/[^\s<]+)/g, (match, prefix, href) => {
+    const linked = chatLinkHtml(String(href), String(href));
+    if (linked === String(href)) return match;
+    return `${prefix}${linked}`;
+  });
+  return next;
+}
+
+function renderPlainBlock(text: string): string {
+  let html = escapeHtml(text);
 
   html = html.replace(/```(\w*)\n([\s\S]*?)\n```/g, (_match, lang, code) => {
     const safeLang = String(lang || '').replace(/[^\w-]/g, '');
     return `<pre><code class="language-${safeLang}">${code}</code></pre>`;
   });
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
-  html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-  html = html.replace(/\|\|([^|]+)\|\|/g, '<span class="spoiler">$1</span>');
-  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_match, label, href) =>
-    chatLinkHtml(String(href), String(label)),
-  );
-  html = html.replace(/(^|\s)(https?:\/\/[^\s<]+)/g, (match, prefix, href) => {
-    const linked = chatLinkHtml(String(href), String(href));
-    if (linked === String(href)) return match;
-    return `${prefix}${linked}`;
-  });
 
+  html = applyInlineFormatting(html);
   return html.replace(/\n/g, '<br>');
+}
+
+function renderQuotedBlock(text: string): string {
+  const html = applyInlineFormatting(escapeHtml(text));
+  return `<blockquote class="chat-blockquote">${html.replace(/\n/g, '<br>')}</blockquote>`;
+}
+
+export function parseFormattedChatText(text: string): string {
+  if (!text) return '';
+
+  const cleanText = stripNoPreviewTokens(text);
+  const chunks = splitQuoteChunks(cleanText);
+
+  return chunks
+    .map((chunk) => (chunk.quoted ? renderQuotedBlock(chunk.text) : renderPlainBlock(chunk.text)))
+    .join('<br>');
 }
 
 export function extractFirstUrl(text: string): string | null {
@@ -102,6 +153,45 @@ export function stripNoPreviewTokens(text: string): string {
     .replace(/\n?\[\[CYBLIGHT_NO_PREVIEW:[^\]]+\]\]/g, '')
     .replace(/\n?\[\[CYBLIGHT_REPLY:[^\]]+\]\]/g, '')
     .trimEnd();
+}
+
+export const SPOILER_PREVIEW_MARKER = '[[spoiler]]';
+
+export function maskSpoilersForPreview(content: string): string {
+  return content.replace(/\|\|([^|]+)\|\|/g, SPOILER_PREVIEW_MARKER);
+}
+
+export function stripPreviewFormatting(content: string): string {
+  return maskSpoilersForPreview(content)
+    .replace(/\[reply:[^\]]+\]/gi, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .replace(/^>\s?/gm, '');
+}
+
+export function truncatePreviewText(content: string, maxLen = 120): string {
+  const plain = stripPreviewFormatting(content).replace(/\s+/g, ' ').trim();
+
+  if (!plain) return 'Новое сообщение';
+  if (plain.length <= maxLen) return plain;
+  return `${plain.slice(0, maxLen - 1)}…`;
+}
+
+export function renderChatListPreviewHtml(text: string): string {
+  const normalized = maskSpoilersForPreview(text);
+  const parts = normalized.split(SPOILER_PREVIEW_MARKER);
+
+  return parts
+    .map((part, index) => {
+      const segment = escapeHtml(part);
+      if (index < parts.length - 1) {
+        return `${segment}<span class="spoiler chat-list-preview-spoiler" aria-hidden="true"></span>`;
+      }
+      return segment;
+    })
+    .join('');
 }
 
 export function isPreviewSuppressedForUrl(text: string, url: string): boolean {

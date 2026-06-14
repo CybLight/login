@@ -2,6 +2,7 @@ import { t, getLocale, localeTag } from '@/i18n';
 import type { PasskeyItem, WebAuthnCredentialDescriptorInput } from '@/types';
 import { showAppConfirm, showAppPrompt } from '@/ui';
 import { apiCall, escapeHtml } from '@/utils';
+import { resolveClientWebAuthnRpId } from '@/utils/webauthn-client';
 import { ensureQRCodeLoaded } from '@/utils/load-qrcode';
 import { fmtTs } from './device-utils';
 
@@ -500,7 +501,10 @@ export function createSecurityCore(deps: SecurityCoreDeps) {
             const options = d1.options;
             const publicKey: PublicKeyCredentialCreationOptions = {
               challenge: fromBase64Url(options.challenge),
-              rp: options.rp,
+              rp: {
+                ...options.rp,
+                id: resolveClientWebAuthnRpId(options.rp?.id),
+              },
               user: {
                 id: fromBase64Url(options.user.id),
                 name: options.user.name,
@@ -565,9 +569,18 @@ export function createSecurityCore(deps: SecurityCoreDeps) {
             }
           } catch (err) {
             const error = err as Error;
-            if (error?.name === 'NotAllowedError')
+            if (error?.name === 'NotAllowedError') {
               api.showMsg('warn', t('Регистрация ключа отменена'));
-            else api.showMsg('error', `${t('Ошибка:')} ${error?.message || 'unknown'}`);
+            } else if (error?.message?.toLowerCase().includes('insecure protocol')) {
+              api.showMsg(
+                'error',
+                t(
+                  'Passkeys на localhost работают только через http://localhost, а не http://127.0.0.1. Откройте сайт по адресу http://localhost:3000',
+                ),
+              );
+            } else {
+              api.showMsg('error', `${t('Ошибка:')} ${error?.message || 'unknown'}`);
+            }
           }
         };
 

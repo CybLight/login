@@ -23,7 +23,8 @@ export default defineConfig({
   },
   server: {
     open: true,
-    port: 5173,
+    host: 'localhost',
+    port: 3000,
     // Proxy API requests to avoid CORS in development
     proxy: {
       '/api': {

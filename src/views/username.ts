@@ -6,6 +6,7 @@ import { t, sitePath, getLocale } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell, showAppAlert } from '@/ui';
 import { setStorage, apiCall } from '@/utils';
+import { resolveClientWebAuthnRpId } from '@/utils/webauthn-client';
 
 export function renderUsername(): void {
   document.body.classList.remove('no-strawberries');
@@ -96,7 +97,7 @@ export function renderUsername(): void {
 async function handlePasskeyLogin(): Promise<void> {
   if (!window.isSecureContext) {
     await showAppAlert(
-      t('❌ WebAuthn требует безопасный контекст.\n\nОткройте страницу на https:// или используйте Chrome/Edge.\n\nДля Firefox: убедитесь, что страница открыта именно как http://localhost:5173/ без прокси/iframe.'),
+      t('❌ WebAuthn требует безопасный контекст.\n\nОткройте страницу на https:// или локально через http://localhost или http://127.0.0.1 (не через IP сети и не в iframe).'),
       { tone: 'error' }
     );
     return;
@@ -148,7 +149,7 @@ async function handlePasskeyLogin(): Promise<void> {
 
     const publicKeyOptions: PublicKeyCredentialRequestOptions = {
       challenge: challengeUint8 as BufferSource,
-      rpId: options.rpId,
+      rpId: resolveClientWebAuthnRpId(options.rpId),
       allowCredentials,
       timeout: options.timeout || 60000,
       userVerification: options.userVerification || 'preferred',
@@ -203,6 +204,13 @@ async function handlePasskeyLogin(): Promise<void> {
       errorMessage = t('❌ Аутентификация отменена или время ожидания истекло');
     } else if (err instanceof Error && err.name === 'InvalidStateError') {
       errorMessage = t('❌ Ключ доступа не найден на этом устройстве');
+    } else if (
+      err instanceof DOMException &&
+      (err.name === 'SecurityError' || err.message.toLowerCase().includes('insecure'))
+    ) {
+      errorMessage = t(
+        '❌ WebAuthn недоступен в этом контексте. Откройте сайт через https:// или http://localhost / http://127.0.0.1.',
+      );
     } else if (err instanceof Error && err.message) {
       errorMessage = `${t('Ошибка: {error}', { error: err.message })}`;
     }

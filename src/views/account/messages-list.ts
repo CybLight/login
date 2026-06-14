@@ -8,6 +8,14 @@ import {
   bindEncryptionReminderHandlers,
   renderMessagesEncryptionReminder,
 } from './encryption-reminder';
+import { formatChatListTime } from './chat-date';
+import {
+  bindMessagesSettingsHandlers,
+  renderMessagesSettingsHtml,
+} from './chat-formatting-settings';
+import { enrichConversationPreviews } from './conversation-preview';
+import { renderChatListPreviewHtml } from './chat-format';
+import { getSignalUserId } from '@/crypto/signal';
 
 type ApiMessage = {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -37,11 +45,23 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
   document.querySelector('.account-main')?.classList.remove('is-chat-view');
 
   try {
-    const [friendsRes, summary] = await Promise.all([
+    const [friendsRes, summaryRaw] = await Promise.all([
       apiCall('/friends/list', { credentials: 'include' }),
       deps.fetchUnreadSummaryData(),
     ]);
     const friendsData = await friendsRes.json().catch(() => ({}));
+
+    const userId = getSignalUserId();
+    const summary =
+      summaryRaw && userId
+        ? {
+            ...summaryRaw,
+            conversationPreviews: await enrichConversationPreviews(
+              summaryRaw.conversationPreviews,
+              userId,
+            ),
+          }
+        : summaryRaw;
 
     if (!friendsData?.ok) {
       container.innerHTML = `<div class="sec-error-text">${t('Не удалось загрузить сообщения')}</div>`;
@@ -82,7 +102,7 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
       const friendId = String(friend.id || '');
       const preview = conversationPreviews[friendId]?.preview?.trim();
       if (preview) {
-        return `<div class="chat-preview">${escapeHtml(preview)}</div>`;
+        return `<div class="chat-preview">${renderChatListPreviewHtml(preview)}</div>`;
       }
       if (friend.isOnline || friend.lastSeenAt != null || friend.last_seen_at != null) {
         const online = isUserOnline(friend);
@@ -95,8 +115,7 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
 
     container.innerHTML = `
       <div class="messages-info">
-        <strong>💬 ${t('Сообщения')}</strong>
-        <p class="messages-info-hint">${t('Выберите друга, чтобы начать переписку')}</p>
+        ${renderMessagesSettingsHtml()}
       </div>
 
       ${renderMessagesEncryptionReminder()}
@@ -105,22 +124,35 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
         friends.length > 0
           ? `<div class="chat-list">${sortedFriends
               .map(
-                (friend: FriendListItem) => `
-              <button class="chat-card" data-action="open-chat" data-id="${escapeHtml(String(friend.id || ''))}" data-username="${escapeHtml(String(friend.username || ''))}" data-presence-user-id="${escapeHtml(String(friend.id || ''))}" type="button" aria-label="${escapeHtml(String(friend.username || 'Unknown'))} ${escapeHtml(formatPresenceLabel(friend))}">
+                (friend: FriendListItem) => {
+                  const friendId = String(friend.id || '');
+                  const latestAt = Number(conversationPreviews[friendId]?.latestAt || 0);
+                  const chatTimeLabel = latestAt ? formatChatListTime(latestAt) : '';
+
+                  return `
+              <button class="chat-card" data-action="open-chat" data-id="${escapeHtml(friendId)}" data-username="${escapeHtml(String(friend.username || ''))}" data-presence-user-id="${escapeHtml(friendId)}" type="button" aria-label="${escapeHtml(String(friend.username || 'Unknown'))} ${escapeHtml(formatPresenceLabel(friend))}">
                 <div class="chat-avatar">${avatarHtml(friend)}</div>
                 <div class="chat-info">
-                  <span
-                    class="chat-username chat-username-link"
-                    data-action="profile"
-                    data-username="${escapeHtml(String(friend.username || ''))}"
-                    role="link"
-                    tabindex="0"
-                  >${escapeHtml(String(friend.username || 'Unknown'))}</span>
+                  <div class="chat-info-head">
+                    <span
+                      class="chat-username chat-username-link"
+                      data-action="profile"
+                      data-username="${escapeHtml(String(friend.username || ''))}"
+                      role="link"
+                      tabindex="0"
+                    >${escapeHtml(String(friend.username || 'Unknown'))}</span>
+                    ${
+                      chatTimeLabel
+                        ? `<span class="chat-card-time">${escapeHtml(chatTimeLabel)}</span>`
+                        : ''
+                    }
+                  </div>
                   ${chatPreviewHtml(friend)}
                 </div>
-                <div class="chat-unread-badge is-hidden" data-unread-badge="${escapeHtml(String(friend.id || ''))}"></div>
+                <div class="chat-unread-badge is-hidden" data-unread-badge="${escapeHtml(friendId)}"></div>
               </button>
-            `
+            `;
+                }
               )
               .join('')}</div>`
           : `<div class="messages-empty"><div class="messages-empty-icon">💬</div><p>${t('Нет доступных чатов')}</p><p class="messages-empty-sub">${t('Добавьте друзей, чтобы начать общение')}</p></div>`
@@ -128,6 +160,7 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
     `;
 
     bindEncryptionReminderHandlers(container);
+    bindMessagesSettingsHandlers(container, api);
 
     const openProfileFromTarget = (target: HTMLElement | null): void => {
       const profileEl = target?.closest('[data-action="profile"]') as HTMLElement | null;
