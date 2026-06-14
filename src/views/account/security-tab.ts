@@ -23,6 +23,7 @@ import {
 } from './account-utils';
 
 type SecurityUser = AppUser & {
+  login?: string;
   email_verified?: boolean | number | string;
   email_verified_at?: string | number | null;
   pendingEmail?: string | null;
@@ -695,7 +696,7 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     };
     bindBackupHandlers({
       userId: String(user.id),
-      login: user.username || String(user.id),
+      login: user.login || user.username || String(user.id),
       api,
     });
   }

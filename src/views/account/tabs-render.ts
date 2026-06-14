@@ -716,6 +716,7 @@ function renderSecurityTab(user: User): string {
             </div>
             <div class="sec-form-row">
               <label class="label sec-label" for="secBackupExportPassword">${t('Пароль резервной копии')}</label>
+              <p class="sec-hint">${t('Минимум 8 символов. Запомните пароль — без него нельзя восстановить ключи.')}</p>
               <div class="pass-wrap">
                 <input class="input" id="secBackupExportPassword" type="password" autocomplete="new-password" placeholder="${t('Длина минимум 8 символов')}" />
                 <button type="button" class="pass-eye" data-target="secBackupExportPassword" aria-label="${t('Показать пароль')}"></button>
@@ -740,12 +741,22 @@ function renderSecurityTab(user: User): string {
             </div>
             <div class="sec-form-row">
               <label class="label sec-label" for="secBackupImportPassword">${t('Пароль резервной копии')}</label>
+              <p class="sec-hint">${t('Пароль, заданный при создании резервной копии.')}</p>
               <div class="pass-wrap">
                 <input class="input" id="secBackupImportPassword" type="password" autocomplete="current-password" placeholder="${t('Пароль от файла резервной копии')}" />
                 <button type="button" class="pass-eye" data-target="secBackupImportPassword" aria-label="${t('Показать пароль')}"></button>
               </div>
             </div>
             <input class="is-hidden" id="secBackupFileInput" type="file" accept=".cyblight-backup,application/json" />
+            <div class="sec-backup-progress is-hidden" id="secBackupImportProgress" aria-live="polite" aria-busy="false">
+              <div class="sec-backup-progress__head">
+                <span class="sec-backup-progress__label" id="secBackupImportProgressLabel">${t('Восстановление резервной копии…')}</span>
+                <span class="sec-backup-progress__percent" id="secBackupImportProgressPercent">0%</span>
+              </div>
+              <div class="sec-backup-progress__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="secBackupImportProgressTrack">
+                <div class="sec-backup-progress__bar" id="secBackupImportProgressBar" style="width: 0%"></div>
+              </div>
+            </div>
             <div class="sec-actions sec-mt-12">
               <button class="btn btn-outline" id="secBackupImportBtn" type="button">${t('Выбрать файл и восстановить')}</button>
             </div>

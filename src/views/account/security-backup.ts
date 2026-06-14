@@ -7,6 +7,7 @@ import {
   importBackupFile,
 } from '@/crypto/backup';
 import { resetActiveSignalContext } from '@/crypto/signal/manager';
+import { showAccountNoticeModal } from './modals';
 
 type BackupDeps = {
   userId: string;
@@ -22,8 +23,39 @@ function readPasswordInput(id: string): string {
 function setBackupBusy(busy: boolean): void {
   const exportBtn = document.getElementById('secBackupExportBtn') as HTMLButtonElement | null;
   const importBtn = document.getElementById('secBackupImportBtn') as HTMLButtonElement | null;
+  const importPassword = document.getElementById('secBackupImportPassword') as HTMLInputElement | null;
   if (exportBtn) exportBtn.disabled = busy;
   if (importBtn) importBtn.disabled = busy;
+  if (importPassword) importPassword.disabled = busy;
+}
+
+function setBackupRestoreProgress(percent: number): void {
+  const wrap = document.getElementById('secBackupImportProgress');
+  const bar = document.getElementById('secBackupImportProgressBar');
+  const percentEl = document.getElementById('secBackupImportProgressPercent');
+  const track = document.getElementById('secBackupImportProgressTrack');
+  if (!wrap || !bar || !percentEl || !track) return;
+
+  const value = Math.min(100, Math.max(0, Math.round(percent)));
+  wrap.classList.remove('is-hidden');
+  wrap.setAttribute('aria-busy', 'true');
+  bar.style.width = `${value}%`;
+  percentEl.textContent = `${value}%`;
+  track.setAttribute('aria-valuenow', String(value));
+}
+
+function hideBackupRestoreProgress(): void {
+  const wrap = document.getElementById('secBackupImportProgress');
+  const bar = document.getElementById('secBackupImportProgressBar');
+  const percentEl = document.getElementById('secBackupImportProgressPercent');
+  const track = document.getElementById('secBackupImportProgressTrack');
+  if (!wrap || !bar || !percentEl || !track) return;
+
+  wrap.classList.add('is-hidden');
+  wrap.setAttribute('aria-busy', 'false');
+  bar.style.width = '0%';
+  percentEl.textContent = '0%';
+  track.setAttribute('aria-valuenow', '0');
 }
 
 export function bindBackupHandlers(deps: BackupDeps): void {
@@ -75,15 +107,21 @@ export function bindBackupHandlers(deps: BackupDeps): void {
 
     setBackupBusy(true);
     api.clearMsg();
+    setBackupRestoreProgress(0);
     try {
       const raw = await file.text();
-      await importBackupFile(userId, raw, password);
+      await importBackupFile(userId, raw, password, setBackupRestoreProgress);
       resetActiveSignalContext();
-      api.showMsg('success', t('Ключи шифрования восстановлены. Обновите страницу сообщений.'));
+      setBackupRestoreProgress(100);
+      showAccountNoticeModal(
+        'success',
+        t('Ключи шифрования восстановлены. Обновите страницу сообщений.')
+      );
     } catch (error) {
       const code = error instanceof Error ? error.message : 'backup_failed';
       api.showMsg('error', backupErrorMessage(code));
     } finally {
+      hideBackupRestoreProgress();
       setBackupBusy(false);
     }
   });

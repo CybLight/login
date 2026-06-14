@@ -26,7 +26,7 @@ function createModalCloser(
   return close;
 }
 
-export function showAccountNoticeModal(type: 'warn' | 'error', text: string): void {
+export function showAccountNoticeModal(type: 'warn' | 'error' | 'success', text: string): void {
   const old = document.getElementById('accountNoticeModal');
   old?.remove();
 
@@ -34,8 +34,11 @@ export function showAccountNoticeModal(type: 'warn' | 'error', text: string): vo
   wrap.id = 'accountNoticeModal';
   wrap.className = 'account-notice-modal';
 
-  const title = type === 'error' ? t('Ошибка') : t('Внимание');
-  const icon = type === 'error' ? '⛔' : '⚠️';
+  const title =
+    type === 'error' ? t('Ошибка') : type === 'success' ? t('Готово') : t('Внимание');
+  const icon = type === 'error' ? '⛔' : type === 'success' ? '✅' : '⚠️';
+  const headClass =
+    type === 'error' ? 'is-error' : type === 'success' ? 'is-success' : 'is-warn';
 
   wrap.innerHTML = `
     <div class="account-notice-backdrop"></div>
@@ -46,7 +49,7 @@ export function showAccountNoticeModal(type: 'warn' | 'error', text: string): vo
       aria-labelledby="accountNoticeTitle"
       aria-describedby="accountNoticeText"
     >
-      <div id="accountNoticeTitle" class="account-notice-head ${type === 'error' ? 'is-error' : 'is-warn'}">${icon} ${title}</div>
+      <div id="accountNoticeTitle" class="account-notice-head ${headClass}">${icon} ${title}</div>
       <div id="accountNoticeText" class="account-notice-text">${escapeHtml(text)}</div>
       <div class="account-notice-actions">
         <button type="button" class="btn btn-primary" id="accountNoticeOkBtn" aria-label="${t('Понятно')}">${t('Понятно')}</button>

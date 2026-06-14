@@ -25,10 +25,21 @@ export async function importBackupFile(
   userId: string,
   rawFile: string,
   password: string,
+  onProgress?: (percent: number) => void,
 ): Promise<void> {
+  const report = (percent: number): void => {
+    onProgress?.(Math.min(100, Math.max(0, Math.round(percent))));
+  };
+
+  report(5);
   const file = parseBackupFile(rawFile);
+  report(12);
   const payload = await decryptBackupPayload(file, password);
-  await restoreBackupPayload(userId, payload);
+  report(28);
+  await restoreBackupPayload(userId, payload, (restorePercent) => {
+    report(28 + (restorePercent * 72) / 100);
+  });
+  report(100);
 }
 
 export function downloadBackupFile(content: string, login: string): void {

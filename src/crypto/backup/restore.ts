@@ -53,28 +53,49 @@ async function deleteUserRecords(userId: string): Promise<void> {
 export async function restoreBackupPayload(
   expectedUserId: string,
   payload: CyblightBackupPayloadV1,
+  onProgress?: (percent: number) => void,
 ): Promise<void> {
   if (payload.userId !== expectedUserId) {
     throw new Error('backup_user_mismatch');
   }
 
+  const writeEntries: Array<[string, unknown]> = [
+    ['wasmManifest', payload.signal.manifest],
+    ...Object.entries(payload.records.preKeys).map(
+      ([keyId, value]) => [`wasmPreKey:${keyId}`, value] as [string, unknown],
+    ),
+    ...Object.entries(payload.records.signedPreKeys).map(
+      ([keyId, value]) => [`wasmSignedPreKey:${keyId}`, value] as [string, unknown],
+    ),
+    ...Object.entries(payload.records.kyberPreKeys).map(
+      ([keyId, value]) => [`wasmKyberPreKey:${keyId}`, value] as [string, unknown],
+    ),
+    ...Object.entries(payload.records.sessions).map(
+      ([sessionKey, value]) => [`wasmSession:${sessionKey}`, value] as [string, unknown],
+    ),
+    ...Object.entries(payload.decryptCache).map(
+      ([messageId, plaintext]) => [`decryptCache:${messageId}`, plaintext] as [string, unknown],
+    ),
+  ];
+
+  const totalSteps = 1 + writeEntries.length;
+  let completedSteps = 0;
+
+  const report = async (): Promise<void> => {
+    onProgress?.(Math.min(100, Math.round((completedSteps / totalSteps) * 100)));
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+  };
+
+  await report();
   await deleteUserRecords(expectedUserId);
+  completedSteps += 1;
+  await report();
 
-  await writeValue(expectedUserId, 'wasmManifest', payload.signal.manifest);
-
-  for (const [keyId, value] of Object.entries(payload.records.preKeys)) {
-    await writeValue(expectedUserId, `wasmPreKey:${keyId}`, value);
-  }
-  for (const [keyId, value] of Object.entries(payload.records.signedPreKeys)) {
-    await writeValue(expectedUserId, `wasmSignedPreKey:${keyId}`, value);
-  }
-  for (const [keyId, value] of Object.entries(payload.records.kyberPreKeys)) {
-    await writeValue(expectedUserId, `wasmKyberPreKey:${keyId}`, value);
-  }
-  for (const [sessionKey, value] of Object.entries(payload.records.sessions)) {
-    await writeValue(expectedUserId, `wasmSession:${sessionKey}`, value);
-  }
-  for (const [messageId, plaintext] of Object.entries(payload.decryptCache)) {
-    await writeValue(expectedUserId, `decryptCache:${messageId}`, plaintext);
+  for (const [key, value] of writeEntries) {
+    await writeValue(expectedUserId, key, value);
+    completedSteps += 1;
+    await report();
   }
 }

@@ -60,7 +60,11 @@ export const en: Record<string, string> = {
   "Пароль резервной копии": "Backup password",
   "Скачать .cyblight-backup": "Download .cyblight-backup",
   "Выбрать файл и восстановить": "Choose file and restore",
+  "Восстановление резервной копии…": "Restoring backup…",
   "Пароль резервной копии должен быть не короче 8 символов.": "Backup password must be at least 8 characters.",
+  "Минимум 8 символов. Запомните пароль — без него нельзя восстановить ключи.":
+    "At least 8 characters. Remember this password — you need it to restore your keys.",
+  "Пароль, заданный при создании резервной копии.": "Password set when the backup was created.",
   "Резервная копия сохранена.": "Backup saved.",
   "Введите пароль резервной копии.": "Enter the backup password.",
   "Ключи шифрования восстановлены. Обновите страницу сообщений.": "Encryption keys restored. Refresh the messages page.",
