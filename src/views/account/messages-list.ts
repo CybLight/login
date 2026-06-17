@@ -18,6 +18,8 @@ import { renderChatListPreviewHtml } from './chat-format';
 import { renderChatDraftPreviewHtml } from './chat-drafts';
 import { getSignalUserId } from '@/crypto/signal';
 import { promptGoogleDriveRestoreIfNeeded } from './drive-restore-prompt';
+import { onChatWebSocket } from '@/services/chat-ws';
+import { updateNavBadges } from './unread';
 
 type ApiMessage = {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -33,6 +35,8 @@ type MessagesDeps = {
   fetchUnreadSummaryData: () => Promise<UnreadSummary | null>;
   setNavBadge: (type: 'pending-requests' | 'unread-messages', count: number) => void;
 };
+
+let messagesListWsUnsub: (() => void) | null = null;
 
 export function bindMessagesHandlers(api: ApiMessage, deps: MessagesDeps): void {
   void loadMessagesTab(api, deps);
@@ -166,6 +170,13 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
 
     bindEncryptionReminderHandlers(container);
     bindMessagesSettingsHandlers(container, api);
+
+    messagesListWsUnsub?.();
+    messagesListWsUnsub = onChatWebSocket((event) => {
+      if (event.type !== 'message.new') return;
+      void deps.updateChatUnreadBadges();
+      void updateNavBadges();
+    });
 
     const openProfileFromTarget = (target: HTMLElement | null): void => {
       const profileEl = target?.closest('[data-action="profile"]') as HTMLElement | null;

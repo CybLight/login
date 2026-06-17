@@ -16,6 +16,8 @@ import { loadMessagesTab as loadMessagesListTab } from './messages-list';
 import { cacheConversationPreview } from './conversation-preview';
 import type { UnreadSummary } from './unread';
 import { updateNavBadges } from './unread';
+import { CHAT_PRESENCE_POLL_MS } from '@/config/constants';
+import { isChatWebSocketConnected, onChatWebSocket } from '@/services/chat-ws';
 import {
   resetChatEditingState,
   insertChatBlockquote,
@@ -455,12 +457,32 @@ export function openChatInMessagesTab(
   });
 
   let backNavigationInProgress = false;
+  let chatWsUnsub: (() => void) | null = null;
+
+  const reloadOpenChatMessages = () => {
+    void loadChatMessagesInAccount(
+      friendId,
+      messagesEl,
+      api,
+      chatInput,
+      chatSendBtn,
+      chatEditIndicator,
+      chatEditingIdInput,
+      chatLoadOptions({
+        hydrateLinkPreviews: false,
+        preserveScrollPosition: true,
+      }),
+    );
+  };
+
   const handleChatBack = (event?: Event) => {
     event?.preventDefault();
     event?.stopPropagation();
     if (backNavigationInProgress) return;
     backNavigationInProgress = true;
 
+    chatWsUnsub?.();
+    chatWsUnsub = null;
     callbacks.stopAccountChatAutoRefresh();
     setAccountChatViewActive(false);
     if (state.accountChatDocClickHandler) {
@@ -1050,28 +1072,28 @@ export function openChatInMessagesTab(
 
   void updateChatHeaderPresence();
 
+  chatWsUnsub = onChatWebSocket((event) => {
+    if (state.accountChatFriendId !== friendId) return;
+    if (event.type !== 'message.new') return;
+    if (event.peerId !== friendId && event.senderId !== friendId) return;
+    reloadOpenChatMessages();
+    void updateNavBadges();
+  });
+
   callbacks.setAccountChatIntervalId(
     window.setInterval(() => {
       const chatExists = document.getElementById('chatMessages');
       if (!chatExists || state.accountChatFriendId !== friendId) {
+        chatWsUnsub?.();
+        chatWsUnsub = null;
         callbacks.stopAccountChatAutoRefresh();
         return;
       }
       void updateChatHeaderPresence();
-      void loadChatMessagesInAccount(
-        friendId,
-        messagesEl,
-        api,
-        chatInput,
-        chatSendBtn,
-        chatEditIndicator,
-        chatEditingIdInput,
-        chatLoadOptions({
-          hydrateLinkPreviews: false,
-          preserveScrollPosition: true,
-        })
-      );
-    }, 5000)
+      if (!isChatWebSocketConnected()) {
+        reloadOpenChatMessages();
+      }
+    }, CHAT_PRESENCE_POLL_MS),
   );
 
   // ==================== MESSAGE SELECTION ====================

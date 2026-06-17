@@ -29,6 +29,8 @@ export const ERROR_CACHE_DURATION = 60000; // 1 minute
 
 // Messaging
 export const EDIT_TIME_LIMIT = 15 * 60 * 1000; // 15 minutes
+export const CHAT_PRESENCE_POLL_MS = 30_000;
+export const CHAT_FALLBACK_POLL_MS = 60_000;
 export const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '👏'];
 
 // Turnstile CAPTCHA

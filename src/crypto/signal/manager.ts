@@ -430,7 +430,7 @@ export async function encryptOutgoingMessage(
   );
 
   await trackSession(ctx, peerAddress(recipientId));
-  void persistWasmContext(ctx);
+  await persistWasmContext(ctx);
 
   return {
     content: arrayBufferToBase64(bytesToArrayBuffer(ciphertext.body)),
@@ -515,10 +515,14 @@ export async function decryptIncomingMessage(
 
   throwIfSignalKeyIssue();
 
-  if (!batch?.ctx) {
+  let ctx = batch?.ctx;
+  if (!ctx) {
     await ensureSignalKeysRegistered(userId);
+    ctx = await requireContext(userId);
+    if (batch) {
+      batch.ctx = ctx;
+    }
   }
-  const ctx = batch?.ctx ?? (await requireContext(userId));
   const sender = peerAddress(message.senderId);
   const body = new Uint8Array(base64ToArrayBuffer(message.content));
   const signalType = Number(message.signalType);
@@ -599,9 +603,14 @@ export async function decryptMessageList<T extends WireMessage>(
     .filter((id): id is string => Boolean(id));
   const cache = await readDecryptCacheBatch(userId, messageIds);
 
-  const missingIds = messageIds.filter((id) => !cache.has(id));
-  if (missingIds.length > 0) {
-    const remote = await fetchPlaintextSyncBatch(userId, missingIds);
+  const ownMessageIds = new Set(
+    decryptOrder
+      .filter((message) => message.senderId === userId && message.id)
+      .map((message) => message.id as string),
+  );
+  const missingOwnIds = messageIds.filter((id) => !cache.has(id) && ownMessageIds.has(id));
+  if (missingOwnIds.length > 0) {
+    const remote = await fetchPlaintextSyncBatch(userId, missingOwnIds);
     if (remote.size > 0) {
       for (const [id, text] of remote) {
         cache.set(id, text);
@@ -622,7 +631,8 @@ export async function decryptMessageList<T extends WireMessage>(
         pendingCacheWrites: new Map(),
         contextDirty: false,
       };
-    } catch {
+    } catch (error) {
+      console.warn('[Signal] decrypt batch context unavailable:', error);
       batch = {
         cache,
         pendingCacheWrites: new Map(),
