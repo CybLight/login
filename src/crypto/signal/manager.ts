@@ -110,7 +110,6 @@ export function resetActiveSignalContext(): void {
 let nextPreKeyId = Math.floor(Date.now() / 1000);
 let ensureKeysInflight: Promise<void> | null = null;
 let ensureKeysForUser: string | null = null;
-let prekeysAlignedForUser: string | null = null;
 
 export type SignalKeyIssue = 'local_missing' | 'identity_conflict';
 let lastSignalKeyIssue: SignalKeyIssue | null = null;
@@ -298,7 +297,6 @@ async function publishRegistrationKeys(ctx: WasmSignalContext): Promise<void> {
   const oneTimePreKeys = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
   await uploadKeyRegistration(ctx, signedPreKey, kyberPreKey, oneTimePreKeys);
   await persistWasmContext(ctx);
-  prekeysAlignedForUser = ctx.userId;
 }
 
 async function ensureSignalKeysRegisteredInner(userId: string): Promise<void> {
@@ -357,8 +355,6 @@ async function ensureSignalKeysRegisteredInner(userId: string): Promise<void> {
   } else if (unused < REPLENISH_THRESHOLD) {
     await replenishOneTimePreKeys(ctx);
   }
-
-  prekeysAlignedForUser = userId;
 }
 
 async function ensureSignalContextReady(userId: string): Promise<WasmSignalContext> {
