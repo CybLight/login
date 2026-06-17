@@ -82,6 +82,7 @@ export function connectChatWebSocket(): void {
 
   socket.addEventListener('open', () => {
     connectAttempts = 0;
+    console.info('[chat-ws] connected');
     clearPingTimer();
     pingTimer = window.setInterval(() => {
       if (socket?.readyState === WebSocket.OPEN) {
@@ -95,7 +96,8 @@ export function connectChatWebSocket(): void {
     handleMessage(String(event.data));
   });
 
-  socket.addEventListener('close', () => {
+  socket.addEventListener('close', (event) => {
+    console.info('[chat-ws] closed', event.code, event.reason || '');
     socket = null;
     clearPingTimer();
     if (listeners.size > 0) {
@@ -105,6 +107,7 @@ export function connectChatWebSocket(): void {
   });
 
   socket.addEventListener('error', () => {
+    console.warn('[chat-ws] connection error');
     socket?.close();
   });
 }

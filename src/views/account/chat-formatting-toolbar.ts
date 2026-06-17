@@ -18,12 +18,12 @@ export function renderChatFormattingToolbarHtml(): string {
           <button class="chat-format-btn" data-format="bold" type="button" title="${t('Жирный (Ctrl+B)')}" aria-label="${t('Жирный (Ctrl+B)')}"><b>B</b></button>
           <button class="chat-format-btn" data-format="italic" type="button" title="${t('Курсив (Ctrl+I)')}" aria-label="${t('Курсив (Ctrl+I)')}"><i>I</i></button>
           <button class="chat-format-btn" data-format="underline" type="button" title="${t('Подчёркнутый (Ctrl+U)')}" aria-label="${t('Подчёркнутый (Ctrl+U)')}"><u>U</u></button>
-          <button class="chat-format-btn" data-format="strike" type="button" title="${t('Зачёркнутый')}" aria-label="${t('Зачёркнутый')}"><s>S</s></button>
-          <button class="chat-format-btn" data-format="mono" type="button" title="${t('Моноширинный')}" aria-label="${t('Моноширинный')}"><code>M</code></button>
-          <button class="chat-format-btn chat-format-btn--icon" data-format="spoiler" type="button" title="${t('Спойлер')}" aria-label="${t('Спойлер')}">${SPOILER_ICON}</button>
-          <button class="chat-format-btn chat-format-btn--icon" data-format="quote" type="button" title="${t('Цитата')}" aria-label="${t('Цитата')}"><img class="chat-format-icon chat-format-icon--quote" src="/assets/img/msg/quotes.png" alt="" aria-hidden="true"></button>
+          <button class="chat-format-btn" data-format="strike" type="button" title="${t('Зачёркнутый (Ctrl+Shift+X)')}" aria-label="${t('Зачёркнутый (Ctrl+Shift+X)')}"><s>S</s></button>
+          <button class="chat-format-btn" data-format="mono" type="button" title="${t('Моноширинный (Ctrl+Shift+M)')}" aria-label="${t('Моноширинный (Ctrl+Shift+M)')}"><code>M</code></button>
+          <button class="chat-format-btn chat-format-btn--icon" data-format="spoiler" type="button" title="${t('Спойлер (Ctrl+Shift+P)')}" aria-label="${t('Спойлер (Ctrl+Shift+P)')}">${SPOILER_ICON}</button>
+          <button class="chat-format-btn chat-format-btn--icon" data-format="quote" type="button" title="${t('Цитата (Ctrl+Shift+Q)')}" aria-label="${t('Цитата (Ctrl+Shift+Q)')}"><img class="chat-format-icon chat-format-icon--quote" src="/assets/img/msg/quotes.png" alt="" aria-hidden="true"></button>
           <span class="chat-format-separator" aria-hidden="true"></span>
-          <button class="chat-format-btn chat-format-btn--icon" data-format="link" type="button" title="${t('Вставить ссылку')}" aria-label="${t('Вставить ссылку')}">${LINK_ICON}</button>
-          <button class="chat-format-btn" data-format="code" type="button" title="${t('Блок кода')}" aria-label="${t('Блок кода')}"><span class="chat-format-code-braces">{&nbsp;}</span></button>
+          <button class="chat-format-btn chat-format-btn--icon" data-format="link" type="button" title="${t('Вставить ссылку (Ctrl+K)')}" aria-label="${t('Вставить ссылку (Ctrl+K)')}">${LINK_ICON}</button>
+          <button class="chat-format-btn" data-format="code" type="button" title="${t('Блок кода (Ctrl+Shift+C)')}" aria-label="${t('Блок кода (Ctrl+Shift+C)')}"><span class="chat-format-code-braces">{&nbsp;}</span></button>
         </div>`;
 }

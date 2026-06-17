@@ -2,10 +2,14 @@ import { t } from '@/i18n';
 import { showAppPrompt } from '@/ui';
 import { stripNoPreviewTokens } from './chat-format';
 
+function notifyChatInputChange(input: HTMLTextAreaElement): void {
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 export function insertChatFormatting(
   startToken: string,
   endToken: string,
-  input: HTMLTextAreaElement
+  input: HTMLTextAreaElement,
 ): void {
   const selectionStart = input.selectionStart;
   const selectionEnd = input.selectionEnd;
@@ -26,6 +30,7 @@ export function insertChatFormatting(
   }
 
   input.focus();
+  notifyChatInputChange(input);
 }
 
 export async function insertChatLink(input: HTMLTextAreaElement): Promise<void> {
@@ -44,6 +49,7 @@ export async function insertChatLink(input: HTMLTextAreaElement): Promise<void> 
     input.value.substring(0, selectionStart) + markdown + input.value.substring(selectionEnd);
   input.setSelectionRange(selectionStart + markdown.length, selectionStart + markdown.length);
   input.focus();
+  notifyChatInputChange(input);
 }
 
 export function insertChatBlockquote(input: HTMLTextAreaElement): void {
@@ -61,6 +67,7 @@ export function insertChatBlockquote(input: HTMLTextAreaElement): void {
     input.value = text.substring(0, selectionStart) + quoted + text.substring(selectionEnd);
     input.setSelectionRange(selectionStart, selectionStart + quoted.length);
     input.focus();
+    notifyChatInputChange(input);
     return;
   }
 
@@ -68,6 +75,7 @@ export function insertChatBlockquote(input: HTMLTextAreaElement): void {
   input.value = `${text.substring(0, lineStart)}> ${text.substring(lineStart)}`;
   input.setSelectionRange(selectionStart + 2, selectionStart + 2);
   input.focus();
+  notifyChatInputChange(input);
 }
 
 export async function insertChatCode(input: HTMLTextAreaElement): Promise<void> {
@@ -80,6 +88,7 @@ export async function insertChatCode(input: HTMLTextAreaElement): Promise<void> 
   input.value =
     input.value.substring(0, selectionStart) + formatted + input.value.substring(selectionEnd);
   input.focus();
+  notifyChatInputChange(input);
 }
 
 export function startEditMessageInAccount(
@@ -101,6 +110,7 @@ export function startEditMessageInAccount(
   input.focus();
   input.style.height = 'auto';
   input.style.height = `${Math.min(input.scrollHeight, 150)}px`;
+  notifyChatInputChange(input);
 
   if (sendBtn) {
     sendBtn.textContent = '💾 Сохранить';
@@ -126,6 +136,7 @@ export function resetChatEditingState(
     if (input.value) {
       input.style.height = `${Math.min(input.scrollHeight, 150)}px`;
     }
+    notifyChatInputChange(input);
   }
 
   if (sendBtn) {

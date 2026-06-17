@@ -344,21 +344,34 @@ async function ensureSignalKeysRegisteredInner(userId: string): Promise<void> {
     return;
   }
 
-  if (prekeysAlignedForUser !== userId) {
-    await replenishOneTimePreKeys(ctx);
-    prekeysAlignedForUser = userId;
-    return;
-  }
-
   const unused = Number(status.unusedOneTimePreKeys || 0);
   const oldestUnused = status.oldestUnusedPreKeyId;
   const oldestMissingLocally =
     oldestUnused != null && !(await hasLocalPreKeyId(ctx, oldestUnused));
   const serverHasUnknownPrekeys = await serverHasPrekeysOutsideLocal(ctx, status);
 
-  if (unused < REPLENISH_THRESHOLD || serverHasUnknownPrekeys || oldestMissingLocally) {
+  if (oldestMissingLocally || serverHasUnknownPrekeys) {
+    console.warn(
+      '[Signal] server prekeys are not all present locally; skipping replenish (restore backup or use one device)',
+    );
+  } else if (unused < REPLENISH_THRESHOLD) {
     await replenishOneTimePreKeys(ctx);
   }
+
+  prekeysAlignedForUser = userId;
+}
+
+async function ensureSignalContextReady(userId: string): Promise<WasmSignalContext> {
+  await ensureLibsignalInitialized();
+  throwIfSignalKeyIssue();
+
+  const ctx = await getContext(userId);
+  if (ctx) {
+    return ctx;
+  }
+
+  await ensureSignalKeysRegistered(userId);
+  return requireContext(userId);
 }
 
 export async function ensureSignalKeysRegistered(userId: string): Promise<void> {
@@ -557,8 +570,7 @@ export async function decryptIncomingMessage(
 
   let ctx = batch?.ctx;
   if (!ctx) {
-    await ensureSignalKeysRegistered(userId);
-    ctx = await requireContext(userId);
+    ctx = await ensureSignalContextReady(userId);
     if (batch) {
       batch.ctx = ctx;
     }
@@ -570,6 +582,9 @@ export async function decryptIncomingMessage(
   if (signalType !== message_type_pre_key() && signalType !== message_type_signal()) {
     throw new Error('unsupported_signal_type');
   }
+
+  const preKeyIds =
+    signalType === message_type_pre_key() ? peekPreKeyMessageIds(body) : {};
 
   let plaintext: Uint8Array;
   try {
@@ -584,25 +599,49 @@ export async function decryptIncomingMessage(
       ctx.signedPreKeyStore,
       ctx.kyberPreKeyStore,
     );
-  } catch (error) {
-    const hasSession = await ctx.sessionStore.has_session(sender);
-    const preKeyIds =
-      signalType === message_type_pre_key() ? peekPreKeyMessageIds(body) : {};
+  } catch (firstError) {
     const preKeyPresent =
       preKeyIds.preKeyId !== undefined
         ? await hasLocalPreKeyId(ctx, preKeyIds.preKeyId)
         : null;
 
-    console.warn('[Signal] decrypt failed:', {
-      error: String(error),
-      signalType,
-      hasSession,
-      senderId: message.senderId,
-      messageId: message.id ?? null,
-      preKeyIds,
-      preKeyPresent,
-    });
-    throw error;
+    if (
+      signalType === message_type_pre_key() &&
+      preKeyPresent &&
+      (await ctx.sessionStore.has_session(sender))
+    ) {
+      try {
+        await resetPeerSession(ctx, message.senderId);
+        plaintext = await decryptMessage(
+          body,
+          signalType,
+          sender,
+          ctx.localAddress,
+          ctx.sessionStore,
+          ctx.identityStore,
+          ctx.preKeyStore,
+          ctx.signedPreKeyStore,
+          ctx.kyberPreKeyStore,
+        );
+      } catch (retryError) {
+        console.warn('[Signal] decrypt retry failed:', retryError, message.id ?? null);
+        throw retryError;
+      }
+    } else {
+      const error = firstError;
+      const hasSession = await ctx.sessionStore.has_session(sender);
+
+      console.warn('[Signal] decrypt failed:', {
+        error: String(error),
+        signalType,
+        hasSession,
+        senderId: message.senderId,
+        messageId: message.id ?? null,
+        preKeyIds,
+        preKeyPresent,
+      });
+      throw error;
+    }
   }
 
   await trackSession(ctx, sender);
@@ -664,8 +703,7 @@ export async function decryptMessageList<T extends WireMessage>(
   const needsCtx = decryptOrder.some((message) => needsSignalDecrypt(userId, message));
   if (needsCtx) {
     try {
-      await ensureSignalKeysRegistered(userId);
-      const ctx = await requireContext(userId);
+      const ctx = await ensureSignalContextReady(userId);
       batch = {
         ctx,
         cache,

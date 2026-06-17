@@ -37,6 +37,18 @@ type MessagesDeps = {
 };
 
 let messagesListWsUnsub: (() => void) | null = null;
+let messagesListRefreshTimer: number | null = null;
+
+function scheduleMessagesListRefresh(api: ApiMessage, deps: MessagesDeps): void {
+  if (!document.getElementById('messagesContent')) return;
+  if (messagesListRefreshTimer) {
+    window.clearTimeout(messagesListRefreshTimer);
+  }
+  messagesListRefreshTimer = window.setTimeout(() => {
+    messagesListRefreshTimer = null;
+    void loadMessagesTab(api, deps);
+  }, 400);
+}
 
 export function bindMessagesHandlers(api: ApiMessage, deps: MessagesDeps): void {
   void loadMessagesTab(api, deps);
@@ -179,6 +191,7 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
     try {
       messagesListWsUnsub = onChatWebSocket((event) => {
         if (event.type !== 'message.new') return;
+        scheduleMessagesListRefresh(api, deps);
         void deps.updateChatUnreadBadges();
         void updateNavBadges();
       });

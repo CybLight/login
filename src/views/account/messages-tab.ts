@@ -25,6 +25,12 @@ import {
   insertChatLink,
   insertChatCode,
 } from './chat-editor';
+import {
+  adjustChatInputHeight,
+  bindChatRichInput,
+  handleChatInputFormatShortcut,
+  syncChatRichInputMirror,
+} from './chat-rich-input';
 import { showAccountConfirmModal } from './modals';
 import {
   appendOptimisticSentMessage,
@@ -158,7 +164,10 @@ export function openChatInMessagesTab(
         ${renderChatFormatToolbarRowHtml()}
 
         <div class="chat-input-wrapper">
-          <textarea id="chatInput" placeholder="${t('Напишите сообщение...')}" rows="1" maxlength="2000"></textarea>
+          <div class="chat-input-field is-empty">
+            <div class="chat-input-mirror" aria-hidden="true"></div>
+            <textarea id="chatInput" class="chat-input--rich" placeholder="${t('Напишите сообщение...')}" rows="1" maxlength="2000"></textarea>
+          </div>
           <div class="chat-input-emoji-wrap">
             <button id="chatEmojiBtn" type="button" title="${t('Смайлики')}" aria-label="${t('Смайлики')}">😊</button>
             <div id="chatInputEmojiPicker" class="chat-input-emoji-picker"></div>
@@ -180,6 +189,9 @@ export function openChatInMessagesTab(
   const chatBackRow = document.getElementById('chatBackRow') as HTMLElement | null;
   const chatSendBtn = document.getElementById('chatSendBtn') as HTMLButtonElement | null;
   const chatInput = document.getElementById('chatInput') as HTMLTextAreaElement | null;
+  if (chatInput) {
+    bindChatRichInput(chatInput);
+  }
   const chatEmojiBtn = document.getElementById('chatEmojiBtn') as HTMLButtonElement | null;
   const chatInputEmojiPicker = document.getElementById(
     'chatInputEmojiPicker'
@@ -604,10 +616,8 @@ export function openChatInMessagesTab(
   const restoreComposeDraft = () => {
     if (!chatInput) return;
     chatInput.value = composeDraftHolder.draft;
-    chatInput.style.height = 'auto';
-    chatInput.style.height = chatInput.value
-      ? `${Math.min(chatInput.scrollHeight, 150)}px`
-      : 'auto';
+    adjustChatInputHeight(chatInput);
+    syncChatRichInputMirror(chatInput);
     renderInputLinkPreview();
   };
 
@@ -945,8 +955,7 @@ export function openChatInMessagesTab(
 
   chatInput?.addEventListener('input', () => {
     if (!chatInput) return;
-    chatInput.style.height = 'auto';
-    chatInput.style.height = `${Math.min(chatInput.scrollHeight, 150)}px`;
+    adjustChatInputHeight(chatInput);
     if (!chatEditingIdInput?.value) {
       composeDraftHolder.draft = chatInput.value;
       saveChatDraft(friendId, chatInput.value);
@@ -955,24 +964,7 @@ export function openChatInMessagesTab(
   });
 
   chatInput?.addEventListener('keydown', (event) => {
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b') {
-      event.preventDefault();
-      insertChatFormatting('**', '**', chatInput);
-      return;
-    }
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'i') {
-      event.preventDefault();
-      insertChatFormatting('_', '_', chatInput);
-      return;
-    }
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'u') {
-      event.preventDefault();
-      insertChatFormatting('__', '__', chatInput);
-      return;
-    }
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
-      event.preventDefault();
-      void insertChatLink(chatInput);
+    if (chatInput && handleChatInputFormatShortcut(event, chatInput)) {
       return;
     }
     if (event.key === 'Escape') {
