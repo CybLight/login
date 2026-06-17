@@ -1,4 +1,4 @@
-import { arrayBufferToBase64, base64ToArrayBuffer } from './buffer';
+import { arrayBufferToBase64, base64ToArrayBuffer, bytesToArrayBuffer } from './buffer';
 import { type SignalStoredRecord, withSignalDb } from './idb-store';
 
 const SYNC_KEY_STORAGE_KEY = 'plaintextSyncKey';
@@ -17,7 +17,7 @@ function getRecord(
 }
 
 export function exportSyncKeyBase64(key: Uint8Array): string {
-  return arrayBufferToBase64(key.buffer.slice(key.byteOffset, key.byteOffset + key.byteLength));
+  return arrayBufferToBase64(bytesToArrayBuffer(key));
 }
 
 export async function readPlaintextSyncKey(userId: string): Promise<Uint8Array | null> {
