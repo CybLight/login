@@ -132,5 +132,106 @@
     "Backup of keys and messages is in Security → Backup (Google Drive or file)."
   ],
   "Открыть настройки резервной копии": ["Відкрити налаштування резервної копії", "Open backup settings"],
-  "Скрывать напоминание о резервной копии": ["Приховувати нагадування про резервну копію", "Hide backup reminder"]
+  "Скрывать напоминание о резервной копии": ["Приховувати нагадування про резервну копію", "Hide backup reminder"],
+  "Google Drive или файл .cyblight-backup": ["Google Drive або файл .cyblight-backup", "Google Drive or .cyblight-backup file"],
+  "Создайте зашифрованную копию ключей и сообщений в Google Drive или скачайте файл для переноса между устройствами.": [
+    "Створіть зашифровану копію ключів і повідомлень у Google Drive або завантажте файл для переносу між пристроями.",
+    "Create an encrypted copy of your keys and messages in Google Drive, or download a file to transfer between devices."
+  ],
+  "Google Drive": ["Google Drive", "Google Drive"],
+  "Сохраните зашифрованную копию в ваш Google Drive. Доступ только у приложения CybLight и только к созданным им файлам.": [
+    "Збережіть зашифровану копію у вашому Google Drive. Доступ лише в додатку CybLight і лише до створених ним файлів.",
+    "Save an encrypted copy to your Google Drive. Only the CybLight app can access files it created."
+  ],
+  "Пароль от резервной копии": ["Пароль від резервної копії", "Backup password"],
+  "Подготовка…": ["Підготовка…", "Preparing…"],
+  "Сохранить в Google Drive": ["Зберегти в Google Drive", "Save to Google Drive"],
+  "Восстановить из Google Drive": ["Відновити з Google Drive", "Restore from Google Drive"],
+  "Удалить из Drive": ["Видалити з Drive", "Delete from Drive"],
+  "Выйти из Google": ["Вийти з Google", "Sign out of Google"],
+  "Загрузка статуса…": ["Завантаження статусу…", "Loading status…"],
+  "Google Drive не настроен на этом сервере.": [
+    "Google Drive не налаштовано на цьому сервері.",
+    "Google Drive is not configured on this server."
+  ],
+  "Доступ к Google Drive не был предоставлен.": [
+    "Доступ до Google Drive не було надано.",
+    "Google Drive access was not granted."
+  ],
+  "Не удалось войти через Google.": ["Не вдалося увійти через Google.", "Could not sign in with Google."],
+  "В Google Drive нет резервной копии для этого аккаунта.": [
+    "У Google Drive немає резервної копії для цього облікового запису.",
+    "No backup found in Google Drive for this account."
+  ],
+  "Не удалось сохранить резервную копию в Google Drive.": [
+    "Не вдалося зберегти резервну копію в Google Drive.",
+    "Could not save the backup to Google Drive."
+  ],
+  "Не удалось скачать резервную копию из Google Drive.": [
+    "Не вдалося завантажити резервну копію з Google Drive.",
+    "Could not download the backup from Google Drive."
+  ],
+  "Не удалось удалить резервную копию из Google Drive.": [
+    "Не вдалося видалити резервну копію з Google Drive.",
+    "Could not delete the backup from Google Drive."
+  ],
+  "Сохранение в Google Drive…": ["Збереження в Google Drive…", "Saving to Google Drive…"],
+  "Восстановление из Google Drive…": ["Відновлення з Google Drive…", "Restoring from Google Drive…"],
+  "Вход через Google выполнен": ["Вхід через Google виконано", "Signed in with Google"],
+  "Аккаунт Google: {account}": ["Обліковий запис Google: {account}", "Google account: {account}"],
+  "Войдите через Google, чтобы сохранить или восстановить копию.": [
+    "Увійдіть через Google, щоб зберегти або відновити копію.",
+    "Sign in with Google to save or restore a backup."
+  ],
+  "В Google Drive пока нет резервной копии.": [
+    "У Google Drive поки немає резервної копії.",
+    "No backup in Google Drive yet."
+  ],
+  "Последнее сохранение в Drive: {date}": [
+    "Останнє збереження в Drive: {date}",
+    "Last saved to Drive: {date}"
+  ],
+  "Не удалось получить статус Google Drive.": [
+    "Не вдалося отримати статус Google Drive.",
+    "Could not get Google Drive status."
+  ],
+  "Резервная копия сохранена в Google Drive.": [
+    "Резервну копію збережено в Google Drive.",
+    "Backup saved to Google Drive."
+  ],
+  "Удалить копию из Google Drive?": ["Видалити копію з Google Drive?", "Delete backup from Google Drive?"],
+  "Файл будет удалён из вашего Google Drive. Локальные ключи и сообщения не пострадают.": [
+    "Файл буде видалено з вашого Google Drive. Локальні ключі й повідомлення не постраждають.",
+    "The file will be deleted from your Google Drive. Local keys and messages will not be affected."
+  ],
+  "Резервная копия удалена из Google Drive.": [
+    "Резервну копію видалено з Google Drive.",
+    "Backup deleted from Google Drive."
+  ],
+  "В Google Drive нет резервной копии для удаления.": [
+    "У Google Drive немає резервної копії для видалення.",
+    "No backup in Google Drive to delete."
+  ],
+  "Сессия Google Drive завершена.": ["Сесію Google Drive завершено.", "Google Drive session ended."],
+  "Резервная копия в Google Drive": ["Резервна копія в Google Drive", "Backup in Google Drive"],
+  "Найдена копия ключей и сообщений в Google Drive ({date}). Восстановить на этом устройстве?": [
+    "Знайдено копію ключів і повідомлень у Google Drive ({date}). Відновити на цьому пристрої?",
+    "A backup of keys and messages was found in Google Drive ({date}). Restore on this device?"
+  ],
+  "Пароль, заданный при сохранении копии в Google Drive.": [
+    "Пароль, заданий під час збереження копії в Google Drive.",
+    "Password set when saving the backup to Google Drive."
+  ],
+  "Резервная копия сохранена (ключи и сообщения).": [
+    "Резервну копію збережено (ключі й повідомлення).",
+    "Backup saved (keys and messages)."
+  ],
+  "Не удалось импортировать чаты из резервной копии.": [
+    "Не вдалося імпортувати чати з резервної копії.",
+    "Could not import chats from the backup."
+  ],
+  "Сохраните переписку в файл или восстановите её из резервной копии этого аккаунта.": [
+    "Збережіть листування у файл або відновіть його з резервної копії цього облікового запису.",
+    "Save chats to a file or restore them from this account's backup."
+  ]
 }
