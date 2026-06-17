@@ -15,7 +15,9 @@ import {
 } from './chat-formatting-settings';
 import { enrichConversationPreviews } from './conversation-preview';
 import { renderChatListPreviewHtml } from './chat-format';
+import { renderChatDraftPreviewHtml } from './chat-drafts';
 import { getSignalUserId } from '@/crypto/signal';
+import { promptGoogleDriveRestoreIfNeeded } from './drive-restore-prompt';
 
 type ApiMessage = {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -100,6 +102,9 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
 
     const chatPreviewHtml = (friend: FriendListItem) => {
       const friendId = String(friend.id || '');
+      const draftPreview = renderChatDraftPreviewHtml(friendId);
+      if (draftPreview) return draftPreview;
+
       const preview = conversationPreviews[friendId]?.preview?.trim();
       if (preview) {
         return `<div class="chat-preview">${renderChatListPreviewHtml(preview)}</div>`;
@@ -225,6 +230,13 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
       );
       deps.setNavBadge('unread-messages', summary.totalUnread);
       deps.setNavBadge('pending-requests', summary.totalPending);
+    }
+
+    if (userId && summaryRaw?.conversationPreviews) {
+      void promptGoogleDriveRestoreIfNeeded(userId, {
+        conversationPreviews: summaryRaw.conversationPreviews,
+        onRestored: () => loadMessagesTab(api, deps),
+      });
     }
   } catch (error) {
     console.error('Error loading messages:', error);

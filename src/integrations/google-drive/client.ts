@@ -29,21 +29,24 @@ function escapeDriveQueryValue(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
-export async function findDriveBackupFile(
-  accessToken: string,
-  userId: string,
-): Promise<DriveBackupFile | null> {
-  const query = [
+function buildBackupFilesQuery(userId: string): string {
+  return [
     "appProperties has { key='cyblightBackup' and value='1' }",
     `appProperties has { key='cyblightUserId' and value='${escapeDriveQueryValue(userId)}' }`,
     'trashed = false',
   ].join(' and ');
+}
 
+/** Lists CybLight backups for the account (web + app), newest first. */
+export async function listDriveBackupFiles(
+  accessToken: string,
+  userId: string,
+): Promise<DriveBackupFile[]> {
   const url = new URL(`${GOOGLE_DRIVE_API_BASE}/files`);
-  url.searchParams.set('q', query);
+  url.searchParams.set('q', buildBackupFilesQuery(userId));
   url.searchParams.set('fields', 'files(id,name,modifiedTime,size)');
   url.searchParams.set('orderBy', 'modifiedTime desc');
-  url.searchParams.set('pageSize', '1');
+  url.searchParams.set('pageSize', '50');
 
   const response = await driveFetch(accessToken, url.toString());
   if (!response.ok) {
@@ -51,7 +54,15 @@ export async function findDriveBackupFile(
   }
 
   const data = (await response.json()) as DriveListResponse;
-  return data.files?.[0] || null;
+  return data.files ?? [];
+}
+
+export async function findDriveBackupFile(
+  accessToken: string,
+  userId: string,
+): Promise<DriveBackupFile | null> {
+  const files = await listDriveBackupFiles(accessToken, userId);
+  return files[0] ?? null;
 }
 
 export async function downloadDriveBackupFile(
@@ -66,6 +77,22 @@ export async function downloadDriveBackupFile(
     throw new Error('google_drive_download_failed');
   }
   return response.text();
+}
+
+async function deleteDriveBackupFileById(accessToken: string, fileId: string): Promise<boolean> {
+  const response = await driveFetch(
+    accessToken,
+    `${GOOGLE_DRIVE_API_BASE}/files/${encodeURIComponent(fileId)}`,
+    { method: 'DELETE' },
+  );
+
+  if (response.status === 403 || response.status === 404) {
+    return false;
+  }
+  if (!response.ok) {
+    throw new Error('google_drive_delete_failed');
+  }
+  return true;
 }
 
 export async function uploadDriveBackupFile(
@@ -145,17 +172,14 @@ export async function uploadDriveBackupFile(
 }
 
 export async function deleteDriveBackupFile(accessToken: string, userId: string): Promise<boolean> {
-  const existing = await findDriveBackupFile(accessToken, userId);
-  if (!existing) return false;
+  const files = await listDriveBackupFiles(accessToken, userId);
+  if (files.length === 0) return false;
 
-  const response = await driveFetch(
-    accessToken,
-    `${GOOGLE_DRIVE_API_BASE}/files/${encodeURIComponent(existing.id)}`,
-    { method: 'DELETE' },
-  );
-
-  if (!response.ok && response.status !== 404) {
-    throw new Error('google_drive_delete_failed');
+  let deletedAny = false;
+  for (const file of files) {
+    if (await deleteDriveBackupFileById(accessToken, file.id)) {
+      deletedAny = true;
+    }
   }
-  return true;
+  return deletedAny;
 }

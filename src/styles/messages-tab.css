@@ -242,6 +242,16 @@
   align-items: flex-end;
 }
 
+.chat-message--pending {
+  opacity: 0.82;
+}
+
+.chat-message--pending .chat-read-status--pending {
+  opacity: 0.75;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+
 .chat-message.received {
   align-self: flex-start;
   align-items: flex-start;

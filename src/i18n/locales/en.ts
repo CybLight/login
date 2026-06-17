@@ -393,6 +393,7 @@ export const en: Record<string, string> = {
   "На главную": "Home",
   "Навигация аккаунта": "Account navigation",
   "Нажмите, чтобы открыть чат": "Click to open chat",
+  "Черновик": "Draft",
   "Найди спрятанную клубничку где-то там...": "Find the hidden strawberry somewhere...",
   "Найдите пользователей и добавьте их в друзья": "Find users and add them as friends",
   "Найдите пользователей и отправьте им запрос в друзья": "Find users and send them friend requests",
@@ -857,4 +858,7 @@ export const en: Record<string, string> = {
   "Резервная копия сохранена (ключи и сообщения).": "Backup saved (keys and messages).",
   "Не удалось импортировать чаты из резервной копии.": "Could not import chats from the backup.",
   "Сохраните переписку в файл или восстановите её из резервной копии этого аккаунта.": "Save chats to a file or restore them from this account's backup.",
+  "Пропустить": "Skip",
+  "Ключи шифрования не найдены в этом браузере. Восстановить резервную копию из Google Drive?": "Encryption keys were not found in this browser. Restore the backup from Google Drive?",
+  "Отменено восстановление резервной копии.": "Backup restore cancelled.",
 };

@@ -32,6 +32,7 @@ import {
   type WasmSignalContext,
 } from './wasm-context';
 import { readDecryptCache, readDecryptCacheBatch, writeDecryptCache, writeDecryptCacheBatch } from './decrypt-cache';
+import { fetchPlaintextSyncBatch, pushPlaintextSync, pushPlaintextSyncBatch } from './plaintext-sync';
 import {
   auditLocalKeys,
   hasLocalPreKeyId,
@@ -401,6 +402,16 @@ async function ensureSession(ctx: WasmSignalContext, peerUserId: string): Promis
   await persistWasmContext(ctx);
 }
 
+export async function warmupOutgoingSession(userId: string, recipientId: string): Promise<void> {
+  try {
+    await ensureSignalKeysRegistered(userId);
+    const ctx = await requireContext(userId);
+    await ensureSession(ctx, recipientId);
+  } catch {
+    // Warmup is best-effort; send will surface real errors.
+  }
+}
+
 export async function encryptOutgoingMessage(
   userId: string,
   recipientId: string,
@@ -419,7 +430,7 @@ export async function encryptOutgoingMessage(
   );
 
   await trackSession(ctx, peerAddress(recipientId));
-  await persistWasmContext(ctx);
+  void persistWasmContext(ctx);
 
   return {
     content: arrayBufferToBase64(bytesToArrayBuffer(ciphertext.body)),
@@ -436,6 +447,7 @@ export async function cacheSentPlaintext(
 ): Promise<void> {
   if (!messageId) return;
   await writeDecryptCache(userId, messageId, plaintext);
+  void pushPlaintextSync(userId, messageId, plaintext);
 }
 
 function messageSortKey(message: WireMessage): number {
@@ -563,6 +575,7 @@ export async function decryptIncomingMessage(
       batch.cache.set(message.id, text);
     } else {
       await writeDecryptCache(userId, message.id, text);
+      void pushPlaintextSync(userId, message.id, text);
     }
   }
   return text;
@@ -581,14 +594,25 @@ export async function decryptMessageList<T extends WireMessage>(
   const decryptOrder = [...messages].sort((a, b) => messageSortKey(a) - messageSortKey(b));
   const decryptedById = new Map<string, string>();
 
-  let batch: DecryptBatchState | undefined;
-  const needsBatch = decryptOrder.some((message) => needsSignalDecrypt(userId, message));
-  if (needsBatch) {
-    const messageIds = decryptOrder
-      .map((message) => message.id)
-      .filter((id): id is string => Boolean(id));
-    const cache = await readDecryptCacheBatch(userId, messageIds);
+  const messageIds = decryptOrder
+    .map((message) => message.id)
+    .filter((id): id is string => Boolean(id));
+  const cache = await readDecryptCacheBatch(userId, messageIds);
 
+  const missingIds = messageIds.filter((id) => !cache.has(id));
+  if (missingIds.length > 0) {
+    const remote = await fetchPlaintextSyncBatch(userId, missingIds);
+    if (remote.size > 0) {
+      for (const [id, text] of remote) {
+        cache.set(id, text);
+      }
+      void writeDecryptCacheBatch(userId, remote);
+    }
+  }
+
+  let batch: DecryptBatchState | undefined;
+  const needsCtx = decryptOrder.some((message) => needsSignalDecrypt(userId, message));
+  if (needsCtx) {
     try {
       await ensureSignalKeysRegistered(userId);
       const ctx = await requireContext(userId);
@@ -605,6 +629,12 @@ export async function decryptMessageList<T extends WireMessage>(
         contextDirty: false,
       };
     }
+  } else if (messageIds.length > 0) {
+    batch = {
+      cache,
+      pendingCacheWrites: new Map(),
+      contextDirty: false,
+    };
   }
 
   for (const message of decryptOrder) {
@@ -634,6 +664,7 @@ export async function decryptMessageList<T extends WireMessage>(
   }
   if (batch && batch.pendingCacheWrites.size > 0) {
     await writeDecryptCacheBatch(userId, batch.pendingCacheWrites);
+    void pushPlaintextSyncBatch(userId, batch.pendingCacheWrites);
   }
 
   return messages.map((message) => {

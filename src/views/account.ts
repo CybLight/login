@@ -16,7 +16,6 @@ import { hydrateAccountAvatar, isEmailVerified, stopAccountChatAutoRefresh } fro
 import { createChatCore } from './account/chat-core';
 import { startEditMessageInAccount } from './account/chat-editor';
 import { showPendingRoleNotice } from '@/utils/roleNotice';
-import { promptGoogleDriveRestoreIfNeeded } from './account/drive-restore-prompt';
 
 // Global state variables
 let twoFAEnabled = false;
@@ -120,6 +119,4 @@ export async function renderAccount(tab: string = 'profile'): Promise<void> {
 
   // Hydrate avatar (профиль + аватарка в шапке на всех вкладках)
   void hydrateAccountAvatar(user);
-
-  void promptGoogleDriveRestoreIfNeeded(String(user.id));
 }

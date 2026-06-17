@@ -12,11 +12,19 @@ export type DriveBackupMetadata = {
   file: DriveBackupFile;
 };
 
-export async function fetchDriveBackupMetadata(userId: string): Promise<DriveBackupMetadata | null> {
+export async function fetchDriveBackupMetadata(
+  userId: string,
+  options?: { interactive?: boolean },
+): Promise<DriveBackupMetadata | null> {
   let accessToken: string;
   try {
-    accessToken = await getGoogleDriveAccessToken({ interactive: false });
-  } catch {
+    accessToken = await getGoogleDriveAccessToken({
+      interactive: options?.interactive === true,
+    });
+  } catch (error) {
+    if (options?.interactive === true) {
+      throw error;
+    }
     return null;
   }
 

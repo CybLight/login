@@ -9,7 +9,7 @@ import { setupAccessibleModal } from '@/utils/keyboard';
 import type { ApiOkResponse, FriendListItem } from '@/types';
 import { createChatCore, type ChatLoadOptions } from './chat-core';
 import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
-import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId, getSignalKeyIssueMessage } from '@/crypto/signal';
+import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId, getSignalKeyIssueMessage, warmupOutgoingSession } from '@/crypto/signal';
 import { extractFirstUrl } from './chat-format';
 import { renderChatFormatToolbarRowHtml, bindChatFormatToolbarToggle } from './chat-formatting-settings';
 import { loadMessagesTab as loadMessagesListTab } from './messages-list';
@@ -24,6 +24,11 @@ import {
   insertChatCode,
 } from './chat-editor';
 import { showAccountConfirmModal } from './modals';
+import {
+  appendOptimisticSentMessage,
+  finalizeOptimisticSentMessage,
+  revertOptimisticSentMessage,
+} from './chat-send-optimistic';
 import { CYBLIGHT_EMOJI_CATEGORIES, CYBLIGHT_EMOJI_QUICK, getEmojiCategoryTitle } from './emoji-categories';
 import {
   bindEncryptionReminderHandlers,
@@ -755,11 +760,30 @@ export function openChatInMessagesTab(
     }
 
     if (chatSendBtn) chatSendBtn.disabled = true;
+
+    const outgoingContent = content;
+    const optimisticId = `pending-${Date.now()}`;
+    let usedOptimisticUi = false;
+
+    if (!editingId && messagesEl) {
+      appendOptimisticSentMessage(messagesEl, outgoingContent, optimisticId);
+      usedOptimisticUi = true;
+      clearChatDraft(friendId);
+      composeDraftHolder.draft = '';
+      if (chatInput) {
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+      }
+      suppressedInputPreviewUrl = null;
+      renderInputLinkPreview();
+      clearReplyState();
+    }
+
     try {
       let response: Response;
       let data: ApiOkResponse;
       const userId = getSignalUserId();
-      const encrypted = await encryptOutgoingMessage(userId, friendId, content);
+      const encrypted = await encryptOutgoingMessage(userId, friendId, outgoingContent);
 
       if (editingId) {
         response = await apiCall(`/messages/${encodeURIComponent(editingId)}`, {
@@ -797,18 +821,11 @@ export function openChatInMessagesTab(
           sendPayload.message?.id || sendPayload.messageId || editingId || '',
         );
         if (savedId) {
-          await cacheSentPlaintext(userId, savedId, content);
-          cacheConversationPreview(friendId, userId, content, Date.now());
+          void cacheSentPlaintext(userId, savedId, outgoingContent);
+          cacheConversationPreview(friendId, userId, outgoingContent, Date.now());
         }
 
-        if (!editingId) {
-          clearChatDraft(friendId);
-          composeDraftHolder.draft = '';
-          if (chatInput) {
-            chatInput.value = '';
-            chatInput.style.height = 'auto';
-          }
-        } else {
+        if (editingId) {
           resetChatEditingState(
             chatInput,
             chatSendBtn,
@@ -816,27 +833,59 @@ export function openChatInMessagesTab(
             chatEditingIdInput,
             composeDraftHolder,
           );
+          suppressedInputPreviewUrl = null;
+          renderInputLinkPreview();
+          await loadChatMessagesInAccount(
+            friendId,
+            messagesEl,
+            api,
+            chatInput,
+            chatSendBtn,
+            chatEditIndicator,
+            chatEditingIdInput,
+            chatLoadOptions({
+              hydrateLinkPreviews: false,
+              forceScrollToBottom: true,
+            }),
+          );
+        } else if (usedOptimisticUi && messagesEl && savedId) {
+          finalizeOptimisticSentMessage(
+            messagesEl,
+            optimisticId,
+            savedId,
+            outgoingContent,
+            userId,
+            state.accountChatMessageMap,
+          );
+        } else if (messagesEl) {
+          void loadChatMessagesInAccount(
+            friendId,
+            messagesEl,
+            api,
+            chatInput,
+            chatSendBtn,
+            chatEditIndicator,
+            chatEditingIdInput,
+            chatLoadOptions({
+              hydrateLinkPreviews: false,
+              forceScrollToBottom: true,
+            }),
+          );
         }
-        suppressedInputPreviewUrl = null;
-        renderInputLinkPreview();
-        clearReplyState();
-        await loadChatMessagesInAccount(
-          friendId,
-          messagesEl,
-          api,
-          chatInput,
-          chatSendBtn,
-          chatEditIndicator,
-          chatEditingIdInput,
-          chatLoadOptions({
-            hydrateLinkPreviews: true,
-            forceScrollToBottom: true,
-          })
-        );
-        // Update badge counters after sending message
+
         void updateNavBadges();
         void callbacks.updateChatUnreadBadges();
       } else {
+        if (usedOptimisticUi && messagesEl) {
+          revertOptimisticSentMessage(messagesEl, optimisticId);
+          if (chatInput) {
+            chatInput.value = outgoingContent;
+            chatInput.style.height = 'auto';
+            chatInput.style.height = `${Math.min(chatInput.scrollHeight, 150)}px`;
+          }
+          composeDraftHolder.draft = outgoingContent;
+          saveChatDraft(friendId, outgoingContent);
+        }
         api.showMsg(
           'error',
           data?.error ||
@@ -844,6 +893,16 @@ export function openChatInMessagesTab(
         );
       }
     } catch {
+      if (usedOptimisticUi && messagesEl) {
+        revertOptimisticSentMessage(messagesEl, optimisticId);
+        if (chatInput) {
+          chatInput.value = outgoingContent;
+          chatInput.style.height = 'auto';
+          chatInput.style.height = `${Math.min(chatInput.scrollHeight, 150)}px`;
+        }
+        composeDraftHolder.draft = outgoingContent;
+        saveChatDraft(friendId, outgoingContent);
+      }
       const keyIssue = getSignalKeyIssueMessage();
       api.showMsg('error', keyIssue || t('Ошибка при отправке'));
     } finally {
@@ -945,6 +1004,8 @@ export function openChatInMessagesTab(
     chatEditingIdInput,
     chatLoadOptions()
   );
+
+  void warmupOutgoingSession(getSignalUserId(), friendId);
 
   renderPinnedBar();
 

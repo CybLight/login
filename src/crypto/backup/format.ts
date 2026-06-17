@@ -37,6 +37,8 @@ export type CyblightBackupPayloadBase = {
   };
   records: CyblightBackupRecords;
   decryptCache: Record<string, string>;
+  /** Base64-encoded 32-byte AES key for cross-device plaintext sync */
+  plaintextSyncKey?: string;
 };
 
 export type CyblightBackupPayloadV1 = CyblightBackupPayloadBase & {

@@ -1,5 +1,6 @@
 import type { CyblightBackupPayload } from './format';
 import { type SignalStoredRecord, withSignalDb } from '../signal/idb-store';
+import { restorePlaintextSyncKeyFromBackup } from '../signal/sync-key';
 
 export async function restoreBackupPayload(
   expectedUserId: string,
@@ -65,4 +66,6 @@ export async function restoreBackupPayload(
     completedSteps += 1;
     await report();
   }
+
+  await restorePlaintextSyncKeyFromBackup(expectedUserId, payload.plaintextSyncKey);
 }

@@ -96,10 +96,21 @@ export function renderMessagesSettingsHtml(): string {
           <img src="/assets/img/msg/comGear.png" alt="" aria-hidden="true">
         </button>
       </div>
-      <div id="messagesSettingsPanel" class="messages-settings-panel is-hidden" role="dialog" aria-label="${t('Настройки сообщений')}">
-        <div class="messages-settings-panel__title">${t('Настройки сообщений')}</div>
-        ${renderMessagesFormatToolbarSettingHtml()}
-        ${renderMessagesCloudBackupHintHtml()}
+      <div id="messagesSettingsOverlay" class="messages-settings-overlay is-hidden" aria-hidden="true">
+        <div class="messages-settings-backdrop" id="messagesSettingsBackdrop" aria-hidden="true"></div>
+        <div id="messagesSettingsPanel" class="messages-settings-panel" role="dialog" aria-label="${t('Настройки сообщений')}">
+          <div class="messages-settings-panel__head">
+            <div class="messages-settings-panel__title">${t('Настройки сообщений')}</div>
+            <button
+              type="button"
+              class="messages-settings-panel__close"
+              id="messagesSettingsCloseBtn"
+              aria-label="${t('Закрыть')}"
+            >✕</button>
+          </div>
+          ${renderMessagesFormatToolbarSettingHtml()}
+          ${renderMessagesCloudBackupHintHtml()}
+        </div>
       </div>`;
 }
 
@@ -154,27 +165,51 @@ function renderMessagesCloudBackupHintHtml(): string {
 
 export function bindMessagesSettingsHandlers(root: ParentNode, _api: MessagesSettingsApi): void {
   const btn = root.querySelector('#messagesSettingsBtn') as HTMLButtonElement | null;
+  const overlay = root.querySelector('#messagesSettingsOverlay') as HTMLElement | null;
+  const backdrop = root.querySelector('#messagesSettingsBackdrop') as HTMLElement | null;
+  const closeBtn = root.querySelector('#messagesSettingsCloseBtn') as HTMLButtonElement | null;
   const panel = root.querySelector('#messagesSettingsPanel') as HTMLElement | null;
   const checkbox = root.querySelector('#chatFormatToolbarHiddenSetting') as HTMLInputElement | null;
   const reminderCheckbox = root.querySelector('#encryptionReminderHiddenSetting') as HTMLInputElement | null;
 
+  let escapeHandler: ((event: KeyboardEvent) => void) | null = null;
+
   const closePanel = () => {
-    panel?.classList.add('is-hidden');
+    overlay?.classList.add('is-hidden');
+    overlay?.setAttribute('aria-hidden', 'true');
     btn?.setAttribute('aria-expanded', 'false');
+    if (escapeHandler) {
+      document.removeEventListener('keydown', escapeHandler);
+      escapeHandler = null;
+    }
   };
 
   const openPanel = () => {
-    panel?.classList.remove('is-hidden');
+    overlay?.classList.remove('is-hidden');
+    overlay?.setAttribute('aria-hidden', 'false');
     btn?.setAttribute('aria-expanded', 'true');
+
+    escapeHandler = (event) => {
+      if (event.key === 'Escape') closePanel();
+    };
+    document.addEventListener('keydown', escapeHandler);
   };
 
   btn?.addEventListener('click', (event) => {
     event.stopPropagation();
-    if (panel?.classList.contains('is-hidden')) {
+    if (overlay?.classList.contains('is-hidden')) {
       openPanel();
     } else {
       closePanel();
     }
+  });
+
+  backdrop?.addEventListener('click', () => {
+    closePanel();
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    closePanel();
   });
 
   panel?.addEventListener('click', (event) => {
@@ -193,12 +228,4 @@ export function bindMessagesSettingsHandlers(root: ParentNode, _api: MessagesSet
   });
 
   bindMessagesBackupShortcutHandlers(root);
-
-  root.addEventListener('click', (event) => {
-    if (panel?.classList.contains('is-hidden')) return;
-    const target = event.target as Node | null;
-    if (!target) return;
-    if (btn?.contains(target) || panel?.contains(target)) return;
-    closePanel();
-  });
 }

@@ -1,4 +1,5 @@
 import { type SignalStoredRecord, readSignalDbSafely } from '../signal/idb-store';
+import { readPlaintextSyncKeyForBackup } from '../signal/sync-key';
 import {
   BACKUP_PAYLOAD_FORMAT,
   BACKUP_PAYLOAD_VERSION_V1,
@@ -79,6 +80,7 @@ export async function collectBackupPayload(
     signal: { manifest },
     records,
     decryptCache,
+    plaintextSyncKey: await readPlaintextSyncKeyForBackup(userId),
   };
 
   if (chats) {
