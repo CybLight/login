@@ -25,6 +25,8 @@ import {
   loadWasmContext,
   peerAddress,
   persistWasmContext,
+  resetPeerSession,
+  clearAllSessions,
   trackKyberPreKey,
   trackPreKey,
   trackSession,
@@ -290,6 +292,7 @@ async function replenishOneTimePreKeys(ctx: WasmSignalContext): Promise<void> {
 }
 
 async function publishRegistrationKeys(ctx: WasmSignalContext): Promise<void> {
+  await clearAllSessions(ctx);
   const signedPreKey = await resolveSignedPreKeyForUpload(ctx);
   const kyberPreKey = await resolveKyberPreKeyForUpload(ctx);
   const oneTimePreKeys = await generateOneTimePreKeyBatch(ctx, ONE_TIME_PREKEY_BATCH);
@@ -369,12 +372,21 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
   return ensureKeysInflight;
 }
 
-async function ensureSession(ctx: WasmSignalContext, peerUserId: string): Promise<void> {
-  const address = peerAddress(peerUserId);
-  if (await ctx.sessionStore.has_session(address)) {
-    return;
-  }
+function hasPreKeyHandshakePeer(ctx: WasmSignalContext, peerUserId: string): boolean {
+  return ctx.manifest.preKeyHandshakePeers?.includes(peerUserId) ?? false;
+}
 
+function markPreKeyHandshakePeer(ctx: WasmSignalContext, peerUserId: string): void {
+  if (!ctx.manifest.preKeyHandshakePeers) {
+    ctx.manifest.preKeyHandshakePeers = [];
+  }
+  if (!ctx.manifest.preKeyHandshakePeers.includes(peerUserId)) {
+    ctx.manifest.preKeyHandshakePeers.push(peerUserId);
+  }
+}
+
+async function establishSession(ctx: WasmSignalContext, peerUserId: string): Promise<void> {
+  const address = peerAddress(peerUserId);
   const bundle = await fetchKeyBundle(peerUserId);
   const preKeyId = bundle.oneTimePreKey?.keyId ?? null;
   const preKeyBytes = bundle.oneTimePreKey
@@ -399,16 +411,38 @@ async function ensureSession(ctx: WasmSignalContext, peerUserId: string): Promis
   );
 
   await trackSession(ctx, address);
-  await persistWasmContext(ctx);
 }
 
-export async function warmupOutgoingSession(userId: string, recipientId: string): Promise<void> {
+async function ensureSession(ctx: WasmSignalContext, peerUserId: string): Promise<void> {
+  const address = peerAddress(peerUserId);
+  if (await ctx.sessionStore.has_session(address)) {
+    return;
+  }
+
+  await establishSession(ctx, peerUserId);
+}
+
+async function encryptForPeer(
+  ctx: WasmSignalContext,
+  recipientId: string,
+  plaintext: string,
+): Promise<{ body: Uint8Array; message_type: number }> {
+  await ensureSession(ctx, recipientId);
+  return encryptMessage(
+    new Uint8Array(utf8ToArrayBuffer(plaintext)),
+    peerAddress(recipientId),
+    ctx.localAddress,
+    ctx.sessionStore,
+    ctx.identityStore,
+  );
+}
+
+export async function warmupOutgoingSession(userId: string, _recipientId: string): Promise<void> {
   try {
     await ensureSignalKeysRegistered(userId);
-    const ctx = await requireContext(userId);
-    await ensureSession(ctx, recipientId);
   } catch {
-    // Warmup is best-effort; send will surface real errors.
+    // Warmup only registers keys; creating outbound sessions here wastes prekeys and
+    // can leave whisper-only sessions that the recipient cannot decrypt.
   }
 }
 
@@ -419,15 +453,21 @@ export async function encryptOutgoingMessage(
 ): Promise<EncryptedMessagePayload> {
   await ensureSignalKeysRegistered(userId);
   const ctx = await requireContext(userId);
-  await ensureSession(ctx, recipientId);
 
-  const ciphertext = await encryptMessage(
-    new Uint8Array(utf8ToArrayBuffer(plaintext)),
-    peerAddress(recipientId),
-    ctx.localAddress,
-    ctx.sessionStore,
-    ctx.identityStore,
-  );
+  let ciphertext = await encryptForPeer(ctx, recipientId, plaintext);
+
+  if (
+    ciphertext.message_type === message_type_signal() &&
+    !hasPreKeyHandshakePeer(ctx, recipientId)
+  ) {
+    await resetPeerSession(ctx, recipientId);
+    await establishSession(ctx, recipientId);
+    ciphertext = await encryptForPeer(ctx, recipientId, plaintext);
+  }
+
+  if (ciphertext.message_type === message_type_pre_key()) {
+    markPreKeyHandshakePeer(ctx, recipientId);
+  }
 
   await trackSession(ctx, peerAddress(recipientId));
   await persistWasmContext(ctx);
@@ -566,6 +606,7 @@ export async function decryptIncomingMessage(
   }
 
   await trackSession(ctx, sender);
+  markPreKeyHandshakePeer(ctx, message.senderId);
   if (batch) {
     batch.contextDirty = true;
   } else {

@@ -27,6 +27,7 @@ export type StoreManifest = {
   signedPreKeyIds: number[];
   kyberPreKeyIds: number[];
   sessionKeys: string[];
+  preKeyHandshakePeers?: string[];
   latestSignedPreKeyId?: number;
   latestKyberPreKeyId?: number;
   latestSignedPreKeyUpload?: PreKeyUploadMeta;
@@ -279,6 +280,34 @@ export function trackKyberPreKey(ctx: WasmSignalContext, keyId: number): void {
     ctx.manifest.kyberPreKeyIds.push(keyId);
   }
   ctx.manifest.latestKyberPreKeyId = keyId;
+}
+
+export async function resetPeerSession(ctx: WasmSignalContext, peerUserId: string): Promise<void> {
+  const address = peerAddress(peerUserId);
+  if (await ctx.sessionStore.has_session(address)) {
+    await ctx.sessionStore.archive_session(address);
+  }
+  const key = sessionKey(address);
+  ctx.manifest.sessionKeys = ctx.manifest.sessionKeys.filter((entry) => entry !== key);
+  if (ctx.manifest.preKeyHandshakePeers) {
+    ctx.manifest.preKeyHandshakePeers = ctx.manifest.preKeyHandshakePeers.filter(
+      (peerId) => peerId !== peerUserId,
+    );
+  }
+}
+
+export async function clearAllSessions(ctx: WasmSignalContext): Promise<void> {
+  for (const key of [...ctx.manifest.sessionKeys]) {
+    const [name, deviceIdRaw] = key.split(':');
+    const deviceId = Number(deviceIdRaw);
+    if (!name || !Number.isFinite(deviceId)) continue;
+    const address = new WasmProtocolAddress(name, deviceId);
+    if (await ctx.sessionStore.has_session(address)) {
+      await ctx.sessionStore.archive_session(address);
+    }
+  }
+  ctx.manifest.sessionKeys = [];
+  ctx.manifest.preKeyHandshakePeers = [];
 }
 
 export async function trackSession(ctx: WasmSignalContext, address: WasmProtocolAddress): Promise<void> {
