@@ -119,7 +119,7 @@ export async function fetchUnreadSummaryData(): Promise<UnreadSummary | null> {
               const id = String(wire.id ?? '').trim();
               const content = String(wire.content ?? '');
               const senderId = String(wire.senderId ?? wire.sender_id ?? '').trim();
-              const encryption = String(wire.encryption ?? 'plaintext');
+              const encryption = String(wire.encryption ?? 'signal_v1');
               if (id && senderId) {
                 lastMessage = {
                   id,

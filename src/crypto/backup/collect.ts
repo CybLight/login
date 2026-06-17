@@ -1,52 +1,47 @@
-import type { StoreManifest } from '../signal/wasm-context';
+import { type SignalStoredRecord, readSignalDbSafely } from '../signal/idb-store';
 import {
   BACKUP_PAYLOAD_FORMAT,
-  BACKUP_VERSION,
+  BACKUP_PAYLOAD_VERSION_V1,
+  BACKUP_PAYLOAD_VERSION_V2,
   defaultBackupRecords,
-  type CyblightBackupPayloadV1,
+  type CyblightBackupPayload,
+  type CyblightBackupPayloadV2,
+  type CyblightChatsExportPayload,
 } from './format';
 
-const DB_NAME = 'cyblight-signal-store';
-const STORE_NAME = 'kv';
-
-type StoredRecord = {
-  userId: string;
-  key: string;
-  value: unknown;
-};
-
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 2);
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('indexeddb_open_failed'));
+async function listUserRecords(userId: string): Promise<SignalStoredRecord[]> {
+  return readSignalDbSafely([], async (store) => {
+    return new Promise<SignalStoredRecord[]>((resolve, reject) => {
+      const req = store.getAll();
+      req.onsuccess = () => {
+        const all = (req.result as SignalStoredRecord[]) || [];
+        resolve(all.filter((row) => row.userId === userId));
+      };
+      req.onerror = () => reject(req.error || new Error('indexeddb_read_failed'));
+    });
   });
 }
 
-async function listUserRecords(userId: string): Promise<StoredRecord[]> {
-  const db = await openDb();
-  const rows = await new Promise<StoredRecord[]>((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.getAll();
-    req.onsuccess = () => {
-      const all = (req.result as StoredRecord[]) || [];
-      resolve(all.filter((row) => row.userId === userId));
-    };
-    req.onerror = () => reject(req.error || new Error('indexeddb_read_failed'));
-  });
-  db.close();
-  return rows;
+export async function hasLocalBackupKeys(userId: string): Promise<boolean> {
+  try {
+    const payload = await collectBackupPayload(userId);
+    return payload !== null;
+  } catch {
+    return false;
+  }
 }
 
-export async function collectBackupPayload(userId: string): Promise<CyblightBackupPayloadV1 | null> {
+export async function collectBackupPayload(
+  userId: string,
+  chats?: CyblightChatsExportPayload | null,
+): Promise<CyblightBackupPayload | null> {
   const rows = await listUserRecords(userId);
   const manifestRow = rows.find((row) => row.key === 'wasmManifest');
   if (!manifestRow || typeof manifestRow.value !== 'object' || manifestRow.value === null) {
     return null;
   }
 
-  const manifest = manifestRow.value as StoreManifest;
+  const manifest = manifestRow.value as CyblightBackupPayload['signal']['manifest'];
   const records = defaultBackupRecords();
   const decryptCache: Record<string, string> = {};
 
@@ -77,13 +72,26 @@ export async function collectBackupPayload(userId: string): Promise<CyblightBack
     }
   }
 
-  return {
+  const base = {
     format: BACKUP_PAYLOAD_FORMAT,
-    version: BACKUP_VERSION,
     userId,
     createdAt: Date.now(),
     signal: { manifest },
     records,
     decryptCache,
+  };
+
+  if (chats) {
+    const payload: CyblightBackupPayloadV2 = {
+      ...base,
+      version: BACKUP_PAYLOAD_VERSION_V2,
+      chats,
+    };
+    return payload;
+  }
+
+  return {
+    ...base,
+    version: BACKUP_PAYLOAD_VERSION_V1,
   };
 }

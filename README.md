@@ -34,6 +34,15 @@ npm run lint
 | `VITE_API_BASE` | Базовый URL API |
 | `VITE_TURNSTILE_SITEKEY` | Cloudflare Turnstile |
 | `VITE_LOG_LEVEL` | Уровень логирования (`debug` в dev) |
+| `VITE_GOOGLE_DRIVE_CLIENT_ID` | OAuth Client ID для резервной копии в Google Drive |
+
+### Google Drive (резервная копия)
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → создайте OAuth **Web client**
+2. Включите **Google Drive API**
+3. Authorized JavaScript origins: `https://login.cyblight.org`, `http://localhost:3000`
+4. Scope приложения: `https://www.googleapis.com/auth/drive.file` (только файлы, созданные CybLight)
+5. Client ID → `VITE_GOOGLE_DRIVE_CLIENT_ID` в `.env` и в переменных деплоя
 
 В режиме разработки запросы к `/api/*` проксируются на `https://api.cyblight.org` (см. `vite.config.ts`).
 

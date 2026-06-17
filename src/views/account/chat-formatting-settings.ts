@@ -1,9 +1,7 @@
 import { t } from '@/i18n';
+import { Router } from '@/router/Router';
+import { OPEN_SECURITY_BACKUP_SECTION, OPEN_SECURITY_SECTION_KEY } from './encryption-reminder';
 import { renderChatFormattingToolbarHtml } from './chat-formatting-toolbar';
-import {
-  bindMessagesExportImportHandlers,
-  renderMessagesExportImportSettingsHtml,
-} from './messages-export-import';
 
 type MessagesSettingsApi = {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -95,8 +93,20 @@ export function renderMessagesSettingsHtml(): string {
       <div id="messagesSettingsPanel" class="messages-settings-panel is-hidden" role="dialog" aria-label="${t('Настройки сообщений')}">
         <div class="messages-settings-panel__title">${t('Настройки сообщений')}</div>
         ${renderMessagesFormatToolbarSettingHtml()}
-        ${renderMessagesExportImportSettingsHtml()}
+        ${renderMessagesCloudBackupHintHtml()}
       </div>`;
+}
+
+function bindMessagesBackupShortcutHandlers(root: ParentNode): void {
+  const btn = root.querySelector('#messagesOpenBackupSettingsBtn') as HTMLButtonElement | null;
+  btn?.addEventListener('click', () => {
+    try {
+      sessionStorage.setItem(OPEN_SECURITY_SECTION_KEY, OPEN_SECURITY_BACKUP_SECTION);
+    } catch {
+      // ignore
+    }
+    Router.navigate('account-security');
+  });
 }
 
 function renderMessagesFormatToolbarSettingHtml(): string {
@@ -113,7 +123,20 @@ function renderMessagesFormatToolbarSettingHtml(): string {
         </label>`;
 }
 
-export function bindMessagesSettingsHandlers(root: ParentNode, api: MessagesSettingsApi): void {
+function renderMessagesCloudBackupHintHtml(): string {
+  return `
+        <div class="messages-settings-section">
+          <div class="messages-settings-section__title">${t('Резервная копия чатов')}</div>
+          <p class="messages-settings-section__hint">${t('Резервная копия ключей и сообщений — в разделе «Безопасность → Резервная копия» (Google Drive или файл).')}</p>
+          <div class="messages-settings-actions">
+            <button id="messagesOpenBackupSettingsBtn" class="messages-settings-action-btn" type="button">
+              ${t('Открыть настройки резервной копии')}
+            </button>
+          </div>
+        </div>`;
+}
+
+export function bindMessagesSettingsHandlers(root: ParentNode, _api: MessagesSettingsApi): void {
   const btn = root.querySelector('#messagesSettingsBtn') as HTMLButtonElement | null;
   const panel = root.querySelector('#messagesSettingsPanel') as HTMLElement | null;
   const checkbox = root.querySelector('#chatFormatToolbarHiddenSetting') as HTMLInputElement | null;
@@ -145,7 +168,7 @@ export function bindMessagesSettingsHandlers(root: ParentNode, api: MessagesSett
     setChatFormatToolbarHidden(checkbox.checked);
   });
 
-  bindMessagesExportImportHandlers(root, api);
+  bindMessagesBackupShortcutHandlers(root);
 
   root.addEventListener('click', (event) => {
     if (panel?.classList.contains('is-hidden')) return;

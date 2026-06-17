@@ -3,7 +3,15 @@
  */
 
 import { TURNSTILE_SITEKEY } from '@/config/constants';
+import { getLocale } from '@/i18n';
 import { logger } from '@/utils';
+
+function getTurnstileLanguage(): string {
+  const locale = getLocale();
+  if (locale === 'en') return 'en';
+  if (locale === 'uk') return 'uk';
+  return 'ru';
+}
 
 export const captchaService = {
   widgetId: null as string | null | undefined,
@@ -58,6 +66,7 @@ export const captchaService = {
       this.widgetId = window.turnstile?.render(container, {
         sitekey: TURNSTILE_SITEKEY,
         theme: document.body.classList.contains('light') ? 'light' : 'dark',
+        language: getTurnstileLanguage(),
         callback: (token: string) => this.onSuccess(token),
         'expired-callback': () => this.onExpired(),
         'error-callback': () => this.onError(),

@@ -2,11 +2,9 @@
  * Пасхалка «Зеркало профиля» — 7 быстрых кликов по своему аватару на странице профиля.
  */
 
-import { Router } from "@/router/Router";
-import { apiCall, getStorage, setStorage } from "@/utils";
+import { apiCall, getStorage, setStorage, maybeLogBridgeEaster, sendEasterLog } from "@/utils";
 import { PROFILE_MIRROR_KEY } from "@/config/constants";
-
-const LOG_URL = "https://cyblight.org/e-log";
+import { authService, extractEasterFlags } from "@/services";
 
 const CLICKS_REQUIRED = 7;
 const CLICK_WINDOW_MS = 4200;
@@ -104,24 +102,34 @@ function showMirrorModal(username: string): Promise<void> {
   });
 }
 
-function sendProfileMirrorLog(username: string): void {
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+async function logProfileMirrorUnlock(username: string): Promise<void> {
+  try {
+    const user = await authService.checkSession();
+    const hadBridge = user?.easter?.bridge === true;
 
-  fetch(LOG_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
+    sendEasterLog({
       type: "profile_mirror",
       userName: username,
       source: "profile_avatar_seven_clicks",
+      alex: 3,
       clicks: CLICKS_REQUIRED,
-      page: window.location.href,
-      timezone: tz,
-      route: Router.getRoute(),
-      ua: navigator.userAgent,
-      referrer: document.referrer || null,
-    }),
-  }).catch(() => {});
+    });
+
+    const meRes = await apiCall("/auth/me", {
+      method: "GET",
+      credentials: "include",
+    });
+    if (!meRes.ok) return;
+
+    const meData = await meRes.json().catch(() => ({}));
+    maybeLogBridgeEaster(
+      username,
+      hadBridge,
+      extractEasterFlags(meData).bridge === true,
+    );
+  } catch {
+    // fire-and-forget
+  }
 }
 
 async function saveProfileMirrorToServer(): Promise<void> {
@@ -157,8 +165,8 @@ async function triggerProfileMirrorEaster(
   await new Promise((r) => setTimeout(r, 900));
 
   setProfileMirrorAccess();
-  sendProfileMirrorLog(username);
   await saveProfileMirrorToServer();
+  void logProfileMirrorUnlock(username);
   await showMirrorModal(username);
 
   header?.classList.remove("profile-mirror-flip");

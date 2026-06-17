@@ -13,7 +13,5 @@ export * from './account-banned';
 export * from './contact-admin';
 export * from './done';
 export * from './account';
-export * from './strawberry-history';
 export * from './profile';
 export * from './edit-profile';
-export * from './postmaster';

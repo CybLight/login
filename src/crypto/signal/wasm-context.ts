@@ -10,18 +10,9 @@ import {
 } from '@getmaapp/signal-wasm';
 import { arrayBufferToBase64, base64ToArrayBuffer, bytesToArrayBuffer } from './buffer';
 import { ensureLibsignalInitialized } from './libsignal-init';
-
-const DB_NAME = 'cyblight-signal-store';
-const DB_VERSION = 2;
-const STORE_NAME = 'kv';
+import { type SignalStoredRecord, withSignalDb } from './idb-store';
 
 export const DEVICE_ID = 1;
-
-type StoredRecord = {
-  userId: string;
-  key: string;
-  value: unknown;
-};
 
 export type PreKeyUploadMeta = {
   keyId: number;
@@ -55,58 +46,34 @@ export type WasmSignalContext = {
   manifest: StoreManifest;
 };
 
-function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: ['userId', 'key'] });
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('indexeddb_open_failed'));
-  });
-}
-
 async function readAllValuesForUser(userId: string): Promise<Map<string, unknown>> {
-  const db = await openDb();
   const values = new Map<string, unknown>();
 
-  await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const store = tx.objectStore(STORE_NAME);
-    const req = store.getAll();
-    req.onsuccess = () => {
-      for (const row of (req.result as StoredRecord[]) || []) {
-        if (row.userId === userId) {
-          values.set(row.key, row.value);
-        }
+  await withSignalDb('readonly', async (store) => {
+    const rows = await new Promise<SignalStoredRecord[]>((resolve, reject) => {
+      const req = store.getAll();
+      req.onsuccess = () => resolve((req.result as SignalStoredRecord[]) || []);
+      req.onerror = () => reject(req.error || new Error('indexeddb_read_failed'));
+    });
+
+    for (const row of rows) {
+      if (row.userId === userId) {
+        values.set(row.key, row.value);
       }
-    };
-    req.onerror = () => reject(req.error || new Error('indexeddb_read_failed'));
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error || new Error('indexeddb_read_failed'));
+    }
   });
 
-  db.close();
   return values;
 }
 
 async function writeValuesBatch(userId: string, entries: Array<[string, unknown]>): Promise<void> {
   if (entries.length === 0) return;
 
-  const db = await openDb();
-  await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
+  await withSignalDb('readwrite', async (store) => {
     for (const [key, value] of entries) {
-      store.put({ userId, key, value } satisfies StoredRecord);
+      store.put({ userId, key, value } satisfies SignalStoredRecord);
     }
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error || new Error('indexeddb_write_failed'));
   });
-  db.close();
 }
 
 export function sessionKey(address: WasmProtocolAddress): string {

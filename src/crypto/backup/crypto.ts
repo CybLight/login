@@ -10,8 +10,9 @@ import {
   BACKUP_ITERATIONS,
   BACKUP_KDF,
   BACKUP_VERSION,
+  isBackupPayloadVersion,
   type CyblightBackupFileV1,
-  type CyblightBackupPayloadV1,
+  type CyblightBackupPayload,
 } from './format';
 
 function randomBytes(length: number): Uint8Array {
@@ -43,7 +44,7 @@ async function deriveKey(password: string, salt: Uint8Array, iterations: number)
 }
 
 export async function encryptBackupPayload(
-  payload: CyblightBackupPayloadV1,
+  payload: CyblightBackupPayload,
   password: string,
 ): Promise<CyblightBackupFileV1> {
   const salt = randomBytes(16);
@@ -70,7 +71,7 @@ export async function encryptBackupPayload(
 export async function decryptBackupPayload(
   file: CyblightBackupFileV1,
   password: string,
-): Promise<CyblightBackupPayloadV1> {
+): Promise<CyblightBackupPayload> {
   if (file.format !== BACKUP_FILE_FORMAT || file.version !== BACKUP_VERSION) {
     throw new Error('backup_format_unsupported');
   }
@@ -94,8 +95,11 @@ export async function decryptBackupPayload(
     throw new Error('backup_password_invalid');
   }
 
-  const parsed = JSON.parse(arrayBufferToUtf8(decrypted)) as CyblightBackupPayloadV1;
-  if (parsed.format !== 'cyblight-backup-payload' || parsed.version !== BACKUP_VERSION) {
+  const parsed = JSON.parse(arrayBufferToUtf8(decrypted)) as CyblightBackupPayload;
+  if (
+    parsed.format !== 'cyblight-backup-payload' ||
+    !isBackupPayloadVersion(parsed.version)
+  ) {
     throw new Error('backup_payload_invalid');
   }
   return parsed;

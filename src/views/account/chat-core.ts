@@ -139,7 +139,7 @@ export function createChatCore(deps: ChatCoreDeps) {
           id: String(message.id || ''),
           content: String(message.content || ''),
           senderId: String(message.senderId || message.sender_id || ''),
-          encryption: (message.encryption as string | null | undefined) ?? 'plaintext',
+          encryption: (message.encryption as string | null | undefined) ?? 'signal_v1',
           signalType: (message.signalType as number | null | undefined) ?? null,
           registrationId: (message.registrationId as number | null | undefined) ?? null,
           createdAt:
@@ -154,7 +154,7 @@ export function createChatCore(deps: ChatCoreDeps) {
             id: String(pinnedPayload.messageId || pinnedPayload.message_id || ''),
             content: String(pinnedPayload.content || ''),
             senderId: String(pinnedPayload.senderId || pinnedPayload.sender_id || ''),
-            encryption: String(pinnedPayload.encryption || 'plaintext'),
+            encryption: String(pinnedPayload.encryption || 'signal_v1'),
             signalType: Number(pinnedPayload.signalType ?? pinnedPayload.signal_type ?? 0) || null,
             registrationId:
               Number(pinnedPayload.registrationId ?? pinnedPayload.signal_registration_id ?? 0) ||

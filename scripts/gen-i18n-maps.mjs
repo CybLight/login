@@ -6,6 +6,9 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { supplementalTriples } from './supplemental-triples.mjs';
+import part4 from './supplemental-part4.json' with { type: 'json' };
+import part5 from './supplemental-part5.json' with { type: 'json' };
+import ukOverrides from './uk-overrides.json' with { type: 'json' };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -59,7 +62,7 @@ const triples = [
   ['Регистрация', 'Реєстрація', 'Sign up'],
   ['Логин', 'Логін', 'Username'],
   ['Пароль', 'Пароль', 'Password'],
-  ['Повтори пароль', 'Повтори пароль', 'Repeat password'],
+  ['Повтори пароль', 'Повторіть пароль', 'Repeat password'],
   ['Показать пароль', 'Показати пароль', 'Show password'],
   ['Скрыть пароль', 'Приховати пароль', 'Hide password'],
   ['← Назад', '← Назад', '← Back'],
@@ -197,7 +200,7 @@ const triples = [
   ['Редактировать профиль', 'Редагувати профіль', 'Edit profile'],
   ['Посмотреть профиль', 'Переглянути профіль', 'View profile'],
   ['Заблокирован', 'Заблоковано', 'Blocked'],
-  ['Онлайн', 'Онлайн', 'Online'],
+  ['Онлайн', 'У мережі', 'Online'],
   ['Не в сети', 'Не в мережі', 'Offline'],
   ['Написать сообщение', 'Написати повідомлення', 'Send message'],
   ['Удалить из друзей', 'Видалити з друзів', 'Remove friend'],
@@ -325,18 +328,24 @@ const triples = [
   ['Настроить', 'Налаштувати', 'Customize'],
 ];
 
-const allTriples = [...triples, ...supplementalTriples];
+const part4Triples = Object.entries(part4).map(([ru, [uk, en]]) => [ru, uk, en]);
+const part5Triples = Object.entries(part5).map(([ru, [uk, en]]) => [ru, uk, en]);
+const merged = new Map();
+for (const row of [...triples, ...supplementalTriples, ...part4Triples, ...part5Triples]) {
+  merged.set(row[0], row);
+}
+const allTriples = [...merged.values()];
 
 function toTs(mapName, entries) {
   const lines = entries.map(([ru, tr]) => `  ${JSON.stringify(ru)}: ${JSON.stringify(tr)},`);
   return `/** Auto-generated — run: node scripts/gen-i18n-maps.mjs */\nexport const ${mapName}: Record<string, string> = {\n${lines.join('\n')}\n};\n`;
 }
 
-const ukEntries = allTriples.map(([ru, uk]) => [ru, uk]);
+const ukEntries = allTriples.map(([ru, uk]) => [ru, ukOverrides[ru] ?? uk]);
 const enEntries = allTriples.map(([ru, , en]) => [ru, en]);
 
 const outDir = path.join(ROOT, 'src/i18n/locales');
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, 'uk.ts'), toTs('uk', ukEntries), 'utf8');
 fs.writeFileSync(path.join(outDir, 'en.ts'), toTs('en', enEntries), 'utf8');
-console.log('Generated', allTriples.length, 'translation pairs', `(${supplementalTriples.length} supplemental)`);
+console.log('Generated', allTriples.length, 'translation pairs', `(${supplementalTriples.length + part4Triples.length + part5Triples.length} supplemental)`);

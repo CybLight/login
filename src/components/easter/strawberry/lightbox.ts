@@ -3,6 +3,7 @@
  * Поддерживает: swipe, pinch-zoom, pan
  */
 
+import '@/styles/lightbox.css';
 import { trapFocus } from '@/utils/focus';
 
 export interface LightboxItems {

@@ -1,19 +1,41 @@
 import { t } from '@/i18n';
+import { fetchChatsForBackup, importChatsPayload } from './chats';
 import { collectBackupPayload } from './collect';
 import { decryptBackupPayload, encryptBackupPayload, parseBackupFile, serializeBackupFile } from './crypto';
 import { restoreBackupPayload } from './restore';
 
-import { BACKUP_FILE_EXTENSION, BACKUP_VERSION, type CyblightBackupFileV1, type CyblightBackupPayloadV1 } from './format';
+import {
+  BACKUP_FILE_EXTENSION,
+  BACKUP_PAYLOAD_VERSION_V2,
+  BACKUP_VERSION,
+  isBackupPayloadV2,
+  type CyblightBackupFileV1,
+  type CyblightBackupPayload,
+} from './format';
 
 export {
   BACKUP_FILE_EXTENSION,
   BACKUP_VERSION,
+  BACKUP_PAYLOAD_VERSION_V2,
   type CyblightBackupFileV1,
-  type CyblightBackupPayloadV1,
+  type CyblightBackupPayload,
+};
+export { hasLocalBackupKeys } from './collect';
+
+export type BackupRestoreResult = {
+  chatsImported: number;
+  chatsSkipped: number;
+  chatsErrors: number;
 };
 
-export async function createBackupFile(userId: string, password: string): Promise<string> {
-  const payload = await collectBackupPayload(userId);
+export async function createBackupFile(
+  userId: string,
+  password: string,
+  options?: { includeChats?: boolean },
+): Promise<string> {
+  const includeChats = options?.includeChats !== false;
+  const chats = includeChats ? await fetchChatsForBackup() : null;
+  const payload = await collectBackupPayload(userId, chats);
   if (!payload) {
     throw new Error('backup_no_local_keys');
   }
@@ -26,7 +48,7 @@ export async function importBackupFile(
   rawFile: string,
   password: string,
   onProgress?: (percent: number) => void,
-): Promise<void> {
+): Promise<BackupRestoreResult> {
   const report = (percent: number): void => {
     onProgress?.(Math.min(100, Math.max(0, Math.round(percent))));
   };
@@ -35,11 +57,26 @@ export async function importBackupFile(
   const file = parseBackupFile(rawFile);
   report(12);
   const payload = await decryptBackupPayload(file, password);
-  report(28);
+  report(20);
   await restoreBackupPayload(userId, payload, (restorePercent) => {
-    report(28 + (restorePercent * 72) / 100);
+    report(20 + (restorePercent * 55) / 100);
   });
+
+  let chatsImported = 0;
+  let chatsSkipped = 0;
+  let chatsErrors = 0;
+
+  if (isBackupPayloadV2(payload) && payload.chats) {
+    report(80);
+    const result = await importChatsPayload(payload.chats);
+    chatsImported = result.imported;
+    chatsSkipped = result.skipped;
+    chatsErrors = result.errors;
+  }
+
   report(100);
+
+  return { chatsImported, chatsSkipped, chatsErrors };
 }
 
 export function downloadBackupFile(content: string, login: string): void {
@@ -68,6 +105,8 @@ export function backupErrorMessage(code: string): string {
     case 'backup_payload_invalid':
     case 'backup_format_unsupported':
       return t('Некорректный файл резервной копии.');
+    case 'chats_import_failed':
+      return t('Не удалось импортировать чаты из резервной копии.');
     default:
       return t('Не удалось обработать резервную копию.');
   }

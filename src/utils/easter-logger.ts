@@ -13,6 +13,10 @@ export interface EasterLogPayload {
   [key: string]: unknown;
 }
 
+/**
+ * Универсальная функция отправки логов для всех пасхалок CybLight
+ */
+
 export function sendEasterLog(payload: EasterLogPayload): void {
   if (!allowsDiagnosticConsent()) return;
 

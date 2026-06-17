@@ -8,6 +8,8 @@ import {
 } from '@/crypto/backup';
 import { resetActiveSignalContext } from '@/crypto/signal/manager';
 import { showAccountNoticeModal } from './modals';
+import { enhanceFileBackupImportSuccess } from './backup-ui-utils';
+import { bindDriveBackupHandlers } from './security-drive-backup';
 
 type BackupDeps = {
   userId: string;
@@ -24,9 +26,17 @@ function setBackupBusy(busy: boolean): void {
   const exportBtn = document.getElementById('secBackupExportBtn') as HTMLButtonElement | null;
   const importBtn = document.getElementById('secBackupImportBtn') as HTMLButtonElement | null;
   const importPassword = document.getElementById('secBackupImportPassword') as HTMLInputElement | null;
+  const driveUploadBtn = document.getElementById('secDriveBackupUploadBtn') as HTMLButtonElement | null;
+  const driveRestoreBtn = document.getElementById('secDriveBackupRestoreBtn') as HTMLButtonElement | null;
+  const driveDeleteBtn = document.getElementById('secDriveBackupDeleteBtn') as HTMLButtonElement | null;
+  const driveDisconnectBtn = document.getElementById('secDriveBackupDisconnectBtn') as HTMLButtonElement | null;
   if (exportBtn) exportBtn.disabled = busy;
   if (importBtn) importBtn.disabled = busy;
   if (importPassword) importPassword.disabled = busy;
+  if (driveUploadBtn) driveUploadBtn.disabled = busy;
+  if (driveRestoreBtn) driveRestoreBtn.disabled = busy;
+  if (driveDeleteBtn) driveDeleteBtn.disabled = busy;
+  if (driveDisconnectBtn) driveDisconnectBtn.disabled = busy;
 }
 
 function setBackupRestoreProgress(percent: number): void {
@@ -64,6 +74,13 @@ export function bindBackupHandlers(deps: BackupDeps): void {
   const importBtn = document.getElementById('secBackupImportBtn');
   const fileInput = document.getElementById('secBackupFileInput') as HTMLInputElement | null;
 
+  const backupHelpers = {
+    readPassword: readPasswordInput,
+    setBackupBusy,
+  };
+
+  bindDriveBackupHandlers({ userId, login, api, ...backupHelpers });
+
   exportBtn?.addEventListener('click', async () => {
     const password = readPasswordInput('secBackupExportPassword');
     const confirm = readPasswordInput('secBackupExportPasswordConfirm');
@@ -79,9 +96,9 @@ export function bindBackupHandlers(deps: BackupDeps): void {
     setBackupBusy(true);
     api.clearMsg();
     try {
-      const content = await createBackupFile(userId, password);
+      const content = await createBackupFile(userId, password, { includeChats: true });
       downloadBackupFile(content, login);
-      api.showMsg('success', t('Резервная копия сохранена.'));
+      api.showMsg('success', t('Резервная копия сохранена (ключи и сообщения).'));
     } catch (error) {
       const code = error instanceof Error ? error.message : 'backup_failed';
       api.showMsg('error', backupErrorMessage(code));
@@ -110,13 +127,10 @@ export function bindBackupHandlers(deps: BackupDeps): void {
     setBackupRestoreProgress(0);
     try {
       const raw = await file.text();
-      await importBackupFile(userId, raw, password, setBackupRestoreProgress);
+      const result = await importBackupFile(userId, raw, password, setBackupRestoreProgress);
       resetActiveSignalContext();
       setBackupRestoreProgress(100);
-      showAccountNoticeModal(
-        'success',
-        t('Ключи шифрования восстановлены. Обновите страницу сообщений.')
-      );
+      showAccountNoticeModal('success', enhanceFileBackupImportSuccess(result));
     } catch (error) {
       const code = error instanceof Error ? error.message : 'backup_failed';
       api.showMsg('error', backupErrorMessage(code));

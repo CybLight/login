@@ -694,7 +694,7 @@ function renderSecurityTab(user: User): string {
             </div>
             <div class="sec-title">${t('Резервная копия шифрования')}</div>
           </div>
-          <div class="sec-sub">${t('Файл .cyblight-backup для переноса ключей между браузером и приложением')}</div>
+          <div class="sec-sub">${t('Google Drive или файл .cyblight-backup')}</div>
         </div>
         <div class="sec-right">
           <svg class="sec-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="20" width="20" aria-hidden="true">
@@ -706,7 +706,45 @@ function renderSecurityTab(user: User): string {
       <div class="sec-panel is-hidden" id="secBackupPanel">
         <div class="sec-panel-inner sec-backup-panel">
           <div class="sec-status sec-status-muted">
-            ${t('Создайте зашифрованную копию ключей шифрования. Один и тот же файл можно восстановить в браузере или в приложении CybLight.')}
+            ${t('Создайте зашифрованную копию ключей и сообщений в Google Drive или скачайте файл для переноса между устройствами.')}
+          </div>
+
+          <div class="sec-form-block sec-form-block--drive">
+            <div class="sec-form-block-head">
+              <span class="sec-form-block-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#34A853" d="M12 2L2 19h7.5l2.5-4.5L14.5 19H22L12 2z"/>
+                  <path fill="#FBBC04" d="M12 2L7.5 10.5 10 14.5 14.5 19H22L12 2z"/>
+                  <path fill="#4285F4" d="M2 19h7.5l2.5-4.5L10 14.5 7.5 10.5 2 19z"/>
+                </svg>
+              </span>
+              <div class="sec-form-title">${t('Google Drive')}</div>
+            </div>
+            <p class="sec-hint">${t('Сохраните зашифрованную копию в ваш Google Drive. Доступ только у приложения CybLight и только к созданным им файлам.')}</p>
+            <p class="sec-status sec-status-muted sec-drive-account is-hidden" id="secDriveBackupAccount"></p>
+            <p class="sec-status sec-status-muted" id="secDriveBackupStatus">${t('Загрузка статуса…')}</p>
+            <div class="sec-form-row">
+              <label class="label sec-label" for="secDriveBackupPassword">${t('Пароль резервной копии')}</label>
+              <div class="pass-wrap">
+                <input class="input" id="secDriveBackupPassword" type="password" autocomplete="current-password" placeholder="${t('Пароль от резервной копии')}" />
+                <button type="button" class="pass-eye" data-target="secDriveBackupPassword" aria-label="${t('Показать пароль')}"></button>
+              </div>
+            </div>
+            <div class="sec-backup-progress sec-backup-progress--drive is-hidden" id="secDriveBackupProgress" aria-live="polite" aria-busy="false">
+              <div class="sec-backup-progress__head">
+                <span class="sec-backup-progress__label" id="secDriveBackupProgressLabel">${t('Подготовка…')}</span>
+                <span class="sec-backup-progress__percent" id="secDriveBackupProgressPercent">0%</span>
+              </div>
+              <div class="sec-backup-progress__track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="secDriveBackupProgressTrack">
+                <div class="sec-backup-progress__bar" id="secDriveBackupProgressBar" style="width: 0%"></div>
+              </div>
+            </div>
+            <div class="sec-actions sec-mt-12 sec-actions--wrap">
+              <button class="btn btn-primary" id="secDriveBackupUploadBtn" type="button">${t('Сохранить в Google Drive')}</button>
+              <button class="btn btn-outline" id="secDriveBackupRestoreBtn" type="button">${t('Восстановить из Google Drive')}</button>
+              <button class="btn btn-outline btn-danger-outline" id="secDriveBackupDeleteBtn" type="button">${t('Удалить из Drive')}</button>
+              <button class="btn btn-outline" id="secDriveBackupDisconnectBtn" type="button">${t('Выйти из Google')}</button>
+            </div>
           </div>
 
           <div class="sec-form-block sec-form-block--export">

@@ -2655,6 +2655,67 @@ body.no-strawberries .strawberry-ring-wave {
   background: linear-gradient(180deg, rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.02));
 }
 
+.sec-form-block--drive .sec-form-block-icon {
+  background: rgba(66, 133, 244, 0.12);
+}
+
+.sec-drive-account {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.sec-form-block--cloud {
+  border-color: rgba(14, 165, 233, 0.28);
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.1), rgba(255, 255, 255, 0.02));
+}
+
+.sec-form-block--cloud .sec-form-block-icon {
+  background: rgba(14, 165, 233, 0.16);
+}
+
+.sec-form-block--drive {
+  border-color: rgba(52, 168, 83, 0.28);
+  background: linear-gradient(180deg, rgba(52, 168, 83, 0.08), rgba(255, 255, 255, 0.02));
+}
+
+.sec-form-block--drive .sec-form-block-icon {
+  background: rgba(66, 133, 244, 0.12);
+}
+
+.sec-drive-account {
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.sec-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.sec-checkbox-row input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.sec-actions--wrap {
+  flex-wrap: wrap;
+}
+
+.btn-danger-outline {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+}
+
+.btn-danger-outline:hover {
+  border-color: rgba(239, 68, 68, 0.65);
+  background: rgba(239, 68, 68, 0.12);
+}
+
 .sec-form-block-head {
   display: flex;
   align-items: center;
@@ -2706,6 +2767,19 @@ body.no-strawberries .strawberry-ring-wave {
 
 .sec-form-block .input::placeholder {
   color: rgba(231, 236, 255, 0.38);
+}
+
+.sec-backup-progress--drive {
+  border-color: rgba(52, 168, 83, 0.32);
+  background: rgba(52, 168, 83, 0.1);
+}
+
+.sec-backup-progress--drive .sec-backup-progress__percent {
+  color: #86efac;
+}
+
+.sec-backup-progress--drive .sec-backup-progress__bar {
+  background: linear-gradient(90deg, #22c55e, #34d399, #22c55e);
 }
 
 .sec-backup-progress {

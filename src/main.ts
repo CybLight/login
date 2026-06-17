@@ -12,8 +12,12 @@ import { Router } from '@/router/Router';
 import { initDevFooterPin, initErrorHandlers, logger } from '@/utils';
 import { authService } from '@/services';
 import { NotificationManager } from '@/components/notification/NotificationManager';
-import { initStrawberryBackground } from '@/components/strawberry';
-import { initDeveloperModeEaster } from '@/components/easter/developer-mode';
+import {
+  initDeveloperModeEaster,
+  initStrawberryBackground,
+  renderPostmaster,
+  renderStrawberryHistory,
+} from '@/components/easter';
 import { initReportModalTriggers } from '@/ui/report-modal';
 import { initPrivacySettings } from '@/ui/privacy-settings';
 import { setSignalUserId } from '@/crypto/signal/session-context';
@@ -38,10 +42,8 @@ import {
   renderContactAdmin,
   renderDone,
   renderAccount,
-  renderStrawberryHistory,
   renderPublicProfile,
   renderEditProfile,
-  renderPostmaster,
 } from '@/views';
 
 function initGlobalUiDelegation(): void {

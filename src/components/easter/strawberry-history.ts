@@ -7,9 +7,9 @@ import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { getStorage, escapeHtml, apiCall } from '@/utils';
 import { HISTORY_FROM_KEY } from '@/config/constants';
-import { hasStrawberryAccess, setStrawberryAccess } from '@/components/strawberry';
+import { hasStrawberryAccess, setStrawberryAccess } from '@/components/easter/strawberry';
 import { pushLocalEasterFlagsToServer } from '@/services';
-import { StrawberryLightbox } from '@/components/lightbox';
+import { StrawberryLightbox } from '@/components/easter/strawberry/lightbox';
 
 export async function renderStrawberryHistory(): Promise<void> {
   // Убираем no-strawberries класс

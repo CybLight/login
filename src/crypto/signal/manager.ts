@@ -478,8 +478,8 @@ export async function decryptIncomingMessage(
   message: WireMessage,
   batch?: DecryptBatchState,
 ): Promise<string> {
-  if (!message.encryption || message.encryption === 'plaintext') {
-    return message.content;
+  if (!message.encryption || message.encryption !== 'signal_v1') {
+    return t('🔒 Сообщение недоступно');
   }
 
   if (message.senderId === userId) {
@@ -569,7 +569,7 @@ export async function decryptIncomingMessage(
 }
 
 function needsSignalDecrypt(userId: string, message: WireMessage): boolean {
-  if (!message.encryption || message.encryption === 'plaintext') return false;
+  if (message.encryption !== 'signal_v1') return false;
   if (message.senderId === userId) return false;
   return true;
 }

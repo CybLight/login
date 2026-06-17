@@ -3,7 +3,7 @@
  */
 
 import { Router } from '@/router/Router';
-import { getStorage, setStorage } from '@/utils';
+import { getStorage, setStorage, sendEasterLog } from '@/utils';
 import { EASTER_KEY } from '@/config/constants';
 import { authService, extractEasterFlags, pushLocalEasterFlagsToServer } from '@/services';
 import { customPrompt, showCongratsModal } from './modal';
@@ -54,9 +54,10 @@ export async function triggerStrawberryEaster(): Promise<void> {
   }
 
   // Отправляем лог
-  sendWorkLog({
+  sendEasterLog({
+    type: 'alex_strawberry',
     alex: 2,
-    userName: storedName || null,
+    userName: storedName,
     source: 'special_strawberry_click',
   });
 
@@ -91,28 +92,4 @@ export async function triggerStrawberryEaster(): Promise<void> {
     // Перенаправляем на страницу истории
     Router.navigate('strawberry-history');
   });
-}
-
-/**
- * Отправка лога работы
- */
-function sendWorkLog(extra: Record<string, unknown> = {}): void {
-  const LOG_URL = 'https://cyblight.org/e-log';
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  const payload = {
-    type: 'alex_strawberry',
-    page: window.location.href,
-    timezone: tz,
-    route: Router.getRoute(),
-    ua: navigator.userAgent,
-    referrer: document.referrer || null,
-    ...extra,
-  };
-
-  fetch(LOG_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
 }
