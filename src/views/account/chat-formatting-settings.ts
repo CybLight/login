@@ -1,6 +1,12 @@
 import { t } from '@/i18n';
 import { Router } from '@/router/Router';
-import { OPEN_SECURITY_BACKUP_SECTION, OPEN_SECURITY_SECTION_KEY } from './encryption-reminder';
+import {
+  OPEN_SECURITY_BACKUP_SECTION,
+  OPEN_SECURITY_SECTION_KEY,
+  hideEncryptionReminderElements,
+  isEncryptionReminderHidden,
+  setEncryptionReminderHidden,
+} from './encryption-reminder';
 import { renderChatFormattingToolbarHtml } from './chat-formatting-toolbar';
 
 type MessagesSettingsApi = {
@@ -124,10 +130,20 @@ function renderMessagesFormatToolbarSettingHtml(): string {
 }
 
 function renderMessagesCloudBackupHintHtml(): string {
+  const reminderHidden = isEncryptionReminderHidden();
+
   return `
         <div class="messages-settings-section">
           <div class="messages-settings-section__title">${t('Резервная копия чатов')}</div>
           <p class="messages-settings-section__hint">${t('Резервная копия ключей и сообщений — в разделе «Безопасность → Резервная копия» (Google Drive или файл).')}</p>
+          <label class="messages-setting-row messages-setting-row--section">
+            <input
+              id="encryptionReminderHiddenSetting"
+              type="checkbox"
+              ${reminderHidden ? 'checked' : ''}
+            />
+            <span>${t('Скрывать напоминание о резервной копии')}</span>
+          </label>
           <div class="messages-settings-actions">
             <button id="messagesOpenBackupSettingsBtn" class="messages-settings-action-btn" type="button">
               ${t('Открыть настройки резервной копии')}
@@ -140,6 +156,7 @@ export function bindMessagesSettingsHandlers(root: ParentNode, _api: MessagesSet
   const btn = root.querySelector('#messagesSettingsBtn') as HTMLButtonElement | null;
   const panel = root.querySelector('#messagesSettingsPanel') as HTMLElement | null;
   const checkbox = root.querySelector('#chatFormatToolbarHiddenSetting') as HTMLInputElement | null;
+  const reminderCheckbox = root.querySelector('#encryptionReminderHiddenSetting') as HTMLInputElement | null;
 
   const closePanel = () => {
     panel?.classList.add('is-hidden');
@@ -166,6 +183,13 @@ export function bindMessagesSettingsHandlers(root: ParentNode, _api: MessagesSet
 
   checkbox?.addEventListener('change', () => {
     setChatFormatToolbarHidden(checkbox.checked);
+  });
+
+  reminderCheckbox?.addEventListener('change', () => {
+    setEncryptionReminderHidden(reminderCheckbox.checked);
+    if (reminderCheckbox.checked) {
+      hideEncryptionReminderElements(document);
+    }
   });
 
   bindMessagesBackupShortcutHandlers(root);

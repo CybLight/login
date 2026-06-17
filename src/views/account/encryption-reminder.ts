@@ -3,30 +3,44 @@ import { Router } from '@/router/Router';
 
 export const OPEN_SECURITY_SECTION_KEY = 'cyb_open_security_section';
 export const OPEN_SECURITY_BACKUP_SECTION = 'backup';
+export const ENCRYPTION_REMINDER_HIDDEN_KEY = 'cyb_encryption_reminder_hidden';
+/** @deprecated use {@link ENCRYPTION_REMINDER_HIDDEN_KEY} */
 export const ENCRYPTION_REMINDER_CHAT_DISMISSED_KEY = 'cyb_encryption_reminder_chat_dismissed';
 
-export function isEncryptionReminderDismissed(compact = false): boolean {
-  if (!compact) return false;
-
+export function isEncryptionReminderHidden(): boolean {
   try {
-    return localStorage.getItem(ENCRYPTION_REMINDER_CHAT_DISMISSED_KEY) === '1';
+    return (
+      localStorage.getItem(ENCRYPTION_REMINDER_HIDDEN_KEY) === '1' ||
+      localStorage.getItem(ENCRYPTION_REMINDER_CHAT_DISMISSED_KEY) === '1'
+    );
   } catch {
     return false;
   }
 }
 
-export function dismissEncryptionReminder(compact = false): void {
-  if (!compact) return;
-
+export function setEncryptionReminderHidden(hidden: boolean): void {
   try {
-    localStorage.setItem(ENCRYPTION_REMINDER_CHAT_DISMISSED_KEY, '1');
+    if (hidden) {
+      localStorage.setItem(ENCRYPTION_REMINDER_HIDDEN_KEY, '1');
+    } else {
+      localStorage.removeItem(ENCRYPTION_REMINDER_HIDDEN_KEY);
+      localStorage.removeItem(ENCRYPTION_REMINDER_CHAT_DISMISSED_KEY);
+    }
   } catch {
     // ignore storage errors
   }
 }
 
+export function dismissEncryptionReminder(): void {
+  setEncryptionReminderHidden(true);
+}
+
+export function hideEncryptionReminderElements(root: ParentNode = document): void {
+  root.querySelectorAll('.messages-encryption-reminder').forEach((el) => el.remove());
+}
+
 export function renderMessagesEncryptionReminder(compact = false): string {
-  if (isEncryptionReminderDismissed(compact)) return '';
+  if (isEncryptionReminderHidden()) return '';
 
   const className = compact
     ? 'messages-encryption-reminder messages-encryption-reminder--compact'
@@ -71,8 +85,10 @@ export function bindEncryptionReminderHandlers(root: ParentNode): void {
   root.querySelectorAll('[data-action="dismiss-encryption-reminder"]').forEach((el) => {
     el.addEventListener('click', (event) => {
       event.preventDefault();
-      dismissEncryptionReminder(true);
-      el.closest('.messages-encryption-reminder')?.remove();
+      dismissEncryptionReminder();
+      hideEncryptionReminderElements(root);
+      const checkbox = root.querySelector('#encryptionReminderHiddenSetting') as HTMLInputElement | null;
+      if (checkbox) checkbox.checked = true;
     });
   });
 }

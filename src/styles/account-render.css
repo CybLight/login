@@ -993,6 +993,10 @@
   accent-color: #60a5fa;
 }
 
+.messages-setting-row--section {
+  margin: 10px 0 12px;
+}
+
 .messages-settings-section {
   margin-top: 14px;
   padding-top: 14px;

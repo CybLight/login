@@ -815,4 +815,8 @@ export const en: Record<string, string> = {
   "❌ WebAuthn недоступен в этом контексте. Откройте сайт через https:// или http://localhost / http://127.0.0.1.": "❌ WebAuthn is unavailable in this context. Open the site via https:// or http://localhost / http://127.0.0.1.",
   "🔒 Не удалось расшифровать сообщение": "🔒 Could not decrypt message",
   "🔒 Сообщение отправлено": "🔒 Message sent",
+  "Резервная копия чатов": "Chat backup",
+  "Резервная копия ключей и сообщений — в разделе «Безопасность → Резервная копия» (Google Drive или файл).": "Backup of keys and messages is in Security → Backup (Google Drive or file).",
+  "Открыть настройки резервной копии": "Open backup settings",
+  "Скрывать напоминание о резервной копии": "Hide backup reminder",
 };

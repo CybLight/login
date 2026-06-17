@@ -125,5 +125,12 @@
   "🛡️ Не удалось получить токен Turnstile.\n\nВозможные причины:\n• Открыта панель разработчика (DevTools) в Firefox\n• Включён режим приватности или блокировщик\n\nПопробуйте закрыть DevTools или использовать другой браузер.": [
     "🛡️ Не вдалося отримати токен Turnstile.\n\nМожливі причини:\n• Відкрита панель розробника (DevTools) у Firefox\n• Увімкнено приватний режим або блокувальник\n\nСпробуйте закрити DevTools або використати інший браузер.",
     "🛡️ Failed to get Turnstile token.\n\nPossible causes:\n• DevTools open in Firefox\n• Private mode or blocker enabled\n\nTry closing DevTools or using another browser."
-  ]
+  ],
+  "Резервная копия чатов": ["Резервна копія чатів", "Chat backup"],
+  "Резервная копия ключей и сообщений — в разделе «Безопасность → Резервная копия» (Google Drive или файл).": [
+    "Резервна копія ключів і повідомлень — у розділі «Безопека → Резервна копія» (Google Drive або файл).",
+    "Backup of keys and messages is in Security → Backup (Google Drive or file)."
+  ],
+  "Открыть настройки резервной копии": ["Відкрити налаштування резервної копії", "Open backup settings"],
+  "Скрывать напоминание о резервной копии": ["Приховувати нагадування про резервну копію", "Hide backup reminder"]
 }
