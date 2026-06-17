@@ -16,7 +16,7 @@ import {
 import { enrichConversationPreviews } from './conversation-preview';
 import { renderChatListPreviewHtml } from './chat-format';
 import { renderChatDraftPreviewHtml } from './chat-drafts';
-import { getSignalUserId } from '@/crypto/signal';
+import { tryGetSignalUserId } from '@/crypto/signal';
 import { promptGoogleDriveRestoreIfNeeded } from './drive-restore-prompt';
 import { onChatWebSocket } from '@/services/chat-ws';
 import { updateNavBadges } from './unread';
@@ -57,17 +57,22 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
     ]);
     const friendsData = await friendsRes.json().catch(() => ({}));
 
-    const userId = getSignalUserId();
-    const summary =
-      summaryRaw && userId
-        ? {
-            ...summaryRaw,
-            conversationPreviews: await enrichConversationPreviews(
-              summaryRaw.conversationPreviews,
-              userId,
-            ),
-          }
-        : summaryRaw;
+    const userId = tryGetSignalUserId();
+    let conversationPreviews = summaryRaw?.conversationPreviews ?? {};
+    if (summaryRaw && userId) {
+      try {
+        conversationPreviews = await enrichConversationPreviews(conversationPreviews, userId);
+      } catch (error) {
+        console.warn('[loadMessagesTab] Preview decrypt failed:', error);
+      }
+    }
+
+    const summary = summaryRaw
+      ? {
+          ...summaryRaw,
+          conversationPreviews,
+        }
+      : summaryRaw;
 
     if (!friendsData?.ok) {
       container.innerHTML = `<div class="sec-error-text">${t('Не удалось загрузить сообщения')}</div>`;
@@ -75,7 +80,6 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
     }
 
     const friends = Array.isArray(friendsData.friends) ? friendsData.friends : [];
-    const conversationPreviews = summary?.conversationPreviews ?? {};
 
     const sortedFriends = [...friends].sort((left: FriendListItem, right: FriendListItem) => {
       const leftId = String(left.id || '');
@@ -172,11 +176,15 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
     bindMessagesSettingsHandlers(container, api);
 
     messagesListWsUnsub?.();
-    messagesListWsUnsub = onChatWebSocket((event) => {
-      if (event.type !== 'message.new') return;
-      void deps.updateChatUnreadBadges();
-      void updateNavBadges();
-    });
+    try {
+      messagesListWsUnsub = onChatWebSocket((event) => {
+        if (event.type !== 'message.new') return;
+        void deps.updateChatUnreadBadges();
+        void updateNavBadges();
+      });
+    } catch (error) {
+      console.warn('[loadMessagesTab] Chat WebSocket unavailable:', error);
+    }
 
     const openProfileFromTarget = (target: HTMLElement | null): void => {
       const profileEl = target?.closest('[data-action="profile"]') as HTMLElement | null;

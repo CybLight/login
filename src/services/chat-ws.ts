@@ -68,7 +68,17 @@ export function connectChatWebSocket(): void {
     return;
   }
 
-  socket = new WebSocket(getChatWebSocketUrl());
+  try {
+    socket = new WebSocket(getChatWebSocketUrl());
+  } catch (error) {
+    console.warn('[chat-ws] WebSocket connection blocked:', error);
+    socket = null;
+    if (listeners.size > 0) {
+      connectAttempts += 1;
+      scheduleReconnect();
+    }
+    return;
+  }
 
   socket.addEventListener('open', () => {
     connectAttempts = 0;
