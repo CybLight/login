@@ -456,7 +456,7 @@ export async function warmupOutgoingSession(userId: string, _recipientId: string
   }
 }
 
-export async function encryptOutgoingMessage(
+async function encryptOutgoingMessageOnce(
   userId: string,
   recipientId: string,
   plaintext: string,
@@ -484,6 +484,39 @@ export async function encryptOutgoingMessage(
     registrationId: ctx.registrationId,
     encryption: 'signal_v1',
   };
+}
+
+function isTransientEncryptError(error: unknown): boolean {
+  const message = String(error instanceof Error ? error.message : error).toLowerCase();
+  return (
+    message.includes('network') ||
+    message.includes('fetch') ||
+    message.includes('timeout') ||
+    message.includes('aborted') ||
+    message.includes('wasm') ||
+    message.includes('key_bundle') ||
+    message.includes('operation failed')
+  );
+}
+
+export async function encryptOutgoingMessage(
+  userId: string,
+  recipientId: string,
+  plaintext: string,
+): Promise<EncryptedMessagePayload> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await encryptOutgoingMessageOnce(userId, recipientId, plaintext);
+    } catch (error) {
+      lastError = error;
+      if (attempt >= 2 || !isTransientEncryptError(error)) {
+        throw error;
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 250 * (attempt + 1)));
+    }
+  }
+  throw lastError;
 }
 
 export async function cacheSentPlaintext(
@@ -519,16 +552,29 @@ function throwIfSignalKeyIssue(): void {
   }
 }
 
-async function readCachedPlaintextAsync(
+async function readSyncedPlaintext(
   userId: string,
-  message: WireMessage,
+  messageId: string,
   batch?: DecryptBatchState,
 ): Promise<string | null> {
-  if (!message.id) return null;
-  if (batch) {
-    return batch.cache.get(message.id) ?? null;
+  if (batch?.cache.has(messageId)) {
+    return batch.cache.get(messageId) ?? null;
   }
-  return readDecryptCache(userId, message.id);
+  const cached = await readDecryptCache(userId, messageId);
+  if (cached !== null) {
+    if (batch) batch.cache.set(messageId, cached);
+    return cached;
+  }
+  const remote = await fetchPlaintextSyncBatch(userId, [messageId]);
+  const synced = remote.get(messageId) ?? null;
+  if (synced !== null) {
+    if (batch) {
+      batch.cache.set(messageId, synced);
+    } else {
+      await writeDecryptCache(userId, messageId, synced);
+    }
+  }
+  return synced;
 }
 
 export async function decryptIncomingMessage(
@@ -542,9 +588,7 @@ export async function decryptIncomingMessage(
 
   if (message.senderId === userId) {
     if (message.id) {
-      const cached = batch
-        ? batch.cache.get(message.id) ?? null
-        : await readDecryptCache(userId, message.id);
+      const cached = await readSyncedPlaintext(userId, message.id, batch);
       if (cached !== null) {
         return cached;
       }
@@ -553,7 +597,7 @@ export async function decryptIncomingMessage(
   }
 
   if (message.id) {
-    const cached = await readCachedPlaintextAsync(userId, message, batch);
+    const cached = await readSyncedPlaintext(userId, message.id, batch);
     if (cached !== null) {
       return cached;
     }
@@ -639,6 +683,15 @@ export async function decryptIncomingMessage(
       });
       throw error;
     } else {
+      if (message.id) {
+        const synced = await readSyncedPlaintext(userId, message.id, batch);
+        if (synced !== null) {
+          if (batch) {
+            batch.pendingCacheWrites.set(message.id, synced);
+          }
+          return synced;
+        }
+      }
       const error = firstError;
       const hasSession = await ctx.sessionStore.has_session(sender);
 
@@ -694,14 +747,13 @@ export async function decryptMessageList<T extends WireMessage>(
     .filter((id): id is string => Boolean(id));
   const cache = await readDecryptCacheBatch(userId, messageIds);
 
-  const ownMessageIds = new Set(
-    decryptOrder
-      .filter((message) => message.senderId === userId && message.id)
-      .map((message) => message.id as string),
-  );
-  const missingOwnIds = messageIds.filter((id) => !cache.has(id) && ownMessageIds.has(id));
-  if (missingOwnIds.length > 0) {
-    const remote = await fetchPlaintextSyncBatch(userId, missingOwnIds);
+  const missingSyncIds = messageIds.filter((id) => {
+    if (cache.has(id)) return false;
+    const message = decryptOrder.find((entry) => entry.id === id);
+    return message?.encryption === 'signal_v1';
+  });
+  if (missingSyncIds.length > 0) {
+    const remote = await fetchPlaintextSyncBatch(userId, missingSyncIds);
     if (remote.size > 0) {
       for (const [id, text] of remote) {
         cache.set(id, text);

@@ -925,7 +925,8 @@ export function openChatInMessagesTab(
             (editingId ? t('Не удалось отредактировать сообщение') : t('Не удалось отправить сообщение'))
         );
       }
-    } catch {
+    } catch (error) {
+      console.error('[chat] send failed:', error);
       if (usedOptimisticUi && messagesEl) {
         revertOptimisticSentMessage(messagesEl, optimisticId);
         if (chatInput) {
