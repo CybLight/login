@@ -12,7 +12,7 @@ import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
 import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId, getSignalKeyIssueMessage, warmupOutgoingSession } from '@/crypto/signal';
 import { extractFirstUrl } from './chat-format';
 import { renderChatFormatToolbarRowHtml, bindChatFormatToolbarToggle } from './chat-formatting-settings';
-import { loadMessagesTab as loadMessagesListTab } from './messages-list';
+import { loadMessagesTab as loadMessagesListTab, unsubscribeMessagesListWebSocket } from './messages-list';
 import { cacheConversationPreview } from './conversation-preview';
 import type { UnreadSummary } from './unread';
 import { updateNavBadges } from './unread';
@@ -101,6 +101,7 @@ export function openChatInMessagesTab(
 
   sessionStorage.removeItem('openChatWith');
 
+  unsubscribeMessagesListWebSocket();
   callbacks.setAccountChatFriendId(friendId);
   callbacks.stopAccountChatAutoRefresh();
   setAccountChatViewActive(true);

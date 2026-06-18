@@ -11,6 +11,7 @@ export type ChatWsEvent = {
 type ChatWsListener = (event: ChatWsEvent) => void;
 
 const listeners = new Set<ChatWsListener>();
+let keepAlive = false;
 let socket: WebSocket | null = null;
 let reconnectTimer: number | null = null;
 let pingTimer: number | null = null;
@@ -73,7 +74,7 @@ export function connectChatWebSocket(): void {
   } catch (error) {
     console.warn('[chat-ws] WebSocket connection blocked:', error);
     socket = null;
-    if (listeners.size > 0) {
+    if (listeners.size > 0 || keepAlive) {
       connectAttempts += 1;
       scheduleReconnect();
     }
@@ -100,7 +101,7 @@ export function connectChatWebSocket(): void {
     console.info('[chat-ws] closed', event.code, event.reason || '');
     socket = null;
     clearPingTimer();
-    if (listeners.size > 0) {
+    if (listeners.size > 0 || keepAlive) {
       connectAttempts += 1;
       scheduleReconnect();
     }
@@ -114,6 +115,7 @@ export function connectChatWebSocket(): void {
 
 export function disconnectChatWebSocket(): void {
   listeners.clear();
+  keepAlive = false;
   if (reconnectTimer) {
     window.clearTimeout(reconnectTimer);
     reconnectTimer = null;
@@ -129,10 +131,15 @@ export function onChatWebSocket(listener: ChatWsListener): () => void {
   connectChatWebSocket();
   return () => {
     listeners.delete(listener);
-    if (listeners.size === 0) {
+    if (listeners.size === 0 && !keepAlive) {
       disconnectChatWebSocket();
     }
   };
+}
+
+export function maintainChatWebSocket(): void {
+  keepAlive = true;
+  connectChatWebSocket();
 }
 
 export function isChatWebSocketConnected(): boolean {

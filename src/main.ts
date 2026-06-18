@@ -180,7 +180,9 @@ export async function initApp(): Promise<void> {
     logger.info('User logged in', { username: user.username });
     setSignalUserId(user.id);
     void import('@/services/chat-ws')
-      .then((m) => m.connectChatWebSocket())
+      .then((m) => {
+        m.maintainChatWebSocket();
+      })
       .catch((error) => {
         console.warn('[chat-ws] connect failed:', error);
       });

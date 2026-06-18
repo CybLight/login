@@ -382,6 +382,7 @@ export async function ensureSignalKeysRegistered(userId: string): Promise<void> 
 }
 
 function hasPreKeyHandshakePeer(ctx: WasmSignalContext, peerUserId: string): boolean {
+  // Peers we have successfully decrypted an incoming message from (not outgoing PreKey sends).
   return ctx.manifest.preKeyHandshakePeers?.includes(peerUserId) ?? false;
 }
 
@@ -472,10 +473,6 @@ export async function encryptOutgoingMessage(
     await resetPeerSession(ctx, recipientId);
     await establishSession(ctx, recipientId);
     ciphertext = await encryptForPeer(ctx, recipientId, plaintext);
-  }
-
-  if (ciphertext.message_type === message_type_pre_key()) {
-    markPreKeyHandshakePeer(ctx, recipientId);
   }
 
   await trackSession(ctx, peerAddress(recipientId));
@@ -623,6 +620,24 @@ export async function decryptIncomingMessage(
         console.warn('[Signal] decrypt retry failed:', retryError, message.id ?? null);
         throw retryError;
       }
+    } else if (
+      signalType === message_type_signal() &&
+      (await ctx.sessionStore.has_session(sender))
+    ) {
+      await resetPeerSession(ctx, message.senderId);
+      if (batch) {
+        batch.contextDirty = true;
+      } else {
+        await persistWasmContext(ctx);
+      }
+      const error = firstError;
+      console.warn('[Signal] decrypt failed (stale whisper session cleared):', {
+        error: String(error),
+        signalType,
+        senderId: message.senderId,
+        messageId: message.id ?? null,
+      });
+      throw error;
     } else {
       const error = firstError;
       const hasSession = await ctx.sessionStore.has_session(sender);

@@ -39,8 +39,18 @@ type MessagesDeps = {
 let messagesListWsUnsub: (() => void) | null = null;
 let messagesListRefreshTimer: number | null = null;
 
+export function unsubscribeMessagesListWebSocket(): void {
+  messagesListWsUnsub?.();
+  messagesListWsUnsub = null;
+  if (messagesListRefreshTimer) {
+    window.clearTimeout(messagesListRefreshTimer);
+    messagesListRefreshTimer = null;
+  }
+}
+
 function scheduleMessagesListRefresh(api: ApiMessage, deps: MessagesDeps): void {
   if (!document.getElementById('messagesContent')) return;
+  if (document.querySelector('.account-main')?.classList.contains('is-chat-view')) return;
   if (messagesListRefreshTimer) {
     window.clearTimeout(messagesListRefreshTimer);
   }
