@@ -10,6 +10,11 @@ import {
   renderPendingSubHtml,
 } from "./account-utils";
 import { getAvatarInnerHtml } from "./avatar";
+import {
+  countV010UnlockedEggs,
+  renderFormatMirrorEasterCard,
+  renderV010AppEasterCards,
+} from "./easter-v010-render";
 
 type User = {
   id?: string;
@@ -876,7 +881,7 @@ function easterProgressHtml(current: number, total: number): string {
   )}</div>`;
 }
 
-const EASTER_EGGS_TOTAL = 12;
+const EASTER_EGGS_TOTAL = 30;
 
 function easterCollectionSummaryHtml(found: number, total: number = EASTER_EGGS_TOTAL): string {
   const isComplete = found >= total;
@@ -922,20 +927,21 @@ function renderEasterTab(user: User): string {
   const bridgeAppToday =
     user.easter?.bridgeAppToday === true || user.easter?.bridge_app_today === true;
   const bridgePlatformsToday = (bridgeWebToday ? 1 : 0) + (bridgeAppToday ? 1 : 0);
-  const easterFoundCount = [
-    hasStrawberry,
-    hasProfileMirror,
-    hasDarkTrigger,
-    hasPostmaster,
-    hasDeveloperMode,
-    hasThemeFlux,
-    hasLightCatcher,
-    hasNightGuard,
-    hasTrustedFingerprint,
-    hasEcho,
-    hasArchivist,
-    hasBridge,
-  ].filter(Boolean).length;
+  const easterFoundCount =
+    [
+      hasStrawberry,
+      hasProfileMirror,
+      hasDarkTrigger,
+      hasPostmaster,
+      hasDeveloperMode,
+      hasThemeFlux,
+      hasLightCatcher,
+      hasNightGuard,
+      hasTrustedFingerprint,
+      hasEcho,
+      hasArchivist,
+      hasBridge,
+    ].filter(Boolean).length + countV010UnlockedEggs(user.easter);
 
   console.log(
     "[EASTER] hasStrawberry:",
@@ -1274,6 +1280,8 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-desc">${hasArchivist ? t('Закрепил, изменил, отреагировал и переслал в одном чате') : t('Освой все инструменты сообщений в одном диалоге')}</div>
           ${hasArchivist ? "" : `<div class="easter-hint">${t('💡 Подсказка: закрепи, измени, поставь реакцию и перешли в одном чате')}</div>`}
         </div>
+
+        ${renderV010AppEasterCards(user.easter)}
       </div>
       </div>
 
@@ -1294,6 +1302,8 @@ function renderEasterTab(user: User): string {
           ${hasBridge ? "" : easterProgressHtml(bridgePlatformsToday, 2)}
           ${hasBridge ? `<div class="easter-hint">${t('🎊 CybLight на обоих берегах!')}</div>` : `<div class="easter-hint">${t('💡 Подсказка: исследуй сайт и приложение в один день')}</div>`}
         </div>
+
+        ${renderFormatMirrorEasterCard(user.easter)}
       </div>
       </div>
     </div>

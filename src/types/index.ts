@@ -236,6 +236,42 @@ export interface UserEasterFlags {
   bridge_app_today?: boolean;
   echo?: boolean;
   archivist?: boolean;
+  typographer?: boolean;
+  spoilerHunter?: boolean;
+  spoiler_hunter?: boolean;
+  noMarkers?: boolean;
+  no_markers?: boolean;
+  enterMaster?: boolean;
+  enter_master?: boolean;
+  fontExtremes?: boolean;
+  font_extremes?: boolean;
+  cloudKeeper?: boolean;
+  cloud_keeper?: boolean;
+  drivePilot?: boolean;
+  drive_pilot?: boolean;
+  liveWire?: boolean;
+  live_wire?: boolean;
+  fromShadow?: boolean;
+  from_shadow?: boolean;
+  watchman?: boolean;
+  carouselWatcher?: boolean;
+  carousel_watcher?: boolean;
+  formatMirror?: boolean;
+  format_mirror?: boolean;
+  formatMirrorWebToday?: boolean;
+  format_mirror_web_today?: boolean;
+  formatMirrorAppToday?: boolean;
+  format_mirror_app_today?: boolean;
+  synchronist?: boolean;
+  quoteDay?: boolean;
+  quote_day?: boolean;
+  midnightEditor?: boolean;
+  midnight_editor?: boolean;
+  polyglotFriend?: boolean;
+  polyglot_friend?: boolean;
+  silence?: boolean;
+  reactionStreak?: boolean;
+  reaction_streak?: boolean;
 }
 
 export interface EasterLoginPayload {

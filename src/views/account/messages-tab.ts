@@ -12,6 +12,7 @@ import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
 import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId, getSignalKeyIssueMessage, warmupOutgoingSession } from '@/crypto/signal';
 import { extractFirstUrl } from './chat-format';
 import { renderChatFormatToolbarRowHtml, bindChatFormatToolbarToggle } from './chat-formatting-settings';
+import { touchFormatMirrorWeb } from '@/utils/format-easter';
 import { loadMessagesTab as loadMessagesListTab, unsubscribeMessagesListWebSocket } from './messages-list';
 import { cacheConversationPreview } from './conversation-preview';
 import type { UnreadSummary } from './unread';
@@ -856,6 +857,7 @@ export function openChatInMessagesTab(
         if (savedId) {
           void cacheSentPlaintext(userId, savedId, outgoingContent);
           cacheConversationPreview(friendId, userId, outgoingContent, Date.now());
+          void touchFormatMirrorWeb(outgoingContent);
         }
 
         if (editingId) {

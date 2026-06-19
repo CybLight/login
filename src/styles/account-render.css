@@ -1923,6 +1923,258 @@
   --easter-glow: rgba(176, 190, 197, 0.16);
 }
 
+.easter-card--typographer {
+  --easter-bg: #4a3728;
+  --easter-bg-hover: #563f2e;
+  --easter-bg-locked: #2a211a;
+  --easter-text: #d7ccc8;
+  --easter-text-muted: rgba(215, 204, 200, 0.82);
+  --easter-text-locked: #a89b96;
+  --easter-text-muted-locked: rgba(168, 155, 150, 0.78);
+  --easter-border: rgba(215, 204, 200, 0.35);
+  --easter-border-hover: rgba(215, 204, 200, 0.5);
+  --easter-border-locked: rgba(168, 155, 150, 0.22);
+  --easter-glow: rgba(215, 204, 200, 0.16);
+}
+
+.easter-card--spoiler-hunter {
+  --easter-bg: #3d3a2f;
+  --easter-bg-hover: #484436;
+  --easter-bg-locked: #252320;
+  --easter-text: #fff9c4;
+  --easter-text-muted: rgba(255, 249, 196, 0.82);
+  --easter-text-locked: #c5bf94;
+  --easter-text-muted-locked: rgba(197, 191, 148, 0.78);
+  --easter-border: rgba(255, 249, 196, 0.35);
+  --easter-border-hover: rgba(255, 249, 196, 0.5);
+  --easter-border-locked: rgba(197, 191, 148, 0.22);
+  --easter-glow: rgba(255, 249, 196, 0.16);
+}
+
+.easter-card--no-markers {
+  --easter-bg: #2e3a4f;
+  --easter-bg-hover: #35455d;
+  --easter-bg-locked: #1c2430;
+  --easter-text: #90caf9;
+  --easter-text-muted: rgba(144, 202, 249, 0.82);
+  --easter-text-locked: #7a9fbf;
+  --easter-text-muted-locked: rgba(122, 159, 191, 0.78);
+  --easter-border: rgba(144, 202, 249, 0.35);
+  --easter-border-hover: rgba(144, 202, 249, 0.5);
+  --easter-border-locked: rgba(122, 159, 191, 0.22);
+  --easter-glow: rgba(144, 202, 249, 0.16);
+}
+
+.easter-card--enter-master {
+  --easter-bg: #2f3d2e;
+  --easter-bg-hover: #374837;
+  --easter-bg-locked: #1e261d;
+  --easter-text: #a5d6a7;
+  --easter-text-muted: rgba(165, 214, 167, 0.82);
+  --easter-text-locked: #8ab38c;
+  --easter-text-muted-locked: rgba(138, 179, 140, 0.78);
+  --easter-border: rgba(165, 214, 167, 0.35);
+  --easter-border-hover: rgba(165, 214, 167, 0.5);
+  --easter-border-locked: rgba(138, 179, 140, 0.22);
+  --easter-glow: rgba(165, 214, 167, 0.16);
+}
+
+.easter-card--font-extremes {
+  --easter-bg: #3e2f4a;
+  --easter-bg-hover: #483856;
+  --easter-bg-locked: #261e2e;
+  --easter-text: #ce93d8;
+  --easter-text-muted: rgba(206, 147, 216, 0.82);
+  --easter-text-locked: #a877b0;
+  --easter-text-muted-locked: rgba(168, 119, 176, 0.78);
+  --easter-border: rgba(206, 147, 216, 0.35);
+  --easter-border-hover: rgba(206, 147, 216, 0.5);
+  --easter-border-locked: rgba(168, 119, 176, 0.22);
+  --easter-glow: rgba(206, 147, 216, 0.16);
+}
+
+.easter-card--cloud-keeper {
+  --easter-bg: #1e3a5f;
+  --easter-bg-hover: #24446d;
+  --easter-bg-locked: #142840;
+  --easter-text: #81d4fa;
+  --easter-text-muted: rgba(129, 212, 250, 0.82);
+  --easter-text-locked: #6aabcc;
+  --easter-text-muted-locked: rgba(106, 171, 204, 0.78);
+  --easter-border: rgba(129, 212, 250, 0.35);
+  --easter-border-hover: rgba(129, 212, 250, 0.5);
+  --easter-border-locked: rgba(106, 171, 204, 0.22);
+  --easter-glow: rgba(129, 212, 250, 0.16);
+}
+
+.easter-card--drive-pilot {
+  --easter-bg: #4a3520;
+  --easter-bg-hover: #553d26;
+  --easter-bg-locked: #2e2114;
+  --easter-text: #ffcc80;
+  --easter-text-muted: rgba(255, 204, 128, 0.82);
+  --easter-text-locked: #cca366;
+  --easter-text-muted-locked: rgba(204, 163, 102, 0.78);
+  --easter-border: rgba(255, 204, 128, 0.35);
+  --easter-border-hover: rgba(255, 204, 128, 0.5);
+  --easter-border-locked: rgba(204, 163, 102, 0.22);
+  --easter-glow: rgba(255, 204, 128, 0.16);
+}
+
+.easter-card--live-wire {
+  --easter-bg: #3d3520;
+  --easter-bg-hover: #473f26;
+  --easter-bg-locked: #262214;
+  --easter-text: #ffe082;
+  --easter-text-muted: rgba(255, 224, 130, 0.82);
+  --easter-text-locked: #ccb368;
+  --easter-text-muted-locked: rgba(204, 179, 104, 0.78);
+  --easter-border: rgba(255, 224, 130, 0.35);
+  --easter-border-hover: rgba(255, 224, 130, 0.5);
+  --easter-border-locked: rgba(204, 179, 104, 0.22);
+  --easter-glow: rgba(255, 224, 130, 0.16);
+}
+
+.easter-card--from-shadow {
+  --easter-bg: #2a2a35;
+  --easter-bg-hover: #32323f;
+  --easter-bg-locked: #1a1a22;
+  --easter-text: #b39ddb;
+  --easter-text-muted: rgba(179, 157, 219, 0.82);
+  --easter-text-locked: #8f7eaf;
+  --easter-text-muted-locked: rgba(143, 126, 175, 0.78);
+  --easter-border: rgba(179, 157, 219, 0.35);
+  --easter-border-hover: rgba(179, 157, 219, 0.5);
+  --easter-border-locked: rgba(143, 126, 175, 0.22);
+  --easter-glow: rgba(179, 157, 219, 0.16);
+}
+
+.easter-card--watchman {
+  --easter-bg: #1f3340;
+  --easter-bg-hover: #253c4b;
+  --easter-bg-locked: #142028;
+  --easter-text: #80cbc4;
+  --easter-text-muted: rgba(128, 203, 196, 0.82);
+  --easter-text-locked: #66a29d;
+  --easter-text-muted-locked: rgba(102, 162, 157, 0.78);
+  --easter-border: rgba(128, 203, 196, 0.35);
+  --easter-border-hover: rgba(128, 203, 196, 0.5);
+  --easter-border-locked: rgba(102, 162, 157, 0.22);
+  --easter-glow: rgba(128, 203, 196, 0.16);
+}
+
+.easter-card--carousel-watcher {
+  --easter-bg: #4a2840;
+  --easter-bg-hover: #55304a;
+  --easter-bg-locked: #2e1828;
+  --easter-text: #f48fb1;
+  --easter-text-muted: rgba(244, 143, 177, 0.82);
+  --easter-text-locked: #c3738e;
+  --easter-text-muted-locked: rgba(195, 115, 142, 0.78);
+  --easter-border: rgba(244, 143, 177, 0.35);
+  --easter-border-hover: rgba(244, 143, 177, 0.5);
+  --easter-border-locked: rgba(195, 115, 142, 0.22);
+  --easter-glow: rgba(244, 143, 177, 0.16);
+}
+
+.easter-card--format-mirror {
+  --easter-bg: #2e4057;
+  --easter-bg-hover: #354a65;
+  --easter-bg-locked: #1c2836;
+  --easter-text: #90a4ae;
+  --easter-text-muted: rgba(144, 164, 174, 0.82);
+  --easter-text-locked: #73838b;
+  --easter-text-muted-locked: rgba(115, 131, 139, 0.78);
+  --easter-border: rgba(144, 164, 174, 0.35);
+  --easter-border-hover: rgba(144, 164, 174, 0.5);
+  --easter-border-locked: rgba(115, 131, 139, 0.22);
+  --easter-glow: rgba(144, 164, 174, 0.16);
+}
+
+.easter-card--synchronist {
+  --easter-bg: #1b4332;
+  --easter-bg-hover: #21503c;
+  --easter-bg-locked: #122b20;
+  --easter-text: #95d5b2;
+  --easter-text-muted: rgba(149, 213, 178, 0.82);
+  --easter-text-locked: #77aa8e;
+  --easter-text-muted-locked: rgba(119, 170, 142, 0.78);
+  --easter-border: rgba(149, 213, 178, 0.35);
+  --easter-border-hover: rgba(149, 213, 178, 0.5);
+  --easter-border-locked: rgba(119, 170, 142, 0.22);
+  --easter-glow: rgba(149, 213, 178, 0.16);
+}
+
+.easter-card--quote-day {
+  --easter-bg: #374151;
+  --easter-bg-hover: #404b5e;
+  --easter-bg-locked: #232830;
+  --easter-text: #cbd5e1;
+  --easter-text-muted: rgba(203, 213, 225, 0.82);
+  --easter-text-locked: #a2aab4;
+  --easter-text-muted-locked: rgba(162, 170, 180, 0.78);
+  --easter-border: rgba(203, 213, 225, 0.35);
+  --easter-border-hover: rgba(203, 213, 225, 0.5);
+  --easter-border-locked: rgba(162, 170, 180, 0.22);
+  --easter-glow: rgba(203, 213, 225, 0.16);
+}
+
+.easter-card--midnight-editor {
+  --easter-bg: #1a1a2e;
+  --easter-bg-hover: #222238;
+  --easter-bg-locked: #11111a;
+  --easter-text: #9fa8da;
+  --easter-text-muted: rgba(159, 168, 218, 0.82);
+  --easter-text-locked: #7f86ae;
+  --easter-text-muted-locked: rgba(127, 134, 174, 0.78);
+  --easter-border: rgba(159, 168, 218, 0.35);
+  --easter-border-hover: rgba(159, 168, 218, 0.5);
+  --easter-border-locked: rgba(127, 134, 174, 0.22);
+  --easter-glow: rgba(159, 168, 218, 0.16);
+}
+
+.easter-card--polyglot-friend {
+  --easter-bg: #1e4620;
+  --easter-bg-hover: #245228;
+  --easter-bg-locked: #122914;
+  --easter-text: #c5e1a5;
+  --easter-text-muted: rgba(197, 225, 165, 0.82);
+  --easter-text-locked: #9eb484;
+  --easter-text-muted-locked: rgba(158, 180, 132, 0.78);
+  --easter-border: rgba(197, 225, 165, 0.35);
+  --easter-border-hover: rgba(197, 225, 165, 0.5);
+  --easter-border-locked: rgba(158, 180, 132, 0.22);
+  --easter-glow: rgba(197, 225, 165, 0.16);
+}
+
+.easter-card--silence {
+  --easter-bg: #2d2d2d;
+  --easter-bg-hover: #363636;
+  --easter-bg-locked: #1a1a1a;
+  --easter-text: #e0e0e0;
+  --easter-text-muted: rgba(224, 224, 224, 0.82);
+  --easter-text-locked: #b3b3b3;
+  --easter-text-muted-locked: rgba(179, 179, 179, 0.78);
+  --easter-border: rgba(224, 224, 224, 0.35);
+  --easter-border-hover: rgba(224, 224, 224, 0.5);
+  --easter-border-locked: rgba(179, 179, 179, 0.22);
+  --easter-glow: rgba(224, 224, 224, 0.16);
+}
+
+.easter-card--reaction-streak {
+  --easter-bg: #4a3020;
+  --easter-bg-hover: #553826;
+  --easter-bg-locked: #2e1e14;
+  --easter-text: #ffab91;
+  --easter-text-muted: rgba(255, 171, 145, 0.82);
+  --easter-text-locked: #cc8974;
+  --easter-text-muted-locked: rgba(204, 137, 116, 0.78);
+  --easter-border: rgba(255, 171, 145, 0.35);
+  --easter-border-hover: rgba(255, 171, 145, 0.5);
+  --easter-border-locked: rgba(204, 137, 116, 0.22);
+  --easter-glow: rgba(255, 171, 145, 0.16);
+}
+
 .easter-card-icon {
   font-size: 48px;
   margin-bottom: 12px;

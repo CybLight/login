@@ -30,6 +30,26 @@ type ResolvedEasterFlags = {
   bridgeAppToday?: boolean;
   echo?: boolean;
   archivist?: boolean;
+  typographer?: boolean;
+  spoilerHunter?: boolean;
+  noMarkers?: boolean;
+  enterMaster?: boolean;
+  fontExtremes?: boolean;
+  cloudKeeper?: boolean;
+  drivePilot?: boolean;
+  liveWire?: boolean;
+  fromShadow?: boolean;
+  watchman?: boolean;
+  carouselWatcher?: boolean;
+  formatMirror?: boolean;
+  formatMirrorWebToday?: boolean;
+  formatMirrorAppToday?: boolean;
+  synchronist?: boolean;
+  quoteDay?: boolean;
+  midnightEditor?: boolean;
+  polyglotFriend?: boolean;
+  silence?: boolean;
+  reactionStreak?: boolean;
 };
 
 const EASTER_SYNC_TARGETS = [
@@ -168,6 +188,106 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
           : undefined,
     echo: typeof easter?.echo === 'boolean' ? easter.echo : undefined,
     archivist: typeof easter?.archivist === 'boolean' ? easter.archivist : undefined,
+    typographer: typeof easter?.typographer === 'boolean' ? easter.typographer : undefined,
+    spoilerHunter:
+      typeof easter?.spoilerHunter === 'boolean'
+        ? easter.spoilerHunter
+        : typeof easter?.spoiler_hunter === 'boolean'
+          ? easter.spoiler_hunter
+          : undefined,
+    noMarkers:
+      typeof easter?.noMarkers === 'boolean'
+        ? easter.noMarkers
+        : typeof easter?.no_markers === 'boolean'
+          ? easter.no_markers
+          : undefined,
+    enterMaster:
+      typeof easter?.enterMaster === 'boolean'
+        ? easter.enterMaster
+        : typeof easter?.enter_master === 'boolean'
+          ? easter.enter_master
+          : undefined,
+    fontExtremes:
+      typeof easter?.fontExtremes === 'boolean'
+        ? easter.fontExtremes
+        : typeof easter?.font_extremes === 'boolean'
+          ? easter.font_extremes
+          : undefined,
+    cloudKeeper:
+      typeof easter?.cloudKeeper === 'boolean'
+        ? easter.cloudKeeper
+        : typeof easter?.cloud_keeper === 'boolean'
+          ? easter.cloud_keeper
+          : undefined,
+    drivePilot:
+      typeof easter?.drivePilot === 'boolean'
+        ? easter.drivePilot
+        : typeof easter?.drive_pilot === 'boolean'
+          ? easter.drive_pilot
+          : undefined,
+    liveWire:
+      typeof easter?.liveWire === 'boolean'
+        ? easter.liveWire
+        : typeof easter?.live_wire === 'boolean'
+          ? easter.live_wire
+          : undefined,
+    fromShadow:
+      typeof easter?.fromShadow === 'boolean'
+        ? easter.fromShadow
+        : typeof easter?.from_shadow === 'boolean'
+          ? easter.from_shadow
+          : undefined,
+    watchman: typeof easter?.watchman === 'boolean' ? easter.watchman : undefined,
+    carouselWatcher:
+      typeof easter?.carouselWatcher === 'boolean'
+        ? easter.carouselWatcher
+        : typeof easter?.carousel_watcher === 'boolean'
+          ? easter.carousel_watcher
+          : undefined,
+    formatMirror:
+      typeof easter?.formatMirror === 'boolean'
+        ? easter.formatMirror
+        : typeof easter?.format_mirror === 'boolean'
+          ? easter.format_mirror
+          : undefined,
+    formatMirrorWebToday:
+      typeof easter?.formatMirrorWebToday === 'boolean'
+        ? easter.formatMirrorWebToday
+        : typeof easter?.format_mirror_web_today === 'boolean'
+          ? easter.format_mirror_web_today
+          : undefined,
+    formatMirrorAppToday:
+      typeof easter?.formatMirrorAppToday === 'boolean'
+        ? easter.formatMirrorAppToday
+        : typeof easter?.format_mirror_app_today === 'boolean'
+          ? easter.format_mirror_app_today
+          : undefined,
+    synchronist: typeof easter?.synchronist === 'boolean' ? easter.synchronist : undefined,
+    quoteDay:
+      typeof easter?.quoteDay === 'boolean'
+        ? easter.quoteDay
+        : typeof easter?.quote_day === 'boolean'
+          ? easter.quote_day
+          : undefined,
+    midnightEditor:
+      typeof easter?.midnightEditor === 'boolean'
+        ? easter.midnightEditor
+        : typeof easter?.midnight_editor === 'boolean'
+          ? easter.midnight_editor
+          : undefined,
+    polyglotFriend:
+      typeof easter?.polyglotFriend === 'boolean'
+        ? easter.polyglotFriend
+        : typeof easter?.polyglot_friend === 'boolean'
+          ? easter.polyglot_friend
+          : undefined,
+    silence: typeof easter?.silence === 'boolean' ? easter.silence : undefined,
+    reactionStreak:
+      typeof easter?.reactionStreak === 'boolean'
+        ? easter.reactionStreak
+        : typeof easter?.reaction_streak === 'boolean'
+          ? easter.reaction_streak
+          : undefined,
   };
 }
 
