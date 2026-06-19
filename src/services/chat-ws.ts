@@ -44,6 +44,32 @@ function clearPingTimer(): void {
   }
 }
 
+function closeChatWebSocketGracefully(): void {
+  if (!socket) return;
+  if (socket.readyState === WebSocket.OPEN) {
+    try {
+      socket.close(1000, 'page hide');
+    } catch {
+      // ignore
+    }
+  }
+  socket = null;
+  clearPingTimer();
+}
+
+function bindPageLifecycleHandlers(): void {
+  if (typeof window === 'undefined' || (bindPageLifecycleHandlers as { bound?: boolean }).bound) {
+    return;
+  }
+  (bindPageLifecycleHandlers as { bound?: boolean }).bound = true;
+  window.addEventListener('pagehide', closeChatWebSocketGracefully);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      closeChatWebSocketGracefully();
+    }
+  });
+}
+
 function scheduleReconnect(): void {
   if (reconnectTimer) return;
   const delay = Math.min(30_000, 1_000 * 2 ** Math.min(connectAttempts, 5));
@@ -65,6 +91,7 @@ function handleMessage(raw: string): void {
 
 export function connectChatWebSocket(): void {
   if (typeof WebSocket === 'undefined') return;
+  bindPageLifecycleHandlers();
   if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
     return;
   }
@@ -89,7 +116,7 @@ export function connectChatWebSocket(): void {
       if (socket?.readyState === WebSocket.OPEN) {
         socket.send('ping');
       }
-    }, 45_000);
+    }, 25_000);
   });
 
   socket.addEventListener('message', (event) => {
@@ -120,10 +147,8 @@ export function disconnectChatWebSocket(): void {
     window.clearTimeout(reconnectTimer);
     reconnectTimer = null;
   }
-  clearPingTimer();
   connectAttempts = 0;
-  socket?.close();
-  socket = null;
+  closeChatWebSocketGracefully();
 }
 
 export function onChatWebSocket(listener: ChatWsListener): () => void {
