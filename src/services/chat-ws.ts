@@ -1,7 +1,7 @@
 import { API_BASE } from '@/config/constants';
 
 export type ChatWsEvent = {
-  type: 'message.new';
+  type: 'message.new' | 'message.deleted' | 'message.edited';
   messageId: string;
   senderId: string;
   peerId: string;
@@ -56,7 +56,7 @@ function scheduleReconnect(): void {
 function handleMessage(raw: string): void {
   try {
     const event = JSON.parse(raw) as ChatWsEvent;
-    if (event?.type !== 'message.new') return;
+    if (event?.type !== 'message.new' && event?.type !== 'message.deleted' && event?.type !== 'message.edited') return;
     listeners.forEach((listener) => listener(event));
   } catch {
     // ignore malformed payloads

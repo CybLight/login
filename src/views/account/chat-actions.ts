@@ -1,4 +1,5 @@
 import { apiCall } from '@/utils';
+import { animateChatMessageRemoval } from './chat-message-animate-remove';
 
 type ApiMessage = {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -16,7 +17,11 @@ export async function deleteMessageInAccount(
   messageId: string,
   api: ApiMessage,
   confirmModal: ConfirmModalFn,
-  reloadChat: () => Promise<void>
+  reloadChat: () => Promise<void>,
+  options?: {
+    messagesContainer?: HTMLElement | null;
+    onSuccess?: (messageId: string) => void;
+  },
 ): Promise<void> {
   const confirmed = await confirmModal({
     title: 'Удалить сообщение',
@@ -26,14 +31,19 @@ export async function deleteMessageInAccount(
   });
   if (!confirmed) return;
 
+  const container = options?.messagesContainer ?? document.getElementById('chatMessages');
+  const removalAnimation = animateChatMessageRemoval(container, messageId);
+
   const response = await apiCall(`/messages/${encodeURIComponent(messageId)}`, {
     method: 'DELETE',
     credentials: 'include',
   });
 
   if (response.ok) {
-    await reloadChat();
+    await removalAnimation;
+    options?.onSuccess?.(messageId);
   } else {
+    await reloadChat();
     api.showMsg('error', 'Не удалось удалить сообщение');
   }
 }

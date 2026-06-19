@@ -200,10 +200,11 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
     messagesListWsUnsub?.();
     try {
       messagesListWsUnsub = onChatWebSocket((event) => {
-        if (event.type !== 'message.new') return;
-        scheduleMessagesListRefresh(api, deps);
-        void deps.updateChatUnreadBadges();
-        void updateNavBadges();
+        if (event.type === 'message.new' || event.type === 'message.deleted' || event.type === 'message.edited') {
+          scheduleMessagesListRefresh(api, deps);
+          void deps.updateChatUnreadBadges();
+          void updateNavBadges();
+        }
       });
     } catch (error) {
       console.warn('[loadMessagesTab] Chat WebSocket unavailable:', error);

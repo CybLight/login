@@ -8,6 +8,7 @@ import { apiCall, escapeHtml, formatPresenceLabel, hasPresenceData, isUserOnline
 import { setupAccessibleModal } from '@/utils/keyboard';
 import type { ApiOkResponse, FriendListItem } from '@/types';
 import { createChatCore, type ChatLoadOptions } from './chat-core';
+import { animateChatMessageRemoval } from './chat-message-animate-remove';
 import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
 import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId, getSignalKeyIssueMessage, warmupOutgoingSession } from '@/crypto/signal';
 import { extractFirstUrl } from './chat-format';
@@ -606,10 +607,20 @@ export function openChatInMessagesTab(
     });
   };
 
+  const handleMessageDeleted = (messageId: string) => {
+    const pinned = state.accountPinnedMessageByChat.get(friendId);
+    if (pinned?.messageId === messageId) {
+      state.accountPinnedMessageByChat.delete(friendId);
+      renderPinnedBar();
+    }
+    void updateNavBadges();
+  };
+
   const chatLoadOptions = (overrides: Partial<ChatLoadOptions> = {}): ChatLoadOptions => ({
     onReplySelect: setReplyState,
     onPinStateChanged: renderPinnedBar,
     onForwardRequest: forwardMessageFromPicker,
+    onMessageDeleted: handleMessageDeleted,
     peerUsername: friendUsername,
     composeDraftHolder,
     ...overrides,
@@ -1070,10 +1081,30 @@ export function openChatInMessagesTab(
 
   chatWsUnsub = onChatWebSocket((event) => {
     if (state.accountChatFriendId !== friendId) return;
-    if (event.type !== 'message.new') return;
     if (event.peerId !== friendId && event.senderId !== friendId) return;
-    reloadOpenChatMessages();
-    void updateNavBadges();
+
+    if (event.type === 'message.new') {
+      reloadOpenChatMessages();
+      void updateNavBadges();
+      return;
+    }
+
+    if (event.type === 'message.deleted') {
+      void animateChatMessageRemoval(messagesEl, event.messageId).then((removed) => {
+        if (removed) {
+          handleMessageDeleted(event.messageId);
+        } else {
+          reloadOpenChatMessages();
+        }
+      });
+      void updateNavBadges();
+      return;
+    }
+
+    if (event.type === 'message.edited') {
+      reloadOpenChatMessages();
+      void updateNavBadges();
+    }
   });
 
   callbacks.setAccountChatIntervalId(
@@ -1202,33 +1233,36 @@ export function openChatInMessagesTab(
     });
     if (!confirmed) return;
 
-    for (const messageId of selectedMessages) {
-      try {
-        await apiCall(`/messages/${encodeURIComponent(messageId)}`, {
-          method: 'DELETE',
-          credentials: 'include',
-        });
-      } catch (err) {
-        console.error('Error deleting message:', err);
-      }
+    const removalAnimations = selectedIds.map((messageId) =>
+      animateChatMessageRemoval(messagesEl, messageId),
+    );
+    const deleteResults = await Promise.all(
+      selectedIds.map(async (messageId) => {
+        try {
+          const response = await apiCall(`/messages/${encodeURIComponent(messageId)}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+          return response.ok;
+        } catch (err) {
+          console.error('Error deleting message:', err);
+          return false;
+        }
+      }),
+    );
+
+    await Promise.all(removalAnimations);
+
+    if (deleteResults.every(Boolean)) {
+      api.showMsg('ok', t('Удалено {count} сообщений', { count: selectedIds.length }));
+      selectedIds.forEach((messageId) => handleMessageDeleted(messageId));
+      cancelSelection();
+      void updateNavBadges();
+      return;
     }
 
-    api.showMsg('ok', t('Удалено {count} сообщений', { count: selectedMessages.size }));
+    api.showMsg('error', t('Не удалось удалить сообщения'));
     cancelSelection();
-    if (messagesEl) {
-      await loadChatMessagesInAccount(
-        friendId,
-        messagesEl,
-        api,
-        chatInput,
-        chatSendBtn,
-        chatEditIndicator,
-        chatEditingIdInput,
-        chatLoadOptions({
-          hydrateLinkPreviews: false,
-          preserveScrollPosition: true,
-        })
-      );
-    }
+    reloadOpenChatMessages();
   });
 }

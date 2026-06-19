@@ -187,7 +187,24 @@
   border-radius: 8px;
   transition:
     background-color 0.2s,
-    border-color 0.2s;
+    border-color 0.2s,
+    opacity 0.2s ease-out,
+    transform 0.2s ease-out,
+    height 0.26s ease-in,
+    margin 0.26s ease-in,
+    padding 0.26s ease-in;
+}
+
+.chat-message--removing {
+  opacity: 0;
+  transform: scale(0.95) translateY(-4px);
+  height: 0 !important;
+  min-height: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  pointer-events: none;
 }
 
 .chat-message--selectable {

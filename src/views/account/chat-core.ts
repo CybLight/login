@@ -66,6 +66,7 @@ export type ChatLoadOptions = {
   onReplySelect?: (messageId: string, text: string, author?: string) => void;
   onPinStateChanged?: () => void;
   onForwardRequest?: (text: string) => Promise<void> | void;
+  onMessageDeleted?: (messageId: string) => void;
   peerUsername?: string;
   composeDraftHolder?: { draft: string };
 };
@@ -144,6 +145,8 @@ export function createChatCore(deps: ChatCoreDeps) {
           registrationId: (message.registrationId as number | null | undefined) ?? null,
           createdAt:
             Number(message.createdAt ?? message.created_at ?? 0) || null,
+          editedAt:
+            Number(message.editedAt ?? message.edited_at ?? 0) || null,
         })),
       );
 
@@ -527,6 +530,9 @@ export function createChatCore(deps: ChatCoreDeps) {
                     preserveScrollPosition: true,
                   }
                 );
+              }, {
+                messagesContainer: container,
+                onSuccess: options?.onMessageDeleted,
               });
               return;
             }
@@ -818,6 +824,9 @@ export function createChatCore(deps: ChatCoreDeps) {
                     preserveScrollPosition: true,
                   }
                 );
+              }, {
+                messagesContainer: container,
+                onSuccess: options?.onMessageDeleted,
               });
               closeChatContextMenu();
               return;
