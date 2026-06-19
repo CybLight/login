@@ -226,25 +226,18 @@ export function renderV010AppEasterCards(easter: UserEasterFlags | undefined): s
   ).join('');
 }
 
-export function countV010UnlockedEggs(easter: UserEasterFlags | undefined): number {
+export function countV010AppUnlockedEggs(easter: UserEasterFlags | undefined): number {
   let count = 0;
-  if (easterFlag(easter, 'typographer')) count++;
-  if (easterFlag(easter, 'spoilerHunter', 'spoiler_hunter')) count++;
-  if (easterFlag(easter, 'noMarkers', 'no_markers')) count++;
-  if (easterFlag(easter, 'enterMaster', 'enter_master')) count++;
-  if (easterFlag(easter, 'fontExtremes', 'font_extremes')) count++;
-  if (easterFlag(easter, 'cloudKeeper', 'cloud_keeper')) count++;
-  if (easterFlag(easter, 'drivePilot', 'drive_pilot')) count++;
-  if (easterFlag(easter, 'liveWire', 'live_wire')) count++;
-  if (easterFlag(easter, 'fromShadow', 'from_shadow')) count++;
-  if (easterFlag(easter, 'watchman')) count++;
-  if (easterFlag(easter, 'carouselWatcher', 'carousel_watcher')) count++;
-  if (easterFlag(easter, 'synchronist')) count++;
-  if (easterFlag(easter, 'quoteDay', 'quote_day')) count++;
-  if (easterFlag(easter, 'midnightEditor', 'midnight_editor')) count++;
-  if (easterFlag(easter, 'polyglotFriend', 'polyglot_friend')) count++;
-  if (easterFlag(easter, 'silence')) count++;
-  if (easterFlag(easter, 'reactionStreak', 'reaction_streak')) count++;
+  for (const spec of V010_APP_CARDS) {
+    if (easterFlag(easter, spec.camel, spec.snake)) count++;
+  }
+  return count;
+}
+
+export const V010_APP_EGGS_TOTAL = V010_APP_CARDS.length;
+
+export function countV010UnlockedEggs(easter: UserEasterFlags | undefined): number {
+  let count = countV010AppUnlockedEggs(easter);
   if (easterFlag(easter, 'formatMirror', 'format_mirror')) count++;
   return count;
 }

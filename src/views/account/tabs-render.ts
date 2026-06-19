@@ -11,9 +11,10 @@ import {
 } from "./account-utils";
 import { getAvatarInnerHtml } from "./avatar";
 import {
-  countV010UnlockedEggs,
+  countV010AppUnlockedEggs,
   renderFormatMirrorEasterCard,
   renderV010AppEasterCards,
+  V010_APP_EGGS_TOTAL,
 } from "./easter-v010-render";
 
 type User = {
@@ -881,7 +882,17 @@ function easterProgressHtml(current: number, total: number): string {
   )}</div>`;
 }
 
-const EASTER_EGGS_TOTAL = 30;
+const EASTER_SITE_TOTAL = 6;
+const EASTER_APP_BASE_TOTAL = 5;
+const EASTER_BRIDGE_TOTAL = 2;
+const EASTER_EGGS_TOTAL = EASTER_SITE_TOTAL + EASTER_APP_BASE_TOTAL + V010_APP_EGGS_TOTAL + EASTER_BRIDGE_TOTAL;
+
+function easterSubtabCountHtml(found: number, total: number): string {
+  const isComplete = found >= total;
+  const completeClass = isComplete ? " easter-subtab-count--complete" : "";
+  const label = t("{found} из {total}", { found: String(found), total: String(total) });
+  return `<span class="easter-subtab-count${completeClass}" aria-label="${escapeHtml(label)}">${found}/${total}</span>`;
+}
 
 function easterCollectionSummaryHtml(found: number, total: number = EASTER_EGGS_TOTAL): string {
   const isComplete = found >= total;
@@ -927,21 +938,30 @@ function renderEasterTab(user: User): string {
   const bridgeAppToday =
     user.easter?.bridgeAppToday === true || user.easter?.bridge_app_today === true;
   const bridgePlatformsToday = (bridgeWebToday ? 1 : 0) + (bridgeAppToday ? 1 : 0);
-  const easterFoundCount =
+  const hasFormatMirror =
+    user.easter?.formatMirror === true || user.easter?.format_mirror === true;
+
+  const siteFoundCount = [
+    hasStrawberry,
+    hasProfileMirror,
+    hasDarkTrigger,
+    hasPostmaster,
+    hasDeveloperMode,
+    hasThemeFlux,
+  ].filter(Boolean).length;
+
+  const appFoundCount =
     [
-      hasStrawberry,
-      hasProfileMirror,
-      hasDarkTrigger,
-      hasPostmaster,
-      hasDeveloperMode,
-      hasThemeFlux,
       hasLightCatcher,
       hasNightGuard,
       hasTrustedFingerprint,
       hasEcho,
       hasArchivist,
-      hasBridge,
-    ].filter(Boolean).length + countV010UnlockedEggs(user.easter);
+    ].filter(Boolean).length + countV010AppUnlockedEggs(user.easter);
+
+  const bridgeFoundCount = [hasBridge, hasFormatMirror].filter(Boolean).length;
+
+  const easterFoundCount = siteFoundCount + appFoundCount + bridgeFoundCount;
 
   console.log(
     "[EASTER] hasStrawberry:",
@@ -995,6 +1015,7 @@ function renderEasterTab(user: User): string {
         >
           <span aria-hidden="true">🌐</span>
           <span>${t('На сайте')}</span>
+          ${easterSubtabCountHtml(siteFoundCount, EASTER_SITE_TOTAL)}
         </button>
         <button
           type="button"
@@ -1007,6 +1028,7 @@ function renderEasterTab(user: User): string {
         >
           <span aria-hidden="true">📱</span>
           <span>${t('В приложении')}</span>
+          ${easterSubtabCountHtml(appFoundCount, EASTER_APP_BASE_TOTAL + V010_APP_EGGS_TOTAL)}
         </button>
         <button
           type="button"
@@ -1019,6 +1041,7 @@ function renderEasterTab(user: User): string {
         >
           <span aria-hidden="true">🌉</span>
           <span>${t('Связующие')}</span>
+          ${easterSubtabCountHtml(bridgeFoundCount, EASTER_BRIDGE_TOTAL)}
         </button>
       </div>
 

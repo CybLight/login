@@ -1562,6 +1562,36 @@
   box-shadow: 0 0 0 1px rgba(251, 146, 60, 0.18) inset;
 }
 
+.easter-subtab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(231, 236, 255, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.easter-subtab.active .easter-subtab-count {
+  background: rgba(251, 146, 60, 0.22);
+  color: #ffe4c4;
+}
+
+.easter-subtab-count--complete {
+  background: rgba(74, 222, 128, 0.16);
+  color: #86efac;
+}
+
+.easter-subtab.active .easter-subtab-count--complete {
+  background: rgba(74, 222, 128, 0.22);
+  color: #bbf7d0;
+}
+
 .easter-subpanel[hidden] {
   display: none !important;
 }
