@@ -15,6 +15,9 @@ export type ConversationPreviewEntry = {
   preview: string;
   latestAt: number;
   kind?: 'message' | 'reaction';
+  reactionEmoji?: string;
+  actorId?: string;
+  actorLogin?: string;
   lastMessage?: ConversationPreviewWireMessage;
 };
 
@@ -155,6 +158,9 @@ export async function fetchUnreadSummaryData(): Promise<UnreadSummary | null> {
                 row.kind === 'reaction' || row.kind === 'message'
                   ? row.kind
                   : undefined,
+              reactionEmoji: String(row.reactionEmoji ?? row.reaction_emoji ?? '').trim() || undefined,
+              actorId: String(row.actorId ?? row.actor_id ?? '').trim() || undefined,
+              actorLogin: String(row.actorLogin ?? row.actor_login ?? '').trim() || undefined,
               lastMessage,
             };
           }

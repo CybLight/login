@@ -12,6 +12,25 @@ function formatConversationPreview(userId: string, senderId: string, text: strin
   return senderId === userId ? `Вы: ${preview}` : preview;
 }
 
+function formatReactionPreview(
+  userId: string,
+  actorId: string,
+  actorLogin: string,
+  emoji: string,
+  text: string,
+): string {
+  const snippet = truncatePreviewText(stripNoPreviewTokens(text));
+  const quoted = `"${snippet}"`;
+  const reaction = emoji.trim();
+  if (actorId === userId) {
+    return reaction ? `Вы отреагировали ${reaction} на ${quoted}` : `Вы отреагировали на ${quoted}`;
+  }
+  const actor = actorLogin.trim() || actorId;
+  return reaction
+    ? `${actor} отреагировал(-a) ${reaction} на ${quoted}`
+    : `${actor} отреагировал(-a) на ${quoted}`;
+}
+
 export function cacheConversationPreview(
   friendId: string,
   senderId: string,
@@ -74,11 +93,23 @@ export async function enrichConversationPreviews(
   pending.forEach(({ friendId, entry, wire }, index) => {
     const text = decrypted[index]?.content;
     if (!text) return;
+    const preview =
+      entry.kind === 'reaction'
+        ? formatReactionPreview(
+            userId,
+            entry.actorId || '',
+            entry.actorLogin || entry.actorId || '',
+            entry.reactionEmoji || '',
+            text,
+          )
+        : formatConversationPreview(userId, wire.senderId, text);
     next[friendId] = {
       ...entry,
-      preview: formatConversationPreview(userId, wire.senderId, text),
+      preview,
     };
-    cacheConversationPreview(friendId, wire.senderId, text, Number(entry.latestAt || 0));
+    if (entry.kind !== 'reaction') {
+      cacheConversationPreview(friendId, wire.senderId, text, Number(entry.latestAt || 0));
+    }
   });
 
   return next;
