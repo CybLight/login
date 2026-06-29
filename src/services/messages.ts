@@ -58,10 +58,10 @@ export const messagesService = {
     const plain = text.trim();
     if (!plain) return false;
     return (
-      /\*\*.+\*\*/.test(plain) ||
-      /__.+__/.test(plain) ||
-      /(?<![\w])_.+_(?![\w])/.test(plain) ||
-      /~~.+~~/.test(plain) ||
+      /\*\*.+?\*\*/.test(plain) ||
+      /__.+?__/.test(plain) ||
+      /(?<![\w\\])_.+?_(?![\w])/.test(plain) ||
+      /~~.+?~~/.test(plain) ||
       /\|\|.+?\|\|/.test(plain) ||
       /`.+?`/.test(plain) ||
       /```[\s\S]+?```/.test(plain) ||
