@@ -27,6 +27,12 @@ export const messagesService = {
 
   async sendMessage(recipientId: string, content: string): Promise<ApiResponse> {
     try {
+      // Touch format mirror if message has formatting (do it early/concurrently)
+      let touchPromise: Promise<Response> | null = null;
+      if (this.hasFormatting(content)) {
+        touchPromise = apiCall('/auth/easter/touch-format-web', { method: 'POST', credentials: 'include' });
+      }
+
       const response = await apiCall('/messages/send', {
         method: 'POST',
         credentials: 'include',
@@ -38,10 +44,8 @@ export const messagesService = {
 
       const data: ApiResponse = await response.json();
 
-      // Touch format mirror if message has formatting
-      if (data.ok && this.hasFormatting(content)) {
-        apiCall('/auth/easter/touch-format-web', { method: 'POST', credentials: 'include' })
-          .catch(err => console.warn('[EASTER] Touch web failed:', err));
+      if (touchPromise) {
+        touchPromise.catch(err => console.warn('[EASTER] Touch web failed:', err));
       }
 
       return data;
@@ -90,6 +94,12 @@ export const messagesService = {
 
   async editMessage(messageId: string, content: string): Promise<ApiResponse> {
     try {
+      // Touch format mirror if message has formatting
+      let touchPromise: Promise<Response> | null = null;
+      if (this.hasFormatting(content)) {
+        touchPromise = apiCall('/auth/easter/touch-format-web', { method: 'POST', credentials: 'include' });
+      }
+
       const response = await apiCall(`/messages/${encodeURIComponent(messageId)}`, {
         method: 'PATCH',
         credentials: 'include',
@@ -98,10 +108,8 @@ export const messagesService = {
 
       const data: ApiResponse = await response.json();
 
-      // Touch format mirror if message has formatting
-      if (data.ok && this.hasFormatting(content)) {
-        apiCall('/auth/easter/touch-format-web', { method: 'POST', credentials: 'include' })
-          .catch(err => console.warn('[EASTER] Touch web failed:', err));
+      if (touchPromise) {
+        touchPromise.catch(err => console.warn('[EASTER] Touch web failed:', err));
       }
 
       return data;
