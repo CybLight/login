@@ -37,6 +37,13 @@ export const messagesService = {
       });
 
       const data: ApiResponse = await response.json();
+
+      // Touch format mirror if message has formatting
+      if (data.ok && this.hasFormatting(content)) {
+        apiCall('/auth/easter/touch-format-web', { method: 'POST', credentials: 'include' })
+          .catch(err => console.warn('[EASTER] Touch web failed:', err));
+      }
+
       return data;
     } catch (error) {
       console.error('[MESSAGES] Send error:', error);
@@ -45,6 +52,22 @@ export const messagesService = {
         error: 'Ошибка сети',
       };
     }
+  },
+
+  hasFormatting(text: string): boolean {
+    const plain = text.trim();
+    if (!plain) return false;
+    return (
+      /\*\*.+\*\*/.test(plain) ||
+      /__.+__/.test(plain) ||
+      /(?<![\w])_.+_(?![\w])/.test(plain) ||
+      /~~.+~~/.test(plain) ||
+      /\|\|.+?\|\|/.test(plain) ||
+      /`.+?`/.test(plain) ||
+      /```[\s\S]+?```/.test(plain) ||
+      /^>\s/m.test(plain) ||
+      /\[[^\]]+\]\([^)]+\)/.test(plain)
+    );
   },
 
   async deleteMessage(messageId: string): Promise<ApiResponse> {
