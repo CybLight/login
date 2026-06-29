@@ -97,6 +97,13 @@ export const messagesService = {
       });
 
       const data: ApiResponse = await response.json();
+
+      // Touch format mirror if message has formatting
+      if (data.ok && this.hasFormatting(content)) {
+        apiCall('/auth/easter/touch-format-web', { method: 'POST', credentials: 'include' })
+          .catch(err => console.warn('[EASTER] Touch web failed:', err));
+      }
+
       return data;
     } catch (error) {
       console.error('[MESSAGES] Edit error:', error);
