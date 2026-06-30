@@ -56,6 +56,7 @@ export async function restoreBackupFromGoogleDrive(
   userId: string,
   password: string,
   onProgress?: (percent: number) => void,
+  options?: { skipChats?: boolean },
 ): Promise<BackupRestoreResult> {
   const report = (percent: number): void => {
     onProgress?.(Math.min(100, Math.max(0, Math.round(percent))));
@@ -72,9 +73,15 @@ export async function restoreBackupFromGoogleDrive(
   report(18);
   const raw = await downloadDriveBackupFile(accessToken, file.id);
   report(32);
-  return importBackupFile(userId, raw, password, (restorePercent) => {
-    report(32 + (restorePercent * 68) / 100);
-  });
+  return importBackupFile(
+    userId,
+    raw,
+    password,
+    (restorePercent) => {
+      report(32 + (restorePercent * 68) / 100);
+    },
+    options,
+  );
 }
 
 export async function deleteGoogleDriveBackup(userId: string): Promise<boolean> {

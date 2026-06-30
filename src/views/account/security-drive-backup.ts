@@ -175,10 +175,16 @@ export function bindDriveBackupHandlers(deps: DriveBackupDeps): void {
     api.clearMsg();
     showDriveRestoreProgress(0);
     try {
-      const result = await restoreBackupFromGoogleDrive(userId, password, showDriveRestoreProgress);
+      const skipChats = (document.getElementById('secDriveBackupRestoreSkipChats') as HTMLInputElement | null)?.checked || false;
+      const result = await restoreBackupFromGoogleDrive(userId, password, showDriveRestoreProgress, { skipChats });
       resetActiveSignalContext();
       showDriveRestoreProgress(100);
-      showAccountNoticeModal('success', enhanceFileBackupImportSuccess(result));
+
+      if (skipChats) {
+          showAccountNoticeModal('success', t('Ключи шифрования успешно восстановлены из Google Drive. Сообщения пропущены.'));
+      } else {
+          showAccountNoticeModal('success', enhanceFileBackupImportSuccess(result));
+      }
       await refreshDriveBackupStatusLabel();
     } catch (error) {
       const code = error instanceof Error ? error.message : 'backup_failed';

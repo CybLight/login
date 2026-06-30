@@ -736,6 +736,13 @@ function renderSecurityTab(user: User): string {
                 <button type="button" class="pass-eye" data-target="secDriveBackupPassword" aria-label="${t('Показать пароль')}"></button>
               </div>
             </div>
+            <div class="sec-form-row sec-mt-8">
+              <label class="checkbox-label" for="secDriveBackupRestoreSkipChats">
+                <input type="checkbox" id="secDriveBackupRestoreSkipChats" />
+                <span>${t('Восстановить только ключи шифрования (быстро)')}</span>
+              </label>
+              <p class="sec-hint">${t('Используйте этот режим, если хотите только восстановить доступ к чатам без загрузки истории сообщений.')}</p>
+            </div>
             <div class="sec-backup-progress sec-backup-progress--drive is-hidden" id="secDriveBackupProgress" aria-live="polite" aria-busy="false">
               <div class="sec-backup-progress__head">
                 <span class="sec-backup-progress__label" id="secDriveBackupProgressLabel">${t('Подготовка…')}</span>
