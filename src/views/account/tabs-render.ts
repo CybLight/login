@@ -791,6 +791,13 @@ function renderSecurityTab(user: User): string {
                 <button type="button" class="pass-eye" data-target="secBackupImportPassword" aria-label="${t('Показать пароль')}"></button>
               </div>
             </div>
+            <div class="sec-form-row sec-mt-8">
+              <label class="checkbox-label" for="secBackupImportSkipChats">
+                <input type="checkbox" id="secBackupImportSkipChats" />
+                <span>${t('Восстановить только ключи шифрования (быстро)')}</span>
+              </label>
+              <p class="sec-hint">${t('Используйте этот режим, если хотите только восстановить доступ к чатам без загрузки истории сообщений.')}</p>
+            </div>
             <input class="is-hidden" id="secBackupFileInput" type="file" accept=".cyblight-backup,application/json" />
             <div class="sec-backup-progress is-hidden" id="secBackupImportProgress" aria-live="polite" aria-busy="false">
               <div class="sec-backup-progress__head">

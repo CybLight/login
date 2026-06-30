@@ -133,6 +133,7 @@ export async function loadLoginHistory(container: HTMLElement): Promise<void> {
       'auth.password.change': t('🔑 Смена пароля'),
       '2fa_enabled': t('🛡️ 2FA включена'),
       '2fa_disabled': t('🔓 2FA отключена'),
+      session_revoked: t('🔌 Сессия отозвана'),
       passkey_added: t('➕ Passkey добавлен'),
       passkey_removed: t('➖ Passkey удалён'),
       passkey_login: t('🔑 Вход через passkey'),

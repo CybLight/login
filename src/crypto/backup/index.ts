@@ -48,6 +48,7 @@ export async function importBackupFile(
   rawFile: string,
   password: string,
   onProgress?: (percent: number) => void,
+  options?: { skipChats?: boolean },
 ): Promise<BackupRestoreResult> {
   const report = (percent: number): void => {
     onProgress?.(Math.min(100, Math.max(0, Math.round(percent))));
@@ -59,14 +60,17 @@ export async function importBackupFile(
   const payload = await decryptBackupPayload(file, password);
   report(20);
   await restoreBackupPayload(userId, payload, (restorePercent) => {
-    report(20 + (restorePercent * 55) / 100);
+    // If skipping chats, the keys restore is the final step
+    const base = options?.skipChats ? 20 : 20;
+    const range = options?.skipChats ? 80 : 55;
+    report(base + (restorePercent * range) / 100);
   });
 
   let chatsImported = 0;
   let chatsSkipped = 0;
   let chatsErrors = 0;
 
-  if (isBackupPayloadV2(payload) && payload.chats) {
+  if (!options?.skipChats && isBackupPayloadV2(payload) && payload.chats) {
     report(80);
     const result = await importChatsPayload(payload.chats);
     chatsImported = result.imported;
@@ -113,6 +117,8 @@ export function backupErrorMessage(code: string): string {
       return t('Некорректный ключ синхронизации в резервной копии.');
     case 'chats_import_failed':
       return t('Не удалось импортировать чаты из резервной копии.');
+    case 'backup_keys_only_success':
+      return t('Ключи шифрования успешно восстановлены. Сообщения пропущены.');
     default:
       console.error('[Backup] Unhandled error code:', code);
       return t('Не удалось обработать резервную копию.');

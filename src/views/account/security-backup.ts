@@ -127,10 +127,17 @@ export function bindBackupHandlers(deps: BackupDeps): void {
     setBackupRestoreProgress(0);
     try {
       const raw = await file.text();
-      const result = await importBackupFile(userId, raw, password, setBackupRestoreProgress);
+      const skipChats = (document.getElementById('secBackupImportSkipChats') as HTMLInputElement | null)?.checked || false;
+
+      const result = await importBackupFile(userId, raw, password, setBackupRestoreProgress, { skipChats });
       resetActiveSignalContext();
       setBackupRestoreProgress(100);
-      showAccountNoticeModal('success', enhanceFileBackupImportSuccess(result));
+
+      if (skipChats) {
+        showAccountNoticeModal('success', t('Ключи шифрования успешно восстановлены. Сообщения пропущены.'));
+      } else {
+        showAccountNoticeModal('success', enhanceFileBackupImportSuccess(result));
+      }
     } catch (error) {
       const code = error instanceof Error ? error.message : 'backup_failed';
       api.showMsg('error', backupErrorMessage(code));

@@ -124,6 +124,11 @@ export async function decryptBackupPayload(
     throw new Error('backup_payload_invalid');
   }
 
+  // Handle Android versioning or legacy field mappings if needed
+  if (parsed.version === undefined) {
+      (parsed as any).version = 1;
+  }
+
   return parsed as CyblightBackupPayload;
 }
 
