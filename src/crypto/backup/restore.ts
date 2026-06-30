@@ -6,6 +6,7 @@ export async function restoreBackupPayload(
   expectedUserId: string,
   payload: CyblightBackupPayload,
   onProgress?: (percent: number) => void,
+  options?: { skipDecryptCache?: boolean },
 ): Promise<void> {
   if (payload.userId !== expectedUserId) {
     throw new Error('backup_user_mismatch');
@@ -38,10 +39,15 @@ export async function restoreBackupPayload(
     ...Object.entries(sessions).map(
       ([sessionKey, value]) => [`wasmSession:${sessionKey}`, value] as [string, unknown],
     ),
-    ...Object.entries(payload.decryptCache || {}).map(
-      ([messageId, plaintext]) => [`decryptCache:${messageId}`, plaintext] as [string, unknown],
-    ),
   ];
+
+  if (options?.skipDecryptCache !== true) {
+    writeEntries.push(
+      ...Object.entries(payload.decryptCache || {}).map(
+        ([messageId, plaintext]) => [`decryptCache:${messageId}`, plaintext] as [string, unknown],
+      ),
+    );
+  }
 
   const totalSteps = 1 + writeEntries.length;
   let completedSteps = 0;

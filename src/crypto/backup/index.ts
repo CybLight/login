@@ -59,12 +59,17 @@ export async function importBackupFile(
   report(12);
   const payload = await decryptBackupPayload(file, password);
   report(20);
-  await restoreBackupPayload(userId, payload, (restorePercent) => {
-    // If skipping chats, the keys restore is the final step
-    const base = options?.skipChats ? 20 : 20;
-    const range = options?.skipChats ? 80 : 55;
-    report(base + (restorePercent * range) / 100);
-  });
+  await restoreBackupPayload(
+    userId,
+    payload,
+    (restorePercent) => {
+      // If skipping chats, the keys restore is the final step
+      const base = options?.skipChats ? 20 : 20;
+      const range = options?.skipChats ? 80 : 55;
+      report(base + (restorePercent * range) / 100);
+    },
+    { skipDecryptCache: options?.skipChats },
+  );
 
   let chatsImported = 0;
   let chatsSkipped = 0;
