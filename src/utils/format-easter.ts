@@ -1,4 +1,5 @@
 import { apiCall } from './api';
+import { showCongratsModal } from '@/components/easter/strawberry/modal';
 
 export function messageHasFormatting(content: string): boolean {
   const text = content.trim();
@@ -19,11 +20,19 @@ export function messageHasFormatting(content: string): boolean {
 export async function touchFormatMirrorWeb(outgoingContent: string): Promise<void> {
   if (!messageHasFormatting(outgoingContent)) return;
   try {
-    await apiCall('/auth/easter/touch-format-web', {
+    const res = await apiCall('/auth/easter/touch-format-web', {
       method: 'POST',
       credentials: 'include',
       body: '{}',
     });
+
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data.ok && data.formatMirror) {
+        // Показываем модалку поздравления для зеркала формата
+        void showCongratsModal('__FORMAT_MIRROR__', () => {});
+      }
+    }
   } catch {
     // ignore
   }

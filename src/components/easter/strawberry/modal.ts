@@ -238,9 +238,14 @@ export function showCongratsModal(userName: string, onConfirm: () => void): Prom
 
     if (titleEl) titleEl.textContent = 'Поздравляю!';
     if (textEl) {
-      const text1 = 'эта клубничка была особенная';
-      const text2 = 'ты поймал её вовремя, <br> пока она не разбилась об футер сайта.';
-      textEl.innerHTML = `<b>${escapeHtml(userName)}</b>,🍓 ${text1} 😉<br> ${text2}`;
+      if (userName === '__FORMAT_MIRROR__') {
+        titleEl.textContent = 'Зеркало формата';
+        textEl.innerHTML = `Поздравляем! Ты выполнил условия пасхалки <b>Зеркало формата</b>, отправив сообщения с форматированием на разных устройствах.`;
+      } else {
+        const text1 = 'эта клубничка была особенная';
+        const text2 = 'ты поймал её вовремя, <br> пока она не разбилась об футер сайта.';
+        textEl.innerHTML = `<b>${escapeHtml(userName)}</b>,🍓 ${text1} 😉<br> ${text2}`;
+      }
     }
 
     // Скрываем input и cancel
