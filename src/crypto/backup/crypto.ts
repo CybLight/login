@@ -10,7 +10,6 @@ import {
   BACKUP_ITERATIONS,
   BACKUP_KDF,
   BACKUP_VERSION,
-  isBackupPayloadVersion,
   type CyblightBackupFileV1,
   type CyblightBackupPayload,
 } from './format';
@@ -69,19 +68,28 @@ export async function encryptBackupPayload(
 }
 
 export async function decryptBackupPayload(
-  file: CyblightBackupFileV1,
+  file: any,
   password: string,
 ): Promise<CyblightBackupPayload> {
-  if (file.format !== BACKUP_FILE_FORMAT || file.version !== BACKUP_VERSION) {
+  const format = file.format || BACKUP_FILE_FORMAT;
+  const kdf = file.kdf || BACKUP_KDF;
+  const iterations = file.iterations || BACKUP_ITERATIONS;
+  const saltStr = file.salt || file.saltBase64;
+  const ivStr = file.iv || file.ivBase64;
+
+  if (format !== BACKUP_FILE_FORMAT) {
     throw new Error('backup_format_unsupported');
   }
-  if (file.kdf !== BACKUP_KDF) {
+  if (kdf !== BACKUP_KDF) {
     throw new Error('backup_kdf_unsupported');
   }
+  if (!saltStr || !ivStr || !file.ciphertext) {
+    throw new Error('backup_file_invalid');
+  }
 
-  const salt = new Uint8Array(base64ToArrayBuffer(file.salt));
-  const iv = new Uint8Array(base64ToArrayBuffer(file.iv));
-  const key = await deriveKey(password, salt, file.iterations);
+  const salt = new Uint8Array(base64ToArrayBuffer(saltStr));
+  const iv = new Uint8Array(base64ToArrayBuffer(ivStr));
+  const key = await deriveKey(password, salt, iterations);
   const ciphertext = base64ToArrayBuffer(file.ciphertext);
 
   let decrypted: ArrayBuffer;
@@ -91,28 +99,50 @@ export async function decryptBackupPayload(
       key,
       ciphertext,
     );
-  } catch {
+  } catch (err) {
+    console.error('[Backup] Decrypt failed:', err);
     throw new Error('backup_password_invalid');
   }
 
-  const parsed = JSON.parse(arrayBufferToUtf8(decrypted)) as CyblightBackupPayload;
-  if (
-    parsed.format !== 'cyblight-backup-payload' ||
-    !isBackupPayloadVersion(parsed.version)
-  ) {
+  let decryptedText: string;
+  try {
+    decryptedText = arrayBufferToUtf8(decrypted);
+  } catch (err) {
+    console.error('[Backup] Utf8 decode failed:', err);
     throw new Error('backup_payload_invalid');
   }
-  return parsed;
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(decryptedText);
+  } catch (err) {
+    console.error('[Backup] JSON parse failed:', err);
+    throw new Error('backup_payload_invalid');
+  }
+
+  if (parsed.format !== 'cyblight-backup-payload') {
+    throw new Error('backup_payload_invalid');
+  }
+
+  return parsed as CyblightBackupPayload;
 }
 
 export function serializeBackupFile(file: CyblightBackupFileV1): string {
   return JSON.stringify(file);
 }
 
-export function parseBackupFile(raw: string): CyblightBackupFileV1 {
-  const parsed = JSON.parse(raw) as CyblightBackupFileV1;
-  if (!parsed || parsed.format !== BACKUP_FILE_FORMAT) {
+export function parseBackupFile(raw: string): any {
+  try {
+    const parsed = JSON.parse(raw);
+    if (!parsed || (parsed.format && parsed.format !== BACKUP_FILE_FORMAT)) {
+      // Some old backups might not have format field at top level
+      if (!parsed.ciphertext || (!parsed.salt && !parsed.saltBase64)) {
+        throw new Error('backup_file_invalid');
+      }
+    }
+    return parsed;
+  } catch (err) {
+    console.error('[Backup] File parse failed:', err);
     throw new Error('backup_file_invalid');
   }
-  return parsed;
 }

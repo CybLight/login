@@ -11,21 +11,34 @@ export async function restoreBackupPayload(
     throw new Error('backup_user_mismatch');
   }
 
+  // Handle both nested and top-level manifest
+  const manifest = payload.manifest || payload.signal?.manifest;
+  if (!manifest) {
+    throw new Error('backup_payload_invalid');
+  }
+
+  // Handle both snake_case (Android) and camelCase (Web) records
+  const records = payload.records || {};
+  const preKeys = records.preKeys || records.pre_keys || {};
+  const signedPreKeys = records.signedPreKeys || records.signed_pre_keys || {};
+  const kyberPreKeys = records.kyberPreKeys || records.kyber_pre_keys || {};
+  const sessions = records.sessions || {};
+
   const writeEntries: Array<[string, unknown]> = [
-    ['wasmManifest', payload.signal.manifest],
-    ...Object.entries(payload.records.preKeys).map(
+    ['wasmManifest', manifest],
+    ...Object.entries(preKeys).map(
       ([keyId, value]) => [`wasmPreKey:${keyId}`, value] as [string, unknown],
     ),
-    ...Object.entries(payload.records.signedPreKeys).map(
+    ...Object.entries(signedPreKeys).map(
       ([keyId, value]) => [`wasmSignedPreKey:${keyId}`, value] as [string, unknown],
     ),
-    ...Object.entries(payload.records.kyberPreKeys).map(
+    ...Object.entries(kyberPreKeys).map(
       ([keyId, value]) => [`wasmKyberPreKey:${keyId}`, value] as [string, unknown],
     ),
-    ...Object.entries(payload.records.sessions).map(
+    ...Object.entries(sessions).map(
       ([sessionKey, value]) => [`wasmSession:${sessionKey}`, value] as [string, unknown],
     ),
-    ...Object.entries(payload.decryptCache).map(
+    ...Object.entries(payload.decryptCache || {}).map(
       ([messageId, plaintext]) => [`decryptCache:${messageId}`, plaintext] as [string, unknown],
     ),
   ];

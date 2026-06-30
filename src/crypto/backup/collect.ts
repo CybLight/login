@@ -1,5 +1,6 @@
 import { type SignalStoredRecord, readSignalDbSafely } from '../signal/idb-store';
 import { readPlaintextSyncKeyForBackup } from '../signal/sync-key';
+import type { StoreManifest } from '../signal/wasm-context';
 import {
   BACKUP_PAYLOAD_FORMAT,
   BACKUP_PAYLOAD_VERSION_V1,
@@ -42,7 +43,7 @@ export async function collectBackupPayload(
     return null;
   }
 
-  const manifest = manifestRow.value as CyblightBackupPayload['signal']['manifest'];
+  const manifest = manifestRow.value as StoreManifest;
   const records = defaultBackupRecords();
   const decryptCache: Record<string, string> = {};
 

@@ -14,6 +14,10 @@ export type CyblightBackupRecords = {
   signedPreKeys: Record<string, string>;
   kyberPreKeys: Record<string, string>;
   sessions: Record<string, string>;
+  // Android compatibility fields
+  pre_keys?: Record<string, string>;
+  signed_pre_keys?: Record<string, string>;
+  kyber_pre_keys?: Record<string, string>;
 };
 
 export type CyblightChatsExportPayload = {
@@ -32,9 +36,11 @@ export type CyblightBackupPayloadBase = {
   format: typeof BACKUP_PAYLOAD_FORMAT;
   userId: string;
   createdAt: number;
-  signal: {
+  signal?: {
     manifest: StoreManifest;
   };
+  // Android/Legacy compatibility
+  manifest?: StoreManifest;
   records: CyblightBackupRecords;
   decryptCache: Record<string, string>;
   /** Base64-encoded 32-byte AES key for cross-device plaintext sync */

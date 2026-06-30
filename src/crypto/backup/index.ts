@@ -105,9 +105,16 @@ export function backupErrorMessage(code: string): string {
     case 'backup_payload_invalid':
     case 'backup_format_unsupported':
       return t('Некорректный файл резервной копии.');
+    case 'indexeddb_delete_failed':
+    case 'indexeddb_read_failed':
+    case 'indexeddb_write_failed':
+      return t('Ошибка доступа к локальной базе данных браузера.');
+    case 'sync_key_invalid':
+      return t('Некорректный ключ синхронизации в резервной копии.');
     case 'chats_import_failed':
       return t('Не удалось импортировать чаты из резервной копии.');
     default:
+      console.error('[Backup] Unhandled error code:', code);
       return t('Не удалось обработать резервную копию.');
   }
 }
