@@ -1,6 +1,5 @@
 import {
   arrayBufferToBase64,
-  arrayBufferToUtf8,
   base64ToArrayBuffer,
   bytesToArrayBuffer,
   utf8ToArrayBuffer,
@@ -106,7 +105,8 @@ export async function decryptBackupPayload(
 
   let decryptedText: string;
   try {
-    decryptedText = arrayBufferToUtf8(decrypted);
+    // Use TextDecoder for better performance and memory efficiency with large buffers
+    decryptedText = new TextDecoder().decode(decrypted);
   } catch (err) {
     console.error('[Backup] Utf8 decode failed:', err);
     throw new Error('backup_payload_invalid');

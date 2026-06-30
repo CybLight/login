@@ -127,7 +127,8 @@ export function bindBackupHandlers(deps: BackupDeps): void {
     setBackupRestoreProgress(0);
     try {
       const raw = await file.text();
-      const skipChats = (document.getElementById('secBackupImportSkipChats') as HTMLInputElement | null)?.checked || false;
+      // Read skipChats from checkbox
+      const skipChats = (document.getElementById('secBackupImportSkipChats') as HTMLInputElement | null)?.checked ?? true;
 
       const result = await importBackupFile(userId, raw, password, setBackupRestoreProgress, { skipChats });
       resetActiveSignalContext();

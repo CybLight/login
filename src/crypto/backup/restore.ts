@@ -78,13 +78,15 @@ export async function restoreBackupPayload(
   completedSteps += 1;
   await report();
 
-  for (const [key, value] of writeEntries) {
-    await withSignalDb('readwrite', async (store) => {
+  // BATCH WRITE: Use a single transaction for all entries
+  await withSignalDb('readwrite', async (store) => {
+    for (const [key, value] of writeEntries) {
       store.put({ userId: expectedUserId, key, value } satisfies SignalStoredRecord);
-    });
-    completedSteps += 1;
-    await report();
-  }
+      completedSteps += 1;
+    }
+  });
+
+  await report();
 
   await restorePlaintextSyncKeyFromBackup(expectedUserId, payload.plaintextSyncKey);
 }

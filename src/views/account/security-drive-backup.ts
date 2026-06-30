@@ -175,7 +175,8 @@ export function bindDriveBackupHandlers(deps: DriveBackupDeps): void {
     api.clearMsg();
     showDriveRestoreProgress(0);
     try {
-      const skipChats = (document.getElementById('secDriveBackupRestoreSkipChats') as HTMLInputElement | null)?.checked || false;
+      // Read skipChats from checkbox
+      const skipChats = (document.getElementById('secDriveBackupRestoreSkipChats') as HTMLInputElement | null)?.checked ?? true;
       const result = await restoreBackupFromGoogleDrive(userId, password, showDriveRestoreProgress, { skipChats });
       resetActiveSignalContext();
       showDriveRestoreProgress(100);

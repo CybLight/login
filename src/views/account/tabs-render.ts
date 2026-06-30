@@ -738,10 +738,10 @@ function renderSecurityTab(user: User): string {
             </div>
             <div class="sec-form-row sec-mt-8">
               <label class="checkbox-label" for="secDriveBackupRestoreSkipChats">
-                <input type="checkbox" id="secDriveBackupRestoreSkipChats" />
-                <span>${t('Восстановить только ключи шифрования (быстро)')}</span>
+                <input type="checkbox" id="secDriveBackupRestoreSkipChats" checked />
+                <span>${t('Восстановить только ключи шифрования (мгновенно)')}</span>
               </label>
-              <p class="sec-hint">${t('Используйте этот режим, если хотите только восстановить доступ к чатам без загрузки истории сообщений.')}</p>
+              <p class="sec-hint">${t('Рекомендуемый способ. Восстанавливает доступ к чатам без загрузки старой истории сообщений.')}</p>
             </div>
             <div class="sec-backup-progress sec-backup-progress--drive is-hidden" id="secDriveBackupProgress" aria-live="polite" aria-busy="false">
               <div class="sec-backup-progress__head">
@@ -800,10 +800,10 @@ function renderSecurityTab(user: User): string {
             </div>
             <div class="sec-form-row sec-mt-8">
               <label class="checkbox-label" for="secBackupImportSkipChats">
-                <input type="checkbox" id="secBackupImportSkipChats" />
-                <span>${t('Восстановить только ключи шифрования (быстро)')}</span>
+                <input type="checkbox" id="secBackupImportSkipChats" checked />
+                <span>${t('Восстановить только ключи шифрования (мгновенно)')}</span>
               </label>
-              <p class="sec-hint">${t('Используйте этот режим, если хотите только восстановить доступ к чатам без загрузки истории сообщений.')}</p>
+              <p class="sec-hint">${t('Рекомендуемый способ. Восстанавливает доступ к чатам без загрузки старой истории сообщений.')}</p>
             </div>
             <input class="is-hidden" id="secBackupFileInput" type="file" accept=".cyblight-backup,application/json" />
             <div class="sec-backup-progress is-hidden" id="secBackupImportProgress" aria-live="polite" aria-busy="false">
