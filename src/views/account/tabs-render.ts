@@ -712,7 +712,18 @@ function renderSecurityTab(user: User): string {
       <div class="sec-panel is-hidden" id="secBackupPanel">
         <div class="sec-panel-inner sec-backup-panel">
           <div class="sec-status sec-status-muted">
-            ${t('Создайте зашифрованную копию ключей и сообщений в Google Drive или скачайте файл для переноса между устройствами.')}
+            ${t('Перенесите ключи шифрования через QR-код или используйте файл резервной копии.')}
+          </div>
+
+          <div class="sec-form-block sec-form-block--qr">
+            <div class="sec-form-block-head">
+              <span class="sec-form-block-icon" aria-hidden="true">📱</span>
+              <div class="sec-form-title">${t('Синхронизация через QR')}</div>
+            </div>
+            <p class="sec-hint">${t('Быстрый способ привязать это устройство к вашему телефону.')}</p>
+            <div class="sec-qr-sync-container" id="secQrSyncContainer">
+               <button class="btn btn-primary btn-full" id="secQrSyncStartBtn" type="button">${t('Показать QR-код для привязки')}</button>
+            </div>
           </div>
 
           <div class="sec-form-block sec-form-block--drive">

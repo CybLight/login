@@ -10,11 +10,16 @@ import { resetActiveSignalContext } from '@/crypto/signal/manager';
 import { showAccountNoticeModal } from './modals';
 import { enhanceFileBackupImportSuccess } from './backup-ui-utils';
 import { bindDriveBackupHandlers } from './security-drive-backup';
+import { bindQrSyncHandlers } from './security-qr-sync';
 
 type BackupDeps = {
   userId: string;
   login: string;
-  api: { showMsg: (type: string, text: string, persist?: boolean) => void; clearMsg: () => void };
+  api: {
+    showMsg: (type: string, text: string, persist?: boolean) => void;
+    clearMsg: () => void;
+    fetch: (url: string, init?: RequestInit) => Promise<Response>;
+  };
 };
 
 function readPasswordInput(id: string): string {
@@ -80,6 +85,7 @@ export function bindBackupHandlers(deps: BackupDeps): void {
   };
 
   bindDriveBackupHandlers({ userId, login, api, ...backupHelpers });
+  bindQrSyncHandlers({ userId, api });
 
   exportBtn?.addEventListener('click', async () => {
     const password = readPasswordInput('secBackupExportPassword');

@@ -697,7 +697,10 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
     bindBackupHandlers({
       userId: String(user.id),
       login: user.login || user.username || String(user.id),
-      api,
+      api: {
+        ...api,
+        fetch: (url, init) => apiCall(url, init),
+      },
     });
   }
 
