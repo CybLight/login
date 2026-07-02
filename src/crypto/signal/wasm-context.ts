@@ -12,7 +12,7 @@ import { arrayBufferToBase64, base64ToArrayBuffer, bytesToArrayBuffer } from './
 import { ensureLibsignalInitialized } from './libsignal-init';
 import { type SignalStoredRecord, withSignalDb } from './idb-store';
 
-export const DEVICE_ID = 1;
+export const FALLBACK_DEVICE_ID = 1;
 
 export type PreKeyUploadMeta = {
   keyId: number;
@@ -22,6 +22,7 @@ export type PreKeyUploadMeta = {
 
 export type StoreManifest = {
   registrationId: number;
+  deviceId?: number; // assigned by server during sync
   identitySerialized: string;
   preKeyIds: number[];
   signedPreKeyIds: number[];
@@ -37,6 +38,7 @@ export type StoreManifest = {
 export type WasmSignalContext = {
   userId: string;
   registrationId: number;
+  deviceId: number;
   identityKeyPair: WasmIdentityKeyPair;
   localAddress: WasmProtocolAddress;
   identityStore: WasmInMemIdentityKeyStore;
@@ -81,8 +83,8 @@ export function sessionKey(address: WasmProtocolAddress): string {
   return `${address.name}:${address.deviceId}`;
 }
 
-export function peerAddress(peerUserId: string): WasmProtocolAddress {
-  return new WasmProtocolAddress(peerUserId, DEVICE_ID);
+export function peerAddress(peerUserId: string, deviceId = 1): WasmProtocolAddress {
+  return new WasmProtocolAddress(peerUserId, deviceId);
 }
 
 function toUint8Array(buffer: ArrayBuffer): Uint8Array {
@@ -103,10 +105,12 @@ export async function loadWasmContext(userId: string): Promise<WasmSignalContext
     return null;
   }
 
+  const deviceId = manifest.deviceId || FALLBACK_DEVICE_ID;
+
   const identityKeyPair = WasmIdentityKeyPair.deserialize(
     toUint8Array(base64ToArrayBuffer(manifest.identitySerialized)),
   );
-  const localAddress = new WasmProtocolAddress(userId, DEVICE_ID);
+  const localAddress = new WasmProtocolAddress(userId, deviceId);
 
   const identityStore = new WasmInMemIdentityKeyStore(identityKeyPair, manifest.registrationId);
   const preKeyStore = new WasmInMemPreKeyStore();
@@ -157,6 +161,7 @@ export async function loadWasmContext(userId: string): Promise<WasmSignalContext
   return {
     userId,
     registrationId: manifest.registrationId,
+    deviceId,
     identityKeyPair,
     localAddress,
     identityStore,
@@ -168,16 +173,21 @@ export async function loadWasmContext(userId: string): Promise<WasmSignalContext
   };
 }
 
-export async function createWasmContext(userId: string, registrationId: number): Promise<WasmSignalContext> {
+export async function createWasmContext(
+  userId: string,
+  registrationId: number,
+  deviceId = FALLBACK_DEVICE_ID
+): Promise<WasmSignalContext> {
   await ensureLibsignalInitialized();
 
   const privateKey = WasmPrivateKey.generate();
   const publicKey = privateKey.getPublicKey();
   const identityKeyPair = new WasmIdentityKeyPair(publicKey, privateKey);
-  const localAddress = new WasmProtocolAddress(userId, DEVICE_ID);
+  const localAddress = new WasmProtocolAddress(userId, deviceId);
 
   const manifest: StoreManifest = {
     registrationId,
+    deviceId,
     identitySerialized: arrayBufferToBase64(bytesToArrayBuffer(identityKeyPair.serialize())),
     preKeyIds: [],
     signedPreKeyIds: [],
@@ -188,6 +198,7 @@ export async function createWasmContext(userId: string, registrationId: number):
   const ctx: WasmSignalContext = {
     userId,
     registrationId,
+    deviceId,
     identityKeyPair,
     localAddress,
     identityStore: new WasmInMemIdentityKeyStore(identityKeyPair, registrationId),

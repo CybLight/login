@@ -104,7 +104,7 @@ export function finalizeOptimisticSentMessage(
     content: rawContent,
     senderId: userId,
     createdAt,
-    encryption: 'signal_v1',
+    encryption: 'signal_v2',
   };
   messageMap.set(savedId, record);
 

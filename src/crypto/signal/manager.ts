@@ -50,7 +50,14 @@ export type EncryptedMessagePayload = {
   content: string;
   signalType: number;
   registrationId: number;
-  encryption: 'signal_v1';
+  encryption: 'signal_v1' | 'signal_v2';
+  ciphertexts?: Array<{
+    deviceId: number;
+    registrationId: number;
+    signalType: number;
+    content: string;
+    ownerId?: string;
+  }>;
 };
 
 export type WireMessage = {
@@ -66,7 +73,7 @@ export type WireMessage = {
 
 type KeyBundleResponse = {
   ok: boolean;
-  bundle?: {
+  bundles?: Array<{
     userId: string;
     deviceId: number;
     registrationId: number;
@@ -85,7 +92,7 @@ type KeyBundleResponse = {
       keyId: number;
       publicKey: string;
     } | null;
-  };
+  }>;
   error?: string;
 };
 
@@ -165,21 +172,6 @@ async function requireContext(userId: string): Promise<WasmSignalContext> {
     throw new Error('local_keys_missing');
   }
   return ctx;
-}
-
-async function fetchKeyBundle(peerUserId: string): Promise<NonNullable<KeyBundleResponse['bundle']>> {
-  const response = await apiCall(`/crypto/keys/bundle/${encodeURIComponent(peerUserId)}`, {
-    method: 'GET',
-    credentials: 'include',
-  });
-  const data = (await response.json().catch(() => ({}))) as KeyBundleResponse;
-  if (!response.ok || !data.ok || !data.bundle) {
-    throw new Error(data.error || 'key_bundle_failed');
-  }
-  if (!data.bundle.kyberPreKey) {
-    throw new Error('kyber_prekey_missing');
-  }
-  return data.bundle;
 }
 
 async function uploadKeyRegistration(
@@ -396,9 +388,24 @@ function markPreKeyHandshakePeer(ctx: WasmSignalContext, peerUserId: string): vo
   }
 }
 
-async function establishSession(ctx: WasmSignalContext, peerUserId: string): Promise<void> {
-  const address = peerAddress(peerUserId);
-  const bundle = await fetchKeyBundle(peerUserId);
+async function fetchRecipientBundles(peerUserId: string): Promise<NonNullable<KeyBundleResponse['bundles']>> {
+  const response = await apiCall(`/crypto/keys/bundle/${encodeURIComponent(peerUserId)}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+  const data = (await response.json().catch(() => ({}))) as KeyBundleResponse;
+  if (!response.ok || !data.ok || !data.bundles) {
+    throw new Error(data.error || 'key_bundle_failed');
+  }
+  return data.bundles;
+}
+
+async function establishSession(
+  ctx: WasmSignalContext,
+  peerUserId: string,
+  bundle: NonNullable<KeyBundleResponse['bundles']>[number],
+): Promise<void> {
+  const address = peerAddress(peerUserId, bundle.deviceId);
   const preKeyId = bundle.oneTimePreKey?.keyId ?? null;
   const preKeyBytes = bundle.oneTimePreKey
     ? new Uint8Array(base64ToArrayBuffer(bundle.oneTimePreKey.publicKey))
@@ -424,24 +431,30 @@ async function establishSession(ctx: WasmSignalContext, peerUserId: string): Pro
   await trackSession(ctx, address);
 }
 
-async function ensureSession(ctx: WasmSignalContext, peerUserId: string): Promise<void> {
-  const address = peerAddress(peerUserId);
+async function ensureSession(
+  ctx: WasmSignalContext,
+  peerUserId: string,
+  bundle: NonNullable<KeyBundleResponse['bundles']>[number],
+): Promise<void> {
+  const address = peerAddress(peerUserId, bundle.deviceId);
   if (await ctx.sessionStore.has_session(address)) {
     return;
   }
 
-  await establishSession(ctx, peerUserId);
+  await establishSession(ctx, peerUserId, bundle);
 }
 
 async function encryptForPeer(
   ctx: WasmSignalContext,
   recipientId: string,
+  bundle: NonNullable<KeyBundleResponse['bundles']>[number],
   plaintext: string,
 ): Promise<{ body: Uint8Array; message_type: number }> {
-  await ensureSession(ctx, recipientId);
+  const address = peerAddress(recipientId, bundle.deviceId);
+  await ensureSession(ctx, recipientId, bundle);
   return encryptMessage(
     new Uint8Array(utf8ToArrayBuffer(plaintext)),
-    peerAddress(recipientId),
+    address,
     ctx.localAddress,
     ctx.sessionStore,
     ctx.identityStore,
@@ -465,25 +478,68 @@ async function encryptOutgoingMessageOnce(
   await ensureSignalKeysRegistered(userId);
   const ctx = await requireContext(userId);
 
-  let ciphertext = await encryptForPeer(ctx, recipientId, plaintext);
+  // 1. Fetch all registered devices for recipient AND sender (for sync)
+  const recipientBundles = await fetchRecipientBundles(recipientId);
+  const senderBundles = userId !== recipientId ? await fetchRecipientBundles(userId) : [];
 
-  if (
-    ciphertext.message_type === message_type_signal() &&
-    !hasPreKeyHandshakePeer(ctx, recipientId)
-  ) {
-    await resetPeerSession(ctx, recipientId);
-    await establishSession(ctx, recipientId);
-    ciphertext = await encryptForPeer(ctx, recipientId, plaintext);
+  const ciphertexts: EncryptedMessagePayload['ciphertexts'] = [];
+
+  // Helper to encrypt for a specific set of bundles
+  const encryptForBundles = async (
+    bundles: NonNullable<KeyBundleResponse['bundles']>,
+    targetOwnerId: string,
+  ) => {
+    for (const bundle of bundles) {
+      // Standard Signal sync: Sender encrypts for their OTHER devices.
+      // For CybLight Web, we also encrypt for the sending device itself
+      // so that history remains decryptable after a page refresh if the
+      // local plaintext cache is lost.
+
+      try {
+        let ciphertext = await encryptForPeer(ctx, targetOwnerId, bundle, plaintext);
+
+        if (
+          ciphertext.message_type === message_type_signal() &&
+          !hasPreKeyHandshakePeer(ctx, targetOwnerId)
+        ) {
+          await resetPeerSession(ctx, targetOwnerId);
+          await establishSession(ctx, targetOwnerId, bundle);
+          ciphertext = await encryptForPeer(ctx, targetOwnerId, bundle, plaintext);
+        }
+
+        ciphertexts.push({
+          deviceId: bundle.deviceId,
+          registrationId: bundle.registrationId,
+          signalType: ciphertext.message_type,
+          content: arrayBufferToBase64(bytesToArrayBuffer(ciphertext.body)),
+          ownerId: targetOwnerId,
+        });
+
+        await trackSession(ctx, peerAddress(targetOwnerId, bundle.deviceId));
+      } catch (e) {
+        console.error(`[Signal] Failed to encrypt for device ${bundle.deviceId} of ${targetOwnerId}`, e);
+      }
+    }
+  };
+
+  await encryptForBundles(recipientBundles, recipientId);
+  await encryptForBundles(senderBundles, userId);
+
+  if (ciphertexts.length === 0) {
+    throw new Error('failed_to_encrypt_for_any_device');
   }
 
-  await trackSession(ctx, peerAddress(recipientId));
   await persistWasmContext(ctx);
 
+  // Pick one for legacy signal_v1 compatibility (though backend now prefers signal_v2 array)
+  const primary = ciphertexts.find((c) => c.ownerId === recipientId) || ciphertexts[0];
+
   return {
-    content: arrayBufferToBase64(bytesToArrayBuffer(ciphertext.body)),
-    signalType: ciphertext.message_type,
-    registrationId: ctx.registrationId,
-    encryption: 'signal_v1',
+    content: primary.content,
+    signalType: primary.signalType,
+    registrationId: primary.registrationId,
+    encryption: 'signal_v2',
+    ciphertexts,
   };
 }
 
@@ -596,18 +652,22 @@ export async function decryptIncomingMessage(
   message: WireMessage,
   batch?: DecryptBatchState,
 ): Promise<string> {
-  if (!message.encryption || message.encryption !== 'signal_v1') {
-    return t('🔒 Сообщение недоступно');
-  }
+  const isMe = String(message.senderId) === String(userId);
 
-  if (message.senderId === userId) {
+  if (message.senderId === userId || isMe) {
     if (message.id) {
       const cached = await readSyncedPlaintext(userId, message.id, batch, message);
       if (cached !== null) {
         return cached;
       }
     }
-    return t('🔒 Сообщение отправлено');
+    if (message.content === '[multi-device]' || message.encryption === 'signal_v2') {
+        return t('🔒 Сообщение отправлено');
+    }
+  }
+
+  if (!message.encryption || (message.encryption !== 'signal_v1' && message.encryption !== 'signal_v2')) {
+    return t('🔒 Сообщение недоступно');
   }
 
   if (message.id && isEditedPeerMessage(userId, message)) {
@@ -749,7 +809,7 @@ export async function decryptIncomingMessage(
 }
 
 function needsSignalDecrypt(userId: string, message: WireMessage): boolean {
-  if (message.encryption !== 'signal_v1') return false;
+  if (message.encryption !== 'signal_v1' && message.encryption !== 'signal_v2') return false;
   if (message.senderId === userId) return false;
   return true;
 }
@@ -773,7 +833,7 @@ export async function decryptMessageList<T extends WireMessage>(
 
   const missingSyncIds = messageIds.filter((id) => {
     const message = decryptOrder.find((entry) => entry.id === id);
-    if (!message || message.encryption !== 'signal_v1') return false;
+    if (!message || (message.encryption !== 'signal_v1' && message.encryption !== 'signal_v2')) return false;
     if (isEditedPeerMessage(userId, message)) return true;
     return !cache.has(id);
   });

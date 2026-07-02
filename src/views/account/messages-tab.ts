@@ -217,6 +217,35 @@ export function openChatInMessagesTab(
   let currentInputEmojiSearch = '';
   let suppressedInputPreviewUrl: string | null = null;
   let currentReplyState: ReplyMessageState | null = null;
+  let isPickerLocked = false;
+  let hideTimeout: number | undefined;
+
+  const showPicker = () => {
+    if (hideTimeout) {
+      window.clearTimeout(hideTimeout);
+      hideTimeout = undefined;
+    }
+    if (chatInputEmojiPicker && !chatInputEmojiPicker.classList.contains('active')) {
+      chatInputEmojiPicker.classList.add('active');
+      renderInputEmojiPicker();
+    }
+  };
+
+  const hidePicker = (force = false) => {
+    if (isPickerLocked && !force) return;
+    if (chatInputEmojiPicker) {
+      chatInputEmojiPicker.classList.remove('active');
+    }
+    if (force) isPickerLocked = false;
+  };
+
+  const scheduleHide = () => {
+    if (isPickerLocked) return;
+    if (hideTimeout) window.clearTimeout(hideTimeout);
+    hideTimeout = window.setTimeout(() => {
+      hidePicker();
+    }, 300);
+  };
 
   const forwardMessageFromPicker = async (messageText: string): Promise<void> => {
     const friendsRes = await apiCall('/friends/list', { credentials: 'include' });
@@ -306,9 +335,7 @@ export function openChatInMessagesTab(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             recipientId: targetId,
-            content: encrypted.content,
-            signalType: encrypted.signalType,
-            registrationId: encrypted.registrationId,
+            ciphertexts: encrypted.ciphertexts,
           }),
         });
         const payload = await response.json().catch(() => ({}));
@@ -503,6 +530,10 @@ export function openChatInMessagesTab(
     if (state.accountChatDocClickHandler) {
       document.removeEventListener('click', state.accountChatDocClickHandler);
       callbacks.setAccountChatDocClickHandler(null);
+    }
+    if ((window as any).__chatEscHandler) {
+      document.removeEventListener('keydown', (window as any).__chatEscHandler);
+      delete (window as any).__chatEscHandler;
     }
     void callbacks
       .loadMessagesListTab(api, {
@@ -760,13 +791,18 @@ export function openChatInMessagesTab(
     });
   };
 
+  chatEmojiBtn?.addEventListener('mouseenter', showPicker);
+  chatEmojiBtn?.addEventListener('mouseleave', scheduleHide);
+  chatInputEmojiPicker?.addEventListener('mouseenter', showPicker);
+  chatInputEmojiPicker?.addEventListener('mouseleave', scheduleHide);
+
   chatEmojiBtn?.addEventListener('click', (event) => {
     event.stopPropagation();
-    if (!chatInputEmojiPicker) return;
-    const opening = !chatInputEmojiPicker.classList.contains('active');
-    chatInputEmojiPicker.classList.toggle('active');
-    if (opening) {
-      renderInputEmojiPicker();
+    isPickerLocked = !isPickerLocked;
+    if (isPickerLocked) {
+      showPicker();
+    } else {
+      hidePicker(true);
     }
   });
 
@@ -777,11 +813,24 @@ export function openChatInMessagesTab(
     if (!chatInputEmojiPicker || !chatEmojiBtn) return;
     const target = event.target as Node | null;
     if (!target) return;
-    if (chatEmojiBtn.contains(target as Node)) return;
-    if (chatInputEmojiPicker.classList.contains('active')) return;
+    if (chatEmojiBtn.contains(target) || chatInputEmojiPicker.contains(target)) return;
+    if (chatInputEmojiPicker.classList.contains('active')) {
+      hidePicker(true);
+    }
   };
   callbacks.setAccountChatDocClickHandler(newDocClickHandler);
   document.addEventListener('click', newDocClickHandler);
+
+  const escHandler = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      if (chatInputEmojiPicker?.classList.contains('active')) {
+        hidePicker(true);
+      }
+    }
+  };
+  (window as any).__chatEscHandler = escHandler;
+  document.addEventListener('keydown', escHandler);
+  // Add to cleanup if necessary, though the tab handles its own destruction usually.
 
   const sendMessage = async () => {
     if (!chatInput) return;
@@ -836,9 +885,7 @@ export function openChatInMessagesTab(
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            content: encrypted.content,
-            signalType: encrypted.signalType,
-            registrationId: encrypted.registrationId,
+            ciphertexts: encrypted.ciphertexts,
           }),
         });
         data = await response.json().catch(() => ({}));
@@ -849,9 +896,7 @@ export function openChatInMessagesTab(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             recipientId: friendId,
-            content: encrypted.content,
-            signalType: encrypted.signalType,
-            registrationId: encrypted.registrationId,
+            ciphertexts: encrypted.ciphertexts,
           }),
         });
         data = await response.json().catch(() => ({}));

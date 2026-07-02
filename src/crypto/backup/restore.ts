@@ -6,7 +6,7 @@ export async function restoreBackupPayload(
   expectedUserId: string,
   payload: CyblightBackupPayload,
   onProgress?: (percent: number) => void,
-  options?: { skipDecryptCache?: boolean },
+  options?: { skipDecryptCache?: boolean; assignedDeviceId?: number },
 ): Promise<void> {
   if (payload.userId !== expectedUserId) {
     throw new Error('backup_user_mismatch');
@@ -16,6 +16,10 @@ export async function restoreBackupPayload(
   const manifest = payload.manifest || payload.signal?.manifest;
   if (!manifest) {
     throw new Error('backup_payload_invalid');
+  }
+
+  if (options?.assignedDeviceId) {
+    manifest.deviceId = options.assignedDeviceId;
   }
 
   // Handle both snake_case (Android) and camelCase (Web) records

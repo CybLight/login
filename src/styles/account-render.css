@@ -926,6 +926,53 @@
   flex: 1;
 }
 
+.messages-info-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.messages-qr-btn {
+  background: rgba(102, 126, 234, 0.12);
+  border: 1px solid rgba(102, 126, 234, 0.25);
+  color: #818cf8;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.messages-qr-btn:hover {
+  background: rgba(102, 126, 234, 0.22);
+  border-color: rgba(102, 126, 234, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sec-qr-sync-modal-body {
+  padding: 12px 0;
+  text-align: center;
+}
+
+.sec-qr-sync-modal-body .sec-qr-wrap {
+  margin: 16px auto;
+  padding: 12px;
+  background: #fff;
+  border-radius: 12px;
+  width: fit-content;
+}
+
+.sec-qr-sync-modal-body .sec-hint {
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.85);
+}
+
 .messages-settings-btn {
   flex-shrink: 0;
   width: 40px;
@@ -3165,6 +3212,32 @@ body.account-nav-open .profile-mobile-nav {
   .account-page .account-main .account-body {
     max-width: 720px;
     margin-inline: auto;
+    transition: max-width 0.2s ease;
+  }
+
+  /* Wide mode for chat */
+  .account-page .account-main.is-chat-view {
+    margin: 10px 16px 14px 20px;
+    padding: 16px 20px;
+  }
+
+  .account-page .account-main.is-chat-view .account-header-row,
+  .account-page .account-main.is-chat-view .account-divider,
+  .account-page .account-main.is-chat-view .account-body {
+    max-width: 1040px;
+  }
+
+  .account-page .account-main.is-chat-view .account-header-row {
+    margin-bottom: 0;
+  }
+
+  .account-page .account-main.is-chat-view .account-header-subtitle {
+    display: none;
+  }
+
+  .account-page .account-main.is-chat-view .account-divider {
+    margin-top: 10px;
+    margin-bottom: 12px;
   }
 
   .account-page .account-main .account-divider {

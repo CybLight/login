@@ -1,5 +1,7 @@
 import { t } from '@/i18n';
 import { Router } from '@/router/Router';
+import { getSignalUserId } from '@/crypto/signal';
+import { showQrSyncModal } from './security-qr-sync';
 import {
   OPEN_SECURITY_BACKUP_SECTION,
   OPEN_SECURITY_SECTION_KEY,
@@ -84,17 +86,36 @@ export function renderMessagesSettingsHtml(): string {
           <strong>💬 ${t('Сообщения')}</strong>
           <p class="messages-info-hint">${t('Выберите друга, чтобы начать переписку')}</p>
         </div>
-        <button
-          id="messagesSettingsBtn"
-          class="messages-settings-btn"
-          type="button"
-          title="${t('Настройки сообщений')}"
-          aria-label="${t('Настройки сообщений')}"
-          aria-expanded="false"
-          aria-controls="messagesSettingsPanel"
-        >
-          <img src="/assets/img/msg/comGear.png" alt="" aria-hidden="true">
-        </button>
+        <div class="messages-info-actions">
+          <button
+            id="messagesQrBtn"
+            class="messages-qr-btn"
+            type="button"
+            title="${t('Привязать устройство')}"
+            aria-label="${t('Привязать устройство')}"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+              <line x1="7" y1="7" x2="7" y2="7"></line>
+              <line x1="17" y1="7" x2="17" y2="7"></line>
+              <line x1="7" y1="17" x2="7" y2="17"></line>
+            </svg>
+          </button>
+          <button
+            id="messagesSettingsBtn"
+            class="messages-settings-btn"
+            type="button"
+            title="${t('Настройки сообщений')}"
+            aria-label="${t('Настройки сообщений')}"
+            aria-expanded="false"
+            aria-controls="messagesSettingsPanel"
+          >
+            <img src="/assets/img/msg/comGear.png" alt="" aria-hidden="true">
+          </button>
+        </div>
       </div>
       <div id="messagesSettingsOverlay" class="messages-settings-overlay is-hidden" aria-hidden="true">
         <div class="messages-settings-backdrop" id="messagesSettingsBackdrop" aria-hidden="true"></div>
@@ -157,13 +178,14 @@ function renderMessagesCloudBackupHintHtml(): string {
           </label>
           <div class="messages-settings-actions">
             <button id="messagesOpenBackupSettingsBtn" class="messages-settings-action-btn" type="button">
-              ${t('Открыть настройки резервной копии')}
+              ${t('Открыть настройки резервная копия')}
             </button>
           </div>
         </div>`;
 }
 
 export function bindMessagesSettingsHandlers(root: ParentNode, _api: MessagesSettingsApi): void {
+  const qrBtn = root.querySelector('#messagesQrBtn') as HTMLButtonElement | null;
   const btn = root.querySelector('#messagesSettingsBtn') as HTMLButtonElement | null;
   const overlay = root.querySelector('#messagesSettingsOverlay') as HTMLElement | null;
   const backdrop = root.querySelector('#messagesSettingsBackdrop') as HTMLElement | null;
@@ -171,6 +193,19 @@ export function bindMessagesSettingsHandlers(root: ParentNode, _api: MessagesSet
   const panel = root.querySelector('#messagesSettingsPanel') as HTMLElement | null;
   const checkbox = root.querySelector('#chatFormatToolbarHiddenSetting') as HTMLInputElement | null;
   const reminderCheckbox = root.querySelector('#encryptionReminderHiddenSetting') as HTMLInputElement | null;
+
+  qrBtn?.addEventListener('click', () => {
+    try {
+      const userId = getSignalUserId();
+      void showQrSyncModal(userId, {
+        showMsg: _api.showMsg,
+        clearMsg: _api.clearMsg || (() => {}),
+      });
+    } catch (e) {
+      console.error('Failed to open QR sync modal:', e);
+      Router.navigate('account-sessions');
+    }
+  });
 
   let escapeHandler: ((event: KeyboardEvent) => void) | null = null;
 
@@ -217,12 +252,13 @@ export function bindMessagesSettingsHandlers(root: ParentNode, _api: MessagesSet
   });
 
   checkbox?.addEventListener('change', () => {
-    setChatFormatToolbarHidden(checkbox.checked);
+    setChatFormatToolbarHidden(checkbox?.checked || false);
   });
 
   reminderCheckbox?.addEventListener('change', () => {
-    setEncryptionReminderHidden(reminderCheckbox.checked);
-    if (reminderCheckbox.checked) {
+    const hidden = reminderCheckbox?.checked || false;
+    setEncryptionReminderHidden(hidden);
+    if (hidden) {
       hideEncryptionReminderElements(document);
     }
   });

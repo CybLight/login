@@ -14,6 +14,7 @@ export type KeyStatusSnapshot = {
 
 export type LocalKeyAudit = {
   registrationId: number;
+  deviceId: number;
   identityKeyPublic: string;
   signedPreKeyId: number | null;
   signedPreKeyPresent: boolean;
@@ -45,6 +46,7 @@ export async function auditLocalKeys(ctx: WasmSignalContext): Promise<LocalKeyAu
 
   return {
     registrationId: ctx.registrationId,
+    deviceId: ctx.deviceId,
     identityKeyPublic: arrayBufferToBase64(bytesToArrayBuffer(ctx.identityKeyPair.public_key.serialize())),
     signedPreKeyId: signedId,
     signedPreKeyPresent: signedPresent,
