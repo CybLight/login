@@ -79,7 +79,8 @@ function renderPlainBlock(text: string): string {
 
   html = html.replace(/```(\w*)\n([\s\S]*?)\n```/g, (_match, lang, code) => {
     const safeLang = String(lang || '').replace(/[^\w-]/g, '');
-    return `<pre><code class="language-${safeLang}">${code}</code></pre>`;
+    const dispLang = safeLang || 'code';
+    return `<div class="code-block-wrapper"><div class="code-block-header"><span class="code-block-lang">${dispLang}</span><button class="code-block-copy-btn" onclick="navigator.clipboard.writeText(this.closest('.code-block-wrapper').querySelector('code').innerText); const self=this; self.innerText='Скопировано!'; self.classList.add('copied'); setTimeout(() => { self.innerText='Копировать'; self.classList.remove('copied'); }, 2000)">Копировать</button></div><pre><code class="language-${safeLang}">${code}</code></pre></div>`;
   });
 
   html = applyInlineFormatting(html);

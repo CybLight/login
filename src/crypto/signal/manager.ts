@@ -67,6 +67,7 @@ export type WireMessage = {
   signalType?: number | null;
   registrationId?: number | null;
   senderId: string;
+  senderDeviceId?: number | null;
   createdAt?: number | null;
   editedAt?: number | null;
 };
@@ -691,7 +692,7 @@ export async function decryptIncomingMessage(
       batch.ctx = ctx;
     }
   }
-  const sender = peerAddress(message.senderId);
+  const sender = peerAddress(message.senderId, message.senderDeviceId || 1);
   const body = new Uint8Array(base64ToArrayBuffer(message.content));
   const signalType = Number(message.signalType);
 

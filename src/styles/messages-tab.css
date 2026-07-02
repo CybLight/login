@@ -320,6 +320,69 @@
   padding: 0;
 }
 
+.code-block-wrapper {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #1e1e2e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.code-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #a6adc8;
+  user-select: none;
+}
+
+.code-block-lang {
+  font-weight: 600;
+  color: #89b4fa;
+}
+
+.code-block-copy-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #cdd6f4;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 11px;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.code-block-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.code-block-copy-btn.copied {
+  background: #a6e3a1;
+  color: #11111b;
+}
+
+.chat-message-content .code-block-wrapper pre {
+  background: transparent !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  padding: 12px !important;
+  font-family: "Fira Code", "Courier New", monospace !important;
+  font-size: 13px !important;
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
 .chat-message-content strong {
   font-weight: 700;
 }

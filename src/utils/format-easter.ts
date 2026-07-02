@@ -28,7 +28,7 @@ export async function touchFormatMirrorWeb(outgoingContent: string): Promise<voi
 
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
-      if (data.ok && data.formatMirror) {
+      if (data.ok && data.justUnlocked) {
         // Показываем модалку поздравления для зеркала формата
         void showCongratsModal('__FORMAT_MIRROR__', () => {});
       }
