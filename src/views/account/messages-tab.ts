@@ -226,6 +226,16 @@ export function openChatInMessagesTab(
       hideTimeout = undefined;
     }
     if (chatInputEmojiPicker && !chatInputEmojiPicker.classList.contains('active')) {
+      chatInputEmojiPicker.style.display = 'flex'; // Measure
+      const btnRect = chatEmojiBtn?.getBoundingClientRect();
+      const pickerHeight = chatInputEmojiPicker.offsetHeight;
+      chatInputEmojiPicker.style.display = ''; // Reset
+
+      if (btnRect) {
+        chatInputEmojiPicker.style.left = `${btnRect.right - 360}px`;
+        chatInputEmojiPicker.style.top = `${btnRect.top - pickerHeight - 8}px`;
+      }
+
       chatInputEmojiPicker.classList.add('active');
       renderInputEmojiPicker();
     }

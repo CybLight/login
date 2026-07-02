@@ -3217,8 +3217,17 @@ body.account-nav-open .profile-mobile-nav {
 
   /* Wide mode for chat */
   .account-page .account-main.is-chat-view {
-    margin: 10px 16px 14px 20px;
-    padding: 16px 20px;
+    margin: 8px 16px 10px 20px;
+    padding: 12px 20px;
+  }
+
+  .account-page .account-main.is-chat-view .account-header-row {
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .account-page .account-main.is-chat-view .account-header-title {
+    font-size: 18px;
   }
 
   .account-page .account-main.is-chat-view .account-header-row,

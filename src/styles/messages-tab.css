@@ -3,9 +3,9 @@
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 170px);
-  min-height: 580px;
-  max-height: 900px;
+  height: calc(100dvh - 220px);
+  min-height: 520px;
+  max-height: 780px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   overflow: hidden;
@@ -1161,11 +1161,9 @@
 }
 
 .chat-input-emoji-picker {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  right: -10px;
+  position: fixed;
   width: 360px;
-  max-height: 580px;
+  max-height: 480px;
   overflow: hidden;
   display: none;
   flex-direction: column;
@@ -1176,17 +1174,7 @@
   background: rgba(11, 16, 33, 0.98);
   backdrop-filter: blur(12px);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
-  z-index: 120;
-}
-
-.chat-input-emoji-picker::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  right: 22px;
-  width: 20px;
-  height: 10px;
-  background: transparent;
+  z-index: 5000;
 }
 
 .chat-input-emoji-picker.active {
