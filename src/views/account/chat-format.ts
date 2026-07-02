@@ -103,7 +103,7 @@ export function parseFormattedChatText(text: string): string {
 }
 
 export function extractFirstUrl(text: string): string | null {
-  const match = text.match(/https?:\/\/[^\s<]+/i);
+  const match = text.match(/https?:\/\/[^\s<>\*\_~\|\[\]()]+/i);
   if (!match) return null;
   const raw = match[0].replace(/[),.!?]+$/, '');
   return sanitizeHttpUrl(raw);

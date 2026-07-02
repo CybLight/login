@@ -11,10 +11,78 @@ export function insertChatFormatting(
   endToken: string,
   input: HTMLTextAreaElement,
 ): void {
-  const selectionStart = input.selectionStart;
-  const selectionEnd = input.selectionEnd;
+  input.focus();
+  let selectionStart = input.selectionStart;
+  let selectionEnd = input.selectionEnd;
   const text = input.value;
-  const selectedText = text.substring(selectionStart, selectionEnd);
+
+  const tokenLen = startToken.length;
+  let leftOffset = 0;
+  let rightOffset = 0;
+
+  // 1. Check if the target format is already wrapping this selection (either directly or separated by other formatting tags)
+  // Scan left for startToken
+  for (let i = selectionStart - tokenLen; i >= 0; i--) {
+    const isFormatChar = ['*', '_', '~', '|'].includes(text[i]);
+    if (!isFormatChar && i < selectionStart - tokenLen) break;
+    if (text.substring(i, i + tokenLen) === startToken) {
+      leftOffset = selectionStart - i;
+      break;
+    }
+  }
+
+  // Scan right for endToken
+  for (let i = selectionEnd; i <= text.length - tokenLen; i++) {
+    const isFormatChar = ['*', '_', '~', '|'].includes(text[i]);
+    if (!isFormatChar && i > selectionEnd) break;
+    if (text.substring(i, i + tokenLen) === endToken) {
+      rightOffset = i + tokenLen - selectionEnd;
+      break;
+    }
+  }
+
+  // If both left and right tokens match, toggle formatting OFF
+  if (leftOffset > 0 && rightOffset > 0) {
+    const beforeText = text.substring(0, selectionStart - leftOffset);
+    const selectedText = text.substring(selectionStart, selectionEnd);
+    const afterText = text.substring(selectionEnd + rightOffset);
+
+    input.value = beforeText + selectedText + afterText;
+
+    const newStart = selectionStart - leftOffset;
+    input.setSelectionRange(newStart, newStart + selectedText.length);
+    notifyChatInputChange(input);
+    return;
+  }
+
+  // 2. TOGGLE ON: Apply the format
+  // Implement mutual exclusivity: MONO (code) cannot be combined with other inline formatting.
+  if (startToken === '`' || startToken === '```') {
+    // If applying MONO: Expand selection to consume any wrapping formatting markers (**, __, _, ~~, ||)
+    while (selectionStart > 0 && ['*', '_', '~', '|'].includes(text[selectionStart - 1])) {
+      selectionStart--;
+    }
+    while (selectionEnd < text.length && ['*', '_', '~', '|'].includes(text[selectionEnd])) {
+      selectionEnd++;
+    }
+  } else {
+    // If applying other formats: Expand selection to consume any wrapping MONO markers (`)
+    while (selectionStart > 0 && text[selectionStart - 1] === '`') {
+      selectionStart--;
+    }
+    while (selectionEnd < text.length && text[selectionEnd] === '`') {
+      selectionEnd++;
+    }
+  }
+
+  let selectedText = text.substring(selectionStart, selectionEnd);
+
+  // Strip conflicting markers from within selection
+  if (startToken === '`' || startToken === '```') {
+    selectedText = selectedText.replace(/[\*_~\|]+/g, '');
+  } else {
+    selectedText = selectedText.replace(/`/g, '');
+  }
 
   input.value =
     text.substring(0, selectionStart) +
@@ -24,16 +92,22 @@ export function insertChatFormatting(
     text.substring(selectionEnd);
 
   if (selectedText) {
-    input.setSelectionRange(selectionStart + startToken.length, selectionEnd + startToken.length);
+    input.setSelectionRange(
+      selectionStart + startToken.length,
+      selectionStart + startToken.length + selectedText.length
+    );
   } else {
-    input.setSelectionRange(selectionStart + startToken.length, selectionStart + startToken.length);
+    input.setSelectionRange(
+      selectionStart + startToken.length,
+      selectionStart + startToken.length
+    );
   }
 
-  input.focus();
   notifyChatInputChange(input);
 }
 
 export async function insertChatLink(input: HTMLTextAreaElement): Promise<void> {
+  input.focus();
   const selectionStart = input.selectionStart;
   const selectionEnd = input.selectionEnd;
   const selectedText = input.value.substring(selectionStart, selectionEnd);
@@ -48,37 +122,57 @@ export async function insertChatLink(input: HTMLTextAreaElement): Promise<void> 
   input.value =
     input.value.substring(0, selectionStart) + markdown + input.value.substring(selectionEnd);
   input.setSelectionRange(selectionStart + markdown.length, selectionStart + markdown.length);
-  input.focus();
   notifyChatInputChange(input);
 }
 
 export function insertChatBlockquote(input: HTMLTextAreaElement): void {
+  input.focus();
   const selectionStart = input.selectionStart;
   const selectionEnd = input.selectionEnd;
   const text = input.value;
-  const selectedText = text.substring(selectionStart, selectionEnd);
 
-  if (selectedText) {
-    const quoted = selectedText
+  // Find the start of the line containing selectionStart
+  const lineStart = text.lastIndexOf('\n', selectionStart - 1) + 1;
+  
+  // Find the end of the line containing selectionEnd
+  let lineEnd = text.indexOf('\n', selectionEnd);
+  if (lineEnd === -1) lineEnd = text.length;
+
+  const selectedLines = text.substring(lineStart, lineEnd);
+  const isQuoted = selectedLines.split('\n').every(line => line.startsWith('> '));
+
+  if (isQuoted) {
+    // Toggle OFF: Remove '> ' from the start of each line
+    const unquoted = selectedLines
       .split('\n')
-      .map((line) => (line ? `> ${line}` : '>'))
+      .map(line => line.startsWith('> ') ? line.slice(2) : line)
       .join('\n');
 
-    input.value = text.substring(0, selectionStart) + quoted + text.substring(selectionEnd);
-    input.setSelectionRange(selectionStart, selectionStart + quoted.length);
-    input.focus();
-    notifyChatInputChange(input);
-    return;
+    input.value = text.substring(0, lineStart) + unquoted + text.substring(lineEnd);
+    
+    const diff = selectedLines.length - unquoted.length;
+    input.setSelectionRange(
+      Math.max(lineStart, selectionStart - diff),
+      Math.max(lineStart, selectionEnd - diff)
+    );
+  } else {
+    // Toggle ON: Add '> ' to the start of each line
+    const quoted = selectedLines
+      .split('\n')
+      .map(line => line.startsWith('> ') ? line : `> ${line}`)
+      .join('\n');
+
+    input.value = text.substring(0, lineStart) + quoted + text.substring(lineEnd);
+    
+    const diff = quoted.length - selectedLines.length;
+    input.setSelectionRange(selectionStart + diff, selectionEnd + diff);
   }
 
-  const lineStart = text.lastIndexOf('\n', selectionStart - 1) + 1;
-  input.value = `${text.substring(0, lineStart)}> ${text.substring(lineStart)}`;
-  input.setSelectionRange(selectionStart + 2, selectionStart + 2);
-  input.focus();
   notifyChatInputChange(input);
 }
 
 export async function insertChatCode(input: HTMLTextAreaElement): Promise<void> {
+  input.focus();
   const selectionStart = input.selectionStart;
   const selectionEnd = input.selectionEnd;
   const selectedText = input.value.substring(selectionStart, selectionEnd);
@@ -87,7 +181,6 @@ export async function insertChatCode(input: HTMLTextAreaElement): Promise<void> 
 
   input.value =
     input.value.substring(0, selectionStart) + formatted + input.value.substring(selectionEnd);
-  input.focus();
   notifyChatInputChange(input);
 }
 

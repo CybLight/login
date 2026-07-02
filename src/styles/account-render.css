@@ -3217,8 +3217,8 @@ body.account-nav-open .profile-mobile-nav {
 
   /* Wide mode for chat */
   .account-page .account-main.is-chat-view {
-    margin: 8px 16px 10px 20px;
-    padding: 12px 20px;
+    margin: 8px 16px 8px 20px;
+    padding: 8px 16px;
   }
 
   .account-page .account-main.is-chat-view .account-header-row {
@@ -3585,4 +3585,57 @@ body.account-nav-open .profile-mobile-nav {
     max-width: 100%;
     min-width: 0;
   }
+}
+
+/* ==================== CHAT VIEW LAYOUT LOCK (TELEGRAM STYLE) ==================== */
+
+/* Lock viewport height and disable scrolling globally when in chat view */
+html:has(.is-chat-view),
+body:has(.is-chat-view),
+#app:has(.is-chat-view),
+.account-page:has(.is-chat-view) {
+  height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+/* Let the account wrapper fill the remaining space between header and footer dynamically */
+.account-page:has(.is-chat-view) .account-wrap {
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+/* Hide page footer on mobile in chat view to save screen space */
+@media (max-width: 860px) {
+  .account-page:has(.is-chat-view) > .auth-footer {
+    display: none !important;
+  }
+}
+
+/* Force main content container to stretch vertically and horizontally */
+.account-page .account-main.is-chat-view {
+  height: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+}
+
+/* Force body inside main content to stretch vertically and horizontally */
+.account-page .account-main.is-chat-view .account-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Force messages tab wrapper to stretch vertically and horizontally */
+.account-main.is-chat-view #messagesContent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }

@@ -168,8 +168,7 @@ export function openChatInMessagesTab(
 
         <div class="chat-input-wrapper">
           <div class="chat-input-field is-empty">
-            <div class="chat-input-mirror" aria-hidden="true"></div>
-            <textarea id="chatInput" class="chat-input--rich" placeholder="${t('Напишите сообщение...')}" rows="1" maxlength="2000"></textarea>
+            <div id="chatInput" class="chat-input--rich" contenteditable="true" placeholder="${t('Напишите сообщение...')}" data-maxlength="2000"></div>
           </div>
           <div class="chat-input-emoji-wrap">
             <button id="chatEmojiBtn" type="button" title="${t('Смайлики')}" aria-label="${t('Смайлики')}">😊</button>
@@ -226,18 +225,8 @@ export function openChatInMessagesTab(
       hideTimeout = undefined;
     }
     if (chatInputEmojiPicker && !chatInputEmojiPicker.classList.contains('active')) {
-      chatInputEmojiPicker.style.display = 'flex'; // Measure
-      const btnRect = chatEmojiBtn?.getBoundingClientRect();
-      const pickerHeight = chatInputEmojiPicker.offsetHeight;
-      chatInputEmojiPicker.style.display = ''; // Reset
-
-      if (btnRect) {
-        chatInputEmojiPicker.style.left = `${btnRect.right - 360}px`;
-        chatInputEmojiPicker.style.top = `${btnRect.top - pickerHeight - 8}px`;
-      }
-
-      chatInputEmojiPicker.classList.add('active');
       renderInputEmojiPicker();
+      chatInputEmojiPicker.classList.add('active');
     }
   };
 
@@ -1063,6 +1052,9 @@ export function openChatInMessagesTab(
 
   container.querySelectorAll('[data-format]').forEach((buttonEl) => {
     const btn = buttonEl as HTMLButtonElement;
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+    });
     btn.addEventListener('click', () => {
       if (!chatInput) return;
       const format = btn.getAttribute('data-format');
