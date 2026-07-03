@@ -663,7 +663,29 @@ export async function decryptIncomingMessage(
       }
     }
     if (message.content === '[multi-device]' || message.encryption === 'signal_v2') {
-        return t('🔒 Сообщение отправлено');
+      if (message.content && message.content !== '[multi-device]' && message.signalType != null) {
+        try {
+          const ctx = await ensureSignalContextReady(userId);
+          const sender = peerAddress(message.senderId, message.senderDeviceId || 1);
+          const body = new Uint8Array(base64ToArrayBuffer(message.content));
+          const signalType = Number(message.signalType);
+          const plaintext = await decryptMessage(
+            body,
+            signalType,
+            sender,
+            ctx.localAddress,
+            ctx.sessionStore,
+            ctx.identityStore,
+            ctx.preKeyStore,
+            ctx.signedPreKeyStore,
+            ctx.kyberPreKeyStore,
+          );
+          return new TextDecoder().decode(plaintext);
+        } catch (e) {
+          // ignore, fall back
+        }
+      }
+      return t('🔒 Сообщение отправлено');
     }
   }
 

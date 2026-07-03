@@ -70,7 +70,7 @@ export async function enrichConversationPreviews(
     }
 
     const wire = entry.lastMessage;
-    if (!wire || wire.encryption !== 'signal_v1') continue;
+    if (!wire || (wire.encryption !== 'signal_v1' && wire.encryption !== 'signal_v2')) continue;
 
     pending.push({ friendId, entry, wire });
   }
