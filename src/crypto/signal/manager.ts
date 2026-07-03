@@ -761,6 +761,7 @@ export async function decryptIncomingMessage(
         senderId: message.senderId,
         messageId: message.id ?? null,
       });
+      void forceResetPeerSession(userId, message.senderId);
       throw error;
     } else {
       if (message.id) {
@@ -784,6 +785,7 @@ export async function decryptIncomingMessage(
         preKeyIds,
         preKeyPresent,
       });
+      void forceResetPeerSession(userId, message.senderId);
       throw error;
     }
   }
@@ -912,4 +914,38 @@ export async function decryptMessageList<T extends WireMessage>(
       content: decryptedById.get(key) ?? t('🔒 Не удалось расшифровать сообщение'),
     };
   });
+}
+
+const lastResetSent = new Map<string, number>();
+
+export async function forceResetPeerSession(userId: string, peerUserId: string): Promise<void> {
+  const now = Date.now();
+  const last = lastResetSent.get(peerUserId) || 0;
+  if (now - last < 10000) {
+    return; // Rate limit 10 seconds
+  }
+  lastResetSent.set(peerUserId, now);
+
+  const ctx = await getContext(userId);
+  if (!ctx) return;
+  await resetPeerSession(ctx, peerUserId);
+  if (activeContext && activeUserId === userId) {
+    activeContext = ctx;
+  }
+  await persistWasmContext(ctx);
+
+  await apiCall(`/crypto/session/reset/${encodeURIComponent(peerUserId)}`, {
+    method: 'POST',
+    credentials: 'include',
+  }).catch(() => {});
+}
+
+export async function handleIncomingSessionReset(peerUserId: string): Promise<void> {
+  const userId = activeUserId;
+  if (!userId) return;
+  const ctx = await getContext(userId);
+  if (!ctx) return;
+  await resetPeerSession(ctx, peerUserId);
+  await persistWasmContext(ctx);
+  console.log(`[Signal] Session reset applied for peer ${peerUserId}`);
 }

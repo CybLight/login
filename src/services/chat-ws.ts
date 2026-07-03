@@ -1,7 +1,8 @@
 import { API_BASE } from '@/config/constants';
+import { handleIncomingSessionReset } from '@/crypto/signal/manager';
 
 export type ChatWsEvent = {
-  type: 'message.new' | 'message.deleted' | 'message.edited';
+  type: 'message.new' | 'message.deleted' | 'message.edited' | 'crypto.session_reset';
   messageId: string;
   senderId: string;
   peerId: string;
@@ -82,6 +83,10 @@ function scheduleReconnect(): void {
 function handleMessage(raw: string): void {
   try {
     const event = JSON.parse(raw) as ChatWsEvent;
+    if (event?.type === 'crypto.session_reset') {
+      void handleIncomingSessionReset(event.senderId);
+      return;
+    }
     if (event?.type !== 'message.new' && event?.type !== 'message.deleted' && event?.type !== 'message.edited') return;
     listeners.forEach((listener) => listener(event));
   } catch {
