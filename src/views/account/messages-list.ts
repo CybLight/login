@@ -279,6 +279,7 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
       void promptGoogleDriveRestoreIfNeeded(userId, {
         conversationPreviews: summaryRaw.conversationPreviews,
         onRestored: () => loadMessagesTab(api, deps),
+        api,
       });
     }
   } catch (error) {

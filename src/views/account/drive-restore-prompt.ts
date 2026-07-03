@@ -1,5 +1,4 @@
 import { t } from '@/i18n';
-import { localeTag, getLocale } from '@/i18n/locale';
 import { escapeHtml } from '@/utils';
 import { backupErrorMessage, hasLocalBackupKeys } from '@/crypto/backup';
 import {
@@ -10,7 +9,8 @@ import {
 } from '@/integrations/google-drive';
 import { resetActiveSignalContext } from '@/crypto/signal/manager';
 import { initPasswordEyes } from '@/components/password/password-helpers';
-import { showAccountConfirmModal, showAccountNoticeModal } from './modals';
+import { showAccountNoticeModal } from './modals';
+import { showQrSyncModal } from './security-qr-sync';
 import type { ConversationPreviewEntry } from './unread';
 
 const PROMPT_DISMISSED_KEY = 'cyb_drive_restore_prompt_dismissed';
@@ -20,6 +20,10 @@ let promptInFlight = false;
 export type DriveRestorePromptOptions = {
   conversationPreviews?: Record<string, ConversationPreviewEntry>;
   onRestored?: () => void | Promise<void>;
+  api?: {
+    showMsg: (type: string, text: string, persist?: boolean) => void;
+    clearMsg: () => void;
+  };
 };
 
 type DriveRestoreProgressModal = {
@@ -101,18 +105,6 @@ function showBackupPasswordModal(title: string, hint: string): Promise<string | 
   });
 }
 
-function formatDriveBackupTime(iso: string): string {
-  const timestamp = Date.parse(iso);
-  if (!timestamp) return '';
-  return new Date(timestamp).toLocaleString(localeTag(getLocale()), {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 function isRestorePromptDismissed(): boolean {
   try {
     return sessionStorage.getItem(PROMPT_DISMISSED_KEY) === '1';
@@ -129,10 +121,71 @@ function dismissRestorePrompt(): void {
   }
 }
 
+function showRestoreChoiceModal(): Promise<'drive' | 'qr' | null> {
+  return new Promise((resolve) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'account-notice-modal';
+    wrap.innerHTML = `
+      <div class="account-notice-backdrop"></div>
+      <div class="account-notice-card" role="dialog" aria-modal="true" style="max-width: 500px;">
+        <div class="account-notice-head">🔑 ${escapeHtml(t('Настройка шифрования'))}</div>
+        <p class="account-notice-text" style="margin-bottom: 20px; line-height: 1.5; color: var(--color-text-secondary, #ccc);">
+          ${escapeHtml(t('Ключи шифрования не найдены в этом браузере. Выберите способ восстановления доступа к вашим чатам:'))}
+        </p>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; width: 100%;">
+          <button type="button" class="btn btn-outline" id="restoreChoiceQrBtn" style="justify-content: flex-start; padding: 16px; text-align: left; height: auto; width: 100%; border-radius: 8px; cursor: pointer; display: flex; align-items: center; border: 1px solid var(--border-color, rgba(255,255,255,0.1)); background: transparent;">
+            <div style="font-size: 24px; margin-right: 16px;">📱</div>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px; color: var(--color-text-primary, #fff);">${escapeHtml(t('Связать с мобильным приложением'))}</div>
+              <div style="font-size: 13px; opacity: 0.7; color: var(--color-text-secondary, #ccc); line-height: 1.4;">
+                ${t('Отсканируйте QR-код через {appLink} для мгновенного переноса чатов и ключей.', {
+                  appLink: `<a href="https://cyblight.org/ru/downloads/" target="_blank" rel="noopener noreferrer" style="color: #6c5ce7; text-decoration: underline; font-weight: bold; cursor: pointer;">${t('мобильное приложение')}</a>`
+                })}
+              </div>
+            </div>
+          </button>
+
+          <button type="button" class="btn btn-outline" id="restoreChoiceDriveBtn" style="justify-content: flex-start; padding: 16px; text-align: left; height: auto; width: 100%; border-radius: 8px; cursor: pointer; display: flex; align-items: center; border: 1px solid var(--border-color, rgba(255,255,255,0.1)); background: transparent;">
+            <div style="font-size: 24px; margin-right: 16px;">☁️</div>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px; color: var(--color-text-primary, #fff);">${escapeHtml(t('Восстановить из Google Drive'))}</div>
+              <div style="font-size: 13px; opacity: 0.7; color: var(--color-text-secondary, #ccc); line-height: 1.4;">
+                ${escapeHtml(t('Используйте зашифрованную резервную копию, сохраненную в вашем облаке.'))}
+              </div>
+            </div>
+          </button>
+        </div>
+
+        <div class="account-notice-actions" style="justify-content: flex-end;">
+          <button type="button" class="btn btn-outline" id="restoreChoiceCancelBtn">${escapeHtml(t('Пропустить'))}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(wrap);
+
+    const close = (value: 'drive' | 'qr' | null) => {
+      wrap.remove();
+      resolve(value);
+    };
+
+    wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', () => close(null));
+    wrap.querySelector('#restoreChoiceCancelBtn')?.addEventListener('click', () => close(null));
+    wrap.querySelector('#restoreChoiceQrBtn')?.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).tagName === 'A') return;
+      close('qr');
+    });
+    wrap.querySelector('#restoreChoiceDriveBtn')?.addEventListener('click', () => close('drive'));
+  });
+}
+
 export function hasEncryptedConversationMessages(
   previews: Record<string, ConversationPreviewEntry>,
 ): boolean {
-  return Object.values(previews).some((entry) => entry.lastMessage?.encryption === 'signal_v1');
+  return Object.values(previews).some(
+    (entry) =>
+      entry.lastMessage?.encryption === 'signal_v1' ||
+      entry.lastMessage?.encryption === 'signal_v2',
+  );
 }
 
 export async function promptGoogleDriveRestoreIfNeeded(
@@ -150,6 +203,23 @@ export async function promptGoogleDriveRestoreIfNeeded(
 
   promptInFlight = true;
   try {
+    const choice = await showRestoreChoiceModal();
+
+    if (choice === 'qr') {
+      dismissRestorePrompt();
+      promptInFlight = false;
+      if (options.api) {
+        void showQrSyncModal(userId, options.api);
+      }
+      return;
+    }
+
+    if (choice !== 'drive') {
+      dismissRestorePrompt();
+      promptInFlight = false;
+      return;
+    }
+
     let metadata = null;
     if (hasGoogleDriveSession()) {
       try {
@@ -157,23 +227,6 @@ export async function promptGoogleDriveRestoreIfNeeded(
       } catch {
         metadata = null;
       }
-    }
-
-    const when = metadata ? formatDriveBackupTime(metadata.file.modifiedTime) : '';
-    const shouldRestore = await showAccountConfirmModal({
-      title: t('Резервная копия в Google Drive'),
-      text: when
-        ? t('Найдена копия ключей и сообщений в Google Drive ({date}). Восстановить на этом устройстве?', {
-            date: when,
-          })
-        : t('Ключи шифрования не найдены в этом браузере. Восстановить резервную копию из Google Drive?'),
-      confirmText: t('Восстановить'),
-      cancelText: t('Пропустить'),
-    });
-
-    if (!shouldRestore) {
-      dismissRestorePrompt();
-      return;
     }
 
     if (!metadata) {
