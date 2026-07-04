@@ -1,5 +1,6 @@
 import { t } from '@/i18n';
-import { escapeHtml } from '@/utils';
+import { escapeHtml, apiCall } from '@/utils';
+import { sendEasterLog } from '@/utils/easter-logger';
 import { backupErrorMessage, hasLocalBackupKeys } from '@/crypto/backup';
 import {
   fetchDriveBackupMetadata,
@@ -140,8 +141,8 @@ function showRestoreChoiceModal(): Promise<'drive' | 'qr' | null> {
               <div style="font-weight: 600; font-size: 15px; margin-bottom: 4px; color: var(--color-text-primary, #fff);">${escapeHtml(t('Связать с мобильным приложением'))}</div>
               <div style="font-size: 13px; opacity: 0.7; color: var(--color-text-secondary, #ccc); line-height: 1.4;">
                 ${t('Отсканируйте QR-код через {appLink} для мгновенного переноса чатов и ключей.', {
-                  appLink: `<a href="https://cyblight.org/ru/downloads/" target="_blank" rel="noopener noreferrer" style="color: #6c5ce7; text-decoration: underline; font-weight: bold; cursor: pointer;">${t('мобильное приложение')}</a>`
-                })}
+      appLink: `<a href="https://cyblight.org/ru/downloads/" target="_blank" rel="noopener noreferrer" style="color: #6c5ce7; text-decoration: underline; font-weight: bold; cursor: pointer;">${t('мобильное приложение')}</a>`
+    })}
               </div>
             </div>
           </button>
@@ -163,19 +164,218 @@ function showRestoreChoiceModal(): Promise<'drive' | 'qr' | null> {
       </div>`;
     document.body.appendChild(wrap);
 
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        close(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+
     const close = (value: 'drive' | 'qr' | null) => {
+      window.removeEventListener('keydown', onKeyDown);
       wrap.remove();
       resolve(value);
     };
 
-    wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', () => close(null));
-    wrap.querySelector('#restoreChoiceCancelBtn')?.addEventListener('click', () => close(null));
+    let hoverCount = 0;
+    const cancelBtn = wrap.querySelector('#restoreChoiceCancelBtn') as HTMLElement;
+
+    // Detect mobile or touch device to disable the runaway easter egg there
+    const isMobile = window.matchMedia('(max-width: 768px)').matches || ('ontouchstart' in window);
+
+    if (!isMobile) {
+      const triggerRunaway = (e: Event) => {
+        if (hoverCount < 7) {
+          hoverCount++;
+          const x = (Math.random() - 0.5) * 320;
+          const y = (Math.random() - 0.5) * 160;
+          cancelBtn.style.transform = `translate(${x}px, ${y}px)`;
+          e.preventDefault();
+          e.stopPropagation();
+        } else {
+          crumbleButton(cancelBtn, () => close(null));
+        }
+      };
+
+      cancelBtn?.addEventListener('mouseenter', triggerRunaway);
+
+      cancelBtn?.addEventListener('click', (e) => {
+        if (hoverCount < 7) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          // Unlock on server
+          apiCall('/auth/easter/skip-catcher', { method: 'POST', credentials: 'include' }).catch(() => { });
+          // Save in local storage
+          localStorage.setItem('cyb_skip_catcher_unlocked', '1');
+
+          // Fetch username & log to CybLight Logger
+          apiCall('/auth/me')
+            .then(async (res) => {
+              const data = await res.json() as { user?: { login?: string } };
+              const userName = data?.user?.login || 'unknown';
+              sendEasterLog({
+                type: 'skip_catcher',
+                userName,
+                alex: 13,
+              });
+            })
+            .catch(() => {
+              sendEasterLog({
+                type: 'skip_catcher',
+                userName: 'unknown',
+                alex: 13,
+              });
+            });
+
+          showCongratsModal(() => close(null));
+        } else {
+          crumbleButton(cancelBtn, () => close(null));
+        }
+      });
+    } else {
+      // On mobile, just close the modal normally without runaway or unlocking the easter egg
+      cancelBtn?.addEventListener('click', () => close(null));
+    }
+
     wrap.querySelector('#restoreChoiceQrBtn')?.addEventListener('click', (e) => {
       if ((e.target as HTMLElement).tagName === 'A') return;
       close('qr');
     });
     wrap.querySelector('#restoreChoiceDriveBtn')?.addEventListener('click', () => close('drive'));
   });
+}
+
+function showCongratsModal(onClose: () => void) {
+  const wrap = document.createElement('div');
+  wrap.className = 'account-notice-modal congrats-modal';
+  wrap.style.zIndex = '100000';
+
+  const text1 = t('Ого! Вы смогли нажать на эту кнопку! Ваша реакция и скорость клика просто невероятны! 🚀');
+  const text2_1 = t('Либо... Либо... Ты просто нажал кнопку TAB — ну и сообразительный однако! Возьмёшь меня в ученики?');
+  const text2_2 = t('Или... Или... Ты научился пользоваться консолью разработчика?');
+
+  wrap.innerHTML = `
+    <div class="account-notice-backdrop" style="background: rgba(0,0,0,0.4);"></div>
+    <div class="account-notice-card" role="dialog" aria-modal="true" style="width: min(92vw, 480px) !important; border: 2px solid #ffd700; box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); text-align: center; background: #18191a; border-radius: 16px; padding: 28px;">
+      <div class="account-notice-head" style="color: #ffd700; font-size: 26px; font-weight: 800; margin-bottom: 18px;">🎉 ${escapeHtml(t('Победа!'))}</div>
+      <p id="congratsText1" style="color: #e4e6eb; font-size: 15.5px; line-height: 1.6; margin-bottom: 16px; min-height: 48px; text-align: center;"></p>
+      <div style="color: #a29bfe; font-size: 14px; line-height: 1.6; margin-bottom: 24px; text-align: center; font-style: italic; font-weight: 500;">
+        <div id="congratsText2_1" style="margin-bottom: 10px; min-height: 22px;"></div>
+        <div id="congratsText2_2" style="min-height: 22px; color: #81ecec;"></div>
+      </div>
+      <button type="button" class="btn btn-primary" id="congratsCloseBtn" style="background: #ffd700; color: #000; font-weight: bold; border: none; padding: 10px 28px; border-radius: 8px; box-shadow: 0 0 10px rgba(255, 215, 0, 0.4); margin: 0 auto; display: none; cursor: pointer; transition: transform 0.2s ease;">
+        ${escapeHtml(t('Круто!'))}
+      </button>
+    </div>
+  `;
+  document.body.appendChild(wrap);
+
+  const closeCongrats = () => {
+    wrap.remove();
+    onClose();
+  };
+
+  wrap.querySelector('#congratsCloseBtn')?.addEventListener('click', closeCongrats);
+  wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', closeCongrats);
+
+  const el1 = wrap.querySelector('#congratsText1') as HTMLElement;
+  const el2_1 = wrap.querySelector('#congratsText2_1') as HTMLElement;
+  const el2_2 = wrap.querySelector('#congratsText2_2') as HTMLElement;
+  const closeBtn = wrap.querySelector('#congratsCloseBtn') as HTMLElement;
+
+  typeText(el1, text1, 30, () => {
+    setTimeout(() => {
+      typeText(el2_1, text2_1, 50, () => {
+        setTimeout(() => {
+          typeText(el2_2, text2_2, 60, () => {
+            closeBtn.style.display = 'block';
+          });
+        }, 1500); // 1.5 second pause before "Или... Или..."
+      });
+    }, 1500); // 1.5 second pause before the first "Либо... Либо..."
+  });
+}
+
+function typeText(element: HTMLElement, text: string, speedMs: number, onComplete?: () => void) {
+  const chars = Array.from(text);
+  let index = 0;
+  element.textContent = '';
+
+  const type = () => {
+    if (index < chars.length) {
+      element.textContent += chars[index];
+      index++;
+      setTimeout(type, speedMs);
+    } else if (onComplete) {
+      onComplete();
+    }
+  };
+
+  type();
+}
+
+function crumbleButton(btn: HTMLElement, onClose: () => void) {
+  const rect = btn.getBoundingClientRect();
+  const width = rect.width;
+  const height = rect.height;
+  const top = rect.top + window.scrollY;
+  const left = rect.left + window.scrollX;
+
+  btn.style.visibility = 'hidden';
+  btn.style.pointerEvents = 'none';
+
+  const particleCount = 40;
+  const particles: HTMLElement[] = [];
+
+  for (let i = 0; i < particleCount; i++) {
+    const p = document.createElement('div');
+    p.style.position = 'absolute';
+    p.style.left = `${left + (Math.random() * width)}px`;
+    p.style.top = `${top + (Math.random() * height)}px`;
+    p.style.width = `${3 + Math.random() * 4}px`;
+    p.style.height = `${3 + Math.random() * 4}px`;
+    p.style.backgroundColor = '#ff4757';
+    p.style.borderRadius = '50%';
+    p.style.pointerEvents = 'none';
+    p.style.zIndex = '99999';
+    p.style.boxShadow = '0 0 6px #ff4757';
+
+    const vx = (Math.random() - 0.5) * 12;
+    const vy = (Math.random() - 0.7) * 14; // pop up
+
+    document.body.appendChild(p);
+    particles.push(p);
+
+    let posX = parseFloat(p.style.left);
+    let posY = parseFloat(p.style.top);
+    let velY = vy;
+    let velX = vx;
+    const gravity = 0.45;
+    const footerY = window.innerHeight + window.scrollY - 30;
+
+    const animate = () => {
+      velY += gravity;
+      posX += velX;
+      posY += velY;
+
+      p.style.left = `${posX}px`;
+      p.style.top = `${posY}px`;
+
+      const progress = (posY - top) / (footerY - top);
+      p.style.opacity = String(Math.max(0, 1 - progress));
+
+      if (posY < footerY && posX > 0 && posX < window.innerWidth + window.scrollX) {
+        requestAnimationFrame(animate);
+      } else {
+        p.remove();
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }
+
+  setTimeout(onClose, 1500);
 }
 
 export function hasEncryptedConversationMessages(

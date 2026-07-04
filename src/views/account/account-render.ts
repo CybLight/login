@@ -148,7 +148,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
         </aside>
 
         <!-- Основной контент -->
-        <main id="main-content" class="account-main" tabindex="-1">
+        <main id="main-content" class="account-main${tab === 'sessions' ? ' is-sessions-view' : ''}" tabindex="-1">
           <div class="account-header-row">
             <div>
               <div class="account-header-title">${tabTitle}</div>

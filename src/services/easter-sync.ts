@@ -13,6 +13,7 @@ import {
   POSTMASTER_KEY,
   DEVELOPER_MODE_KEY,
   THEME_FLUX_KEY,
+  SKIP_CATCHER_KEY,
 } from '@/config/constants';
 
 type ResolvedEasterFlags = {
@@ -20,6 +21,7 @@ type ResolvedEasterFlags = {
   darkTrigger?: boolean;
   profileMirror?: boolean;
   lightCatcher?: boolean;
+  skipCatcher?: boolean;
   postmaster?: boolean;
   developerMode?: boolean;
   themeFlux?: boolean;
@@ -84,6 +86,11 @@ const EASTER_SYNC_TARGETS = [
     flag: 'themeFlux' as const,
     endpoint: '/auth/easter/theme-flux',
   },
+  {
+    storageKey: SKIP_CATCHER_KEY,
+    flag: 'skipCatcher' as const,
+    endpoint: '/auth/easter/skip-catcher',
+  },
 ] as const;
 
 export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterFlags {
@@ -128,6 +135,12 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
       : typeof easter?.theme_flux === 'boolean'
         ? easter.theme_flux
         : undefined;
+  const skipCatcherFromEaster =
+    typeof easter?.skipCatcher === 'boolean'
+      ? easter.skipCatcher
+      : typeof easter?.skip_catcher === 'boolean'
+        ? easter.skip_catcher
+        : undefined;
 
   const strawberryFromFlags =
     flags.includes('strawberry') ||
@@ -157,6 +170,10 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
     flags.includes('theme_flux') ||
     flags.includes('theme_flux_unlocked') ||
     flags.includes('easter_theme_flux');
+  const skipCatcherFromFlags =
+    flags.includes('skip_catcher') ||
+    flags.includes('skip_catcher_unlocked') ||
+    flags.includes('easter_skip_catcher');
 
   return {
     strawberry: strawberryFromEaster ?? (strawberryFromFlags ? true : undefined),
@@ -166,6 +183,7 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
     postmaster: postmasterFromEaster ?? (postmasterFromFlags ? true : undefined),
     developerMode: developerModeFromEaster ?? (developerModeFromFlags ? true : undefined),
     themeFlux: themeFluxFromEaster ?? (themeFluxFromFlags ? true : undefined),
+    skipCatcher: skipCatcherFromEaster ?? (skipCatcherFromFlags ? true : undefined),
     nightGuard: typeof easter?.nightGuard === 'boolean' ? easter.nightGuard : undefined,
     trustedFingerprint:
       typeof easter?.trustedFingerprint === 'boolean'

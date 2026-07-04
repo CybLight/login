@@ -50,15 +50,29 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
 
         const deviceIconSvg = getDeviceIconSvg(s.user_agent || '', ua);
         const browser = s.browser || ua.browser || 'Browser';
-        const os = s.os || ua.os || 'Unknown OS';
+        let os = s.os || ua.os || 'Unknown OS';
 
         let line1 = '';
         let line2 = '';
 
         if (ua.isApp) {
-          const devName = String(s.device_name || s.device || '').trim();
+          const devName = String(s.device_name || s.device || ua.device || '').trim();
           line1 = devName && devName.toLowerCase() !== 'pc' ? devName : 'CybLight App';
           line2 = String(s.model || ua.model || '').trim();
+
+          if (os.includes(' - ')) {
+            const parts = os.split(' - ');
+            os = parts[0].trim();
+            if ((line1 === 'CybLight App' || !line1) && parts[1]) {
+              line1 = parts[1].trim();
+            }
+          } else if (os.includes(' · ')) {
+            const parts = os.split(' · ');
+            os = parts[0].trim();
+            if ((line1 === 'CybLight App' || !line1) && parts[1]) {
+              line1 = parts[1].trim();
+            }
+          }
         } else {
           line1 = browser;
           line2 = ua.version ? `${browser} ${ua.version}` : '';
@@ -73,14 +87,14 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
           <td data-label="${t('Устройство')}">
             <div class="dev">
               <div class="dev-top">
-                <span class="dev-ico" aria-hidden="true">
+                <span class="dev-ico dev-ico--${ua.type}" aria-hidden="true">
                   ${deviceIconSvg}
                 </span>
 
                 <div class="dev-text">
                   <div class="dev-name-row">
                     <span class="dev-name">${escapeHtml(line1)}</span>
-                    ${isCur ? `<span class="pill">${t('Текущая')}</span>` : ''}
+                    ${isCur ? `<span class="pill-current"><span class="pill-current-dot"></span>${t('Текущая')}</span>` : ''}
                   </div>
               
                   ${line2 ? `<div class="dev-sub mono">${escapeHtml(line2 || '—')}</div>` : ''}
@@ -90,9 +104,21 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
           </td>
 
           <td data-label="${t('ОС')}">${escapeHtml(os)}</td>
-          <td data-label="${t('Местоположение')}" title="Edge: ${s.colo || '—'}">${escapeHtml(loc)}</td>
+          <td data-label="${t('Местоположение')}">
+            <div class="loc-cell-val">
+              <div class="loc-text">${escapeHtml(loc)}</div>
+              ${s.ip ? `<div class="loc-ip" title="Edge: ${s.colo || '—'}">IP: ${escapeHtml(s.ip)}</div>` : ''}
+            </div>
+          </td>
           <td data-label="${t('Последний вход')}">${escapeHtml(fmtTs(lastLogin))}</td>
           <td data-label="${t('Последняя активность')}">${escapeHtml(fmtTs(lastSeen))}</td>
+          <td data-label="${t('Ключи шифрования')}">
+            ${
+              (s.device_id ?? 0) > 0
+                ? `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; background: rgba(46, 204, 113, 0.15); color: #2ecc71; font-size: 12px; font-weight: 600; text-transform: uppercase; white-space: nowrap;">🔑 ${t('Привязано')}</span>`
+                : `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 4px; background: rgba(231, 76, 60, 0.15); color: #e74c3c; font-size: 12px; font-weight: 600; text-transform: uppercase; white-space: nowrap;">❌ ${t('Не привязано')}</span>`
+            }
+          </td>
 
           <td class="td-action td-action--right" data-label="${t('Действие')}">
             <button class="icon-btn" type="button" title="${t('Завершить')}" data-revoke="${escapeHtml(
@@ -125,11 +151,12 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
             <th>${t('Местоположение')}</th>
             <th>${t('Последний вход')}</th>
             <th>${t('Последняя активность')}</th>
+            <th>${t('Ключи шифрования')}</th>
             <th class="th-action">${t('Действие')}</th>
           </tr>
         </thead>
         <tbody>
-          ${rows || `<tr><td colspan="6" class="td-empty">${t('Нет сессий')}</td></tr>`}
+          ${rows || `<tr><td colspan="7" class="td-empty">${t('Нет сессий')}</td></tr>`}
         </tbody>
       </table>
     </div>

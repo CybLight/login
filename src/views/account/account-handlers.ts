@@ -374,6 +374,53 @@ function bindEasterHandlers(): void {
       Router.navigate('strawberry-history');
     };
   }
+
+  // Scroll to top button
+  const old = document.getElementById('scrollTopBtn');
+  if (old) old.remove();
+
+  const scrollBtn = document.createElement('div');
+  scrollBtn.id = 'scrollTopBtn';
+  scrollBtn.textContent = '⬆';
+  document.body.appendChild(scrollBtn);
+
+  scrollBtn.onclick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+    document.body.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelector('.account-page')?.scrollTo({ top: 0, behavior: 'smooth' });
+    document.querySelector('.account-main')?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Remove old handler if exists
+  if (window.__history_scroll_handler) {
+    window.removeEventListener('scroll', window.__history_scroll_handler, { capture: true });
+    window.removeEventListener('scroll', window.__history_scroll_handler);
+  }
+
+  // Robust scroll handler
+  window.__history_scroll_handler = () => {
+    const btn = document.getElementById('scrollTopBtn');
+    if (!btn) return;
+
+    const scrollY = window.scrollY 
+      || document.documentElement.scrollTop 
+      || document.body.scrollTop
+      || document.querySelector('.account-page')?.scrollTop
+      || document.querySelector('.account-main')?.scrollTop
+      || 0;
+
+    if (scrollY > 300) btn.classList.add('show');
+    else btn.classList.remove('show');
+  };
+
+  window.addEventListener('scroll', window.__history_scroll_handler, {
+    passive: true,
+    capture: true,
+  });
+
+  // Check immediately
+  window.__history_scroll_handler();
 }
 
 function bindEasterSubTabs(): void {

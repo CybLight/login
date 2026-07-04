@@ -16,6 +16,7 @@ export const LIGHT_CATCHER_KEY = 'cyb_light_catcher_unlocked';
 export const POSTMASTER_KEY = 'cyb_postmaster_unlocked';
 export const DEVELOPER_MODE_KEY = 'cyb_developer_mode_unlocked';
 export const THEME_FLUX_KEY = 'cyb_theme_flux_unlocked';
+export const SKIP_CATCHER_KEY = 'cyb_skip_catcher_unlocked';
 export const CHAT_DRAFT_PREFIX = 'cyb_chat_draft_';
 export const HISTORY_FROM_KEY = 'cyb_history_from';
 

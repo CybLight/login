@@ -178,7 +178,7 @@ function renderMessagesCloudBackupHintHtml(): string {
           </label>
           <div class="messages-settings-actions">
             <button id="messagesOpenBackupSettingsBtn" class="messages-settings-action-btn" type="button">
-              ${t('Открыть настройки резервная копия')}
+              ${t('Открыть настройки резервной копии')}
             </button>
           </div>
         </div>`;

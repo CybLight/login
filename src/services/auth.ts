@@ -20,6 +20,9 @@ export const authService = {
       if (response.ok) {
         const data: SessionCheckResponse = await response.json();
         console.log('[AUTH] Session valid:', data);
+        if (data.user && typeof data.user.gender === 'string') {
+          localStorage.setItem('cyb_user_gender', data.user.gender);
+        }
         return data.user || null;
       }
 

@@ -278,9 +278,8 @@ function renderProfileTab(user: User): string {
         <div class="info-card__value">
           <span class="mono-pill id-pill">
             <b class="mono">${escapeHtml(pubId)}</b>
-            ${
-              user.publicId
-                ? `<button class="copy-btn copy-btn--icon"
+            ${user.publicId
+      ? `<button class="copy-btn copy-btn--icon"
                       type="button"
                       data-copybtn="${escapeHtml(pubId)}"
                       aria-label="${t('Скопировать ID пользователя')}"
@@ -289,8 +288,8 @@ function renderProfileTab(user: User): string {
                       <path fill="currentColor" d="M16 1H6a2 2 0 0 0-2 2v12h2V3h10V1zm3 4H10a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H10V7h9v14z"/>
                     </svg>
                   </button>`
-                : ""
-            }
+      : ""
+    }
           </span>
         </div>
         <div class="info-card__hint">${t('Отправляй его поддержке')}</div>
@@ -352,16 +351,16 @@ function renderSecurityTab(user: User): string {
           <div class="sec-email-pending-body">
             <div class="sec-email-pending-title" id="secEmailPendingTitle">
               ${pendingVerifiedAt
-                ? t('Запланирована смена email')
-                : t('Подтвердите новый email')}
+      ? t('Запланирована смена email')
+      : t('Подтвердите новый email')}
             </div>
             <div class="sec-email-pending-text" id="secEmailPendingText">
               ${renderPendingCardTextHtml(pending)}
             </div>
             <div class="sec-email-pending-countdown" id="secEmailPendingCountdown" ${pendingVerifiedAt ? "" : 'style="display:none"'}>
               ${pendingRemainingShort
-                ? t('Осталось: {time}', { time: pendingRemainingShort })
-                : ""}
+      ? t('Осталось: {time}', { time: pendingRemainingShort })
+      : ""}
             </div>
           </div>
         </div>
@@ -375,13 +374,13 @@ function renderSecurityTab(user: User): string {
     ? `<div class="sec-hint sec-hint--warn sec-mt-10" id="secEmailPendingBanner">
         <span id="secEmailPendingBannerText">
         ${pendingVerifiedAt && pendingCompletesAt
-          ? t('Новый адрес {email} подтверждён. Смена завершится {date}.', {
-              email: escapeHtml(pendingEmail),
-              date: formatPendingDate(pendingCompletesAt),
-            })
-          : t('Запрошена смена на {email}. Подтвердите письмо на новом адресе.', {
-              email: escapeHtml(pendingEmail),
-            })}
+      ? t('Новый адрес {email} подтверждён. Смена завершится {date}.', {
+        email: escapeHtml(pendingEmail),
+        date: formatPendingDate(pendingCompletesAt),
+      })
+      : t('Запрошена смена на {email}. Подтвердите письмо на новом адресе.', {
+        email: escapeHtml(pendingEmail),
+      })}
         </span>
         <button class="btn btn-outline sec-mt-10" type="button" data-cancel-pending-email>${t('Отменить смену')}</button>
       </div>`
@@ -454,13 +453,12 @@ function renderSecurityTab(user: User): string {
         <div class="sec-left">
           <div class="sec-head-row">
             <div class="sec-icon-box">
-              ${
-                securityScore >= 100
-                  ? `<img src="/assets/img/security/okey_64.png" width="32" height="32" alt="${t('Защищён')}" class="sec-icon-img" />`
-                  : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              ${securityScore >= 100
+      ? `<img src="/assets/img/security/okey_64.png" width="32" height="32" alt="${t('Защищён')}" class="sec-icon-img" />`
+      : `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L4 6V11C4 16.55 7.84 21.74 13 23C18.16 21.74 22 16.55 22 11V6L12 2Z" fill="${securityScore >= 50 ? "#fbbf24" : "#ef4444"}" opacity="0.9"/>
               </svg>`
-              }
+    }
             </div>
             <div class="sec-title">${securityItemTitle}</div>
           </div>
@@ -489,42 +487,40 @@ function renderSecurityTab(user: User): string {
 
           <div id="securityChecklist" class="security-checklist">
             ${securityChecks
-              .map(
-                (check) => `
+      .map(
+        (check) => `
               <div ${check.id ? `id="${check.id}"` : ""} class="security-check-item ${check.done ? "is-done" : ""}">
                 <div class="security-check-icon">${check.icon}</div>
                 <div class="security-check-text">${check.text}</div>
                 ${check.done ? `<div class="security-check-done">${t('Выполнено')}</div>` : ""}
               </div>
             `,
-              )
-              .join("")}
+      )
+      .join("")}
           </div>
 
           <div id="securityRecommendations">
-            ${
-              securityScore < 100
-                ? `
+            ${securityScore < 100
+      ? `
             <div class="security-recommendation security-recommendation--info">
               <div class="security-recommendation-title">${t('💡 Рекомендация')}</div>
               <div class="security-recommendation-text">
-                ${
-                  securityScore < 30
-                    ? t('Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.')
-                    : securityScore < 50
-                      ? t('Добавьте еще несколько методов защиты для повышения безопасности.')
-                      : t('Отлично! Осталось совсем немного для максимальной защиты.')
-                }
+                ${securityScore < 30
+        ? t('Начните с подтверждения email и включения 2FA для базовой защиты аккаунта.')
+        : securityScore < 50
+          ? t('Добавьте еще несколько методов защиты для повышения безопасности.')
+          : t('Отлично! Осталось совсем немного для максимальной защиты.')
+      }
               </div>
             </div>
           `
-                : `
+      : `
             <div class="security-recommendation security-recommendation--ok">
               <div class="security-recommendation-title">${t('🎉 Превосходно!')}</div>
               <div class="security-recommendation-text">${t('Ваш аккаунт под надёжной защитой. Рекомендуемых действий не найдено.')}</div>
             </div>
           `
-            }
+    }
           </div>
         </div>
       </div>
@@ -556,9 +552,8 @@ function renderSecurityTab(user: User): string {
           <div class="sec-form-row">
             <input class="input" id="secEmailInp" type="email" placeholder="name@example.com" value="${escapeHtml(user.email || "")}" ${pendingEmail ? "disabled" : ""} />
           </div>
-          ${
-            requiresAuthToChange
-              ? `
+          ${requiresAuthToChange
+      ? `
           <div class="sec-form-row sec-mt-10" id="secEmailAuthFields">
             <label class="sec-label" for="secEmailPass">${t('Текущий пароль')}</label>
             <div class="pass-wrap">
@@ -566,28 +561,26 @@ function renderSecurityTab(user: User): string {
               <button type="button" class="pass-eye" data-target="secEmailPass" aria-label="${t('Показать пароль')}"></button>
             </div>
           </div>
-          ${
-            twoFAOn
-              ? `
+          ${twoFAOn
+        ? `
           <div class="sec-form-row sec-mt-10">
             <label class="sec-label" for="secEmailTotp">${t('Код 2FA')}</label>
             <input class="input" id="secEmailTotp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" />
           </div>`
-              : ""
-          }
+        : ""
+      }
           <p class="sec-hint sec-mt-10">${t('Смена подтверждённого email требует пароль{twoFA}. Новый адрес вступит в силу через 24 часа после подтверждения.', { twoFA: twoFAOn ? t(' и код 2FA') : '' })}</p>`
-              : ""
-          }
+      : ""
+    }
           <div class="sec-actions">
             <button class="btn btn-outline" id="secEmailCancelBtn" type="button" aria-label="${t('Отменить')}">${t('Отменить')}</button>
             <button class="btn btn-primary" id="secEmailSaveBtn" type="button" aria-label="${t('Сохранить')}" ${pendingEmail ? "disabled" : ""}>${t('Сохранить')}</button>
           </div>
           <div class="sec-hint is-hidden" id="secEmailHint"></div>
-          ${
-            (!emailVerified && user.email) || (pendingEmail && !pendingVerifiedAt)
-              ? `<button class="btn btn-outline sec-mt-10" id="secEmailResendBtn" type="button" aria-label="${t('Отправить письмо ещё раз')}">${t('Отправить письмо ещё раз')}</button>`
-              : ``
-          }
+          ${(!emailVerified && user.email) || (pendingEmail && !pendingVerifiedAt)
+      ? `<button class="btn btn-outline sec-mt-10" id="secEmailResendBtn" type="button" aria-label="${t('Отправить письмо ещё раз')}">${t('Отправить письмо ещё раз')}</button>`
+      : ``
+    }
         </div>
       </div>
 
@@ -907,7 +900,7 @@ function easterProgressHtml(current: number, total: number): string {
   )}</div>`;
 }
 
-const EASTER_SITE_TOTAL = 6;
+const EASTER_SITE_TOTAL = 7;
 const EASTER_APP_BASE_TOTAL = 5;
 const EASTER_BRIDGE_TOTAL = 2;
 const EASTER_EGGS_TOTAL = EASTER_SITE_TOTAL + EASTER_APP_BASE_TOTAL + V010_APP_EGGS_TOTAL + EASTER_BRIDGE_TOTAL;
@@ -924,9 +917,9 @@ function easterCollectionSummaryHtml(found: number, total: number = EASTER_EGGS_
   const text = isComplete
     ? t("Все получено! 👑")
     : t("{found} из {total} получено", {
-        found: String(found),
-        total: String(total),
-      });
+      found: String(found),
+      total: String(total),
+    });
   const completeClass = isComplete ? " easter-collection-summary--complete" : "";
   return `<div class="easter-collection-summary${completeClass}">${escapeHtml(text)}</div>`;
 }
@@ -953,6 +946,9 @@ function renderEasterTab(user: User): string {
   const hasThemeFlux =
     localStorage.getItem("cyb_theme_flux_unlocked") === "1" ||
     !!user.easter?.themeFlux;
+  const hasSkipCatcher =
+    localStorage.getItem("cyb_skip_catcher_unlocked") === "1" ||
+    !!user.easter?.skipCatcher;
   const hasNightGuard = !!user.easter?.nightGuard;
   const hasTrustedFingerprint = !!user.easter?.trustedFingerprint;
   const hasBridge = !!user.easter?.bridge;
@@ -973,6 +969,7 @@ function renderEasterTab(user: User): string {
     hasPostmaster,
     hasDeveloperMode,
     hasThemeFlux,
+    hasSkipCatcher,
   ].filter(Boolean).length;
 
   const appFoundCount =
@@ -1079,11 +1076,10 @@ function renderEasterTab(user: User): string {
       >
       <div class="easter-grid">
         <div class="easter-card easter-card--strawberry ${hasStrawberry ? "" : "locked"}">
-          ${
-            hasStrawberry
-              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
-              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
-          }
+          ${hasStrawberry
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
           <div class="easter-strawberry-wrap" aria-hidden="true">
             <span class="easter-strawberry special">🍓</span>
           </div>
@@ -1091,15 +1087,13 @@ function renderEasterTab(user: User): string {
             Strawberry Hunt
           </div>
           <div class="easter-card-desc">
-            ${
-              hasStrawberry
-                ? t('Ты нашел особую клубничку на сайте! Отличная работа 🎉')
-                : t('Найди спрятанную клубничку где-то там...')
-            }
+            ${hasStrawberry
+      ? t('Ты нашел особую клубничку на сайте! Отличная работа 🎉')
+      : t('Найди спрятанную клубничку где-то там...')
+    }
           </div>
-          ${
-            hasStrawberry
-              ? `<button 
+          ${hasStrawberry
+      ? `<button 
                   id="toHistoryBtn"
                   class="btn btn-outline easter-action-btn"
                   type="button"
@@ -1107,31 +1101,28 @@ function renderEasterTab(user: User): string {
                   <span class="easter-action-icon">📖</span>
                   <span>${t('Открыть стенографию')}</span>
                 </button>`
-              : `<div class="easter-hint">${t('💡 Подсказка: исследуй страницы входа...')}</div>`
-          }
+      : `<div class="easter-hint">${t('💡 Подсказка: исследуй страницы входа...')}</div>`
+    }
           ${hasStrawberry ? `<div class="easter-hint">${t('🎊 Поздравляем с находкой!')}</div>` : ""}
         </div>
 
         <div class="easter-card easter-card--profile-mirror ${hasProfileMirror ? "" : "locked"}">
-          ${
-            hasProfileMirror
-              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
-              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
-          }
+          ${hasProfileMirror
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
           <span class="easter-card-icon easter-mirror">🪞</span>
           <div class="easter-card-title">
             ${t('Зеркало профиля')}
           </div>
           <div class="easter-card-desc">
-            ${
-              hasProfileMirror
-                ? t('Семь отражений — и ты увидел себя с другой стороны')
-                : t('Секрет спрятан там, где ты показываешь себя миру')
-            }
+            ${hasProfileMirror
+      ? t('Семь отражений — и ты увидел себя с другой стороны')
+      : t('Секрет спрятан там, где ты показываешь себя миру')
+    }
           </div>
-          ${
-            hasProfileMirror
-              ? `<button
+          ${hasProfileMirror
+      ? `<button
                   type="button"
                   class="btn btn-outline easter-action-btn"
                   data-route="${escapeHtml(user.login || user.username || "")}"
@@ -1140,8 +1131,8 @@ function renderEasterTab(user: User): string {
                   <span class="easter-action-icon">👤</span>
                   <span>${t('Мой профиль')}</span>
                 </button>`
-              : `<div class="easter-hint">${t('💡 Подсказка: загляни в свой профиль и посмотри на себя чаще...')}</div>`
-          }
+      : `<div class="easter-hint">${t('💡 Подсказка: загляни в свой профиль и посмотри на себя чаще...')}</div>`
+    }
           ${hasProfileMirror ? `<div class="easter-hint">${t('🎊 Ты заглянул в своё отражение!')}</div>` : ""}
         </div>
       </div>
@@ -1153,25 +1144,22 @@ function renderEasterTab(user: User): string {
 
       <div class="easter-grid">
         <div class="easter-card easter-card--dark-trigger ${hasDarkTrigger ? "easter-card-rare" : "locked"}">
-          ${
-            hasDarkTrigger
-              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
-              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
-          }
+          ${hasDarkTrigger
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
           <span class="easter-card-icon easter-moon">🌑</span>
           <div class="easter-card-title">
             Dark Trigger
           </div>
           <div class="easter-card-desc">
-            ${
-              hasDarkTrigger
-                ? t('Ты заметил тёмный триггер в полной темноте! Редкое достижение 🌟')
-                : t('Разгадай загадку тьмы, припрятанную где-то на сайте')
-            }
+            ${hasDarkTrigger
+      ? t('Ты заметил тёмный триггер в полной темноте! Редкое достижение 🌟')
+      : t('Разгадай загадку тьмы, припрятанную где-то на сайте')
+    }
           </div>
-          ${
-            hasDarkTrigger
-              ? `<a 
+          ${hasDarkTrigger
+      ? `<a 
                   href="${siteRootPath('dark/trig/c4...77/media/dark-trigger.jpg')}" 
                   target="_blank" 
                   rel="noopener noreferrer"
@@ -1180,85 +1168,93 @@ function renderEasterTab(user: User): string {
                   <span class="easter-action-icon">👁️</span>
                   <span>${t('Бусинвальд')}</span>
                 </a>`
-              : `<div class="easter-hint">${t('💡 Подсказка: посмотри в тёмную папку на сайте...')}</div>`
-          }
-          ${
-            hasDarkTrigger
-              ? `<div class="easter-hint">${t('🎊 Конгратулейшн, ты настоящий детектив!')}</div>`
-              : ""
-          }
+      : `<div class="easter-hint">${t('💡 Подсказка: посмотри в тёмную папку на сайте...')}</div>`
+    }
+          ${hasDarkTrigger
+      ? `<div class="easter-hint">${t('🎊 Конгратулейшн, ты настоящий детектив!')}</div>`
+      : ""
+    }
         </div>
 
         <div class="easter-card easter-card--postmaster ${hasPostmaster ? "" : "locked"}">
-          ${
-            hasPostmaster
-              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
-              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
-          }
+          ${hasPostmaster
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
           <span class="easter-card-icon">📬</span>
           <div class="easter-card-title">
             Postmaster
           </div>
           <div class="easter-card-desc">
-            ${
-              hasPostmaster
-                ? t('Ты прочитал письмо до самого конца — настоящий почтовый детектив')
-                : t('Секрет спрятан там, где заканчиваются автоматические письма')
-            }
+            ${hasPostmaster
+      ? t('Ты прочитал письмо до самого конца — настоящий почтовый детектив')
+      : t('Секрет спрятан там, где заканчиваются автоматические письма')
+    }
           </div>
-          ${
-            hasPostmaster
-              ? `<div class="easter-hint">${t('🎊 Секрет из ящика входящих пойман!')}</div>`
-              : `<div class="easter-hint">${t('💡 Подсказка: загляни в письмо о восстановлении пароля...')}</div>`
-          }
+          ${hasPostmaster
+      ? `<div class="easter-hint">${t('🎊 Секрет из ящика входящих пойман!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: загляни в письмо о восстановлении пароля...')}</div>`
+    }
         </div>
 
         <div class="easter-card easter-card--developer-mode ${hasDeveloperMode ? "" : "locked"}">
-          ${
-            hasDeveloperMode
-              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
-              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
-          }
+          ${hasDeveloperMode
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
           <span class="easter-card-icon">🛠️</span>
           <div class="easter-card-title">
             Developer Mode
           </div>
           <div class="easter-card-desc">
-            ${
-              hasDeveloperMode
-                ? t('Ты открыл DevTools и поймал бегущую строку в футере')
-                : t('Редкий секрет для самых внимательных')
-            }
+            ${hasDeveloperMode
+      ? t('Ты открыл DevTools и поймал бегущую строку в футере')
+      : t('Редкий секрет для самых внимательных')
+    }
           </div>
-          ${
-            hasDeveloperMode
-              ? `<div class="easter-hint">${t('🎊 console.log("found") — секрет под капотом!')}</div>`
-              : `<div class="easter-hint">${t('💡 Подсказка: Загляни под капот сайта')}</div>`
-          }
+          ${hasDeveloperMode
+      ? `<div class="easter-hint">${t('🎊 console.log("found") — секрет под капотом!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: Загляни под капот сайта')}</div>`
+    }
         </div>
 
         <div class="easter-card easter-card--theme-flux ${hasThemeFlux ? "" : "locked"}">
-          ${
-            hasThemeFlux
-              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
-              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
-          }
+          ${hasThemeFlux
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
           <span class="easter-card-icon">🌗</span>
           <div class="easter-card-title">
             ${t('Маятник')}
           </div>
           <div class="easter-card-desc">
-            ${
-              hasThemeFlux
-                ? t('Ты раскачал сайт между светом и тьмой — настроение поймано')
-                : t('Секрет для тех, кто не может выбрать одну тему')
-            }
+            ${hasThemeFlux
+      ? t('Ты раскачал сайт между светом и тьмой — настроение поймано')
+      : t('Секрет для тех, кто не может выбрать одну тему')
+    }
           </div>
-          ${
-            hasThemeFlux
-              ? `<div class="easter-hint">${t('🎊 Свет ↔ тьма — и секрет ваш!')}</div>`
-              : `<div class="easter-hint">${t('💡 Подсказка: покачай настроение сайта — свет, тьма, свет...')}</div>`
-          }
+          ${hasThemeFlux
+      ? `<div class="easter-hint">${t('🎊 Свет ↔ тьма — и секрет ваш!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: покачай настроение сайта — свет, тьма, свет...')}</div>`
+    }
+        </div>
+
+        <div class="easter-card easter-card--skip-catcher ${hasSkipCatcher ? "" : "locked"}">
+          ${hasSkipCatcher
+      ? `
+                <span class="easter-card-badge">${t('✓ Найдено')}</span>
+                <span class="easter-card-icon">🎯</span>
+                <div class="easter-card-title">${t('Неуловимый')}</div>
+                <div class="easter-card-desc">${t('Ты смог поймать кнопку «Пропустить»! Твоя скорость реакции космическая 🚀')}</div>
+                <div class="easter-hint">${t('🎊 Скорость клика на высоте!')}</div>
+              `
+      : `
+                <span class="easter-card-badge locked">${t('🔒 Скрытая')}</span>
+                <span class="easter-card-icon">❓</span>
+                <div class="easter-card-title">???</div>
+                <div class="easter-card-desc">${t('Секретная редкая пасхалка. Продолжайте исследовать сайт, чтобы открыть её.')}</div>
+              `
+    }
         </div>
       </div>
       </div>
@@ -1276,25 +1272,22 @@ function renderEasterTab(user: User): string {
       </div>
       <div class="easter-grid">
         <div class="easter-card easter-card--light-catcher ${hasLightCatcher ? "" : "locked"}">
-          ${
-            hasLightCatcher
-              ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
-              : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
-          }
+          ${hasLightCatcher
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
           <span class="easter-card-icon">💡</span>
           <div class="easter-card-title">${t('Ловец света')}</div>
           <div class="easter-card-desc">
-            ${
-              hasLightCatcher
-                ? t('Ты поймал свет в приложении CybLight! Быстрые пальцы ⚡')
-                : t('Свет спрятан в мобильном приложении CybLight')
-            }
+            ${hasLightCatcher
+      ? t('Ты поймал свет в приложении CybLight! Быстрые пальцы ⚡')
+      : t('Свет спрятан в мобильном приложении CybLight')
+    }
           </div>
-          ${
-            hasLightCatcher
-              ? `<div class="easter-hint">${t('🎊 Свет пойман — секрет сохранён!')}</div>`
-              : `<div class="easter-hint">${t('💡 Подсказка: проверь на прочность версию Android приложения')}</div>`
-          }
+          ${hasLightCatcher
+      ? `<div class="easter-hint">${t('🎊 Свет пойман — секрет сохранён!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: проверь на прочность версию Android приложения')}</div>`
+    }
         </div>
 
         <div class="easter-card easter-card--night-guard ${hasNightGuard ? "" : "locked"}">

@@ -16,6 +16,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   easter?: UserEasterFlags;
+  gender?: string;
 }
 
 export interface UserProfile {
@@ -220,6 +221,8 @@ export interface UserEasterFlags {
   profile_mirror?: boolean;
   lightCatcher?: boolean;
   light_catcher?: boolean;
+  skipCatcher?: boolean;
+  skip_catcher?: boolean;
   postmaster?: boolean;
   developerMode?: boolean;
   developer_mode?: boolean;
@@ -345,6 +348,8 @@ export interface SessionListItem {
   colo?: string;
   created_at?: string | number;
   last_seen_at?: string | number;
+  device_id?: number | null;
+  ip?: string;
 }
 
 export interface WebAuthnCredentialDescriptorInput {

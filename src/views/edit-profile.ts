@@ -1094,6 +1094,9 @@ function initSaveProfile(profile: EditableProfile, getSelectedAvatar: () => stri
       const result = await updateProfile(updateData);
 
       if (result.ok) {
+        if (typeof gender === 'string') {
+          localStorage.setItem('cyb_user_gender', gender);
+        }
         showMsg('success', t('✅ Профиль успешно обновлен!'));
         setTimeout(() => {
           Router.navigate(

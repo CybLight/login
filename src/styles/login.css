@@ -1560,6 +1560,10 @@
   backdrop-filter: blur(10px);
 }
 
+.account-main.is-sessions-view {
+  max-width: 1050px;
+}
+
 .account-brand {
   display: flex;
   align-items: center;
@@ -3046,10 +3050,10 @@ body.no-strawberries .strawberry-ring-wave {
 
 .sessions-head {
   display: flex;
-  gap: 12px;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
 .sessions-table-wrap {
@@ -3140,16 +3144,35 @@ body.no-strawberries .strawberry-ring-wave {
   justify-content: center;
   align-self: center;
   margin-top: 0 !important;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   opacity: 0.9;
 }
 
 .sessions-table .dev-ico svg {
-  width: 100%;
-  height: 100%;
+  width: 24px;
+  height: 24px;
   fill: currentColor;
+}
+
+.sessions-table .dev-ico--phone svg {
+  width: 30px;
+  height: 30px;
+}
+
+.sessions-table .loc-cell-val {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.sessions-table .loc-ip {
+  font-size: 11px;
+  opacity: 0.65;
+  margin-top: 4px;
+  font-family: monospace;
 }
 
 .sessions-table .dev-text {
@@ -3525,11 +3548,6 @@ body.no-strawberries .strawberry-ring-wave {
   }
 }
 
-@media (min-width: 768px) {
-  #scrollTopBtn {
-    display: none !important;
-  }
-}
 
 @media (min-width: 721px) {
   .sessions-table .pill {
@@ -3617,7 +3635,7 @@ body.no-strawberries .strawberry-ring-wave {
     border: 0 !important;
     padding: 7px 0;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     gap: 12px;
     font-size: 13px;
     line-height: 1.4;
@@ -3636,7 +3654,7 @@ body.no-strawberries .strawberry-ring-wave {
     line-height: 1.35;
   }
 
-  .sessions-table td[data-label="Device"] {
+  .sessions-table td:first-child {
     display: block;
     padding-top: 0;
     padding-right: 48px;
@@ -3645,7 +3663,7 @@ body.no-strawberries .strawberry-ring-wave {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
-  .sessions-table td[data-label="Device"]::before {
+  .sessions-table td:first-child::before {
     content: "";
     padding-right: 0;
   }
@@ -3656,9 +3674,24 @@ body.no-strawberries .strawberry-ring-wave {
   }
 
   .sessions-table .dev-ico {
-    width: 22px;
-    height: 22px;
-    flex: 0 0 22px;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+
+  .sessions-table .dev-ico svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .sessions-table .dev-ico--phone svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .sessions-table .loc-cell-val {
+    align-items: flex-end;
+    text-align: right;
   }
 
   .sessions-table .dev-name {
@@ -4589,5 +4622,229 @@ html.dev-footer-pinned .cyb-privacy-banner {
   .cyb-privacy-modal__quick {
     grid-template-columns: 1fr;
   }
+}
+
+/* Allow sessions tab containers to expand up to 1040px on desktop screens */
+@media (min-width: 861px) {
+  .account-page .account-main.is-sessions-view .account-header-row,
+  .account-page .account-main.is-sessions-view .account-divider,
+  .account-page .account-main.is-sessions-view .account-body {
+    max-width: 1040px !important;
+  }
+}
+
+/* Custom styled orange button with neon border */
+#logoutOthersBtn {
+  width: auto !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  height: auto !important;
+  color: #ff9f43 !important;
+  background: rgba(255, 159, 67, 0.08) !important;
+  border: 1px solid #ff9f43 !important;
+  box-shadow: 0 0 8px rgba(255, 159, 67, 0.4), inset 0 0 4px rgba(255, 159, 67, 0.2) !important;
+  transition: all 0.25s ease-in-out !important;
+  border-radius: 8px !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#logoutOthersBtn:hover:not(:disabled) {
+  background: rgba(255, 159, 67, 0.16) !important;
+  box-shadow: 0 0 14px rgba(255, 159, 67, 0.7), inset 0 0 6px rgba(255, 159, 67, 0.3) !important;
+  color: #ffffff !important;
+}
+
+#logoutOthersBtn:disabled {
+  opacity: 0.5;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+/* Custom styled red revoke buttons with neon glow */
+.sessions-table .icon-btn {
+  color: #ff4757 !important;
+  background: rgba(255, 71, 87, 0.08) !important;
+  border: 1px solid #ff4757 !important;
+  box-shadow: 0 0 6px rgba(255, 71, 87, 0.35) !important;
+  transition: all 0.25s ease-in-out !important;
+  border-radius: 10px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sessions-table .icon-btn:hover:not(:disabled) {
+  background: rgba(255, 71, 87, 0.2) !important;
+  box-shadow: 0 0 12px rgba(255, 71, 87, 0.6) !important;
+  color: #ffffff !important;
+}
+
+/* Premium styled current session pill with pulsing dot indicator */
+.pill-current {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #00d2d3 !important;
+  background: rgba(0, 210, 211, 0.12) !important;
+  border: 1px solid rgba(0, 210, 211, 0.3) !important;
+  padding: 3px 8px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 8px rgba(0, 210, 211, 0.15) !important;
+  margin: 0 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.pill-current-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background-color: #00d2d3 !important;
+  display: inline-block !important;
+  box-shadow: 0 0 6px #00d2d3 !important;
+  animation: pill-current-pulse 2s infinite !important;
+}
+
+@keyframes pill-current-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 210, 211, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(0, 210, 211, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 210, 211, 0);
+  }
+}
+
+/* Vertical separator lines between columns in sessions table on desktop */
+@media (min-width: 721px) {
+  .sessions-table th:not(:last-child),
+  .sessions-table td:not(:last-child) {
+    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  }
+}
+
+/* Center all table headers, data cells and device columns on desktop */
+@media (min-width: 721px) {
+  .sessions-table th,
+  .sessions-table td {
+    text-align: center !important;
+  }
+  
+  .sessions-table .dev-top {
+    justify-content: center !important;
+  }
+  
+  .sessions-table .dev-text {
+    align-items: center !important;
+    text-align: center !important;
+  }
+  
+  .sessions-table .dev-name-row {
+    justify-content: center !important;
+  }
+}
+
+#restoreChoiceQrBtn,
+#restoreChoiceDriveBtn {
+  transition: all 0.25s ease-in-out !important;
+}
+
+#restoreChoiceCancelBtn {
+  font-size: 11px !important;
+  padding: 6px 12px !important;
+  height: auto !important;
+  width: auto !important;
+  min-width: 90px !important;
+  max-width: 120px !important;
+  transition: transform 0.1s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.25s ease, background 0.25s ease, color 0.25s ease !important;
+}
+
+#restoreChoiceQrBtn:hover {
+  border-color: #00d2d3 !important;
+  background: rgba(0, 210, 211, 0.06) !important;
+  box-shadow: 0 0 15px rgba(0, 210, 211, 0.4), inset 0 0 6px rgba(0, 210, 211, 0.15) !important;
+}
+
+#restoreChoiceDriveBtn:hover {
+  border-color: #6c5ce7 !important;
+  background: rgba(108, 92, 231, 0.06) !important;
+  box-shadow: 0 0 15px rgba(108, 92, 231, 0.4), inset 0 0 6px rgba(108, 92, 231, 0.15) !important;
+}
+
+#restoreChoiceCancelBtn:hover {
+  border-color: #ff4757 !important;
+  background: rgba(255, 71, 87, 0.06) !important;
+  box-shadow: 0 0 12px rgba(255, 71, 87, 0.35) !important;
+  color: #ff4757 !important;
+}
+
+/* Beautiful user menu (dropdown) styling overrides */
+.account-user-menu {
+  width: 240px !important;
+  min-width: 240px !important;
+  padding: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
+.account-user-menu[hidden] {
+  display: none !important;
+}
+
+.account-user-menu__name {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  text-align: center !important;
+  margin-bottom: 4px !important;
+}
+
+.account-user-menu__meta {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+  margin-top: 6px !important;
+  margin-bottom: 6px !important;
+  width: 100% !important;
+}
+
+.account-user-menu__divider {
+  width: 100% !important;
+  margin: 12px 0 !important;
+}
+
+.account-user-menu__edit,
+.account-user-menu__logout {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  display: block !important;
+  text-align: center !important;
+}
+
+.account-user-menu__edit {
+  margin-bottom: 10px !important;
+  padding: 10px 14px !important;
+  font-size: 13.5px !important;
+}
+
+.account-user-menu__logout {
+  padding: 10px 14px !important;
+  font-size: 13.5px !important;
 }
 
