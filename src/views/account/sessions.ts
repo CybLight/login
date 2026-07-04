@@ -74,7 +74,8 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
             }
           }
         } else {
-          line1 = browser;
+          const isAdminSession = (s.user_agent || '').includes('CybLightAdmin');
+          line1 = isAdminSession ? t('Панель администратора') : browser;
           line2 = ua.version ? `${browser} ${ua.version}` : '';
         }
 

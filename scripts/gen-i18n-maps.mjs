@@ -358,6 +358,7 @@ const triples = [
   ['Ключи шифрования', 'Ключі шифрування', 'Encryption keys'],
   ['Привязано', 'Прив\'язано', 'Linked'],
   ['Не привязано', 'Не прив\'язано', 'Not linked'],
+  ['Панель администратора', 'Панель адміністратора', 'Admin Panel'],
 ];
 
 const part4Triples = Object.entries(part4).map(([ru, [uk, en]]) => [ru, uk, en]);
