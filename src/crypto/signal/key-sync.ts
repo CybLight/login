@@ -2,6 +2,7 @@ import type { WasmSignalContext } from './wasm-context';
 import { bytesToArrayBuffer, arrayBufferToBase64 } from './buffer';
 
 export type KeyStatusSnapshot = {
+  deviceId?: number | null;
   registered?: boolean;
   registrationId?: number | null;
   identityKeyPublic?: string | null;
@@ -61,6 +62,7 @@ export function isServerLocalKeySync(
   local: LocalKeyAudit,
 ): boolean {
   if (!status.registered) return false;
+  if (status.deviceId !== undefined && status.deviceId !== null && status.deviceId !== local.deviceId) return false;
   if (!status.registrationId || status.registrationId !== local.registrationId) return false;
   if (status.identityKeyPublic && status.identityKeyPublic !== local.identityKeyPublic) return false;
   if (status.signedPreKeyId && status.signedPreKeyId !== local.signedPreKeyId) return false;

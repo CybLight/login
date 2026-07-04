@@ -99,6 +99,7 @@ type KeyBundleResponse = {
 
 type KeyStatusResponse = {
   ok: boolean;
+  deviceId?: number | null;
   registered?: boolean;
   registrationId?: number | null;
   identityKeyPublic?: string | null;
@@ -187,6 +188,7 @@ async function uploadKeyRegistration(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       registrationId: ctx.registrationId,
+      deviceId: ctx.deviceId,
       identityKey: arrayBufferToBase64(bytesToArrayBuffer(ctx.identityKeyPair.public_key.serialize())),
       signedPreKey,
       kyberPreKey,
