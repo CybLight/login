@@ -118,6 +118,90 @@ export function showAccountConfirmModal(opts: {
   });
 }
 
+export function showAccountDeleteConfirmModal(opts: {
+  title: string;
+  text: string;
+  passwordPlaceholder?: string;
+  confirmText?: string;
+  cancelText?: string;
+}): Promise<{ confirmed: boolean; password?: string }> {
+  const old = document.getElementById('accountDeleteConfirmModal');
+  old?.remove();
+
+  return new Promise((resolve) => {
+    const wrap = document.createElement('div');
+    wrap.id = 'accountDeleteConfirmModal';
+    wrap.className = 'account-notice-modal';
+
+    wrap.innerHTML = `
+      <div class="account-notice-backdrop"></div>
+      <div
+        class="account-notice-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="accountDeleteTitle"
+        aria-describedby="accountDeleteText"
+      >
+        <div id="accountDeleteTitle" class="account-notice-head is-error">🔥 ${escapeHtml(opts.title)}</div>
+        <div id="accountDeleteText" class="account-notice-text">${escapeHtml(opts.text)}</div>
+
+        <div class="sec-form-row sec-mt-12">
+          <label class="label" for="accountDeletePassInp">${t('Введите текущий пароль для подтверждения')}</label>
+          <div class="pass-wrap">
+            <input class="input" id="accountDeletePassInp" type="password" autocomplete="current-password" placeholder="${escapeHtml(opts.passwordPlaceholder || t('Действующий пароль'))}" />
+            <button type="button" class="pass-eye" data-target="accountDeletePassInp" aria-label="${t('Показать пароль')}"></button>
+          </div>
+        </div>
+
+        <div class="account-notice-actions account-notice-actions--end account-notice-actions--spaced">
+          <button type="button" class="btn btn-outline" id="accountDeleteCancelBtn" aria-label="${escapeHtml(opts.cancelText || t('Отмена'))}">${escapeHtml(opts.cancelText || t('Отмена'))}</button>
+          <button type="button" class="btn btn-danger" id="accountDeleteConfirmBtn" aria-label="${escapeHtml(opts.confirmText || t('Удалить аккаунт'))}">${escapeHtml(opts.confirmText || t('Удалить аккаунт'))}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(wrap);
+
+    const dialogEl = wrap.querySelector('.account-notice-card') as HTMLElement;
+    const close = createModalCloser(wrap, dialogEl);
+
+    // Initialize password eyes for the new modal
+    try {
+      const { initPasswordEyes } = require('@/components/password/password-helpers');
+      initPasswordEyes(wrap);
+    } catch (e) {
+      console.warn('Failed to init password eyes in delete modal', e);
+    }
+
+    const passInp = wrap.querySelector('#accountDeletePassInp') as HTMLInputElement;
+
+    const finish = (confirmed: boolean) => {
+      const password = passInp?.value || '';
+      close();
+      resolve({ confirmed, password });
+    };
+
+    wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', () => finish(false));
+    wrap.querySelector('#accountDeleteCancelBtn')?.addEventListener('click', () => finish(false));
+    wrap.querySelector('#accountDeleteConfirmBtn')?.addEventListener('click', () => {
+      if (!passInp.value) {
+        passInp.classList.add('input--invalid');
+        passInp.focus();
+        return;
+      }
+      finish(true);
+    });
+
+    passInp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        wrap.querySelector<HTMLButtonElement>('#accountDeleteConfirmBtn')?.click();
+      }
+    });
+
+    setTimeout(() => passInp?.focus(), 100);
+  });
+}
+
 export function showAccountPinScopeModal(opts: {
   title: string;
   text: string;

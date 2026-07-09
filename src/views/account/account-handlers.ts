@@ -12,7 +12,11 @@ import { bindFriendsHandlers } from './friends';
 import { bindMessagesHandlers, loadMessagesTab as loadMessagesListTab } from './messages-list';
 import type { ChatLoadOptions } from './chat-core';
 import { openChatInMessagesTab } from './messages-tab';
-import { showAccountConfirmModal, showAccountNoticeModal } from './modals';
+import {
+  showAccountConfirmModal,
+  showAccountDeleteConfirmModal,
+  showAccountNoticeModal,
+} from './modals';
 import { updateNavBadges, setNavBadge, updateChatUnreadBadges, fetchUnreadSummaryData } from './unread';
 import { isEmailVerified } from './account-utils';
 
@@ -296,6 +300,11 @@ export function bindAccountHandlers(
     });
   }
 
+  // Profile tab handlers
+  if (_tab === 'profile') {
+    bindProfileTabHandlers(api);
+  }
+
   // Sessions tab handlers
   if (_tab === 'sessions') {
     bindSessionsHandlers(api);
@@ -355,6 +364,57 @@ export function bindAccountHandlers(
 
   // Load badge counts for all tabs so counters stay visible in sidebar
   void updateNavBadges();
+}
+
+/**
+ * Привязать обработчики для вкладки Профиль (удаление)
+ */
+function bindProfileTabHandlers(api: ApiMessage): void {
+  const deleteBtn = document.getElementById('profileDeleteAccountBtn');
+  if (!deleteBtn) return;
+
+  deleteBtn.addEventListener('click', async () => {
+    const { confirmed, password } = await showAccountDeleteConfirmModal({
+      title: 'Удаление аккаунта',
+      text: 'Вы собираетесь безвозвратно удалить свой аккаунт CybLight. Все ваши сообщения, друзья и настройки будут стерты навсегда. Это действие невозможно отменить.',
+      confirmText: 'Удалить навсегда',
+      cancelText: 'Отмена',
+      passwordPlaceholder: 'Введите пароль'
+    });
+
+    if (!confirmed || !password) return;
+
+    (deleteBtn as HTMLButtonElement).disabled = true;
+    deleteBtn.textContent = 'Удаление...';
+
+    try {
+      const r = await apiCall('/auth/me', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+
+      if (r.ok) {
+        api.showMsg('ok', 'Аккаунт успешно удалён');
+        localStorage.clear();
+        sessionStorage.clear();
+        setTimeout(() => {
+          Router.navigate('username');
+        }, 1500);
+      } else {
+        const d = await r.json().catch(() => ({}));
+        api.showMsg('error', d.error === 'invalid_password' ? 'Неверный пароль' : (d.error ? `Ошибка: ${d.error}` : 'Не удалось удалить аккаунт'));
+        (deleteBtn as HTMLButtonElement).disabled = false;
+        deleteBtn.innerHTML = '<span class="nav-icon" style="font-size: 18px; margin-right: 8px;">🗑️</span> Удалить аккаунт';
+      }
+    } catch (err) {
+      console.error('Account deletion error:', err);
+      api.showMsg('error', 'Ошибка сети');
+      (deleteBtn as HTMLButtonElement).disabled = false;
+      deleteBtn.innerHTML = '<span class="nav-icon" style="font-size: 18px; margin-right: 8px;">🗑️</span> Удалить аккаунт';
+    }
+  });
 }
 
 /**

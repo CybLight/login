@@ -317,6 +317,25 @@
   display: block;
 }
 
+.profile-danger-zone {
+  margin-top: 32px;
+  padding: 20px;
+  border-radius: 14px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+  text-align: center;
+}
+
+.profile-danger-hint {
+  margin-top: 10px;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.btn-full {
+  width: 100%;
+}
+
 .btn {
   padding: 12px 24px;
   border-radius: 8px;
@@ -3631,11 +3650,81 @@ body:has(.is-chat-view),
   width: 100%;
 }
 
-/* Force messages tab wrapper to stretch vertically and horizontally */
-.account-main.is-chat-view #messagesContent {
-  flex: 1;
-  min-height: 0;
+/* ==================== DANGER ZONE (ACCOUNT DELETION) ==================== */
+
+.danger-zone {
   display: flex;
   flex-direction: column;
-  width: 100%;
+  gap: 16px;
+  padding: 16px 0;
 }
+
+.danger-zone__title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fca5a5;
+  margin: 0;
+}
+
+.danger-zone__text {
+  font-size: 14px;
+  line-height: 1.5;
+  opacity: 0.85;
+  margin: 0;
+}
+
+.danger-zone__card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  border-radius: 12px;
+}
+
+.danger-zone__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.danger-zone__info strong {
+  font-size: 15px;
+  color: white;
+}
+
+.danger-zone__info span {
+  font-size: 13px;
+  opacity: 0.6;
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+.danger-zone__warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+  background: rgba(251, 191, 36, 0.08);
+  border-left: 4px solid #fbbf24;
+  border-radius: 8px;
+  color: #fde68a;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.danger-zone__warning svg {
+  flex-shrink: 0;
+  color: #fbbf24;
+}
+
+@media (max-width: 600px) {
+  .danger-zone__card {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
+/* ==================== END DANGER ZONE ==================== */

@@ -301,6 +301,14 @@ function renderProfileTab(user: User): string {
         <div class="info-card__hint">${t('Создано в системе')}</div>
       </article>
     </section>
+
+    <div class="profile-danger-zone">
+       <button type="button" class="btn btn-danger-soft btn-full" id="profileDeleteAccountBtn">
+          <span class="nav-icon" style="font-size: 18px; margin-right: 8px;">🗑️</span>
+          ${t('Удалить аккаунт')}
+       </button>
+       <p class="profile-danger-hint">${t('Безвозвратное удаление всех данных')}</p>
+    </div>
   `;
 }
 
