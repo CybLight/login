@@ -11,7 +11,10 @@ import { createChatCore, type ChatLoadOptions } from './chat-core';
 import { animateChatMessageRemoval } from './chat-message-animate-remove';
 import { clearChatDraft, loadChatDraft, saveChatDraft } from './chat-drafts';
 import { encryptOutgoingMessage, cacheSentPlaintext, getSignalUserId, getSignalKeyIssueMessage, warmupOutgoingSession } from '@/crypto/signal';
-import { extractFirstUrl } from './chat-format';
+import {
+  extractFirstUrl,
+  extractReplyTokenRaw,
+} from './chat-format';
 import { renderChatFormatToolbarRowHtml, bindChatFormatToolbarToggle } from './chat-formatting-settings';
 import { touchFormatMirrorWeb } from '@/utils/format-easter';
 import { loadMessagesTab as loadMessagesListTab, unsubscribeMessagesListWebSocket } from './messages-list';
@@ -852,6 +855,17 @@ export function openChatInMessagesTab(
       content = `${content}\n[[CYBLIGHT_NO_PREVIEW:${encodeURIComponent(firstUrl)}]]`;
     }
 
+    if (editingId) {
+      const originalMessage = state.accountChatMessageMap.get(editingId) as any;
+      const originalRawContent = originalMessage?.content || '';
+      if (originalRawContent) {
+        const oldReplyToken = extractReplyTokenRaw(originalRawContent);
+        if (oldReplyToken && !content.includes('[[CYBLIGHT_REPLY:')) {
+          content = `${content}\n${oldReplyToken.trim()}`;
+        }
+      }
+    }
+
     if (chatSendBtn) chatSendBtn.disabled = true;
 
     const outgoingContent = content;
@@ -884,6 +898,7 @@ export function openChatInMessagesTab(
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            recipientId: friendId,
             ciphertexts: encrypted.ciphertexts,
           }),
         });

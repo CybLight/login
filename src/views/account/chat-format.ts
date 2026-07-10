@@ -124,6 +124,11 @@ export function extractNoPreviewUrls(text: string): string[] {
   return urls;
 }
 
+export function extractReplyTokenRaw(text: string): string | null {
+  const match = text.match(/\n?\[\[CYBLIGHT_REPLY:[^\]]+\]\]/);
+  return match ? match[0] : null;
+}
+
 export function extractReplyMeta(text: string): ReplyMeta | null {
   const newFormat = text.match(/\[\[CYBLIGHT_REPLY:([^:\]]+):([^:\]]*):([^\]]*)\]\]/);
   if (newFormat) {
