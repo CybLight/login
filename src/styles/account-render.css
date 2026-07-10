@@ -3621,24 +3621,24 @@ body:has(.is-chat-view),
 .account-page:has(.is-chat-view) .account-wrap {
   flex: 1 !important;
   min-height: 0 !important;
-  height: auto !important;
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
-/* Hide page footer on mobile in chat view to save screen space */
-@media (max-width: 860px) {
-  .account-page:has(.is-chat-view) > .auth-footer {
-    display: none !important;
-  }
+/* Hide page footer in chat view to save screen space and fix height calculations */
+.account-page:has(.is-chat-view) .auth-footer {
+  display: none !important;
 }
 
 /* Force main content container to stretch vertically and horizontally */
 .account-page .account-main.is-chat-view {
-  height: auto;
+  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   flex: 1;
   width: 100%;
+  overflow: hidden !important;
 }
 
 /* Force body inside main content to stretch vertically and horizontally */
@@ -3648,6 +3648,17 @@ body:has(.is-chat-view),
   display: flex;
   flex-direction: column;
   width: 100%;
+  overflow: hidden !important;
+}
+
+/* Force messages tab wrapper to stretch vertically and horizontally */
+.account-main.is-chat-view #messagesContent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden !important;
 }
 
 /* ==================== DANGER ZONE (ACCOUNT DELETION) ==================== */
