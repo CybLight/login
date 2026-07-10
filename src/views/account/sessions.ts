@@ -3,6 +3,7 @@ import { Router } from '@/router/Router';
 import type { SessionListItem } from '@/types';
 import { apiCall, escapeHtml } from '@/utils';
 import { countryFull, fmtTs, getDeviceIconSvg, parseUA } from './device-utils';
+import { showAccountRadioModal } from './modals';
 
 type ApiMessage = {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -21,11 +22,11 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
     const r = await apiCall('/auth/sessions', {
       credentials: 'include',
     });
-    const { data: meData } = await apiCall('/auth/me', {
+    const meRes = await apiCall('/auth/me', {
       credentials: 'include',
-    })
-      .then((r) => r.json())
-      .catch(() => ({ data: {} }));
+    });
+    const meDataRaw = await meRes.json().catch(() => ({}));
+    const meData = meDataRaw.user || {};
 
     const response = await r.json().catch(() => ({}));
 
@@ -36,7 +37,18 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
 
     const sessions = response.data?.sessions || [];
     const currentSessionId = response.data?.current;
-    const sessionsCount = meData?.sessionsCount || sessions.length || 0;
+    const sessionsCount = meDataRaw?.sessionsCount || sessions.length || 0;
+    const currentTtl = Number(meData.sessionsTtlDays || 0);
+
+    const ttlOptions = [
+      { value: 7, label: t('1 неделя') },
+      { value: 30, label: t('1 месяц') },
+      { value: 90, label: t('3 месяца') },
+      { value: 180, label: t('6 месяцев') },
+      { value: 365, label: t('1 год') },
+    ];
+
+    const currentTtlLabel = ttlOptions.find(o => o.value === currentTtl)?.label || t('по умолчанию');
 
     if (sessions.length === 0) {
       container.innerHTML = `<div class="sec-empty-text">${t('Нет активных сессий')}</div>`;
@@ -134,8 +146,24 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
       .join('');
 
     container.innerHTML = `
+    <div class="sessions-settings">
+      <div class="sessions-setting-card">
+        <div class="sessions-setting-card__title">${t('Автоматически завершать сессии')}</div>
+        <div class="sessions-setting-item" id="sessionTtlTrigger">
+          <div class="sessions-setting-item__label">${t('Если сессия неактивна')}</div>
+          <div class="sessions-setting-item__value">
+            <span id="sessionTtlValue">${currentTtlLabel}</span>
+            <span class="sessions-setting-arrow">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="sessions-head">
-      <div class="sessions-count">${t('Активных сессий:')} <b>${sessionsCount}</b></div>
+      <div class="sessions-count">
+        <span class="sessions-count__label">${t('Активных сессий:')}</span>
+        <span class="sessions-count__value">${sessionsCount}</span>
+      </div>
       <button class="btn btn-outline${sessionsCount <= 1 ? ' is-disabled' : ''}" id="logoutOthersBtn" type="button" ${
         sessionsCount <= 1 ? 'disabled' : ''
       } aria-label="${t('Выход из всех, кроме текущей')}">
@@ -199,6 +227,38 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
         }
       };
     });
+
+    const ttlTrigger = document.getElementById('sessionTtlTrigger');
+    if (ttlTrigger) {
+      ttlTrigger.onclick = async () => {
+        const newValue = await showAccountRadioModal({
+          title: t('Автозавершение сессий'),
+          options: ttlOptions,
+          currentValue: currentTtl,
+        });
+
+        if (newValue !== null && newValue !== currentTtl) {
+          try {
+            const saveRes = await apiCall('/auth/sessions/settings', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ttlDays: newValue }),
+            });
+
+            if (saveRes.ok) {
+              api.showMsg('ok', t('Настройки обновлены'));
+              setTimeout(() => Router.navigate('account-sessions'), 500);
+            } else {
+              const d = await saveRes.json().catch(() => ({}));
+              api.showMsg('error', d?.error || t('Ошибка при сохранении'));
+            }
+          } catch {
+            api.showMsg('error', t('Ошибка сети'));
+          }
+        }
+      };
+    }
 
     const lo = document.getElementById('logoutOthersBtn') as HTMLButtonElement;
     if (lo && !lo.disabled) {

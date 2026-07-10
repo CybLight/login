@@ -202,6 +202,76 @@ export function showAccountDeleteConfirmModal(opts: {
   });
 }
 
+export function showAccountRadioModal<T>(opts: {
+  title: string;
+  options: Array<{ value: T; label: string }>;
+  currentValue?: T;
+  confirmText?: string;
+  cancelText?: string;
+}): Promise<T | null> {
+  const old = document.getElementById('accountRadioModal');
+  old?.remove();
+
+  return new Promise((resolve) => {
+    const wrap = document.createElement('div');
+    wrap.id = 'accountRadioModal';
+    wrap.className = 'account-notice-modal';
+
+    const optionsHtml = opts.options
+      .map(
+        (opt) => `
+      <label class="account-radio-item">
+        <input type="radio" name="accountRadioOption" value="${escapeHtml(String(opt.value))}" ${
+          opt.value === opts.currentValue ? 'checked' : ''
+        } />
+        <span class="account-radio-item__label">${escapeHtml(opt.label)}</span>
+      </label>
+    `
+      )
+      .join('');
+
+    wrap.innerHTML = `
+      <div class="account-notice-backdrop"></div>
+      <div
+        class="account-notice-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="accountRadioTitle"
+      >
+        <div id="accountRadioTitle" class="account-notice-head">${escapeHtml(opts.title)}</div>
+        <div class="account-radio-list">${optionsHtml}</div>
+        <div class="account-notice-actions account-notice-actions--end account-notice-actions--spaced">
+          <button type="button" class="btn btn-outline" id="accountRadioCancelBtn" aria-label="${escapeHtml(opts.cancelText || t('Отмена'))}">${escapeHtml(opts.cancelText || t('Отмена'))}</button>
+          <button type="button" class="btn btn-primary" id="accountRadioOkBtn" aria-label="${escapeHtml(opts.confirmText || t('Готово'))}">${escapeHtml(opts.confirmText || t('Готово'))}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(wrap);
+
+    const dialogEl = wrap.querySelector('.account-notice-card') as HTMLElement;
+    const close = createModalCloser(wrap, dialogEl);
+
+    const finish = (confirmed: boolean) => {
+      let result: T | null = null;
+      if (confirmed) {
+        const selected = wrap.querySelector('input[name="accountRadioOption"]:checked') as HTMLInputElement;
+        if (selected) {
+          // Find original value by comparing stringified versions or using index
+          const index = Array.from(wrap.querySelectorAll('input[name="accountRadioOption"]')).indexOf(selected);
+          result = opts.options[index].value;
+        }
+      }
+      close();
+      resolve(result);
+    };
+
+    wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', () => finish(false));
+    wrap.querySelector('#accountRadioCancelBtn')?.addEventListener('click', () => finish(false));
+    wrap.querySelector('#accountRadioOkBtn')?.addEventListener('click', () => finish(true));
+  });
+}
+
 export function showAccountPinScopeModal(opts: {
   title: string;
   text: string;
