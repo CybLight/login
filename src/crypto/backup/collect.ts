@@ -85,6 +85,16 @@ export async function collectBackupPayload(
   };
 
   if (chats) {
+    // Limit decrypt cache to last 500 messages if history is included
+    const keys = Object.keys(decryptCache);
+    if (keys.length > 500) {
+      const limitedCache: Record<string, string> = {};
+      keys.slice(-500).forEach((k) => {
+        limitedCache[k] = decryptCache[k];
+      });
+      base.decryptCache = limitedCache;
+    }
+
     const payload: CyblightBackupPayloadV2 = {
       ...base,
       version: BACKUP_PAYLOAD_VERSION_V2,

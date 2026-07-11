@@ -22,6 +22,7 @@ export function renderChatFormattingToolbarHtml(): string {
           <button class="chat-format-btn" data-format="mono" type="button" title="${t('Моноширинный (Ctrl+Shift+M)')}" aria-label="${t('Моноширинный (Ctrl+Shift+M)')}"><code>M</code></button>
           <button class="chat-format-btn chat-format-btn--icon" data-format="spoiler" type="button" title="${t('Спойлер (Ctrl+Shift+P)')}" aria-label="${t('Спойлер (Ctrl+Shift+P)')}">${SPOILER_ICON}</button>
           <button class="chat-format-btn chat-format-btn--icon" data-format="quote" type="button" title="${t('Цитата (Ctrl+Shift+Q)')}" aria-label="${t('Цитата (Ctrl+Shift+Q)')}"><img class="chat-format-icon chat-format-icon--quote" src="/assets/img/msg/quotes.png" alt="" aria-hidden="true"></button>
+          <button class="chat-format-btn" data-format="regular" type="button" title="${t('Без форматирования')}" aria-label="${t('Без форматирования')}"><span style="text-decoration: line-through; opacity: 0.7;">Aa</span></button>
           <span class="chat-format-separator" aria-hidden="true"></span>
           <button class="chat-format-btn chat-format-btn--icon" data-format="link" type="button" title="${t('Вставить ссылку (Ctrl+K)')}" aria-label="${t('Вставить ссылку (Ctrl+K)')}">${LINK_ICON}</button>
           <button class="chat-format-btn" data-format="code" type="button" title="${t('Блок кода (Ctrl+Shift+C)')}" aria-label="${t('Блок кода (Ctrl+Shift+C)')}"><span class="chat-format-code-braces">{&nbsp;}</span></button>

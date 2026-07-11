@@ -41,6 +41,16 @@ async function deriveKey(password: string, salt: Uint8Array, iterations: number)
   );
 }
 
+async function compress(data: ArrayBuffer): Promise<ArrayBuffer> {
+  const stream = new Response(data).body!.pipeThrough(new CompressionStream('gzip'));
+  return await new Response(stream).arrayBuffer();
+}
+
+async function decompress(data: ArrayBuffer): Promise<ArrayBuffer> {
+  const stream = new Response(data).body!.pipeThrough(new DecompressionStream('gzip'));
+  return await new Response(stream).arrayBuffer();
+}
+
 export async function encryptBackupPayload(
   payload: CyblightBackupPayload,
   password: string,
@@ -48,7 +58,10 @@ export async function encryptBackupPayload(
   const salt = randomBytes(16);
   const iv = randomBytes(12);
   const key = await deriveKey(password, salt, BACKUP_ITERATIONS);
-  const plaintext = utf8ToArrayBuffer(JSON.stringify(payload));
+
+  const jsonBytes = utf8ToArrayBuffer(JSON.stringify(payload));
+  const plaintext = await compress(jsonBytes);
+
   const encrypted = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv: bytesToArrayBuffer(iv) },
     key,
@@ -57,7 +70,7 @@ export async function encryptBackupPayload(
 
   return {
     format: BACKUP_FILE_FORMAT,
-    version: BACKUP_VERSION,
+    version: BACKUP_VERSION, // Version 2 includes GZIP compression
     kdf: BACKUP_KDF,
     iterations: BACKUP_ITERATIONS,
     salt: arrayBufferToBase64(bytesToArrayBuffer(salt)),
@@ -73,6 +86,7 @@ export async function decryptBackupPayload(
   const format = file.format || BACKUP_FILE_FORMAT;
   const kdf = file.kdf || BACKUP_KDF;
   const iterations = file.iterations || BACKUP_ITERATIONS;
+  const version = file.version || 1;
   const saltStr = file.salt || file.saltBase64;
   const ivStr = file.iv || file.ivBase64;
 
@@ -103,10 +117,21 @@ export async function decryptBackupPayload(
     throw new Error('backup_password_invalid');
   }
 
+  let decompressed: ArrayBuffer;
+  if (version >= 2) {
+    try {
+      decompressed = await decompress(decrypted);
+    } catch (err) {
+      console.error('[Backup] GZIP decompression failed:', err);
+      throw new Error('backup_payload_invalid');
+    }
+  } else {
+    decompressed = decrypted;
+  }
+
   let decryptedText: string;
   try {
-    // Use TextDecoder for better performance and memory efficiency with large buffers
-    decryptedText = new TextDecoder().decode(decrypted);
+    decryptedText = new TextDecoder().decode(decompressed);
   } catch (err) {
     console.error('[Backup] Utf8 decode failed:', err);
     throw new Error('backup_payload_invalid');

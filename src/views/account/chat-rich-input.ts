@@ -1,3 +1,9 @@
+import {
+  insertChatBlockquote,
+  insertChatCode,
+  insertChatFormatting,
+  insertChatLink,
+} from './chat-editor';
 import { parseFormattedChatText } from './chat-format';
 
 // Helper function to convert HTML content editable structure to Markdown syntax
@@ -379,9 +385,59 @@ export function bindChatRichInput(input: any): void {
   updateEmptyState();
 }
 
-export function handleChatInputFormatShortcut(
-  _event: KeyboardEvent,
-  _input: any,
-): boolean {
-  return false;
+export function handleChatInputFormatShortcut(event: KeyboardEvent, input: any): boolean {
+  if (!(event.ctrlKey || event.metaKey)) return false;
+
+  const key = event.key.toLowerCase();
+  let handled = false;
+
+  if (event.shiftKey) {
+    switch (key) {
+      case 'x': // Strikethrough
+        handled = true;
+        insertChatFormatting('~~', '~~', input);
+        break;
+      case 'm': // Monospace
+        handled = true;
+        insertChatFormatting('`', '`', input);
+        break;
+      case 'p': // Spoiler
+        handled = true;
+        insertChatFormatting('||', '||', input);
+        break;
+      case 'q': // Quote
+        handled = true;
+        insertChatBlockquote(input);
+        break;
+      case 'c': // Code block
+        handled = true;
+        void insertChatCode(input);
+        break;
+    }
+  } else {
+    switch (key) {
+      case 'b': // Bold
+        handled = true;
+        insertChatFormatting('**', '**', input);
+        break;
+      case 'i': // Italic
+        handled = true;
+        insertChatFormatting('_', '_', input);
+        break;
+      case 'u': // Underline
+        handled = true;
+        insertChatFormatting('__', '__', input);
+        break;
+      case 'k': // Link
+        handled = true;
+        void insertChatLink(input);
+        break;
+    }
+  }
+
+  if (handled) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  return handled;
 }

@@ -29,6 +29,7 @@ import {
   insertChatFormatting,
   insertChatLink,
   insertChatCode,
+  stripChatFormatting,
 } from './chat-editor';
 import {
   adjustChatInputHeight,
@@ -869,11 +870,19 @@ export function openChatInMessagesTab(
     if (chatSendBtn) chatSendBtn.disabled = true;
 
     const outgoingContent = content;
+    const userId = getSignalUserId();
     const optimisticId = `pending-${Date.now()}`;
     let usedOptimisticUi = false;
 
     if (!editingId && messagesEl) {
       appendOptimisticSentMessage(messagesEl, outgoingContent, optimisticId);
+      state.accountChatMessageMap.set(optimisticId, {
+        id: optimisticId,
+        content: outgoingContent,
+        senderId: userId,
+        createdAt: Date.now(),
+        encryption: 'signal_v2',
+      });
       usedOptimisticUi = true;
       clearChatDraft(friendId);
       composeDraftHolder.draft = '';
@@ -889,7 +898,6 @@ export function openChatInMessagesTab(
     try {
       let response: Response;
       let data: ApiOkResponse;
-      const userId = getSignalUserId();
       const encrypted = await encryptOutgoingMessage(userId, friendId, outgoingContent);
 
       if (editingId) {
@@ -1082,8 +1090,60 @@ export function openChatInMessagesTab(
       else if (format === 'quote') insertChatBlockquote(chatInput);
       else if (format === 'link') void insertChatLink(chatInput);
       else if (format === 'code') void insertChatCode(chatInput);
+      else if (format === 'regular') stripChatFormatting(chatInput);
     });
   });
+
+  let currentOffset = 0;
+  let isPaging = false;
+  let allLoaded = false;
+
+  const loadMoreMessages = async () => {
+    if (isPaging || allLoaded || !messagesEl) return;
+    isPaging = true;
+    currentOffset += 50;
+
+    const previousHeight = messagesEl.scrollHeight;
+
+    await loadChatMessagesInAccount(
+      friendId,
+      messagesEl,
+      api,
+      chatInput,
+      chatSendBtn,
+      chatEditIndicator,
+      chatEditingIdInput,
+      chatLoadOptions({
+        offset: currentOffset,
+        isLoadMore: true,
+        hydrateLinkPreviews: false,
+        preserveScrollPosition: true,
+      })
+    );
+
+    // If no more messages were added, mark as all loaded
+    if (messagesEl.scrollHeight === previousHeight) {
+      allLoaded = true;
+    }
+    isPaging = false;
+  };
+
+  const handleMessagesScroll = () => {
+    if (!messagesEl) return;
+    if (messagesEl.scrollTop < 100) {
+      void loadMoreMessages();
+    }
+  };
+
+  messagesEl?.addEventListener('scroll', handleMessagesScroll, { passive: true });
+
+  // Try to load from session cache for instant opening
+  const cacheKey = `chat_cache_${friendId}`;
+  const cachedHtml = sessionStorage.getItem(cacheKey);
+  if (cachedHtml && messagesEl) {
+    messagesEl.innerHTML = cachedHtml;
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
 
   void loadChatMessagesInAccount(
     friendId,
@@ -1093,7 +1153,11 @@ export function openChatInMessagesTab(
     chatSendBtn,
     chatEditIndicator,
     chatEditingIdInput,
-    chatLoadOptions()
+    chatLoadOptions({
+      onLoadFinished: (html) => {
+        sessionStorage.setItem(cacheKey, html);
+      }
+    })
   );
 
   void warmupOutgoingSession(getSignalUserId(), friendId);

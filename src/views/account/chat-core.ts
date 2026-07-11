@@ -60,6 +60,9 @@ function renderMessageReadStatus(readAt: unknown): string {
 }
 
 export type ChatLoadOptions = {
+  offset?: number;
+  limit?: number;
+  isLoadMore?: boolean;
   hydrateLinkPreviews?: boolean;
   preserveScrollPosition?: boolean;
   forceScrollToBottom?: boolean;
@@ -69,6 +72,7 @@ export type ChatLoadOptions = {
   onMessageDeleted?: (messageId: string) => void;
   peerUsername?: string;
   composeDraftHolder?: { draft: string };
+  onLoadFinished?: (html: string) => void;
 };
 
 type ChatCoreDeps = {
@@ -103,6 +107,9 @@ export function createChatCore(deps: ChatCoreDeps) {
     const shouldHydrateLinkPreviews = options?.hydrateLinkPreviews ?? true;
     const preserveScrollPosition = options?.preserveScrollPosition ?? false;
     const forceScrollToBottom = options?.forceScrollToBottom ?? false;
+    const limit = options?.limit ?? 50;
+    const offset = options?.offset ?? 0;
+    const isLoadMore = options?.isLoadMore ?? false;
 
     const previousScrollTop = container.scrollTop;
     const previousScrollHeight = container.scrollHeight;
@@ -111,7 +118,7 @@ export function createChatCore(deps: ChatCoreDeps) {
     const wasNearBottom = previousBottomOffset <= 80;
 
     try {
-      const response = await apiCall(`/messages/${encodeURIComponent(friendId)}`, {
+      const response = await apiCall(`/messages/${encodeURIComponent(friendId)}?limit=${limit}&offset=${offset}`, {
         credentials: 'include',
       });
 
@@ -181,11 +188,15 @@ export function createChatCore(deps: ChatCoreDeps) {
       options?.onPinStateChanged?.();
 
       if (decryptedList.length === 0) {
-        container.innerHTML = '<div class="chat-empty">Сообщений пока нет</div>';
+        if (!isLoadMore) {
+          container.innerHTML = '<div class="chat-empty">Сообщений пока нет</div>';
+        }
         return;
       }
 
-      deps.accountChatMessageMap.clear();
+      if (!isLoadMore) {
+        deps.accountChatMessageMap.clear();
+      }
       decryptedList.forEach((message: Record<string, unknown>) => {
         deps.accountChatMessageMap.set(String(message.id || ''), message);
       });
@@ -232,6 +243,20 @@ export function createChatCore(deps: ChatCoreDeps) {
       const messageHtmlParts: string[] = [];
       let lastDayKey = '';
 
+      // If we are loading more, we need to know the date of the "oldest" message currently shown
+      // to avoid duplicate date separators or missing ones.
+      if (isLoadMore) {
+        const currentMessages = Array.from(deps.accountChatMessageMap.values())
+          .map(m => m as Record<string, unknown>)
+          .sort((a, b) => normalizeMessageTimestamp(a.createdAt ?? a.created_at) - normalizeMessageTimestamp(b.createdAt ?? b.created_at));
+
+        // Find the first message AFTER the newly loaded ones
+        const firstExistingMsg = currentMessages.find(m => !decryptedList.some(dm => dm.id === m.id));
+        if (firstExistingMsg) {
+           // We'll calculate lastDayKey as we iterate decryptedList
+        }
+      }
+
       for (const message of decryptedList) {
         const msg = message as Record<string, unknown>;
         const messageId = String(msg.id ?? '');
@@ -243,6 +268,12 @@ export function createChatCore(deps: ChatCoreDeps) {
         const dayKey = getLocalDayKey(normalizedCreatedAt);
 
         if (dayKey !== lastDayKey) {
+          // If we are prepending, and the last day key is the same as the first existing message's day key,
+          // we might want to skip the date separator for the first message of the prepend batch?
+          // No, actually decryptedList is chronological.
+          // batch: [Jan 1, Jan 1, Jan 2] -> existing: [Jan 2, Jan 3]
+          // result should be: [Separator Jan 1, msg, msg, Separator Jan 2, msg, msg, Separator Jan 3, msg]
+
           messageHtmlParts.push(renderChatDateSeparatorHtml(normalizedCreatedAt));
           lastDayKey = dayKey;
         }
@@ -321,7 +352,13 @@ export function createChatCore(deps: ChatCoreDeps) {
         `);
       }
 
-      container.innerHTML = messageHtmlParts.join('');
+      const containerHtml = messageHtmlParts.join('');
+      if (isLoadMore) {
+        container.insertAdjacentHTML('afterbegin', containerHtml);
+      } else {
+        container.innerHTML = containerHtml;
+        options?.onLoadFinished?.(container.innerHTML);
+      }
 
       container.querySelectorAll('.spoiler').forEach((spoilerEl) => {
         spoilerEl.addEventListener('click', () => {
@@ -565,181 +602,255 @@ export function createChatCore(deps: ChatCoreDeps) {
           });
       }
 
-      container.querySelectorAll<HTMLElement>('.chat-message').forEach((messageEl) => {
-        messageEl.addEventListener('contextmenu', (event) => {
-          event.preventDefault();
-          event.stopPropagation();
+      const onMessageContextMenu = (event: MouseEvent) => {
+        const target = event.target as HTMLElement | null;
+        const messageEl = target?.closest('.chat-message') as HTMLElement | null;
+        if (!messageEl) return;
 
-          closeChatContextMenu();
+        event.preventDefault();
+        event.stopPropagation();
 
-          const messageId = String(messageEl.dataset.messageId || '');
-          const message = deps.accountChatMessageMap.get(messageId);
-          if (!message) return;
+        closeChatContextMenu();
 
-          const isSent = messageEl.classList.contains('sent');
-          const rawContent = String(message.content || '');
-          const cleanContent = stripNoPreviewTokens(rawContent);
-          const contextReplyAuthor = isSent ? 'Вы' : options?.peerUsername || 'Собеседник';
-          const messageTimeRaw = message.createdAt || message.created_at || Date.now();
-          const normalizedCreatedAt = normalizeMessageTimestamp(messageTimeRaw);
-          const canEditMessage = isSent && Date.now() - normalizedCreatedAt < deps.editTimeLimit;
-          const editTimeLeft = canEditMessage
-            ? Math.max(
-                1,
-                Math.ceil((deps.editTimeLimit - (Date.now() - normalizedCreatedAt)) / 60000)
-              )
-            : 0;
+        const messageId = String(messageEl.dataset.messageId || '');
+        const message = deps.accountChatMessageMap.get(messageId);
+        if (!message) return;
 
-          const menu = document.createElement('div');
-          menu.id = 'chatMessageContextMenu';
-          menu.className = 'chat-context-menu';
+        const isSent = messageEl.classList.contains('sent');
+        const rawContent = String(message.content || '');
+        const cleanContent = stripNoPreviewTokens(rawContent);
+        const contextReplyAuthor = isSent ? 'Вы' : options?.peerUsername || 'Собеседник';
+        const messageTimeRaw = message.createdAt || message.created_at || Date.now();
+        const normalizedCreatedAt = normalizeMessageTimestamp(messageTimeRaw);
+        const canEditMessage = isSent && Date.now() - normalizedCreatedAt < deps.editTimeLimit;
+        const editTimeLeft = canEditMessage
+          ? Math.max(
+              1,
+              Math.ceil((deps.editTimeLimit - (Date.now() - normalizedCreatedAt)) / 60000)
+            )
+          : 0;
 
-          menu.innerHTML = `
-          <div class="chat-context-reactions">
-            ${deps.quickReactions
-              .slice(0, 6)
-              .map((emoji) =>
-                `<button class="chat-context-reaction-btn" type="button" data-menu-action="quick-react" data-menu-emoji="${escapeHtml(
-                  emoji
-                )}" title="Реакция ${escapeHtml(emoji)}" aria-label="Реакция ${escapeHtml(emoji)}">${emoji}</button>`
-              )
-              .join('')}
-          </div>
-          <div class="chat-context-actions">
-            <button class="chat-context-action" type="button" data-menu-action="reply" aria-label="↩️Ответить"><span class="chat-context-action-icon">↩️</span>Ответить</button>
-            <button class="chat-context-action" type="button" data-menu-action="pin" aria-label="📌${ deps.accountPinnedMessageByChat.get(friendId)?.messageId === messageId ? 'Открепить' : 'Закрепить' }"><span class="chat-context-action-icon">📌</span>${
-              deps.accountPinnedMessageByChat.get(friendId)?.messageId === messageId
-                ? 'Открепить'
-                : 'Закрепить'
-            }</button>
-            ${
-              isSent
-                ? `<button class="chat-context-action" type="button" data-menu-action="edit" ${canEditMessage ? '' : 'disabled'} title="${canEditMessage ? `Осталось ${editTimeLeft} мин` : 'Время редактирования истекло'}" aria-label="${canEditMessage ? `Осталось ${editTimeLeft} мин` : 'Время редактирования истекло'}"><span class="chat-context-action-icon">✏️</span>Изменить</button>`
-                : ''
-            }
-            <button class="chat-context-action" type="button" data-menu-action="copy" aria-label="📋Копировать текст"><span class="chat-context-action-icon">📋</span>Копировать текст</button>
-            <button class="chat-context-action" type="button" data-menu-action="forward" aria-label="↪️Переслать"><span class="chat-context-action-icon">↪️</span>Переслать</button>
-            ${
-              isSent
-                ? '<button class="chat-context-action" type="button" data-menu-action="delete" aria-label="🗑️Удалить"><span class="chat-context-action-icon">🗑️</span>Удалить</button>'
-                : ''
-            }
-            <button class="chat-context-action" type="button" data-menu-action="select" aria-label="⭕Выделить"><span class="chat-context-action-icon">⭕</span>Выделить</button>
-          </div>
-        `;
+        const menu = document.createElement('div');
+        menu.id = 'chatMessageContextMenu';
+        menu.className = 'chat-context-menu';
 
-          document.body.appendChild(menu);
+        menu.innerHTML = `
+        <div class="chat-context-reactions">
+          ${deps.quickReactions
+            .slice(0, 6)
+            .map((emoji) =>
+              `<button class="chat-context-reaction-btn" type="button" data-menu-action="quick-react" data-menu-emoji="${escapeHtml(
+                emoji
+              )}" title="Реакция ${escapeHtml(emoji)}" aria-label="Реакция ${escapeHtml(emoji)}">${emoji}</button>`
+            )
+            .join('')}
+        </div>
+        <div class="chat-context-actions">
+          <button class="chat-context-action" type="button" data-menu-action="reply" aria-label="↩️Ответить"><span class="chat-context-action-icon">↩️</span>Ответить</button>
+          <button class="chat-context-action" type="button" data-menu-action="pin" aria-label="📌${ deps.accountPinnedMessageByChat.get(friendId)?.messageId === messageId ? 'Открепить' : 'Закрепить' }"><span class="chat-context-action-icon">📌</span>${
+            deps.accountPinnedMessageByChat.get(friendId)?.messageId === messageId
+              ? 'Открепить'
+              : 'Закрепить'
+          }</button>
+          ${
+            isSent
+              ? `<button class="chat-context-action" type="button" data-menu-action="edit" ${canEditMessage ? '' : 'disabled'} title="${canEditMessage ? `Осталось ${editTimeLeft} мин` : 'Время редактирования истекло'}" aria-label="${canEditMessage ? `Осталось ${editTimeLeft} мин` : 'Время редактирования истекло'}"><span class="chat-context-action-icon">✏️</span>Изменить</button>`
+              : ''
+          }
+          <button class="chat-context-action" type="button" data-menu-action="copy" aria-label="📋Копировать текст"><span class="chat-context-action-icon">📋</span>Копировать текст</button>
+          <button class="chat-context-action" type="button" data-menu-action="forward" aria-label="↪️Переслать"><span class="chat-context-action-icon">↪️</span>Переслать</button>
+          ${
+            isSent
+              ? '<button class="chat-context-action" type="button" data-menu-action="delete" aria-label="🗑️Удалить"><span class="chat-context-action-icon">🗑️</span>Удалить</button>'
+              : ''
+          }
+          <button class="chat-context-action" type="button" data-menu-action="select" aria-label="⭕Выделить"><span class="chat-context-action-icon">⭕</span>Выделить</button>
+        </div>
+      `;
 
-          const viewportWidth = window.innerWidth;
-          const viewportHeight = window.innerHeight;
-          const rect = menu.getBoundingClientRect();
-          const nextLeft = Math.min(event.clientX, Math.max(8, viewportWidth - rect.width - 8));
-          const nextTop = Math.min(event.clientY, Math.max(8, viewportHeight - rect.height - 8));
+        document.body.appendChild(menu);
 
-          menu.style.left = `${Math.max(8, nextLeft)}px`;
-          menu.style.top = `${Math.max(8, nextTop)}px`;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const rect = menu.getBoundingClientRect();
+        const nextLeft = Math.min(event.clientX, Math.max(8, viewportWidth - rect.width - 8));
+        const nextTop = Math.min(event.clientY, Math.max(8, viewportHeight - rect.height - 8));
 
-          const handleMenuAction = async (target: HTMLElement) => {
-            const action = String(target.getAttribute('data-menu-action') || '');
-            if (!action) return;
+        menu.style.left = `${Math.max(8, nextLeft)}px`;
+        menu.style.top = `${Math.max(8, nextTop)}px`;
 
-            if (action === 'quick-react') {
-              const emoji = String(target.getAttribute('data-menu-emoji') || '');
-              if (emoji) {
-                await addReactionToMessageInAccount(messageId, emoji, async () => {
-                  await loadChatMessagesInAccount(
-                    friendId,
-                    container,
-                    api,
-                    chatInput,
-                    chatSendBtn,
-                    chatEditIndicator,
-                    chatEditingIdInput
-                  );
-                });
-              }
-              closeChatContextMenu();
-              return;
-            }
+        const handleMenuAction = async (target: HTMLElement) => {
+          const action = String(target.getAttribute('data-menu-action') || '');
+          if (!action) return;
 
-            if (action === 'reply') {
-              options?.onReplySelect?.(
-                messageId,
-                cleanContent.replace(/\s+/g, ' ').trim().slice(0, 220),
-                contextReplyAuthor
-              );
-              chatInput?.focus();
-              closeChatContextMenu();
-              return;
-            }
-
-            if (action === 'pin') {
-              const pinned = deps.accountPinnedMessageByChat.get(friendId);
-              const isUnpinAction = pinned?.messageId === messageId;
-
-              if (isUnpinAction) {
-                const confirmed = await showAccountConfirmModal({
-                  title: 'Открепить сообщение',
-                  text: 'Убрать закреп из этого чата?',
-                  confirmText: 'Открепить',
-                  cancelText: 'Отмена',
-                });
-                if (!confirmed) {
-                  closeChatContextMenu();
-                  return;
-                }
-
-                const response = await apiCall(`/messages/${encodeURIComponent(messageId)}/pin`, {
-                  method: 'DELETE',
-                  credentials: 'include',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ forBoth: false }),
-                });
-
-                if (!response.ok) {
-                  const payload = await response.json().catch(() => ({}));
-                  api.showMsg('error', payload?.error || 'Не удалось открепить сообщение');
-                  closeChatContextMenu();
-                  return;
-                }
-
-                api.showMsg('info', 'Сообщение откреплено');
-              } else {
-                const decision = await showAccountPinScopeModal({
-                  title: 'Закрепить сообщение',
-                  text: 'Закрепить это сообщение?',
-                  checkboxText: 'Также закрепить для собеседника',
-                  confirmText: 'Закрепить',
-                  cancelText: 'Отмена',
-                  defaultChecked: false,
-                });
-                if (!decision.confirmed) {
-                  closeChatContextMenu();
-                  return;
-                }
-
-                const response = await apiCall(`/messages/${encodeURIComponent(messageId)}/pin`, {
-                  method: 'POST',
-                  credentials: 'include',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ forBoth: decision.forBoth }),
-                });
-
-                if (!response.ok) {
-                  const payload = await response.json().catch(() => ({}));
-                  api.showMsg('error', payload?.error || 'Не удалось закрепить сообщение');
-                  closeChatContextMenu();
-                  return;
-                }
-
-                api.showMsg(
-                  'success',
-                  decision.forBoth
-                    ? 'Сообщение закреплено для вас и собеседника'
-                    : 'Сообщение закреплено'
+          if (action === 'quick-react') {
+            const emoji = String(target.getAttribute('data-menu-emoji') || '');
+            if (emoji) {
+              await addReactionToMessageInAccount(messageId, emoji, async () => {
+                await loadChatMessagesInAccount(
+                  friendId,
+                  container,
+                  api,
+                  chatInput,
+                  chatSendBtn,
+                  chatEditIndicator,
+                  chatEditingIdInput
                 );
+              });
+            }
+            closeChatContextMenu();
+            return;
+          }
+
+          if (action === 'reply') {
+            options?.onReplySelect?.(
+              messageId,
+              cleanContent.replace(/\s+/g, ' ').trim().slice(0, 220),
+              contextReplyAuthor
+            );
+            chatInput?.focus();
+            closeChatContextMenu();
+            return;
+          }
+
+          if (action === 'pin') {
+            const pinned = deps.accountPinnedMessageByChat.get(friendId);
+            const isUnpinAction = pinned?.messageId === messageId;
+
+            if (isUnpinAction) {
+              const confirmed = await showAccountConfirmModal({
+                title: 'Открепить сообщение',
+                text: 'Убрать закреп из этого чата?',
+                confirmText: 'Открепить',
+                cancelText: 'Отмена',
+              });
+              if (!confirmed) {
+                closeChatContextMenu();
+                return;
               }
 
+              const response = await apiCall(`/messages/${encodeURIComponent(messageId)}/pin`, {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ forBoth: false }),
+              });
+
+              if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                api.showMsg('error', payload?.error || 'Не удалось открепить сообщение');
+                closeChatContextMenu();
+                return;
+              }
+
+              api.showMsg('info', 'Сообщение откреплено');
+            } else {
+              const decision = await showAccountPinScopeModal({
+                title: 'Закрепить сообщение',
+                text: 'Закрепить это сообщение?',
+                checkboxText: 'Также закрепить для собеседника',
+                confirmText: 'Закрепить',
+                cancelText: 'Отмена',
+                defaultChecked: false,
+              });
+              if (!decision.confirmed) {
+                closeChatContextMenu();
+                return;
+              }
+
+              const response = await apiCall(`/messages/${encodeURIComponent(messageId)}/pin`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ forBoth: decision.forBoth }),
+              });
+
+              if (!response.ok) {
+                const payload = await response.json().catch(() => ({}));
+                api.showMsg('error', payload?.error || 'Не удалось закрепить сообщение');
+                closeChatContextMenu();
+                return;
+              }
+
+              api.showMsg(
+                'success',
+                decision.forBoth
+                  ? 'Сообщение закреплено для вас и собеседника'
+                  : 'Сообщение закреплено'
+              );
+            }
+
+            await loadChatMessagesInAccount(
+              friendId,
+              container,
+              api,
+              chatInput,
+              chatSendBtn,
+              chatEditIndicator,
+              chatEditingIdInput,
+              {
+                hydrateLinkPreviews: false,
+                preserveScrollPosition: true,
+                onReplySelect: options?.onReplySelect,
+                onPinStateChanged: options?.onPinStateChanged,
+                onForwardRequest: options?.onForwardRequest,
+                peerUsername: options?.peerUsername,
+              }
+            );
+            closeChatContextMenu();
+            return;
+          }
+
+          if (action === 'copy') {
+            const ok = await copyText(cleanContent);
+            api.showMsg(
+              ok ? 'success' : 'warn',
+              ok ? 'Текст сообщения скопирован' : 'Не удалось скопировать'
+            );
+            closeChatContextMenu();
+            return;
+          }
+
+          if (action === 'edit') {
+            if (!chatInput || !isSent) {
+              closeChatContextMenu();
+              return;
+            }
+
+            if (!canEditMessage) {
+              api.showMsg('warn', 'Время редактирования этого сообщения истекло');
+              closeChatContextMenu();
+              return;
+            }
+
+            deps.startEditMessageInAccount(
+              messageId,
+              String(message.content || ''),
+              chatInput,
+              chatSendBtn,
+              chatEditIndicator,
+              chatEditingIdInput,
+              options?.composeDraftHolder,
+            );
+            closeChatContextMenu();
+            return;
+          }
+
+          if (action === 'forward') {
+            if (options?.onForwardRequest) {
+              await options.onForwardRequest(cleanContent);
+            } else if (chatInput) {
+              chatInput.value = cleanContent;
+              chatInput.focus();
+              chatInput.dispatchEvent(new Event('input'));
+              api.showMsg('info', 'Текст сообщения подставлен в поле ввода');
+            }
+            closeChatContextMenu();
+            return;
+          }
+
+          if (action === 'delete') {
+            await deleteMessageInAccount(messageId, api, showAccountConfirmModal, async () => {
               await loadChatMessagesInAccount(
                 friendId,
                 container,
@@ -751,123 +862,51 @@ export function createChatCore(deps: ChatCoreDeps) {
                 {
                   hydrateLinkPreviews: false,
                   preserveScrollPosition: true,
-                  onReplySelect: options?.onReplySelect,
-                  onPinStateChanged: options?.onPinStateChanged,
-                  onForwardRequest: options?.onForwardRequest,
-                  peerUsername: options?.peerUsername,
                 }
               );
-              closeChatContextMenu();
-              return;
-            }
-
-            if (action === 'copy') {
-              const ok = await copyText(cleanContent);
-              api.showMsg(
-                ok ? 'success' : 'warn',
-                ok ? 'Текст сообщения скопирован' : 'Не удалось скопировать'
-              );
-              closeChatContextMenu();
-              return;
-            }
-
-            if (action === 'edit') {
-              if (!chatInput || !isSent) {
-                closeChatContextMenu();
-                return;
-              }
-
-              if (!canEditMessage) {
-                api.showMsg('warn', 'Время редактирования этого сообщения истекло');
-                closeChatContextMenu();
-                return;
-              }
-
-              deps.startEditMessageInAccount(
-                messageId,
-                String(message.content || ''),
-                chatInput,
-                chatSendBtn,
-                chatEditIndicator,
-                chatEditingIdInput,
-                options?.composeDraftHolder,
-              );
-              closeChatContextMenu();
-              return;
-            }
-
-            if (action === 'forward') {
-              if (options?.onForwardRequest) {
-                await options.onForwardRequest(cleanContent);
-              } else if (chatInput) {
-                chatInput.value = cleanContent;
-                chatInput.focus();
-                chatInput.dispatchEvent(new Event('input'));
-                api.showMsg('info', 'Текст сообщения подставлен в поле ввода');
-              }
-              closeChatContextMenu();
-              return;
-            }
-
-            if (action === 'delete') {
-              await deleteMessageInAccount(messageId, api, showAccountConfirmModal, async () => {
-                await loadChatMessagesInAccount(
-                  friendId,
-                  container,
-                  api,
-                  chatInput,
-                  chatSendBtn,
-                  chatEditIndicator,
-                  chatEditingIdInput,
-                  {
-                    hydrateLinkPreviews: false,
-                    preserveScrollPosition: true,
-                  }
-                );
-              }, {
-                messagesContainer: container,
-                onSuccess: options?.onMessageDeleted,
-              });
-              closeChatContextMenu();
-              return;
-            }
-
-            if (action === 'select') {
-              if (window.__chatSelectionHandlers) {
-                window.__chatSelectionHandlers.enter();
-                const localMessageId = messageEl.getAttribute('data-message-id') || '';
-                if (localMessageId) {
-                  window.__chatSelectionHandlers.toggle(localMessageId, messageEl);
-                }
-              }
-              closeChatContextMenu();
-            }
-          };
-
-          menu.addEventListener('click', (menuEvent) => {
-            const target = (menuEvent.target as HTMLElement | null)?.closest(
-              '[data-menu-action]'
-            ) as HTMLElement | null;
-            if (!target) return;
-            void handleMenuAction(target);
-          });
-
-          const onDocClick = (docEvent: MouseEvent) => {
-            const target = docEvent.target as Node | null;
-            if (target && menu.contains(target)) return;
+            }, {
+              messagesContainer: container,
+              onSuccess: options?.onMessageDeleted,
+            });
             closeChatContextMenu();
-            document.removeEventListener('click', onDocClick, true);
-          };
+            return;
+          }
 
-          const onScroll = () => {
+          if (action === 'select') {
+            if (window.__chatSelectionHandlers) {
+              window.__chatSelectionHandlers.enter();
+              const localMessageId = messageEl.getAttribute('data-message-id') || '';
+              if (localMessageId) {
+                window.__chatSelectionHandlers.toggle(localMessageId, messageEl);
+              }
+            }
             closeChatContextMenu();
-            container.removeEventListener('scroll', onScroll);
-          };
+          }
+        };
 
-          document.addEventListener('click', onDocClick, true);
-          container.addEventListener('scroll', onScroll, { passive: true });
+        menu.addEventListener('click', (menuEvent) => {
+          const target = (menuEvent.target as HTMLElement | null)?.closest(
+            '[data-menu-action]'
+          ) as HTMLElement | null;
+          if (!target) return;
+          void handleMenuAction(target);
         });
-      });
+
+        const onDocClick = (docEvent: MouseEvent) => {
+          const target = docEvent.target as Node | null;
+          if (target && menu.contains(target)) return;
+          closeChatContextMenu();
+          document.removeEventListener('click', onDocClick, true);
+        };
+
+        const onScroll = () => {
+          closeChatContextMenu();
+          container.removeEventListener('scroll', onScroll);
+        };
+
+        document.addEventListener('click', onDocClick, true);
+        container.addEventListener('scroll', onScroll, { passive: true });
+      };
 
       if (forceScrollToBottom) {
         container.scrollTop = container.scrollHeight;
@@ -882,21 +921,34 @@ export function createChatCore(deps: ChatCoreDeps) {
         container.scrollTop = container.scrollHeight;
       }
 
-      container.querySelectorAll<HTMLElement>('.chat-message').forEach((messageEl) => {
-        if (!messageEl.hasAttribute('data-selection-listener-attached')) {
-          messageEl.setAttribute('data-selection-listener-attached', 'true');
-          messageEl.classList.add('chat-message--selectable');
-          messageEl.addEventListener('click', (e) => {
-            if (window.__chatSelectionMode) {
-              e.stopPropagation();
-              const messageId = messageEl.getAttribute('data-message-id') || '';
-              if (messageId && window.__chatSelectionHandlers) {
-                window.__chatSelectionHandlers.toggle(messageId, messageEl);
-              }
-            }
-          });
+      const onMessageClick = (event: MouseEvent) => {
+        if (!window.__chatSelectionMode) return;
+
+        const target = event.target as HTMLElement | null;
+        const messageEl = target?.closest('.chat-message') as HTMLElement | null;
+        if (!messageEl) return;
+
+        event.stopPropagation();
+        const messageId = messageEl.getAttribute('data-message-id') || '';
+        if (messageId && window.__chatSelectionHandlers) {
+          window.__chatSelectionHandlers.toggle(messageId, messageEl);
         }
-      });
+      };
+
+      if (!container.hasAttribute('data-listeners-attached')) {
+        container.setAttribute('data-listeners-attached', 'true');
+        container.addEventListener('contextmenu', onMessageContextMenu);
+        container.addEventListener('click', onMessageClick);
+
+        // Spoiler delegation
+        container.addEventListener('click', (e) => {
+          const target = e.target as HTMLElement | null;
+          const spoiler = target?.closest('.spoiler');
+          if (spoiler) {
+            spoiler.classList.toggle('revealed');
+          }
+        });
+      }
 
       if (window.__chatSelectionHandlers?.sync) {
         window.__chatSelectionHandlers.sync();

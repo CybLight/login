@@ -6,9 +6,9 @@ import { apiCall } from '@/utils';
 import { ChatMessage, ApiResponse } from '@/types';
 
 export const messagesService = {
-  async loadMessages(friendId: string, limit: number = 50): Promise<ChatMessage[]> {
+  async loadMessages(friendId: string, limit: number = 50, offset: number = 0): Promise<ChatMessage[]> {
     try {
-      const response = await apiCall(`/messages/${encodeURIComponent(friendId)}?limit=${limit}`, {
+      const response = await apiCall(`/messages/${encodeURIComponent(friendId)}?limit=${limit}&offset=${offset}`, {
         method: 'GET',
         credentials: 'include',
       });

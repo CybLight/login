@@ -184,6 +184,26 @@ export async function insertChatCode(input: HTMLTextAreaElement): Promise<void> 
   notifyChatInputChange(input);
 }
 
+export function stripChatFormatting(input: HTMLTextAreaElement): void {
+  const selectionStart = input.selectionStart;
+  const selectionEnd = input.selectionEnd;
+  if (selectionStart === selectionEnd) return;
+
+  const text = input.value;
+  const selected = text.substring(selectionStart, selectionEnd);
+
+  // Remove common markdown markers globally within selection
+  const plain = selected
+    .replace(/\*\*|__|~~|\|\||`/g, '')
+    .replace(/\[([^]]+)]\([^)]+\)/g, '$1')
+    .replace(/^>\s?/gm, '')
+    .replace(/_/g, '');
+
+  input.value = text.substring(0, selectionStart) + plain + text.substring(selectionEnd);
+  input.setSelectionRange(selectionStart, selectionStart + plain.length);
+  notifyChatInputChange(input);
+}
+
 export function startEditMessageInAccount(
   messageId: string,
   currentContent: string,
