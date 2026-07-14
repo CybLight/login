@@ -355,7 +355,7 @@ function renderSettingsTab(user: User): string {
               <div class="stg-field__hint">${t('Ваш уникальный логин в системе')}</div>
             </div>
           </div>
-          <a href="${sitePath('edit-profile', locale)}" class="stg-btn stg-btn--secondary">${t('Изменить')}</a>
+          <a href="${localePath('edit-profile', locale)}" class="stg-btn stg-btn--secondary">${t('Изменить')}</a>
         </div>
 
         <div class="stg-field">
@@ -367,7 +367,7 @@ function renderSettingsTab(user: User): string {
               <div class="stg-field__hint">${t('Используется для входа и уведомлений')}</div>
             </div>
           </div>
-          <a href="${sitePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Изменить')}</a>
+          <a href="${localePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Изменить')}</a>
         </div>
       </section>
 
@@ -532,7 +532,7 @@ function renderSettingsTab(user: User): string {
             <div class="stg-row__hint">${t('Рекомендуется менять пароль каждые 6 месяцев')}</div>
           </div>
           <div class="stg-row__action">
-            <a href="${sitePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Сменить пароль')}</a>
+            <a href="${localePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Сменить пароль')}</a>
           </div>
         </div>
 
@@ -543,7 +543,7 @@ function renderSettingsTab(user: User): string {
             <div class="stg-row__hint">${t('Дополнительный уровень защиты вашего аккаунта')}</div>
           </div>
           <div class="stg-row__action">
-            <a href="${sitePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Настроить')}</a>
+            <a href="${localePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Настроить')}</a>
           </div>
         </div>
 
@@ -553,7 +553,7 @@ function renderSettingsTab(user: User): string {
             <div class="stg-row__hint">${t('Управление устройствами, с которых выполнен вход')}</div>
           </div>
           <div class="stg-row__action">
-            <a href="${sitePath('account-sessions', locale)}" class="stg-btn stg-btn--secondary">${t('Просмотреть')}</a>
+            <a href="${localePath('account-sessions', locale)}" class="stg-btn stg-btn--secondary">${t('Просмотреть')}</a>
           </div>
         </div>
       </section>
