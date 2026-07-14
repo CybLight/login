@@ -8,7 +8,7 @@ function createModalCloser(
   onClosed?: () => void
 ): () => void {
   let cleanedUp = false;
-  let close = () => {};
+  let close = () => { };
 
   const cleanupKeyboard = setupAccessibleModal(wrap, {
     trapFocusRoot: dialogEl,
@@ -137,25 +137,26 @@ export function showAccountDeleteConfirmModal(opts: {
       <div class="account-notice-backdrop"></div>
       <div
         class="account-notice-card"
+        style="width: min(92vw, 600px) !important; padding: 28px !important; border-radius: 20px !important;"
         role="dialog"
         aria-modal="true"
         aria-labelledby="accountDeleteTitle"
         aria-describedby="accountDeleteText"
       >
-        <div id="accountDeleteTitle" class="account-notice-head is-error">🔥 ${escapeHtml(opts.title)}</div>
-        <div id="accountDeleteText" class="account-notice-text">${escapeHtml(opts.text)}</div>
+        <div id="accountDeleteTitle" class="account-notice-head is-error" style="font-size: 24px !important; font-weight: 800 !important; text-align: center !important; margin-bottom: 24px !important; color: #ff8a80 !important; display: flex; align-items: center; justify-content: center; gap: 8px;">🔥 ${escapeHtml(opts.title)}</div>
+        <div id="accountDeleteText" class="account-notice-text" style="margin-bottom: 24px !important;">${opts.text}</div>
 
-        <div class="sec-form-row sec-mt-12">
-          <label class="label" for="accountDeletePassInp">${t('Введите текущий пароль для подтверждения')}</label>
+        <div class="sec-form-row sec-mt-12" style="margin-bottom: 20px !important;">
+          <label class="label" for="accountDeletePassInp" style="margin-bottom: 8px !important; display: block !important;">${t('Введите текущий пароль для подтверждения')}</label>
           <div class="pass-wrap">
-            <input class="input" id="accountDeletePassInp" type="password" autocomplete="current-password" placeholder="${escapeHtml(opts.passwordPlaceholder || t('Действующий пароль'))}" />
+            <input class="input" id="accountDeletePassInp" type="password" autocomplete="current-password" placeholder="${escapeHtml(opts.passwordPlaceholder || t('Действующий пароль'))}" style="padding: 12px 16px !important; font-size: 15px !important;" />
             <button type="button" class="pass-eye" data-target="accountDeletePassInp" aria-label="${t('Показать пароль')}"></button>
           </div>
         </div>
 
-        <div class="account-notice-actions account-notice-actions--end account-notice-actions--spaced">
-          <button type="button" class="btn btn-outline" id="accountDeleteCancelBtn" aria-label="${escapeHtml(opts.cancelText || t('Отмена'))}">${escapeHtml(opts.cancelText || t('Отмена'))}</button>
-          <button type="button" class="btn btn-danger" id="accountDeleteConfirmBtn" aria-label="${escapeHtml(opts.confirmText || t('Удалить аккаунт'))}">${escapeHtml(opts.confirmText || t('Удалить аккаунт'))}</button>
+        <div class="account-notice-actions account-notice-actions--end account-notice-actions--spaced" style="display: flex !important; gap: 12px !important; justify-content: flex-end !important; margin-top: 24px !important;">
+          <button type="button" class="btn btn-outline" id="accountDeleteCancelBtn" aria-label="${escapeHtml(opts.cancelText || t('Отмена'))}" style="padding: 10px 20px !important; font-weight: 600 !important;">${escapeHtml(opts.cancelText || t('Отмена'))}</button>
+          <button type="button" class="btn btn-danger" id="accountDeleteConfirmBtn" aria-label="${escapeHtml(opts.confirmText || t('Удалить аккаунт'))}" style="padding: 10px 20px !important; font-weight: 600 !important;">${escapeHtml(opts.confirmText || t('Удалить аккаунт'))}</button>
         </div>
       </div>
     `;
@@ -221,9 +222,8 @@ export function showAccountRadioModal<T>(opts: {
       .map(
         (opt) => `
       <label class="account-radio-item">
-        <input type="radio" name="accountRadioOption" value="${escapeHtml(String(opt.value))}" ${
-          opt.value === opts.currentValue ? 'checked' : ''
-        } />
+        <input type="radio" name="accountRadioOption" value="${escapeHtml(String(opt.value))}" ${opt.value === opts.currentValue ? 'checked' : ''
+          } />
         <span class="account-radio-item__label">${escapeHtml(opt.label)}</span>
       </label>
     `

@@ -3,7 +3,7 @@
  */
 
 import { Router } from '@/router/Router';
-import { apiCall } from '@/utils';
+import { apiCall, escapeHtml } from '@/utils';
 import type { User as AppUser } from '@/types';
 import { copyText } from '@/utils/clipboard';
 import { bindSecurityHandlers } from './security-tab';
@@ -302,7 +302,9 @@ export function bindAccountHandlers(
 
   // Settings tab handlers
   if (_tab === 'settings') {
-    bindProfileTabHandlers(api);
+    bindProfileTabHandlers(user, api);
+    bindSettingsQuickNav();
+    bindSettingsNotificationsHandlers(user);
   }
 
   // Sessions tab handlers
@@ -367,16 +369,179 @@ export function bindAccountHandlers(
 }
 
 /**
+ * Инициализация tab-переключения быстрой навигации по настройкам
+ */
+function bindSettingsQuickNav(): void {
+  const nav = document.getElementById('stgQuickNav');
+  if (!nav) return;
+
+  const sections = Array.from(
+    document.querySelectorAll<HTMLElement>('.stg-section[id]')
+  );
+  const navLinks = Array.from(
+    nav.querySelectorAll<HTMLAnchorElement>('.stg-quicknav__item')
+  );
+
+  if (!sections.length || !navLinks.length) return;
+
+  const showSection = (activeId: string) => {
+    // Update nav active state
+    navLinks.forEach(link => {
+      link.classList.toggle('is-active', link.dataset.section === activeId);
+    });
+
+    const currentVisible = sections.find(s => s.classList.contains('stg-section--visible'));
+    const dangerZone = document.querySelector<HTMLElement>('.stg-danger-zone');
+    const isDangerZoneVisible = dangerZone && dangerZone.classList.contains('stg-section--visible');
+
+    const fadeOutTasks: Promise<void>[] = [];
+
+    // 1. Fade out current active section
+    if (currentVisible && currentVisible.id !== activeId) {
+      currentVisible.classList.remove('stg-section--visible');
+      currentVisible.classList.add('stg-section--hidden');
+      fadeOutTasks.push(new Promise(resolve => setTimeout(resolve, 150)));
+    }
+
+    // 1b. Fade out danger zone if it was visible and we are leaving account
+    if (isDangerZoneVisible && activeId !== 'settings-account' && dangerZone) {
+      dangerZone.classList.remove('stg-section--visible');
+      dangerZone.classList.add('stg-section--hidden');
+      if (fadeOutTasks.length === 0) {
+        fadeOutTasks.push(new Promise(resolve => setTimeout(resolve, 150)));
+      }
+    }
+
+    // 2. Once fade-out finishes, switch display and fade-in
+    Promise.all(fadeOutTasks).then(() => {
+      sections.forEach(section => {
+        if (section.id === activeId) {
+          section.style.display = '';
+          // Force layout reflow before starting animation
+          section.getBoundingClientRect();
+          section.classList.remove('stg-section--hidden');
+          section.classList.add('stg-section--visible');
+        } else {
+          section.style.display = 'none';
+          section.classList.add('stg-section--hidden');
+          section.classList.remove('stg-section--visible');
+        }
+      });
+
+      // Handle danger zone display
+      if (dangerZone) {
+        if (activeId === 'settings-account') {
+          dangerZone.style.display = '';
+          dangerZone.getBoundingClientRect();
+          dangerZone.classList.remove('stg-section--hidden');
+          dangerZone.classList.add('stg-section--visible');
+        } else {
+          dangerZone.style.display = 'none';
+          dangerZone.classList.add('stg-section--hidden');
+          dangerZone.classList.remove('stg-section--visible');
+        }
+      }
+    });
+  };
+
+  // Initialize: show only the first section (account), hide danger zone only if first !== account
+  const firstId = navLinks[0]?.dataset.section ?? sections[0]?.id;
+  if (firstId) {
+    // Hide all sections first
+    sections.forEach(s => { s.style.display = 'none'; });
+    // Show first section
+    const firstSection = document.getElementById(firstId);
+    if (firstSection) {
+      firstSection.style.display = '';
+      firstSection.classList.add('stg-section--visible');
+    }
+    navLinks[0]?.classList.add('is-active');
+    // Hide danger zone if first tab is not account
+    const dangerZone = document.querySelector<HTMLElement>('.stg-danger-zone');
+    if (dangerZone && firstId !== 'settings-account') {
+      dangerZone.style.display = 'none';
+    }
+  }
+
+  // Click handler
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e: MouseEvent) => {
+      e.preventDefault();
+      const targetId = link.dataset.section!;
+      showSection(targetId);
+      // Scroll nav into view on mobile if needed
+      link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    });
+  });
+}
+
+/**
+ * Привязать обработчики для настройки email-уведомлений
+ */
+function bindSettingsNotificationsHandlers(user: AppUser): void {
+  const checkbox = document.getElementById('stgNotifSystemEmails') as HTMLInputElement | null;
+  if (!checkbox) return;
+
+  checkbox.addEventListener('change', async () => {
+    const isChecked = checkbox.checked;
+    checkbox.disabled = true;
+
+    try {
+      const res = await apiCall('/auth/settings/notifications', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemEmailsDisabled: !isChecked,
+        }),
+      });
+
+      if (res && res.ok) {
+        (user as any).systemEmailsDisabled = !isChecked;
+      } else {
+        checkbox.checked = !isChecked;
+        console.error('Failed to update notification settings:', res);
+      }
+    } catch (err) {
+      checkbox.checked = !isChecked;
+      console.error('Error updating notification settings:', err);
+    } finally {
+      checkbox.disabled = false;
+    }
+  });
+}
+
+
+/**
  * Привязать обработчики для вкладки Профиль (удаление)
  */
-function bindProfileTabHandlers(api: ApiMessage): void {
+function bindProfileTabHandlers(user: AppUser, api: ApiMessage): void {
   const deleteBtn = document.getElementById('profileDeleteAccountBtn');
   if (!deleteBtn) return;
 
   deleteBtn.addEventListener('click', async () => {
+    const login = (user as any).login || user.username || 'User';
     const { confirmed, password } = await showAccountDeleteConfirmModal({
       title: 'Удаление аккаунта',
-      text: 'Вы собираетесь безвозвратно удалить свой аккаунт CybLight. Все ваши сообщения, друзья и настройки будут стерты навсегда. Это действие невозможно отменить.',
+      text: `
+        <div class="delete-warning-container" style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; margin: 15px 0 25px 0;">
+          <div class="delete-user-badge" style="font-size: 24px; font-weight: 800; color: #fff; background: linear-gradient(135deg, #ff416c, #ff4b2b); padding: 8px 28px; border-radius: 50px; box-shadow: 0 4px 15px rgba(255, 75, 43, 0.4); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+            ${escapeHtml(login)}
+          </div>
+          
+          <p style="font-size: 16px; color: #ff8a80; font-weight: 600; margin: 0; line-height: 1.5;">
+            Вы собираетесь безвозвратно удалить свой аккаунт на сайте CybLight.
+          </p>
+          
+          <p style="font-size: 14px; color: #e0e0e0; margin: 0; line-height: 1.5;">
+            Все ваши сообщения, друзья и настройки будут стерты навсегда.
+          </p>
+          
+          <div style="font-size: 13px; color: #ff5252; background: rgba(255, 82, 82, 0.1); padding: 8px 20px; border-radius: 6px; border: 1px solid rgba(255, 82, 82, 0.2); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px; margin-top: 4px;">
+            ⚠️ Это действие невозможно отменить
+          </div>
+        </div>
+      `,
       confirmText: 'Удалить навсегда',
       cancelText: 'Отмена',
       passwordPlaceholder: 'Введите пароль'

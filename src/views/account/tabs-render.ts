@@ -304,38 +304,298 @@ function renderProfileTab(user: User): string {
   `;
 }
 
-function renderSettingsTab(_user: User): string {
+function renderSettingsTab(user: User): string {
   const locale = getLocale();
   const route = 'account-settings';
+  const login = escapeHtml((user as any).login || user.username || '');
+  const email = escapeHtml(user.email || '');
 
   return `
-    <div class="settings-tab-view">
-      <section class="sessions-setting-card" style="margin-bottom: 20px;">
-        <div class="sessions-setting-card__title">${t('Язык интерфейса')}</div>
-        <div class="settings-lang-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
-          <a href="${localePath(route, 'ru')}" class="settings-lang-item ${locale === 'ru' ? 'is-active' : ''}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; text-decoration: none; font-weight: ${locale === 'ru' ? '600' : '400'};">
-            <span>🇷🇺 ${t('Русский')}</span>
-            ${locale === 'ru' ? '<span style="color: #2ecc71;">✓</span>' : ''}
-          </a>
-          <a href="${localePath(route, 'uk')}" class="settings-lang-item ${locale === 'uk' ? 'is-active' : ''}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; text-decoration: none; font-weight: ${locale === 'uk' ? '600' : '400'};">
-            <span>🇺🇦 Українська</span>
-            ${locale === 'uk' ? '<span style="color: #2ecc71;">✓</span>' : ''}
-          </a>
-          <a href="${localePath(route, 'en')}" class="settings-lang-item ${locale === 'en' ? 'is-active' : ''}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; text-decoration: none; font-weight: ${locale === 'en' ? '600' : '400'};">
-            <span>🇬🇧 English</span>
-            ${locale === 'en' ? '<span style="color: #2ecc71;">✓</span>' : ''}
-          </a>
+    <div class="settings-tab-view" style="max-width: 760px;">
+
+      <!-- Quick nav -->
+      <nav class="stg-quicknav" id="stgQuickNav" aria-label="${t('Навигация по настройкам')}">
+        <a class="stg-quicknav__item is-active" href="#settings-account" data-section="settings-account">
+          <span class="stg-quicknav__icon">👤</span>
+          <span class="stg-quicknav__label">${t('Аккаунт')}</span>
+        </a>
+        <a class="stg-quicknav__item" href="#settings-appearance" data-section="settings-appearance">
+          <span class="stg-quicknav__icon">🎨</span>
+          <span class="stg-quicknav__label">${t('Внешний вид')}</span>
+        </a>
+        <a class="stg-quicknav__item" href="#settings-notifications" data-section="settings-notifications">
+          <span class="stg-quicknav__icon">🔔</span>
+          <span class="stg-quicknav__label">${t('Уведомления')}</span>
+        </a>
+        <a class="stg-quicknav__item" href="#settings-security" data-section="settings-security">
+          <span class="stg-quicknav__icon">🔒</span>
+          <span class="stg-quicknav__label">${t('Безопасность')}</span>
+        </a>
+        <a class="stg-quicknav__item" href="#settings-privacy" data-section="settings-privacy">
+          <span class="stg-quicknav__icon">🛡️</span>
+          <span class="stg-quicknav__label">${t('Конфиденциальность')}</span>
+        </a>
+      </nav>
+
+      <section class="stg-section" id="settings-account">
+        <header class="stg-section__header">
+          <span class="stg-section__icon">👤</span>
+          <div>
+            <h2 class="stg-section__title">${t('Аккаунт')}</h2>
+            <p class="stg-section__desc">${t('Основные данные вашего аккаунта')}</p>
+          </div>
+        </header>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
+            <span class="stg-field__icon">🪪</span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('Имя пользователя')}</div>
+              <div class="stg-field__value">${login || '—'}</div>
+              <div class="stg-field__hint">${t('Ваш уникальный логин в системе')}</div>
+            </div>
+          </div>
+          <a href="${sitePath('edit-profile', locale)}" class="stg-btn stg-btn--secondary">${t('Изменить')}</a>
+        </div>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
+            <span class="stg-field__icon">✉️</span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('Электронная почта')}</div>
+              <div class="stg-field__value">${email || t('Не указана')}</div>
+              <div class="stg-field__hint">${t('Используется для входа и уведомлений')}</div>
+            </div>
+          </div>
+          <a href="${sitePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Изменить')}</a>
         </div>
       </section>
 
-      <section class="sessions-setting-card profile-danger-zone" style="margin-top: 30px; border: 1px solid rgba(231, 76, 60, 0.2); padding: 16px; border-radius: 12px; background: rgba(231, 76, 60, 0.03);">
-        <div class="sessions-setting-card__title" style="color: #e74c3c; margin-bottom: 8px; font-weight: 600;">⚠️ ${t('Опасная зона')}</div>
-        <p class="profile-danger-hint" style="margin: 0 0 16px 0; color: #aaa; font-size: 14px; line-height: 1.5;">${t('Безвозвратное удаление всех данных')}. ${t('После этого действия восстановить профиль, историю сообщений и контакты будет невозможно.')}</p>
-        <button type="button" class="btn btn-danger btn-full" id="profileDeleteAccountBtn" style="background: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer;">
-          <span class="nav-icon" style="font-size: 18px; margin-right: 8px;">🗑️</span>
-          ${t('Удалить аккаунт')}
-        </button>
+      <!-- ============ DANGER ZONE ============ -->
+      <div class="stg-danger-zone">
+        <div class="stg-danger-zone__header">
+          <span class="stg-danger-zone__icon">⚠️</span>
+          <div>
+            <div class="stg-danger-zone__title">${t('Опасная зона')}</div>
+            <div class="stg-danger-zone__subtitle">${t('Необратимые действия — будьте осторожны')}</div>
+          </div>
+        </div>
+
+        <div class="stg-danger-zone__card">
+          <div class="stg-danger-zone__card-info">
+            <div class="stg-danger-zone__card-title">🗑️ ${t('Удаление аккаунта')}</div>
+            <div class="stg-danger-zone__card-desc">
+              ${t('Безвозвратно удалит ваш профиль, переписку, друзей и все данные. Это действие нельзя отменить.')}
+            </div>
+          </div>
+          <button type="button" class="stg-danger-zone__btn" id="profileDeleteAccountBtn">
+            ${t('Удалить аккаунт')}
+          </button>
+        </div>
+      </div>
+
+      <!-- ============ APPEARANCE ============ -->
+      <section class="stg-section" id="settings-appearance">
+        <header class="stg-section__header">
+          <span class="stg-section__icon">🎨</span>
+          <div>
+            <h2 class="stg-section__title">${t('Внешний вид')}</h2>
+            <p class="stg-section__desc">${t('Язык и тема интерфейса')}</p>
+          </div>
+        </header>
+
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Язык интерфейса')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 12px;">${t('Выберите язык отображения сайта')}</div>
+          <div class="stg-lang-grid">
+            <a href="${localePath(route, 'ru')}" class="stg-lang-card ${locale === 'ru' ? 'is-active' : ''}">
+              <span class="stg-lang-card__flag">🇷🇺</span>
+              <span class="stg-lang-card__name">${t('Русский')}</span>
+              ${locale === 'ru' ? '<span class="stg-lang-card__check">✓</span>' : ''}
+            </a>
+            <a href="${localePath(route, 'uk')}" class="stg-lang-card ${locale === 'uk' ? 'is-active' : ''}">
+              <span class="stg-lang-card__flag">🇺🇦</span>
+              <span class="stg-lang-card__name">Українська</span>
+              ${locale === 'uk' ? '<span class="stg-lang-card__check">✓</span>' : ''}
+            </a>
+            <a href="${localePath(route, 'en')}" class="stg-lang-card ${locale === 'en' ? 'is-active' : ''}">
+              <span class="stg-lang-card__flag">🇬🇧</span>
+              <span class="stg-lang-card__name">English</span>
+              ${locale === 'en' ? '<span class="stg-lang-card__check">✓</span>' : ''}
+            </a>
+          </div>
+        </div>
+
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Тема')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 12px;">${t('Тёмная тема активна по умолчанию')}</div>
+          <div class="stg-theme-grid">
+            <button type="button" class="stg-theme-card is-active" data-theme="dark" disabled>
+              <div class="stg-theme-card__preview stg-theme-card__preview--dark">
+                <div class="stg-theme-preview-bar"></div>
+                <div class="stg-theme-preview-lines">
+                  <div></div><div></div><div></div>
+                </div>
+              </div>
+              <span class="stg-theme-card__name">🌙 ${t('Тёмная')}</span>
+              <span class="stg-theme-card__badge">${t('Активна')}</span>
+            </button>
+            <button type="button" class="stg-theme-card stg-theme-card--soon" disabled>
+              <div class="stg-theme-card__preview stg-theme-card__preview--light">
+                <div class="stg-theme-preview-bar stg-theme-preview-bar--light"></div>
+                <div class="stg-theme-preview-lines stg-theme-preview-lines--light">
+                  <div></div><div></div><div></div>
+                </div>
+              </div>
+              <span class="stg-theme-card__name">☀️ ${t('Светлая')}</span>
+              <span class="stg-theme-card__badge stg-theme-card__badge--soon">${t('Скоро')}</span>
+            </button>
+            <button type="button" class="stg-theme-card stg-theme-card--soon" disabled>
+              <div class="stg-theme-card__preview stg-theme-card__preview--system">
+                <div class="stg-theme-preview-half stg-theme-preview-half--dark"></div>
+                <div class="stg-theme-preview-half stg-theme-preview-half--light"></div>
+              </div>
+              <span class="stg-theme-card__name">🖥️ ${t('Системная')}</span>
+              <span class="stg-theme-card__badge stg-theme-card__badge--soon">${t('Скоро')}</span>
+            </button>
+          </div>
+        </div>
       </section>
+
+      <!-- ============ NOTIFICATIONS ============ -->
+      <section class="stg-section" id="settings-notifications">
+        <header class="stg-section__header">
+          <span class="stg-section__icon">🔔</span>
+          <div>
+            <h2 class="stg-section__title">${t('Уведомления')}</h2>
+            <p class="stg-section__desc">${t('Управление email-уведомлениями')}</p>
+          </div>
+        </header>
+
+        <div class="stg-notif-group">
+          <div class="stg-notif-group__title">${t('Email-уведомления')}</div>
+
+          <div class="stg-notif-row">
+            <div class="stg-notif-row__info">
+              <div class="stg-notif-row__label">${t('Новые сообщения')}</div>
+              <div class="stg-notif-row__hint">${t('Уведомления о новых сообщениях от друзей')}</div>
+            </div>
+            <label class="stg-toggle stg-toggle--disabled" title="${t('Скоро')}">
+              <input type="checkbox" disabled />
+              <span class="stg-toggle__track"></span>
+            </label>
+          </div>
+
+          <div class="stg-notif-row">
+            <div class="stg-notif-row__info">
+              <div class="stg-notif-row__label">${t('Запросы в друзья')}</div>
+              <div class="stg-notif-row__hint">${t('Уведомления о новых запросах дружбы')}</div>
+            </div>
+            <label class="stg-toggle stg-toggle--disabled" title="${t('Скоро')}">
+              <input type="checkbox" disabled />
+              <span class="stg-toggle__track"></span>
+            </label>
+          </div>
+
+          <div class="stg-notif-row">
+            <div class="stg-notif-row__info">
+              <div class="stg-notif-row__label">${t('Системные уведомления')}</div>
+              <div class="stg-notif-row__hint">${t('Важные уведомления о безопасности и аккаунте')}</div>
+            </div>
+            <label class="stg-toggle">
+              <input type="checkbox" id="stgNotifSystemEmails" ${!(user as any).systemEmailsDisabled ? 'checked' : ''} />
+              <span class="stg-toggle__track"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="stg-coming-soon-banner">
+          <span class="stg-coming-soon-banner__icon">⚙️</span>
+          <span>${t('Расширенные настройки уведомлений появятся в ближайшее время')}</span>
+        </div>
+      </section>
+
+      <!-- ============ PASSWORD & SECURITY ============ -->
+      <section class="stg-section" id="settings-security">
+        <header class="stg-section__header">
+          <span class="stg-section__icon">🔒</span>
+          <div>
+            <h2 class="stg-section__title">${t('Пароль и безопасность')}</h2>
+            <p class="stg-section__desc">${t('Управление паролем, двухфакторной аутентификацией и сессиями')}</p>
+          </div>
+        </header>
+
+        <div class="stg-row">
+          <div class="stg-row__info">
+            <div class="stg-row__label">${t('Пароль')}</div>
+            <div class="stg-row__value" style="font-size: 13px; color: #9ca3af;">••••••••••••</div>
+            <div class="stg-row__hint">${t('Рекомендуется менять пароль каждые 6 месяцев')}</div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${sitePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Сменить пароль')}</a>
+          </div>
+        </div>
+
+        <div class="stg-row">
+          <div class="stg-row__info">
+            <div class="stg-row__label">${t('Двухфакторная аутентификация')}</div>
+            <div class="stg-row__value" style="font-size: 13px; color: #9ca3af;">${user.twoFactorEnabled ? `<span style="color:#4ade80;">✓ ${t('Включена')}</span>` : `<span style="color:#f87171;">✗ ${t('Отключена')}</span>`}</div>
+            <div class="stg-row__hint">${t('Дополнительный уровень защиты вашего аккаунта')}</div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${sitePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Настроить')}</a>
+          </div>
+        </div>
+
+        <div class="stg-row">
+          <div class="stg-row__info">
+            <div class="stg-row__label">${t('Активные сессии')}</div>
+            <div class="stg-row__hint">${t('Управление устройствами, с которых выполнен вход')}</div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${sitePath('account-sessions', locale)}" class="stg-btn stg-btn--secondary">${t('Просмотреть')}</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PRIVACY ============ -->
+      <section class="stg-section" id="settings-privacy">
+        <header class="stg-section__header">
+          <span class="stg-section__icon">🛡️</span>
+          <div>
+            <h2 class="stg-section__title">${t('Данные и конфиденциальность')}</h2>
+            <p class="stg-section__desc">${t('Управление данными и настройками приватности')}</p>
+          </div>
+        </header>
+
+        <div class="stg-notif-row">
+          <div class="stg-notif-row__info">
+            <div class="stg-notif-row__label">${t('Профиль виден другим пользователям')}</div>
+            <div class="stg-notif-row__hint">${t('Другие пользователи могут просматривать ваш публичный профиль')}</div>
+          </div>
+          <label class="stg-toggle stg-toggle--disabled" title="${t('Скоро')}">
+            <input type="checkbox" checked disabled />
+            <span class="stg-toggle__track"></span>
+          </label>
+        </div>
+
+        <div class="stg-notif-row">
+          <div class="stg-notif-row__info">
+            <div class="stg-notif-row__label">${t('Показывать онлайн-статус')}</div>
+            <div class="stg-notif-row__hint">${t('Другие пользователи видят, когда вы в сети')}</div>
+          </div>
+          <label class="stg-toggle stg-toggle--disabled" title="${t('Скоро')}">
+            <input type="checkbox" checked disabled />
+            <span class="stg-toggle__track"></span>
+          </label>
+        </div>
+
+        <div class="stg-coming-soon-banner">
+          <span class="stg-coming-soon-banner__icon">🔐</span>
+          <span>${t('Расширенные настройки конфиденциальности появятся в ближайшее время')}</span>
+        </div>
+      </section>
+
     </div>
   `;
 }
