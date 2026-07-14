@@ -300,8 +300,8 @@ export function bindAccountHandlers(
     });
   }
 
-  // Profile tab handlers
-  if (_tab === 'profile') {
+  // Settings tab handlers
+  if (_tab === 'settings') {
     bindProfileTabHandlers(api);
   }
 

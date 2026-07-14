@@ -16,6 +16,7 @@ import type { User as AppUser } from '@/types';
 function accountRouteForTab(tab: string): string {
   if (tab === 'profile') return 'account-profile';
   if (tab === 'easter') return 'account-easter-eggs';
+  if (tab === 'settings') return 'account-settings';
   return `account-${tab}`;
 }
 
@@ -130,6 +131,9 @@ export function renderAccountPage(tab: string, user: AppUser): string {
             </button>
             <button data-tab="sessions" ${tab === 'sessions' ? 'class="active"' : ''} aria-label="🧩 ${t('Сессии')}">
               <span class="nav-icon">🧩</span> ${t('Сессии')}
+            </button>
+            <button data-tab="settings" ${tab === 'settings' ? 'class="active"' : ''} aria-label="⚙️ ${t('Настройки')}">
+              <span class="nav-icon">⚙️</span> ${t('Настройки')}
             </button>
             <button data-tab="easter" ${tab === 'easter' ? 'class="active"' : ''} aria-label="🍓 ${t('Пасхалки')}">
               <span class="nav-icon">🍓</span> ${t('Пасхалки')}

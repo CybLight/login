@@ -1,4 +1,4 @@
-import { t, getLocale, localeTag, sitePath, siteRootPath } from '@/i18n';
+import { t, getLocale, localeTag, sitePath, siteRootPath, localePath } from '@/i18n';
 import type { UserEasterFlags } from "@/types";
 import { escapeHtml } from "@/utils";
 import {
@@ -301,13 +301,41 @@ function renderProfileTab(user: User): string {
         <div class="info-card__hint">${t('Создано в системе')}</div>
       </article>
     </section>
+  `;
+}
 
-    <div class="profile-danger-zone">
-       <button type="button" class="btn btn-danger-soft btn-full" id="profileDeleteAccountBtn">
+function renderSettingsTab(_user: User): string {
+  const locale = getLocale();
+  const route = 'account-settings';
+
+  return `
+    <div class="settings-tab-view">
+      <section class="sessions-setting-card" style="margin-bottom: 20px;">
+        <div class="sessions-setting-card__title">${t('Язык интерфейса')}</div>
+        <div class="settings-lang-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+          <a href="${localePath(route, 'ru')}" class="settings-lang-item ${locale === 'ru' ? 'is-active' : ''}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; text-decoration: none; font-weight: ${locale === 'ru' ? '600' : '400'};">
+            <span>🇷🇺 ${t('Русский')}</span>
+            ${locale === 'ru' ? '<span style="color: #2ecc71;">✓</span>' : ''}
+          </a>
+          <a href="${localePath(route, 'uk')}" class="settings-lang-item ${locale === 'uk' ? 'is-active' : ''}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; text-decoration: none; font-weight: ${locale === 'uk' ? '600' : '400'};">
+            <span>🇺🇦 Українська</span>
+            ${locale === 'uk' ? '<span style="color: #2ecc71;">✓</span>' : ''}
+          </a>
+          <a href="${localePath(route, 'en')}" class="settings-lang-item ${locale === 'en' ? 'is-active' : ''}" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05); color: #fff; text-decoration: none; font-weight: ${locale === 'en' ? '600' : '400'};">
+            <span>🇬🇧 English</span>
+            ${locale === 'en' ? '<span style="color: #2ecc71;">✓</span>' : ''}
+          </a>
+        </div>
+      </section>
+
+      <section class="sessions-setting-card profile-danger-zone" style="margin-top: 30px; border: 1px solid rgba(231, 76, 60, 0.2); padding: 16px; border-radius: 12px; background: rgba(231, 76, 60, 0.03);">
+        <div class="sessions-setting-card__title" style="color: #e74c3c; margin-bottom: 8px; font-weight: 600;">⚠️ ${t('Опасная зона')}</div>
+        <p class="profile-danger-hint" style="margin: 0 0 16px 0; color: #aaa; font-size: 14px; line-height: 1.5;">${t('Безвозвратное удаление всех данных')}. ${t('После этого действия восстановить профиль, историю сообщений и контакты будет невозможно.')}</p>
+        <button type="button" class="btn btn-danger btn-full" id="profileDeleteAccountBtn" style="background: #e74c3c; color: white; display: flex; align-items: center; justify-content: center; width: 100%; padding: 12px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer;">
           <span class="nav-icon" style="font-size: 18px; margin-right: 8px;">🗑️</span>
           ${t('Удалить аккаунт')}
-       </button>
-       <p class="profile-danger-hint">${t('Безвозвратное удаление всех данных')}</p>
+        </button>
+      </section>
     </div>
   `;
 }
@@ -1393,6 +1421,8 @@ export function renderTabContent(tab: string, user: User): string {
       return renderSecurityTab(user);
     case "sessions":
       return renderSessionsTab(user);
+    case "settings":
+      return renderSettingsTab(user);
     case "easter":
       return renderEasterTab(user);
     default:
@@ -1407,6 +1437,7 @@ export function getTabTitle(tab: string): string {
     messages: t('Сообщения'),
     security: t('Безопасность'),
     sessions: t('Сессии'),
+    settings: t('Настройки'),
     easter: t('Пасхалки'),
   };
   return titles[tab] || t('Учётка');

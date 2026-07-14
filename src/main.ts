@@ -144,6 +144,7 @@ export async function initApp(): Promise<void> {
   Router.on('edit-profile', renderEditProfile);
   Router.on('account-security', () => renderAccount('security'));
   Router.on('account-sessions', () => renderAccount('sessions'));
+  Router.on('account-settings', () => renderAccount('settings'));
   Router.on('account-easter-eggs', () => renderAccount('easter'));
   Router.on('account-friends', () => renderAccount('friends'));
   Router.on('account-messages', () => renderAccount('messages'));
