@@ -309,6 +309,7 @@ export function bindAccountHandlers(
     bindSettingsQuickNav();
     bindSettingsNotificationsHandlers(user);
     bindSettingsAccountFieldsHandlers(user, api);
+    bindSettingsSecurityTransitions(user);
   }
 
   // Sessions tab handlers
@@ -805,6 +806,79 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
         },
       });
     });
+  }
+}
+
+function bindSettingsSecurityTransitions(user: AppUser): void {
+  const container = document.getElementById('settings-security');
+  if (!container) return;
+
+  container.querySelectorAll('a[data-sec-goto]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const section = link.getAttribute('data-sec-goto');
+      if (section) {
+        sessionStorage.setItem('cyb_open_security_section', section);
+      }
+      Router.navigate('account-security');
+    });
+  });
+
+  // Загружаем количество passkeys в фоне и обновляем шкалу прогресса
+  void loadSettingsSecurityScore(user);
+}
+
+async function loadSettingsSecurityScore(user: AppUser): Promise<void> {
+  try {
+    const r = await apiCall('/auth/passkey/list', { credentials: 'include' });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.ok) {
+      const passkeys = d.passkeys || [];
+      const count = passkeys.length;
+
+      const emailVerified = isEmailVerified(user);
+      const twoFAOn = !!user.twoFactorEnabled;
+
+      let securityScore = 0;
+      if (emailVerified) securityScore += 30;
+      if (twoFAOn) securityScore += 40;
+      if (count > 0) securityScore += 30;
+
+      const scoreTexts = document.querySelectorAll('.security-score-text');
+      const progressBars = document.querySelectorAll('.security-progress-bar');
+      const statusBadges = document.querySelectorAll('.security-status-badge');
+
+      const levelClass =
+        securityScore >= 100
+          ? "security-level--good"
+          : securityScore >= 50
+            ? "security-level--medium"
+            : "security-level--low";
+
+      const statusText =
+        securityScore >= 100
+          ? `✓ ${t('Защищён')}`
+          : securityScore >= 50
+            ? `⚠ ${t('Средняя')}`
+            : `⚠ ${t('Низкая')}`;
+
+      scoreTexts.forEach(el => {
+        el.textContent = `${securityScore}%`;
+        el.className = `security-score-text ${levelClass}`;
+      });
+
+      progressBars.forEach(el => {
+        (el as HTMLElement).style.width = `${securityScore}%`;
+        el.className = `security-progress-bar ${levelClass}`;
+      });
+
+      statusBadges.forEach(el => {
+        el.textContent = statusText;
+        el.className = `security-status-badge ${levelClass}`;
+      });
+    }
+  } catch (err) {
+    console.error('Error loading passkeys for settings score:', err);
   }
 }
 

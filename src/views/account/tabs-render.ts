@@ -310,6 +310,29 @@ function renderSettingsTab(user: User): string {
   const login = escapeHtml((user as any).login || user.username || '');
   const email = escapeHtml(user.email || '');
 
+  const emailVerified = isEmailVerified(user);
+  const twoFAOn = !!(user.twoFactorEnabled || user.totp_enabled);
+  const passChanged =
+    user.password_changed_at ||
+    user.passwordChangedAt ||
+    user.passChangedAt ||
+    user.pass_changed_at ||
+    null;
+  const passChangedText = passChanged ? formatDate(passChanged) : "—";
+
+  let securityScore = 0;
+  if (emailVerified) securityScore += 30;
+  if (twoFAOn) securityScore += 40;
+  const hasPasskey = !!((user as any).passkeysCount || (user as any).passkeyCount || (user as any).webauthnDevices?.length);
+  if (hasPasskey) securityScore += 30;
+
+  const securityLevelClass =
+    securityScore >= 100
+      ? "security-level--good"
+      : securityScore >= 50
+        ? "security-level--medium"
+        : "security-level--low";
+
   return `
     <div class="settings-tab-view" style="max-width: 760px;">
 
@@ -525,35 +548,167 @@ function renderSettingsTab(user: User): string {
           </div>
         </header>
 
-        <div class="stg-row">
-          <div class="stg-row__info">
-            <div class="stg-row__label">${t('Пароль')}</div>
-            <div class="stg-row__value" style="font-size: 13px; color: #9ca3af;">••••••••••••</div>
-            <div class="stg-row__hint">${t('Рекомендуется менять пароль каждые 6 месяцев')}</div>
+        <!-- Общий статус безопасности (из основной вкладки) -->
+        <div class="stg-security-summary-card">
+          <div class="stg-security-summary-info">
+            <div class="stg-security-summary-label">
+              ${t('Уровень защиты:')} <strong class="security-score-text ${securityLevelClass}">${securityScore}%</strong>
+            </div>
+            <div class="security-status-badge ${securityLevelClass}">
+              ${securityScore >= 100 ? `✓ ${t('Защищён')}` : securityScore >= 50 ? `⚠ ${t('Средняя')}` : `⚠ ${t('Низкая')}`}
+            </div>
           </div>
-          <div class="stg-row__action">
-            <a href="${localePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Сменить пароль')}</a>
-          </div>
-        </div>
-
-        <div class="stg-row">
-          <div class="stg-row__info">
-            <div class="stg-row__label">${t('Двухфакторная аутентификация')}</div>
-            <div class="stg-row__value" style="font-size: 13px; color: #9ca3af;">${user.twoFactorEnabled ? `<span style="color:#4ade80;">✓ ${t('Включена')}</span>` : `<span style="color:#f87171;">✗ ${t('Отключена')}</span>`}</div>
-            <div class="stg-row__hint">${t('Дополнительный уровень защиты вашего аккаунта')}</div>
-          </div>
-          <div class="stg-row__action">
-            <a href="${localePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Настроить')}</a>
+          <div class="security-progress-track" style="margin-top: 12px; height: 6px; border-radius: 99px;">
+            <div class="security-progress-bar ${securityLevelClass}" style="width: ${securityScore}%; height: 100%; border-radius: 99px; transition: width 0.4s ease-in-out;"></div>
           </div>
         </div>
 
+        <!-- 1. Email -->
         <div class="stg-row">
-          <div class="stg-row__info">
-            <div class="stg-row__label">${t('Активные сессии')}</div>
-            <div class="stg-row__hint">${t('Управление устройствами, с которых выполнен вход')}</div>
+          <div class="stg-row__info-with-icon">
+            <div class="stg-row__icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 4H4C2.9 4 2.01 4.9 2.01 6L2 18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill="#3b82f6" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="stg-row__text">
+              <div class="stg-row__label">${t('Адрес электронной почты')}</div>
+              <div class="stg-row__value" style="font-size: 13px; color: #9ca3af; display: flex; align-items: center; gap: 8px;">
+                <span>${email || '—'}</span>
+                ${emailVerified ? `<span class="sec-badge sec-badge--ok" style="font-size:10px; padding: 2px 6px; border-radius: 4px;">${t('Подтверждён')}</span>` : `<span class="sec-badge sec-badge--warn" style="font-size:10px; padding: 2px 6px; border-radius: 4px;">${t('Не подтверждён')}</span>`}
+              </div>
+            </div>
           </div>
           <div class="stg-row__action">
-            <a href="${localePath('account-sessions', locale)}" class="stg-btn stg-btn--secondary">${t('Просмотреть')}</a>
+            <a href="${localePath('account-security', locale)}" data-sec-goto="email" class="stg-btn stg-btn--secondary">${t('Настроить')}</a>
+          </div>
+        </div>
+
+        <!-- 2. Пароль -->
+        <div class="stg-row">
+          <div class="stg-row__info-with-icon">
+            <div class="stg-row__icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 8H17V6C17 3.24 14.76 1 12 1C9.24 1 7 3.24 7 6V8H6C4.9 8 4 8.9 4 10V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V10C20 8.9 19.1 8 18 8ZM12 17C10.9 17 10 16.1 10 15C10 13.9 10.9 13 12 13C13.1 13 14 13.9 14 15C14 16.1 13.1 17 12 17ZM15.1 8H8.9V6C8.9 4.29 10.29 2.9 12 2.9C13.71 2.9 15.1 4.29 15.1 6V8Z" fill="#8b5cf6" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="stg-row__text">
+              <div class="stg-row__label">${t('Пароль')}</div>
+              <div class="stg-row__hint" style="font-size: 12px; color: #9ca3af;">${t('Последний раз был изменён:')} ${passChangedText}</div>
+            </div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${localePath('account-security', locale)}" data-sec-goto="password" class="stg-btn stg-btn--secondary">${t('Сменить пароль')}</a>
+          </div>
+        </div>
+
+        <!-- 3. Двухфакторная аутентификация -->
+        <div class="stg-row">
+          <div class="stg-row__info-with-icon">
+            <div class="stg-row__icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 1H7C5.9 1 5 1.9 5 3V21C5 22.1 5.9 23 7 23H17C18.1 23 19 22.1 19 21V3C19 1.9 18.1 1 17 1ZM17 19H7V5H17V19ZM12 17C13.1 17 14 16.1 14 15C14 13.9 13.1 13 12 13C10.9 13 10 13.9 10 15C10 16.1 10.9 17 12 17Z" fill="#10b981" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="stg-row__text">
+              <div class="stg-row__label">${t('Двухфакторная аутентификация')}</div>
+              <div class="stg-row__value" style="font-size: 13px;">
+                ${twoFAOn ? `<span style="color:#4ade80; font-weight: 500;">✓ ${t('Включена')}</span>` : `<span style="color:#f87171; font-weight: 500;">✗ ${t('Отключена')}</span>`}
+              </div>
+            </div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${localePath('account-security', locale)}" data-sec-goto="2fa" class="stg-btn stg-btn--secondary">${t('Настроить')}</a>
+          </div>
+        </div>
+
+        <!-- 4. Ключи доступа (Passkeys) -->
+        <div class="stg-row">
+          <div class="stg-row__info-with-icon">
+            <div class="stg-row__icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.65 10C11.7 7.31 8.9 5.5 5.77 6.12C3.48 6.58 1.62 8.41 1.14 10.7C0.32 14.57 3.26 18 7 18C9.61 18 11.83 16.33 12.65 14H17V18H21V14H23V10H12.65ZM7 14C5.9 14 5 13.1 5 12C5 10.9 5.9 10 7 10C8.1 10 9 10.9 9 12C9 13.1 8.1 14 7 14Z" fill="#f59e0b" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="stg-row__text">
+              <div class="stg-row__label">${t('Ключи доступа (Passkeys)')}</div>
+              <div class="stg-row__hint" style="font-size: 12px; color: #9ca3af;">${t('Вход без пароля с помощью биометрии или PIN-кода')}</div>
+            </div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${localePath('account-security', locale)}" data-sec-goto="passkeys" class="stg-btn stg-btn--secondary">${t('Настроить')}</a>
+          </div>
+        </div>
+
+        <!-- 5. Резервная копия шифрования -->
+        <div class="stg-row">
+          <div class="stg-row__info-with-icon">
+            <div class="stg-row__icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04ZM12 13L16 17H13V21H11V17H8L12 13Z" fill="#8b5cf6" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="stg-row__text">
+              <div class="stg-row__label">${t('Резервная копия шифрования')}</div>
+              <div class="stg-row__hint" style="font-size: 12px; color: #9ca3af;">${t('Google Drive или файл .cyblight-backup')}</div>
+            </div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${localePath('account-security', locale)}" data-sec-goto="backup" class="stg-btn stg-btn--secondary">${t('Настроить')}</a>
+          </div>
+        </div>
+
+        <!-- 6. Доверенные устройства -->
+        <div class="stg-row">
+          <div class="stg-row__info-with-icon">
+            <div class="stg-row__icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 18C21.1 18 21.99 17.1 21.99 16L22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V16C2 17.1 2.9 18 4 18H0V20H24V18H20ZM4 6H20V16H4V6Z" fill="#06b6d4" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="stg-row__text">
+              <div class="stg-row__label">${t('Доверенные устройства')}</div>
+              <div class="stg-row__hint" style="font-size: 12px; color: #9ca3af;">${t('Управление устройствами для входа с 2FA')}</div>
+            </div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${localePath('account-security', locale)}" data-sec-goto="devices" class="stg-btn stg-btn--secondary">${t('Настроить')}</a>
+          </div>
+        </div>
+
+        <!-- 7. История входов -->
+        <div class="stg-row">
+          <div class="stg-row__info-with-icon">
+            <div class="stg-row__icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 3C8.03 3 4 7.03 4 12H1L4.89 15.89L4.96 16.03L9 12H6C6 8.13 9.13 5 13 5C16.87 5 20 8.13 20 12C20 15.87 16.87 19 13 19C11.07 19 9.32 18.21 8.06 16.94L6.64 18.36C8.27 19.99 10.51 21 13 21C17.97 21 22 16.97 22 12C22 7.03 17.97 3 13 3ZM12 8V13L16.25 15.52L17.02 14.24L13.5 12.15V8H12Z" fill="#64748b" opacity="0.9"/>
+              </svg>
+            </div>
+            <div class="stg-row__text">
+              <div class="stg-row__label">${t('История входов')}</div>
+              <div class="stg-row__hint" style="font-size: 12px; color: #9ca3af;">${t('Просмотр активности аккаунта')}</div>
+            </div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${localePath('account-security', locale)}" data-sec-goto="history" class="stg-btn stg-btn--secondary">${t('Посмотреть')}</a>
+          </div>
+        </div>
+
+        <!-- 8. Активные сессии -->
+        <div class="stg-row">
+          <div class="stg-row__info-with-icon">
+            <div class="stg-row__icon-box">
+              <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8.75 8.582v5.668a.75.75 0 0 1-1.5 0V8.582a1.75 1.75 0 1 1 1.5 0Zm3.983-7.125a.75.75 0 0 1 1.06.026A7.976 7.976 0 0 1 16 7c0 2.139-.84 4.083-2.207 5.517a.75.75 0 1 1-1.086-1.034A6.474 6.474 0 0 0 14.5 7a6.474 6.474 0 0 0-1.793-4.483.75.75 0 0 1 .026-1.06Zm-9.466 0c.3.286.312.76.026 1.06A6.474 6.474 0 0 0 1.5 7a6.47 6.47 0 0 0 1.793 4.483.75.75 0 0 1-1.086 1.034A7.973 7.973 0 0 1 0 7c0-2.139.84-4.083 2.207-5.517a.75.75 0 0 1 1.06-.026Zm8.556 2.321A4.988 4.988 0 0 1 13 7a4.988 4.988 0 0 1-1.177 3.222.75.75 0 1 1-1.146-.967A3.487 3.487 0 0 0 11.5 7c0-.86-.309-1.645-.823-2.255a.75.75 0 0 1 1.146-.967Zm-6.492.958A3.48 3.48 0 0 0 4.5 7a3.48 3.48 0 0 0 .823 2.255.75.75 0 0 1-1.146.967A4.981 4.981 0 0 1 3 7a4.982 4.982 0 0 1 1.188-3.236.75.75 0 1 1 1.143.972Z" fill="#10b981"/>
+              </svg>
+            </div>
+            <div class="stg-row__text">
+              <div class="stg-row__label">${t('Активные сессии')}</div>
+              <div class="stg-row__hint" style="font-size: 12px; color: #9ca3af;">${t('Управление устройствами, с которых выполнен вход')}</div>
+            </div>
+          </div>
+          <div class="stg-row__action">
+            <a href="${localePath('account-sessions', locale)}" class="stg-btn stg-btn--secondary">${t('Посмотреть')}</a>
           </div>
         </div>
       </section>

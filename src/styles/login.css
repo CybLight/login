@@ -1593,9 +1593,26 @@
 }
 
 .nav-divider {
+  position: relative;
   height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
-  margin: 8px 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(34, 240, 230, 0) 0%,
+    rgba(34, 240, 230, 0.45) 50%,
+    rgba(34, 240, 230, 0) 100%
+  );
+  margin: 12px 4px;
+}
+
+.nav-divider::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  box-shadow: 0 0 8px rgba(34, 240, 230, 0.25);
+  pointer-events: none;
 }
 
 .account-nav button {
@@ -1613,28 +1630,202 @@
 }
 
 .nav-icon {
-  font-size: 32px;
+  font-size: 26px;
   line-height: 1;
   display: inline-flex;
   vertical-align: middle;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-}
-
-.nav-icon--svg {
-  width: 22px;
-  height: 22px;
-  margin-right: 2px;
-  margin-left: 2px;
+  width: 36px;
+  height: 36px;
 }
 
 .nav-icon--svg svg {
-  width: 100%;
-  height: 100%;
-  fill: currentColor;
+  width: 26px;
+  height: 26px;
+  fill: #10b981;
   display: block;
+  overflow: visible;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* Наведение: подсветка и начало легкой пульсации волн */
+.account-nav button:hover .nav-icon--svg svg {
+  fill: #34d399;
+  filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.45));
+}
+.account-nav button:hover .broadcast-wave-inner {
+  animation: wave-inner-hover 1.2s infinite ease-in-out;
+}
+.account-nav button:hover .broadcast-wave-outer {
+  animation: wave-outer-hover 1.2s infinite ease-in-out;
+}
+
+/* Активное состояние: постоянное расхождение волн */
+.account-nav button.active .nav-icon--svg svg {
+  fill: #4ade80;
+}
+.account-nav button.active .broadcast-spire {
+  animation: spire-glow-active 2s infinite ease-in-out;
+}
+.account-nav button.active .broadcast-wave-inner {
+  animation: wave-inner-active 2s infinite ease-in-out;
+}
+.account-nav button.active .broadcast-wave-outer {
+  animation: wave-outer-active 2s infinite ease-in-out;
+}
+
+.broadcast-spire,
+.broadcast-wave-inner,
+.broadcast-wave-outer {
+  transform-origin: 8px 8px;
+}
+
+/* --- Определение волновых анимаций --- */
+
+/* Наведение */
+@keyframes wave-inner-hover {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes wave-outer-hover {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.95);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+/* Активное состояние */
+@keyframes spire-glow-active {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(74, 222, 128, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.85));
+  }
+}
+
+@keyframes wave-inner-active {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.92);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes wave-outer-active {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+/* --- Настройки и Безопасность анимации значков --- */
+
+.account-nav button[data-tab="settings"] .nav-icon,
+.account-nav button[data-tab="security"] .nav-icon {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Настройки (Шестеренка ⚙️) */
+.account-nav button[data-tab="settings"]:hover .nav-icon {
+  animation: gear-spin-fast 0.6s ease-in-out;
+}
+.account-nav button[data-tab="settings"].active .nav-icon {
+  animation: gear-spin-slow 10s infinite linear;
+}
+
+/* Безопасность (Щит 🛡️) */
+.account-nav button[data-tab="security"]:hover .nav-icon {
+  animation: shield-swing 0.5s ease-in-out;
+}
+.account-nav button[data-tab="security"].active .nav-icon {
+  animation: shield-pulse 2s infinite ease-in-out;
+}
+
+@keyframes gear-spin-fast {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(180deg); }
+}
+
+@keyframes gear-spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shield-swing {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg) scale(1.1); }
+  40% { transform: rotate(10deg) scale(1.1); }
+  60% { transform: rotate(-6deg) scale(1.05); }
+  80% { transform: rotate(4deg) scale(1.05); }
+}
+
+@keyframes shield-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 2px rgba(96, 165, 250, 0.3));
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.7));
+  }
+}
+
+/* Пасхалки (Клубника 🍓) */
+.account-nav button[data-tab="easter"] .nav-icon {
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.account-nav button[data-tab="easter"]:hover .nav-icon {
+  animation: easter-jelly 0.6s ease-in-out;
+}
+.account-nav button[data-tab="easter"].active .nav-icon {
+  animation: easter-active 2.5s infinite ease-in-out;
+}
+
+@keyframes easter-jelly {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  15% { transform: scale(1.25, 0.75) rotate(-10deg); }
+  30% { transform: scale(0.75, 1.25) rotate(10deg); }
+  45% { transform: scale(1.15, 0.85) rotate(-6deg); }
+  60% { transform: scale(0.9, 1.1) rotate(6deg); }
+  75% { transform: scale(1.05, 0.95) rotate(-3deg); }
+}
+
+@keyframes easter-active {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.3));
+  }
+  25% {
+    transform: scale(1.08) rotate(-6deg);
+    filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.65));
+  }
+  75% {
+    transform: scale(1.08) rotate(6deg);
+    filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.65));
+  }
+}
+
 
 .account-nav button:hover {
   background: rgba(255, 255, 255, 0.06);

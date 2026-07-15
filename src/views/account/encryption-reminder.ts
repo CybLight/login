@@ -99,14 +99,22 @@ export function openPendingSecuritySection(): void {
 
   sessionStorage.removeItem(OPEN_SECURITY_SECTION_KEY);
 
-  if (section !== OPEN_SECURITY_BACKUP_SECTION) return;
+  let itemId = '';
+  if (section === OPEN_SECURITY_BACKUP_SECTION || section === 'backup') itemId = 'secBackupItem';
+  else if (section === 'email') itemId = 'secEmailItem';
+  else if (section === 'password') itemId = 'secPassItem';
+  else if (section === '2fa') itemId = 'sec2FAItem';
+  else if (section === 'passkeys') itemId = 'secPasskeysItem';
+  else if (section === 'devices') itemId = 'secDevicesItem';
+  else if (section === 'history') itemId = 'secHistoryItem';
 
-  const item = document.getElementById('secBackupItem');
-  const panel = document.getElementById('secBackupPanel');
-  if (!item || !panel) return;
+  if (!itemId) return;
 
-  panel.style.display = 'block';
-  item.classList.add('is-open');
+  const item = document.getElementById(itemId);
+  if (!item) return;
+
+  // Симулируем клик для вызова оригинальных обработчиков (загрузка данных, анимация открытия)
+  item.click();
 
   requestAnimationFrame(() => {
     item.scrollIntoView({ behavior: 'smooth', block: 'center' });

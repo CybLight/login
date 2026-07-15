@@ -20,6 +20,15 @@ export const authService = {
       if (response.ok) {
         const data: SessionCheckResponse = await response.json();
         console.log('[AUTH] Session valid:', data);
+        if (data.user) {
+          // Нормализуем свойства под интерфейс User на клиенте
+          if (data.user.twoFactorEnabled === undefined) {
+            data.user.twoFactorEnabled = !!((data.user as any).totpEnabled || (data.user as any).totp_enabled);
+          }
+          if (data.user.emailVerified === undefined) {
+            data.user.emailVerified = !!((data.user as any).email_verified || (data.user as any).email_verified_at || (data.user as any).emailVerified);
+          }
+        }
         if (data.user && typeof data.user.gender === 'string') {
           localStorage.setItem('cyb_user_gender', data.user.gender);
         }

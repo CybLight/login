@@ -729,6 +729,7 @@ export const en: Record<string, string> = {
   "Пропустить": "Skip",
   "Просмотр активности аккаунта": "View account activity",
   "Просмотреть": "View",
+  "Посмотреть": "View",
   "Профиль виден другим пользователям": "Profile is visible to other users",
   "Профиль пользователя": "User profile",
   "Прочитано": "Read",
