@@ -351,11 +351,11 @@ function renderSettingsTab(user: User): string {
             <span class="stg-field__icon">🪪</span>
             <div class="stg-field__body">
               <div class="stg-field__label">${t('Имя пользователя')}</div>
-              <div class="stg-field__value">${login || '—'}</div>
+              <div class="stg-field__value" id="stgUsernameValue">${login || '—'}</div>
               <div class="stg-field__hint">${t('Ваш уникальный логин в системе')}</div>
             </div>
           </div>
-          <a href="${localePath('edit-profile', locale)}" class="stg-btn stg-btn--secondary">${t('Изменить')}</a>
+          <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeUsernameBtn">${t('Изменить')}</button>
         </div>
 
         <div class="stg-field">
@@ -363,11 +363,11 @@ function renderSettingsTab(user: User): string {
             <span class="stg-field__icon">✉️</span>
             <div class="stg-field__body">
               <div class="stg-field__label">${t('Электронная почта')}</div>
-              <div class="stg-field__value">${email || t('Не указана')}</div>
+              <div class="stg-field__value" id="stgEmailValue">${email || t('Не указана')}</div>
               <div class="stg-field__hint">${t('Используется для входа и уведомлений')}</div>
             </div>
           </div>
-          <a href="${localePath('account-security', locale)}" class="stg-btn stg-btn--secondary">${t('Изменить')}</a>
+          <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeEmailBtn">${t('Изменить')}</button>
         </div>
       </section>
 

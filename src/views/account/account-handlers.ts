@@ -4,6 +4,7 @@
 
 import { Router } from '@/router/Router';
 import { apiCall, escapeHtml } from '@/utils';
+import { t } from '@/i18n';
 import type { User as AppUser } from '@/types';
 import { copyText } from '@/utils/clipboard';
 import { bindSecurityHandlers } from './security-tab';
@@ -16,6 +17,8 @@ import {
   showAccountConfirmModal,
   showAccountDeleteConfirmModal,
   showAccountNoticeModal,
+  showSettingsUsernameModal,
+  showSettingsEmailModal,
 } from './modals';
 import { updateNavBadges, setNavBadge, updateChatUnreadBadges, fetchUnreadSummaryData } from './unread';
 import { isEmailVerified } from './account-utils';
@@ -305,6 +308,7 @@ export function bindAccountHandlers(
     bindProfileTabHandlers(user, api);
     bindSettingsQuickNav();
     bindSettingsNotificationsHandlers(user);
+    bindSettingsAccountFieldsHandlers(user, api);
   }
 
   // Sessions tab handlers
@@ -684,3 +688,123 @@ function bindEasterSubTabs(): void {
     });
   });
 }
+
+/**
+ * Обработчики кнопок изменения имени и email в настройках
+ */
+function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void {
+  const changeUsernameBtn = document.getElementById('stgChangeUsernameBtn');
+  const changeEmailBtn = document.getElementById('stgChangeEmailBtn');
+
+  if (changeUsernameBtn) {
+    changeUsernameBtn.addEventListener('click', () => {
+      showSettingsUsernameModal({
+        currentUsername: user.username || '',
+        onSave: async (newUsername) => {
+          try {
+            const res = await apiCall('/profile/update', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: newUsername }),
+            });
+
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+              user.username = newUsername;
+              const valEl = document.getElementById('stgUsernameValue');
+              if (valEl) valEl.textContent = newUsername;
+
+              // Если на странице отображается имя пользователя в приветствии, обновим его
+              const userNameHeader = document.querySelector('.stg-user-name');
+              if (userNameHeader) userNameHeader.textContent = newUsername;
+
+              api.showMsg('ok', t('Имя пользователя успешно изменено'));
+              return { ok: true };
+            } else {
+              let errorMsg = t('Не удалось сохранить имя пользователя');
+              if (data.error === 'username_exists' || data.error === 'already_exists') {
+                errorMsg = t('Это имя пользователя уже занято');
+              } else if (data.error === 'invalid_username') {
+                errorMsg = t('Недопустимый формат имени пользователя');
+              }
+              return { ok: false, error: errorMsg };
+            }
+          } catch (err) {
+            console.error('Error saving username:', err);
+            return { ok: false, error: t('Ошибка сети или сервера') };
+          }
+        },
+      });
+    });
+  }
+
+  if (changeEmailBtn) {
+    changeEmailBtn.addEventListener('click', () => {
+      const curEmail = user.email || '';
+      const emailVerified = !!user.emailVerified;
+      const requiresPassword = emailVerified && !!curEmail;
+      const requires2fa = !!user.twoFactorEnabled;
+
+      showSettingsEmailModal({
+        currentEmail: curEmail,
+        requiresPassword,
+        requires2fa,
+        onSave: async (newEmail, password, totpCode) => {
+          try {
+            const res = await apiCall('/auth/email/set', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: newEmail,
+                ...(requiresPassword ? { password, totpCode } : {}),
+              }),
+            });
+
+            const d = await res.json().catch(() => ({}));
+            if (res.ok && d.ok) {
+              if (d.pending) {
+                api.showMsg(
+                  'ok',
+                  d.cooldown
+                    ? t('Запрос принят. Письмо с подтверждением уже отправляли недавно — проверьте почту.')
+                    : t('На указанный адрес отправлено письмо для подтверждения смены email.')
+                );
+              } else {
+                user.email = newEmail;
+                const valEl = document.getElementById('stgEmailValue');
+                if (valEl) valEl.textContent = newEmail;
+                api.showMsg('ok', t('Электронная почта успешно обновлена'));
+              }
+              return { ok: true };
+            } else {
+              const code = d?.error;
+              let errorMsg = t('Не удалось сохранить email.');
+              if (code === 'bad_password' || code === 'invalid_password') {
+                errorMsg = t('Неверный пароль');
+              } else if (code === 'code_required') {
+                errorMsg = t('Введите код 2FA');
+              } else if (code === 'invalid_code') {
+                errorMsg = t('Неверный 2FA код');
+              } else if (code === 'password_required') {
+                errorMsg = t('Введите текущий пароль');
+              } else if (code === 'same_email') {
+                errorMsg = t('Это текущий email. Введите другой адрес.');
+              } else if (code === 'email_exists') {
+                errorMsg = t('Этот адрес электронной почты уже используется.');
+              } else if (code) {
+                errorMsg = `${t('Ошибка:')} ${code}`;
+              }
+              return { ok: false, error: errorMsg };
+            }
+          } catch (err) {
+            console.error('Error saving email:', err);
+            return { ok: false, error: t('Ошибка сети или сервера') };
+          }
+        },
+      });
+    });
+  }
+}
+
