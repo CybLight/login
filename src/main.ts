@@ -7,7 +7,7 @@ import '@/styles/global.css';
 import '@/styles/login.css';
 import '@/styles/accessibility.css';
 
-import { initLocaleRouting, t } from '@/i18n';
+import { initLocaleRouting, t, sitePath } from '@/i18n';
 import { Router } from '@/router/Router';
 import { initDevFooterPin, initErrorHandlers, logger } from '@/utils';
 import { authService } from '@/services';
@@ -159,8 +159,13 @@ export async function initApp(): Promise<void> {
     }
   });
 
-  // Дополнительные роуты с заглушками
   Router.on('2fa', render2FAVerify); // алиас для 2fa-verify
+  Router.on('terms', () => {
+    window.location.replace(sitePath('terms'));
+  });
+  Router.on('privacy', () => {
+    window.location.replace(sitePath('privacy'));
+  });
 
   logger.info('Routes registered');
 

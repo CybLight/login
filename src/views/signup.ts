@@ -2,7 +2,7 @@
  * Signup view - регистрация нового пользователя
  */
 
-import { t } from '@/i18n';
+import { t, localePath } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell, showAppAlert } from '@/ui';
 import { setStorage, apiCall } from '@/utils';
@@ -54,11 +54,21 @@ export async function renderSignup(): Promise<void> {
           <div id="cf-turnstile" class="cf-turnstile"></div>
         </div>
 
+        <div class="field checkbox-field">
+          <input class="checkbox-input" type="checkbox" id="acceptTerms" aria-required="true" />
+          <label class="checkbox-label" for="acceptTerms">
+            ${t('Я ознакомился и принимаю {terms} и {privacy}.', {
+              terms: `<a href="${localePath('terms')}" target="_blank" rel="noopener noreferrer" class="link">${t('Условия использования')}</a>`,
+              privacy: `<a href="${localePath('privacy')}" target="_blank" rel="noopener noreferrer" class="link">${t('Политику конфиденциальности')}</a>`
+            })}
+          </label>
+        </div>
+
         <div class="row">
           <a class="link" href="#" id="back">${t('← Назад')}</a>
         </div>
 
-        <button class="btn btn-primary" type="submit" aria-label="${t('Создать аккаунт')}">${t('Создать аккаунт')}</button>
+        <button class="btn btn-primary" type="submit" aria-label="${t('Создать аккаунт')}" disabled>${t('Создать аккаунт')}</button>
       </form>
     </section>
   `)
@@ -92,6 +102,19 @@ export async function renderSignup(): Promise<void> {
 
   // Обработчик формы
   const form = document.getElementById('f') as HTMLFormElement;
+
+  // Управление кнопкой регистрации на основе чекбокса согласия
+  const acceptTermsCheckbox = document.getElementById('acceptTerms') as HTMLInputElement;
+  const submitBtn = form?.querySelector('button[type="submit"]') as HTMLButtonElement;
+  if (acceptTermsCheckbox && submitBtn) {
+    acceptTermsCheckbox.checked = false;
+    submitBtn.disabled = true;
+
+    acceptTermsCheckbox.addEventListener('change', () => {
+      submitBtn.disabled = !acceptTermsCheckbox.checked;
+    });
+  }
+
   if (form) {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -144,6 +167,17 @@ export async function renderSignup(): Promise<void> {
         return;
       }
 
+      // Валидация принятия условий
+      const acceptTerms = document.getElementById('acceptTerms') as HTMLInputElement;
+      if (!acceptTerms || !acceptTerms.checked) {
+        await showAppAlert(
+          t('Для создания аккаунта необходимо принять Условия использования и Политику конфиденциальности.'),
+          { tone: 'warn' }
+        );
+        acceptTerms?.focus();
+        return;
+      }
+
       // Проверка Turnstile
       if (!captchaService.token) {
         await showAppAlert(
@@ -163,6 +197,7 @@ export async function renderSignup(): Promise<void> {
             login,
             password: pass1,
             turnstileToken: captchaService.token,
+            acceptedTerms: true,
           }),
         });
 

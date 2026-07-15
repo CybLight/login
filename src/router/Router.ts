@@ -31,6 +31,8 @@ export class Router {
     'postmaster',
     'profile',
     '2fa',
+    'terms',
+    'privacy',
   ]);
 
   private static handlers: Record<string, RouteHandler> = {};
@@ -60,6 +62,8 @@ export class Router {
     'strawberry-history': 'Клубничная история',
     postmaster: 'Postmaster',
     profile: 'Профиль',
+    terms: 'Условия использования',
+    privacy: 'Политика конфиденциальности',
   };
 
   private static pathWithoutLocale(): string {

@@ -15,16 +15,22 @@ export function buildAuthFooter(options: AuthFooterOptions = {}): string {
   const contactAdminUrl = localePath('contact-admin', locale);
   const langHref = (code: Locale) => localePath(stripLocalePrefix().path, code);
 
+  const flagMap: Record<Locale, string> = {
+    ru: '🇷🇺',
+    uk: '🇺🇦',
+    en: '🇬🇧',
+  };
+
   const langBlock = showLangSwitcher
     ? `
             <div class="footer-lang-wrap">
               <button type="button" class="footer-lang-btn" aria-haspopup="listbox" aria-expanded="false">
-                ${getLocaleLabel(locale)}
+                ${flagMap[locale]} ${getLocaleLabel(locale)}
               </button>
               <ul class="footer-lang-menu" role="listbox" hidden>
-                <li><a href="${langHref('ru')}" data-locale-link="ru" hreflang="ru">Русский</a></li>
-                <li><a href="${langHref('uk')}" data-locale-link="uk" hreflang="uk">Українська</a></li>
-                <li><a href="${langHref('en')}" data-locale-link="en" hreflang="en">English</a></li>
+                <li><a href="${langHref('ru')}" data-locale-link="ru" hreflang="ru">🇷🇺 Русский</a></li>
+                <li><a href="${langHref('uk')}" data-locale-link="uk" hreflang="uk">🇺🇦 Українська</a></li>
+                <li><a href="${langHref('en')}" data-locale-link="en" hreflang="en">🇬🇧 English</a></li>
               </ul>
             </div>
     `
