@@ -126,15 +126,21 @@ export function renderAccountPage(tab: string, user: AppUser): string {
               <span class="nav-icon">💬</span> ${t('Сообщения')}
               <span class="nav-badge is-hidden" data-badge-type="unread-messages"></span>
             </button>
+
+            <div class="nav-divider"></div>
+
             <button data-tab="security" ${tab === 'security' ? 'class="active"' : ''} aria-label="🛡️ ${t('Безопасность')}">
               <span class="nav-icon">🛡️</span> ${t('Безопасность')}
             </button>
-            <button data-tab="sessions" ${tab === 'sessions' ? 'class="active"' : ''} aria-label="🧩 ${t('Сессии')}">
-              <span class="nav-icon">🧩</span> ${t('Сессии')}
+            <button data-tab="sessions" ${tab === 'sessions' ? 'class="active"' : ''} aria-label="💻 ${t('Сессии')}">
+              <span class="nav-icon">💻</span> ${t('Сессии')}
             </button>
             <button data-tab="settings" ${tab === 'settings' ? 'class="active"' : ''} aria-label="⚙️ ${t('Настройки')}">
               <span class="nav-icon">⚙️</span> ${t('Настройки')}
             </button>
+
+            <div class="nav-divider"></div>
+
             <button data-tab="easter" ${tab === 'easter' ? 'class="active"' : ''} aria-label="🍓 ${t('Пасхалки')}">
               <span class="nav-icon">🍓</span> ${t('Пасхалки')}
             </button>

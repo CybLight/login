@@ -1592,6 +1592,12 @@
   margin-top: 12px;
 }
 
+.nav-divider {
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
+  margin: 8px 4px;
+}
+
 .account-nav button {
   width: 100%;
   text-align: left;
