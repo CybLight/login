@@ -1,5 +1,5 @@
 import { t } from '@/i18n';
-import { escapeHtml } from '@/utils';
+import { escapeHtml, apiCall } from '@/utils';
 import { setupAccessibleModal } from '@/utils/keyboard';
 
 function createModalCloser(
@@ -332,6 +332,8 @@ export function showAccountPinScopeModal(opts: {
 
 export function showSettingsUsernameModal(opts: {
   currentUsername: string;
+  canChangeUsername?: boolean;
+  usernameChangedAt?: number | null;
   onSave: (newUsername: string) => Promise<{ ok: boolean; error?: string }>;
 }): Promise<void> {
   const old = document.getElementById('settingsUsernameModal');
@@ -341,6 +343,8 @@ export function showSettingsUsernameModal(opts: {
     const wrap = document.createElement('div');
     wrap.id = 'settingsUsernameModal';
     wrap.className = 'account-notice-modal';
+
+    const canChange = opts.canChangeUsername !== false;
 
     wrap.innerHTML = `
       <div class="account-notice-backdrop"></div>
@@ -355,13 +359,38 @@ export function showSettingsUsernameModal(opts: {
         
         <div class="sec-form-row" style="margin-bottom: 20px !important;">
           <label class="label" for="stgUsernameInp" style="margin-bottom: 8px !important; display: block !important;">${t('Введите новое имя пользователя')}</label>
-          <input class="input" id="stgUsernameInp" type="text" value="${escapeHtml(opts.currentUsername)}" autocomplete="off" style="padding: 12px 16px !important; font-size: 15px !important;" />
-          <div id="stgUsernameError" class="input-error-msg" style="color: #f87171; font-size: 12px; margin-top: 6px; display: none;"></div>
+          <input 
+            class="input" 
+            id="stgUsernameInp" 
+            type="text" 
+            value="${escapeHtml(opts.currentUsername)}" 
+            autocomplete="off" 
+            style="padding: 12px 16px !important; font-size: 15px !important;" 
+            ${canChange ? '' : 'disabled'}
+          />
+          <div id="stgUsernameError" class="input-error-msg" style="color: #f87171; font-size: 12px; margin-top: 6px; ${canChange ? 'display: none;' : 'display: block;' }">
+            ${
+              canChange
+                ? ''
+                : opts.usernameChangedAt
+                  ? t('Можно изменить через {days} дней', {
+                      days: Math.ceil(
+                        (30 * 24 * 60 * 60 * 1000 - (Date.now() - Number(opts.usernameChangedAt))) /
+                          (24 * 60 * 60 * 1000)
+                      ),
+                    })
+                  : t('Изменение временно недоступно')
+            }
+          </div>
+          <div id="stgUsernameHints" style="margin-top: 10px; ${canChange ? '' : 'display: none;'}"></div>
+          <div class="username-limit-warning" style="font-size: 12px; color: #ff9800; background: rgba(255, 152, 0, 0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 152, 0, 0.2); margin-top: 12px; line-height: 1.4;">
+            ⚠️ ${t('Имя пользователя можно менять не чаще одного раза в 30 дней.')}
+          </div>
         </div>
 
         <div class="account-notice-actions account-notice-actions--end" style="display: flex !important; gap: 12px !important; justify-content: flex-end !important;">
           <button type="button" class="btn btn-outline" id="stgUsernameCancelBtn" style="padding: 10px 20px !important;">${t('Отмена')}</button>
-          <button type="button" class="btn btn-primary" id="stgUsernameSaveBtn" style="padding: 10px 20px !important;">${t('Сохранить')}</button>
+          <button type="button" class="btn btn-primary" id="stgUsernameSaveBtn" style="padding: 10px 20px !important;" ${canChange ? '' : 'disabled'}>${t('Сохранить')}</button>
         </div>
       </div>
     `;
@@ -375,6 +404,153 @@ export function showSettingsUsernameModal(opts: {
     const saveBtn = wrap.querySelector('#stgUsernameSaveBtn') as HTMLButtonElement;
     const cancelBtn = wrap.querySelector('#stgUsernameCancelBtn') as HTMLButtonElement;
     const errorDiv = wrap.querySelector('#stgUsernameError') as HTMLDivElement;
+    const hintsContainer = wrap.querySelector('#stgUsernameHints') as HTMLDivElement;
+
+    // If change is not allowed, just bind cancel/close listeners and return
+    if (!canChange) {
+      const handleClose = () => {
+        close();
+        resolve();
+      };
+      cancelBtn.addEventListener('click', handleClose);
+      wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', handleClose);
+      return;
+    }
+
+    // Attach username hints and live check logic
+    const rules = {
+      len: (v: string) => v.length >= 3 && v.length <= 20,
+      chars: (v: string) => /^[a-zA-Z0-9_-]+$/.test(v),
+    };
+
+    hintsContainer.innerHTML = `
+      <div class="pass-hints">
+        <div class="pass-hints__title">${t('Имя пользователя должно содержать:')}</div>
+        <ul class="pass-hints__list">
+          <li data-rule="len"><span class="icon" aria-hidden="true"></span> ${t('От 3 до 20 символов')}</li>
+          <li data-rule="chars"><span class="icon" aria-hidden="true"></span> ${t('Только латиница, цифры, _ и -')}</li>
+          <li data-rule="available"><span class="icon" aria-hidden="true"></span> ${t('Имя пользователя свободно')}</li>
+        </ul>
+      </div>
+    `;
+
+    let checkTimeout: number | undefined;
+    let isAvailable = false;
+    let lastCheckedVal = '';
+
+    const updateHints = () => {
+      const v = input.value;
+      let syncOk = true;
+
+      // Check synchronous rules
+      hintsContainer.querySelectorAll('[data-rule]').forEach((li) => {
+        const key = li.getAttribute('data-rule');
+        if (key === 'len' || key === 'chars') {
+          const ok = rules[key] ? rules[key](v) : false;
+          li.classList.toggle('ok', ok);
+          if (!ok) syncOk = false;
+        }
+      });
+
+      const availableLi = hintsContainer.querySelector('[data-rule="available"]') as HTMLLIElement;
+
+      // Handle availability status synchronously if it matches current username or format is invalid
+      if (v === opts.currentUsername) {
+        isAvailable = true;
+        if (availableLi) availableLi.classList.add('ok');
+        saveBtn.disabled = !syncOk;
+        errorDiv.style.display = 'none';
+      } else if (!syncOk) {
+        isAvailable = false;
+        if (availableLi) availableLi.classList.remove('ok');
+        saveBtn.disabled = true;
+        errorDiv.style.display = 'none';
+        if (checkTimeout) {
+          clearTimeout(checkTimeout);
+          checkTimeout = undefined;
+        }
+      } else {
+        // If synchronous rules pass and value changed, trigger debounced check
+        if (v !== lastCheckedVal) {
+          saveBtn.disabled = true; // disable save while checking
+          if (availableLi) availableLi.classList.remove('ok');
+          errorDiv.style.display = 'none';
+          
+          if (checkTimeout) clearTimeout(checkTimeout);
+          checkTimeout = window.setTimeout(async () => {
+            lastCheckedVal = v;
+            try {
+              const res = await apiCall(`/profile/check-username/${encodeURIComponent(v)}`, {
+                credentials: 'include'
+              });
+              const data = await res.json();
+              if (input.value === v) { // check if input value hasn't changed in the meantime
+                isAvailable = data.ok && data.available;
+                if (availableLi) {
+                  availableLi.classList.toggle('ok', isAvailable);
+                }
+                saveBtn.disabled = !isAvailable;
+                
+                // Update highlight
+                if (isAvailable) {
+                  input.classList.add('input--valid');
+                  input.classList.remove('input--invalid');
+                  errorDiv.style.display = 'none';
+                } else {
+                  input.classList.add('input--invalid');
+                  input.classList.remove('input--valid');
+                  errorDiv.textContent = t('Имя пользователя занято');
+                  errorDiv.style.display = 'block';
+                }
+              }
+            } catch (err) {
+              console.error('Error checking username availability:', err);
+            }
+          }, 400);
+        } else {
+          // Keep previous availability result
+          if (availableLi) availableLi.classList.toggle('ok', isAvailable);
+          saveBtn.disabled = !isAvailable;
+          if (isAvailable) {
+            errorDiv.style.display = 'none';
+          } else {
+            errorDiv.textContent = t('Имя пользователя занято');
+            errorDiv.style.display = 'block';
+          }
+        }
+      }
+
+      // Update highlighting based on current status
+      if (!v.trim()) {
+        input.classList.remove('input--valid');
+        input.classList.remove('input--invalid');
+        errorDiv.style.display = 'none';
+      } else if (v === opts.currentUsername) {
+        input.classList.add('input--valid');
+        input.classList.remove('input--invalid');
+        errorDiv.style.display = 'none';
+      } else if (!syncOk) {
+        input.classList.add('input--invalid');
+        input.classList.remove('input--valid');
+        errorDiv.style.display = 'none';
+      } else {
+        // If checking async, keep previous color or neutral until complete
+        if (isAvailable && lastCheckedVal === v) {
+          input.classList.add('input--valid');
+          input.classList.remove('input--invalid');
+          errorDiv.style.display = 'none';
+        } else {
+          input.classList.remove('input--valid');
+        }
+      }
+    };
+
+    input.addEventListener('input', updateHints);
+    input.addEventListener('focus', updateHints);
+    input.addEventListener('blur', updateHints);
+
+    // Initial check
+    updateHints();
 
     const handleSave = async () => {
       const val = input.value.trim();

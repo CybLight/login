@@ -115,11 +115,27 @@ export function renderAccountPage(tab: string, user: AppUser): string {
         <aside class="account-sidebar" id="accountSidebar">
           <!-- Навигация вкладок -->
           <nav class="account-nav">
-            <button data-tab="profile" ${tab === 'profile' ? 'class="active"' : ''} aria-label="👤 ${t('Профиль')}">
-              <span class="nav-icon">👤</span> ${t('Профиль')}
+            <button data-tab="profile" ${tab === 'profile' ? 'class="active"' : ''} aria-label="${t('Профиль')}">
+              <span class="nav-icon nav-icon--svg">
+                <svg class="profile-icon-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path class="profile-user-body" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle class="profile-user-head" cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span> ${t('Профиль')}
             </button>
-            <button data-tab="friends" ${tab === 'friends' ? 'class="active"' : ''} aria-label="👥 ${t('Друзья')}">
-              <span class="nav-icon">👥</span> ${t('Друзья')}
+            <button data-tab="friends" ${tab === 'friends' ? 'class="active"' : ''} aria-label="${t('Друзья')}">
+              <span class="nav-icon nav-icon--svg">
+                <svg class="friends-icon-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <g class="friends-user-main">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                  </g>
+                  <g class="friends-user-sub">
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </g>
+                </svg>
+              </span> ${t('Друзья')}
               <span class="nav-badge is-hidden" data-badge-type="pending-requests"></span>
             </button>
             <button data-tab="messages" ${tab === 'messages' ? 'class="active"' : ''} aria-label="${t('Сообщения')}">

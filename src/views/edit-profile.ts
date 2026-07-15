@@ -307,14 +307,14 @@ export async function renderEditProfile(): Promise<void> {
                 ${profile.canChangeUsername ? '' : 'disabled'}
                 placeholder="${t('Введите новое имя пользователя')}"
               />
-              <button id="checkUsernameBtn" class="btn btn-secondary btn-check-username" ${profile.canChangeUsername ? '' : 'disabled'} aria-label="${t('Проверить')}">
-                ${t('Проверить')}
+              <button id="checkUsernameBtn" class="btn btn-secondary btn-check-username" ${profile.canChangeUsername ? '' : 'disabled'} aria-label="${t('Изменить')}">
+                ${t('Изменить')}
               </button>
             </div>
-            <div id="usernameHint" class="field-hint">
+            <div id="usernameHint" class="field-hint" style="color: #ef4444; font-size: 12px; margin-top: 6px; ${profile.canChangeUsername ? 'display: none;' : ''}">
               ${
                 profile.canChangeUsername
-                  ? t('3-20 символов: буквы, цифры, _ или -')
+                  ? ''
                   : profile.usernameChangedAt
                     ? t('Можно изменить через {days} дней', {
                         days: Math.ceil(
@@ -324,6 +324,10 @@ export async function renderEditProfile(): Promise<void> {
                       })
                     : t('Изменение временно недоступно')
               }
+            </div>
+            <div id="usernameHints" style="margin-top: 10px; margin-bottom: 8px;"></div>
+            <div class="username-limit-warning" style="font-size: 12px; color: #ff9800; background: rgba(255, 152, 0, 0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 152, 0, 0.2); margin-top: 12px; line-height: 1.4;">
+              ⚠️ ${t('Имя пользователя можно менять не чаще одного раза в 30 дней.')}
             </div>
           </div>
         </div>
@@ -994,41 +998,159 @@ function initUsernameCheck(profile: EditableProfile): void {
   const usernameInput = document.getElementById('usernameInput') as HTMLInputElement;
   const checkBtn = document.getElementById('checkUsernameBtn') as HTMLButtonElement;
   const hintEl = document.getElementById('usernameHint') as HTMLDivElement;
+  const hintsContainer = document.getElementById('usernameHints') as HTMLDivElement;
 
   if (!checkBtn || !profile.canChangeUsername) {
     return;
   }
 
-  checkBtn.addEventListener('click', async () => {
-    const username = usernameInput.value.trim();
+  // Attach username hints and live check logic
+  const rules = {
+    len: (v: string) => v.length >= 3 && v.length <= 20,
+    chars: (v: string) => /^[a-zA-Z0-9_-]+$/.test(v),
+  };
 
-    if (!username || username === profile.username) {
-      hintEl.textContent = t('3-20 символов: буквы, цифры, _ или -');
-      hintEl.style.color = '';
-      return;
+  if (hintsContainer) {
+    hintsContainer.innerHTML = `
+      <div class="pass-hints">
+        <div class="pass-hints__title">${t('Имя пользователя должно содержать:')}</div>
+        <ul class="pass-hints__list">
+          <li data-rule="len"><span class="icon" aria-hidden="true"></span> ${t('От 3 до 20 символов')}</li>
+          <li data-rule="chars"><span class="icon" aria-hidden="true"></span> ${t('Только латиница, цифры, _ и -')}</li>
+          <li data-rule="available"><span class="icon" aria-hidden="true"></span> ${t('Имя пользователя свободно')}</li>
+        </ul>
+      </div>
+    `;
+  }
+
+  let checkTimeout: number | undefined;
+  let isAvailable = false;
+  let lastCheckedVal = '';
+
+  const updateHints = () => {
+    const v = usernameInput.value;
+    let syncOk = true;
+
+    // Check synchronous rules
+    if (hintsContainer) {
+      hintsContainer.querySelectorAll('[data-rule]').forEach((li) => {
+        const key = li.getAttribute('data-rule');
+        if (key === 'len' || key === 'chars') {
+          const ok = rules[key] ? rules[key](v) : false;
+          li.classList.toggle('ok', ok);
+          if (!ok) syncOk = false;
+        }
+      });
     }
 
-    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
-      hintEl.textContent = t('❌ Неверный формат. Используйте 3-20 символов: буквы, цифры, _ или -');
-      hintEl.style.color = '#ef4444';
-      return;
-    }
+    const availableLi = hintsContainer ? hintsContainer.querySelector('[data-rule="available"]') as HTMLLIElement : null;
+    const saveBtn = document.getElementById('saveProfileBtn') as HTMLButtonElement | null;
 
-    checkBtn.textContent = t('Проверка...');
-    checkBtn.disabled = true;
-
-    const result = await checkUsernameAvailability(username);
-
-    checkBtn.textContent = t('Проверить');
-    checkBtn.disabled = false;
-
-    if (result.available) {
-      hintEl.textContent = t('✅ Имя доступно!');
-      hintEl.style.color = '#22c55e';
+    if (v === profile.username) {
+      isAvailable = true;
+      if (availableLi) availableLi.classList.add('ok');
+      if (saveBtn) saveBtn.disabled = !syncOk;
+      checkBtn.disabled = !syncOk;
+      hintEl.style.display = 'none';
+    } else if (!syncOk) {
+      isAvailable = false;
+      if (availableLi) availableLi.classList.remove('ok');
+      if (saveBtn) saveBtn.disabled = true;
+      checkBtn.disabled = true;
+      hintEl.style.display = 'none';
+      if (checkTimeout) {
+        clearTimeout(checkTimeout);
+        checkTimeout = undefined;
+      }
     } else {
-      hintEl.textContent = `❌ ${result.reason || t('Имя недоступно')}`;
-      hintEl.style.color = '#ef4444';
+      if (v !== lastCheckedVal) {
+        if (saveBtn) saveBtn.disabled = true;
+        checkBtn.disabled = true;
+        if (availableLi) availableLi.classList.remove('ok');
+        hintEl.style.display = 'none';
+
+        if (checkTimeout) clearTimeout(checkTimeout);
+        checkTimeout = window.setTimeout(async () => {
+          lastCheckedVal = v;
+          try {
+            const result = await checkUsernameAvailability(v);
+            if (usernameInput.value === v) {
+              isAvailable = result.available;
+              if (availableLi) {
+                availableLi.classList.toggle('ok', isAvailable);
+              }
+              if (saveBtn) saveBtn.disabled = !isAvailable;
+              checkBtn.disabled = !isAvailable;
+
+              if (isAvailable) {
+                usernameInput.classList.add('input--valid');
+                usernameInput.classList.remove('input--invalid');
+                hintEl.style.display = 'none';
+              } else {
+                usernameInput.classList.add('input--invalid');
+                usernameInput.classList.remove('input--valid');
+                hintEl.textContent = t('Имя пользователя занято');
+                hintEl.style.display = 'block';
+              }
+            }
+          } catch (err) {
+            console.error('Error checking availability:', err);
+          }
+        }, 400);
+      } else {
+        if (availableLi) availableLi.classList.toggle('ok', isAvailable);
+        if (saveBtn) saveBtn.disabled = !isAvailable;
+        checkBtn.disabled = !isAvailable;
+        if (isAvailable) {
+          hintEl.style.display = 'none';
+        } else {
+          hintEl.textContent = t('Имя пользователя занято');
+          hintEl.style.display = 'block';
+        }
+      }
     }
+
+    // Update highlighting based on current status
+    if (!v.trim()) {
+      usernameInput.classList.remove('input--valid');
+      usernameInput.classList.remove('input--invalid');
+      hintEl.style.display = 'none';
+    } else if (v === profile.username) {
+      usernameInput.classList.add('input--valid');
+      usernameInput.classList.remove('input--invalid');
+      hintEl.style.display = 'none';
+    } else if (!syncOk) {
+      usernameInput.classList.add('input--invalid');
+      usernameInput.classList.remove('input--valid');
+      hintEl.style.display = 'none';
+    } else {
+      if (isAvailable && lastCheckedVal === v) {
+        usernameInput.classList.add('input--valid');
+        usernameInput.classList.remove('input--invalid');
+        hintEl.style.display = 'none';
+      } else {
+        usernameInput.classList.remove('input--valid');
+      }
+    }
+  };
+
+  usernameInput.addEventListener('input', updateHints);
+  usernameInput.addEventListener('focus', updateHints);
+  usernameInput.addEventListener('blur', updateHints);
+
+  // Initial check
+  updateHints();
+
+  checkBtn.addEventListener('click', () => {
+    const username = usernameInput.value.trim();
+    if (!username || username === profile.username) {
+      hintEl.textContent = '';
+      hintEl.style.color = '';
+      hintEl.style.display = 'none';
+      return;
+    }
+    lastCheckedVal = '';
+    updateHints();
   });
 }
 

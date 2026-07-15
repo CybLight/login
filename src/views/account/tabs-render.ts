@@ -723,31 +723,74 @@ function renderSettingsTab(user: User): string {
           </div>
         </header>
 
-        <div class="stg-notif-row">
-          <div class="stg-notif-row__info">
-            <div class="stg-notif-row__label">${t('Профиль виден другим пользователям')}</div>
-            <div class="stg-notif-row__hint">${t('Другие пользователи могут просматривать ваш публичный профиль')}</div>
-          </div>
-          <label class="stg-toggle stg-toggle--disabled" title="${t('Скоро')}">
-            <input type="checkbox" checked disabled />
-            <span class="stg-toggle__track"></span>
-          </label>
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Кто может видеть мой аватар')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости вашего аватара')}</div>
+          <select class="input stg-privacy-select" id="stgPrivacyAvatar" data-key="avatar" style="cursor: pointer;">
+            <option value="everyone">${t('Все пользователи')}</option>
+            <option value="friends">${t('Только друзья')}</option>
+            <option value="nobody">${t('Никто')}</option>
+          </select>
         </div>
 
-        <div class="stg-notif-row">
-          <div class="stg-notif-row__info">
-            <div class="stg-notif-row__label">${t('Показывать онлайн-статус')}</div>
-            <div class="stg-notif-row__hint">${t('Другие пользователи видят, когда вы в сети')}</div>
-          </div>
-          <label class="stg-toggle stg-toggle--disabled" title="${t('Скоро')}">
-            <input type="checkbox" checked disabled />
-            <span class="stg-toggle__track"></span>
-          </label>
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Кто может видеть моё краткое описание (Bio)')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости короткого описания профиля')}</div>
+          <select class="input stg-privacy-select" id="stgPrivacyBio" data-key="bio" style="cursor: pointer;">
+            <option value="everyone">${t('Все пользователи')}</option>
+            <option value="friends">${t('Только друзья')}</option>
+            <option value="nobody">${t('Никто')}</option>
+          </select>
         </div>
 
-        <div class="stg-coming-soon-banner">
-          <span class="stg-coming-soon-banner__icon">🔐</span>
-          <span>${t('Расширенные настройки конфиденциальности появятся в ближайшее время')}</span>
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Кто может видеть раздел «О себе»')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости подробного раздела о себе')}</div>
+          <select class="input stg-privacy-select" id="stgPrivacyAbout" data-key="about" style="cursor: pointer;">
+            <option value="everyone">${t('Все пользователи')}</option>
+            <option value="friends">${t('Только друзья')}</option>
+            <option value="nobody">${t('Никто')}</option>
+          </select>
+        </div>
+
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Кто может видеть мой пол')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости вашего пола в профиле')}</div>
+          <select class="input stg-privacy-select" id="stgPrivacyGender" data-key="gender" style="cursor: pointer;">
+            <option value="everyone">${t('Все пользователи')}</option>
+            <option value="friends">${t('Только друзья')}</option>
+            <option value="nobody">${t('Никто')}</option>
+          </select>
+        </div>
+
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Кто может видеть мою дату рождения')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости даты вашего рождения')}</div>
+          <select class="input stg-privacy-select" id="stgPrivacyDob" data-key="dob" style="cursor: pointer;">
+            <option value="everyone">${t('Все пользователи')}</option>
+            <option value="friends">${t('Только друзья')}</option>
+            <option value="nobody">${t('Никто')}</option>
+          </select>
+        </div>
+
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Профиль виден другим пользователям')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости вашей учетной записи в поиске и списках')}</div>
+          <select class="input stg-privacy-select" id="stgPrivacyProfile" data-key="profile" style="cursor: pointer;">
+            <option value="everyone">${t('Все пользователи')}</option>
+            <option value="friends">${t('Только друзья')}</option>
+            <option value="nobody">${t('Никто')}</option>
+          </select>
+        </div>
+
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Показывать онлайн-статус')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка отображения вашей сетевой активности')}</div>
+          <select class="input stg-privacy-select" id="stgPrivacyOnline" data-key="online" style="cursor: pointer;">
+            <option value="everyone">${t('Все пользователи')}</option>
+            <option value="friends">${t('Только друзья')}</option>
+            <option value="nobody">${t('Никто')}</option>
+          </select>
         </div>
       </section>
 

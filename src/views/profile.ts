@@ -328,8 +328,28 @@ function buildProfileHeader(profileRoute: string, isLoggedIn: boolean, subtitle?
       <div class="account-nav-overlay" id="accountNavOverlay" aria-hidden="true"></div>
       <aside class="account-sidebar profile-mobile-nav" id="accountSidebar">
         <nav class="account-nav">
-          <button data-tab="profile" type="button" aria-label="👤 ${t('Профиль')}"><span class="nav-icon">👤</span> ${t('Профиль')}</button>
-          <button data-tab="friends" type="button" aria-label="👥 ${t('Друзья')}"><span class="nav-icon">👥</span> ${t('Друзья')}</button>
+          <button data-tab="profile" type="button" aria-label="${t('Профиль')}">
+            <span class="nav-icon nav-icon--svg">
+              <svg class="profile-icon-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path class="profile-user-body" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle class="profile-user-head" cx="12" cy="7" r="4"></circle>
+              </svg>
+            </span> ${t('Профиль')}
+          </button>
+          <button data-tab="friends" type="button" aria-label="${t('Друзья')}">
+            <span class="nav-icon nav-icon--svg">
+              <svg class="friends-icon-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <g class="friends-user-main">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                </g>
+                <g class="friends-user-sub">
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </g>
+              </svg>
+            </span> ${t('Друзья')}
+          </button>
           <button data-tab="messages" type="button" aria-label="💬 ${t('Сообщения')}"><span class="nav-icon">💬</span> ${t('Сообщения')}</button>
           <button data-tab="security" type="button" aria-label="🛡️ ${t('Безопасность')}"><span class="nav-icon">🛡️</span> ${t('Безопасность')}</button>
           <button data-tab="sessions" type="button" aria-label="🧩 ${t('Сессии')}"><span class="nav-icon">🧩</span> ${t('Сессии')}</button>

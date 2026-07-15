@@ -310,6 +310,7 @@ export function bindAccountHandlers(
     bindSettingsNotificationsHandlers(user);
     bindSettingsAccountFieldsHandlers(user, api);
     bindSettingsSecurityTransitions(user);
+    void bindSettingsPrivacyHandlers(api);
   }
 
   // Sessions tab handlers
@@ -516,6 +517,85 @@ function bindSettingsNotificationsHandlers(user: AppUser): void {
   });
 }
 
+/**
+ * Привязать обработчики для настроек конфиденциальности
+ */
+async function bindSettingsPrivacyHandlers(api: ApiMessage): Promise<void> {
+  const selects = document.querySelectorAll('.stg-privacy-select') as NodeListOf<HTMLSelectElement>;
+  if (selects.length === 0) return;
+
+  // Отключаем все селекты во время загрузки текущих настроек
+  selects.forEach(select => {
+    select.disabled = true;
+  });
+
+  try {
+    const res = await apiCall('/profile/me', {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const privacy = data?.profile?.privacy;
+      if (privacy) {
+        // Устанавливаем значения из БД
+        selects.forEach(select => {
+          const key = select.dataset.key;
+          if (key && privacy[key]) {
+            select.value = privacy[key];
+          }
+        });
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching privacy settings:', err);
+  } finally {
+    // Включаем селекты обратно
+    selects.forEach(select => {
+      select.disabled = false;
+    });
+  }
+
+  // Привязываем обработчик события 'change' к каждому селекту
+  selects.forEach(select => {
+    select.addEventListener('change', async () => {
+      const key = select.dataset.key;
+      if (!key) return;
+
+      const newValue = select.value;
+      
+      // Блокируем селект во время отправки запроса
+      select.disabled = true;
+
+      try {
+        const res = await apiCall('/profile/update', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            privacy: {
+              [key]: newValue,
+            },
+          }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          api.showMsg('ok', t('Настройки приватности успешно сохранены'));
+        } else {
+          api.showMsg('error', t('Не удалось сохранить настройки приватности'));
+        }
+      } catch (err) {
+        console.error('Error updating privacy setting:', err);
+        api.showMsg('error', t('Ошибка сети или сервера'));
+      } finally {
+        select.disabled = false;
+      }
+    });
+  });
+}
+
 
 /**
  * Привязать обработчики для вкладки Профиль (удаление)
@@ -694,13 +774,34 @@ function bindEasterSubTabs(): void {
  * Обработчики кнопок изменения имени и email в настройках
  */
 function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void {
-  const changeUsernameBtn = document.getElementById('stgChangeUsernameBtn');
+  const changeUsernameBtn = document.getElementById('stgChangeUsernameBtn') as HTMLButtonElement | null;
   const changeEmailBtn = document.getElementById('stgChangeEmailBtn');
 
   if (changeUsernameBtn) {
-    changeUsernameBtn.addEventListener('click', () => {
+    changeUsernameBtn.addEventListener('click', async () => {
+      changeUsernameBtn.disabled = true;
+      let canChangeUsername = true;
+      let usernameChangedAt: number | null = null;
+
+      try {
+        const res = await apiCall('/profile/me');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.profile) {
+            canChangeUsername = data.profile.canChangeUsername;
+            usernameChangedAt = data.profile.usernameChangedAt ? Number(data.profile.usernameChangedAt) : null;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load profile for username change eligibility:', err);
+      } finally {
+        changeUsernameBtn.disabled = false;
+      }
+
       showSettingsUsernameModal({
         currentUsername: user.username || '',
+        canChangeUsername,
+        usernameChangedAt,
         onSave: async (newUsername) => {
           try {
             const res = await apiCall('/profile/update', {

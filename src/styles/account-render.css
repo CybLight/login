@@ -61,12 +61,10 @@
 .nav-divider {
   position: relative;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    rgba(34, 240, 230, 0) 0%,
-    rgba(34, 240, 230, 0.45) 50%,
-    rgba(34, 240, 230, 0) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(34, 240, 230, 0) 0%,
+      rgba(34, 240, 230, 0.45) 50%,
+      rgba(34, 240, 230, 0) 100%);
   margin: 12px 4px;
 }
 
@@ -132,9 +130,11 @@
   fill: #34d399;
   filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.45));
 }
+
 .account-nav button:hover .broadcast-wave-inner {
   animation: wave-inner-hover 1.2s infinite ease-in-out;
 }
+
 .account-nav button:hover .broadcast-wave-outer {
   animation: wave-outer-hover 1.2s infinite ease-in-out;
 }
@@ -143,12 +143,15 @@
 .account-nav button.active .nav-icon--svg svg {
   fill: #4ade80;
 }
+
 .account-nav button.active .broadcast-spire {
   animation: spire-glow-active 2s infinite ease-in-out;
 }
+
 .account-nav button.active .broadcast-wave-inner {
   animation: wave-inner-active 2s infinite ease-in-out;
 }
+
 .account-nav button.active .broadcast-wave-outer {
   animation: wave-outer-active 2s infinite ease-in-out;
 }
@@ -169,19 +172,209 @@
 }
 
 .account-nav button.active .messages-bubble-svg {
-  stroke: #3b82f6; /* Красивый синий цвет для активного баббла сообщений */
-  transform: scale(1.05);
+  stroke: #ff7f27;
+  animation: messages-pulse 2s infinite ease-in-out;
 }
 
 .account-nav button:hover .messages-bubble-svg {
-  stroke: #60a5fa; /* Голубой цвет при наведении */
+  stroke: #ff983f;
+  animation: messages-jiggle 0.6s ease-in-out;
+}
+
+@keyframes messages-jiggle {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  20% {
+    transform: scale(1.1) rotate(-6deg);
+  }
+  40% {
+    transform: scale(1.1) rotate(5deg);
+  }
+  60% {
+    transform: scale(1.05) rotate(-3deg);
+  }
+  80% {
+    transform: scale(1.05) rotate(2deg);
+  }
+}
+
+@keyframes messages-pulse {
+  0%, 100% {
+    transform: scale(1.05);
+  }
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+/* Стили и микро-анимации для иконки Профиля */
+.profile-icon-svg {
+  width: 22px;
+  height: 22px;
+  stroke: #94a3b8;
+  transition: stroke 0.2s ease, transform 0.2s ease;
+  overflow: visible;
+}
+
+.account-nav button.active .profile-icon-svg {
+  stroke: #ff7f27;
   transform: scale(1.05);
 }
 
-@keyframes typing-bounce {
+.account-nav button:hover .profile-icon-svg {
+  stroke: #ff983f;
+  transform: scale(1.05);
+}
+
+.profile-user-head,
+.profile-user-body {
+  transform-origin: center bottom;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.account-nav button:hover .profile-user-head {
+  animation: profile-head-nod 0.8s ease-in-out;
+}
+
+.account-nav button:hover .profile-user-body {
+  animation: profile-body-shrug 0.8s ease-in-out;
+}
+
+.account-nav button.active .profile-user-head {
+  animation: profile-head-float-active 2.5s infinite ease-in-out;
+}
+
+.account-nav button.active .profile-user-body {
+  animation: profile-body-float-active 2.5s infinite ease-in-out;
+}
+
+@keyframes profile-head-nod {
   0%, 100% {
     transform: translateY(0);
   }
+  30% {
+    transform: translateY(1.5px);
+  }
+  60% {
+    transform: translateY(-0.8px);
+  }
+}
+
+@keyframes profile-body-shrug {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  30% {
+    transform: scaleY(0.95);
+  }
+  60% {
+    transform: scaleY(1.03);
+  }
+}
+
+@keyframes profile-head-float-active {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes profile-body-float-active {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(0.5px);
+  }
+}
+
+/* Стили и микро-анимации для иконки Друзей */
+.friends-icon-svg {
+  width: 22px;
+  height: 22px;
+  stroke: #94a3b8;
+  transition: stroke 0.2s ease, transform 0.2s ease;
+  overflow: visible;
+}
+
+.account-nav button.active .friends-icon-svg {
+  stroke: #ff7f27;
+  transform: scale(1.05);
+}
+
+.account-nav button:hover .friends-icon-svg {
+  stroke: #ff983f;
+  transform: scale(1.05);
+}
+
+.friends-user-main,
+.friends-user-sub {
+  transform-origin: bottom center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.account-nav button:hover .friends-user-main {
+  animation: friend-bob-left 1.2s infinite ease-in-out;
+}
+
+.account-nav button:hover .friends-user-sub {
+  animation: friend-bob-right 1.2s infinite ease-in-out;
+}
+
+.account-nav button.active .friends-user-main {
+  animation: friend-bob-left-active 2.4s infinite ease-in-out;
+}
+
+.account-nav button.active .friends-user-sub {
+  animation: friend-bob-right-active 2.4s infinite ease-in-out;
+}
+
+@keyframes friend-bob-left {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-2px) rotate(-3deg);
+  }
+}
+
+@keyframes friend-bob-right {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-1px) rotate(3deg);
+  }
+}
+
+@keyframes friend-bob-left-active {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+
+@keyframes friend-bob-right-active {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1.5px);
+  }
+}
+
+@keyframes typing-bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
   50% {
     transform: translateY(-4px);
   }
@@ -217,10 +410,13 @@
 
 /* Наведение */
 @keyframes wave-inner-hover {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.5;
     transform: scale(0.95);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.05);
@@ -228,10 +424,13 @@
 }
 
 @keyframes wave-outer-hover {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.4;
     transform: scale(0.95);
   }
+
   75% {
     opacity: 1;
     transform: scale(1.08);
@@ -240,19 +439,25 @@
 
 /* Активное состояние */
 @keyframes spire-glow-active {
-  0%, 100% {
+
+  0%,
+  100% {
     filter: drop-shadow(0 0 2px rgba(74, 222, 128, 0.4));
   }
+
   50% {
     filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.85));
   }
 }
 
 @keyframes wave-inner-active {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(0.92);
   }
+
   30% {
     opacity: 1;
     transform: scale(1.06);
@@ -260,10 +465,13 @@
 }
 
 @keyframes wave-outer-active {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.2;
     transform: scale(0.9);
   }
+
   60% {
     opacity: 1;
     transform: scale(1.12);
@@ -281,6 +489,7 @@
 .account-nav button[data-tab="settings"]:hover .nav-icon {
   animation: gear-spin-fast 0.6s ease-in-out;
 }
+
 .account-nav button[data-tab="settings"].active .nav-icon {
   animation: gear-spin-slow 10s infinite linear;
 }
@@ -289,33 +498,63 @@
 .account-nav button[data-tab="security"]:hover .nav-icon {
   animation: shield-swing 0.5s ease-in-out;
 }
+
 .account-nav button[data-tab="security"].active .nav-icon {
   animation: shield-pulse 2s infinite ease-in-out;
 }
 
 @keyframes gear-spin-fast {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(180deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(180deg);
+  }
 }
 
 @keyframes gear-spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes shield-swing {
-  0%, 100% { transform: rotate(0deg); }
-  20% { transform: rotate(-12deg) scale(1.1); }
-  40% { transform: rotate(10deg) scale(1.1); }
-  60% { transform: rotate(-6deg) scale(1.05); }
-  80% { transform: rotate(4deg) scale(1.05); }
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  20% {
+    transform: rotate(-12deg) scale(1.1);
+  }
+
+  40% {
+    transform: rotate(10deg) scale(1.1);
+  }
+
+  60% {
+    transform: rotate(-6deg) scale(1.05);
+  }
+
+  80% {
+    transform: rotate(4deg) scale(1.05);
+  }
 }
 
 @keyframes shield-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     filter: drop-shadow(0 0 2px rgba(96, 165, 250, 0.3));
   }
+
   50% {
     transform: scale(1.08);
     filter: drop-shadow(0 0 10px rgba(96, 165, 250, 0.7));
@@ -326,31 +565,56 @@
 .account-nav button[data-tab="easter"] .nav-icon {
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .account-nav button[data-tab="easter"]:hover .nav-icon {
   animation: easter-jelly 0.6s ease-in-out;
 }
+
 .account-nav button[data-tab="easter"].active .nav-icon {
   animation: easter-active 2.5s infinite ease-in-out;
 }
 
 @keyframes easter-jelly {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  15% { transform: scale(1.25, 0.75) rotate(-10deg); }
-  30% { transform: scale(0.75, 1.25) rotate(10deg); }
-  45% { transform: scale(1.15, 0.85) rotate(-6deg); }
-  60% { transform: scale(0.9, 1.1) rotate(6deg); }
-  75% { transform: scale(1.05, 0.95) rotate(-3deg); }
+
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  15% {
+    transform: scale(1.25, 0.75) rotate(-10deg);
+  }
+
+  30% {
+    transform: scale(0.75, 1.25) rotate(10deg);
+  }
+
+  45% {
+    transform: scale(1.15, 0.85) rotate(-6deg);
+  }
+
+  60% {
+    transform: scale(0.9, 1.1) rotate(6deg);
+  }
+
+  75% {
+    transform: scale(1.05, 0.95) rotate(-3deg);
+  }
 }
 
 @keyframes easter-active {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1) rotate(0deg);
     filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.3));
   }
+
   25% {
     transform: scale(1.08) rotate(-6deg);
     filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.65));
   }
+
   75% {
     transform: scale(1.08) rotate(6deg);
     filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.65));
@@ -417,11 +681,9 @@
   font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
-  background: linear-gradient(
-    135deg,
-    rgba(17, 24, 39, 0.97) 0%,
-    rgba(30, 41, 59, 0.96) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(17, 24, 39, 0.97) 0%,
+      rgba(30, 41, 59, 0.96) 100%);
   backdrop-filter: blur(8px);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
   animation: slideDown 0.25s ease-out;
@@ -432,6 +694,7 @@
     opacity: 0;
     transform: translateX(-50%) translateY(-16px) scale(0.97);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0) scale(1);
@@ -756,7 +1019,8 @@
 
 .input:focus {
   outline: none;
-  border-color: rgba(59, 130, 246, 0.8);
+  border-color: rgba(255, 127, 39, 0.8);
+  box-shadow: 0 0 0 3px rgba(255, 127, 39, 0.18);
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -764,6 +1028,17 @@
   border-color: rgba(239, 68, 68, 0.95) !important;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
   background: rgba(239, 68, 68, 0.09);
+}
+
+.input.input--valid {
+  border-color: rgba(16, 185, 129, 0.95) !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+select.input option {
+  background-color: #ff6a07f6;
+  color: #ffffff;
 }
 
 .account-notice-modal {
@@ -786,11 +1061,9 @@
   width: min(92vw, 460px);
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(
-    180deg,
-    rgba(24, 28, 50, 0.98),
-    rgba(12, 16, 33, 0.98)
-  );
+  background: linear-gradient(180deg,
+      rgba(24, 28, 50, 0.98),
+      rgba(12, 16, 33, 0.98));
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
   padding: 16px;
 }
@@ -1614,9 +1887,9 @@
   overflow: hidden;
 }
 
-.friend-avatar > .presence-dot,
-.search-result-avatar > .presence-dot,
-.chat-avatar > .presence-dot {
+.friend-avatar>.presence-dot,
+.search-result-avatar>.presence-dot,
+.chat-avatar>.presence-dot {
   right: -2px;
   bottom: -2px;
 }
@@ -1972,11 +2245,9 @@
   border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   padding: 20px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.01) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.01) 100%);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -1990,21 +2261,17 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(
-    circle at top-right,
-    rgba(255, 255, 255, 0.08) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle at top-right,
+      rgba(255, 255, 255, 0.08) 0%,
+      transparent 70%);
   pointer-events: none;
 }
 
 .easter-card:hover {
   border-color: rgba(255, 255, 255, 0.25);
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.03) 100%);
   transform: translateY(-2px);
 }
 
@@ -2021,11 +2288,9 @@
 }
 
 .easter-card[class*="easter-card--"]::before {
-  background: radial-gradient(
-    circle at top-right,
-    var(--easter-glow) 0%,
-    transparent 72%
-  );
+  background: radial-gradient(circle at top-right,
+      var(--easter-glow) 0%,
+      transparent 72%);
 }
 
 .easter-card[class*="easter-card--"]::after {
@@ -2053,22 +2318,18 @@
 }
 
 .easter-card[class*="easter-card--"]:not(.locked)::before {
-  background: radial-gradient(
-    circle at 50% 0%,
-    var(--easter-glow) 0%,
-    transparent 68%
-  );
+  background: radial-gradient(circle at 50% 0%,
+      var(--easter-glow) 0%,
+      transparent 68%);
   opacity: 1.35;
 }
 
 .easter-card[class*="easter-card--"].easter-card-rare:not(.locked) {
   border-color: #8b5cf6;
-  background: linear-gradient(
-    135deg,
-    rgba(139, 92, 246, 0.14) 0%,
-    var(--easter-bg) 52%,
-    rgba(99, 102, 241, 0.08) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(139, 92, 246, 0.14) 0%,
+      var(--easter-bg) 52%,
+      rgba(99, 102, 241, 0.08) 100%);
   box-shadow:
     0 0 20px rgba(139, 92, 246, 0.3),
     inset 0 0 20px rgba(139, 92, 246, 0.1);
@@ -2087,6 +2348,7 @@
 }
 
 @keyframes easterFoundPulse {
+
   0%,
   100% {
     box-shadow:
@@ -2578,16 +2840,14 @@
   pointer-events: none;
   z-index: 2;
   overflow: hidden;
-  background: linear-gradient(
-    135deg,
-    transparent 0%,
-    transparent 42%,
-    rgba(255, 255, 255, 0.2) 47%,
-    rgba(224, 242, 254, 0.75) 50%,
-    rgba(255, 255, 255, 0.2) 53%,
-    transparent 58%,
-    transparent 100%
-  );
+  background: linear-gradient(135deg,
+      transparent 0%,
+      transparent 42%,
+      rgba(255, 255, 255, 0.2) 47%,
+      rgba(224, 242, 254, 0.75) 50%,
+      rgba(255, 255, 255, 0.2) 53%,
+      transparent 58%,
+      transparent 100%);
   background-size: 220% 220%;
   background-position: -18% -12%;
   mix-blend-mode: screen;
@@ -2596,11 +2856,13 @@
 }
 
 @keyframes mirrorShimmer {
+
   0%,
   100% {
     transform: scale(1) rotateY(0deg);
     filter: drop-shadow(0 0 12px rgba(96, 165, 250, 0.4));
   }
+
   50% {
     transform: scale(1.05) rotateY(-8deg);
     filter: drop-shadow(0 0 22px rgba(147, 197, 253, 0.62));
@@ -2608,17 +2870,20 @@
 }
 
 @keyframes mirrorGlint {
+
   0%,
   22%,
   100% {
     background-position: -18% -12%;
     opacity: 0;
   }
+
   42%,
   58% {
     background-position: 42% 42%;
     opacity: 0.72;
   }
+
   78% {
     background-position: 108% 96%;
     opacity: 0;
@@ -2626,20 +2891,24 @@
 }
 
 @keyframes moonFloat {
+
   0%,
   100% {
     transform: translateY(0) scale(1);
   }
+
   50% {
     transform: translateY(-4px) scale(1.05);
   }
 }
 
 @keyframes moonGlow {
+
   0%,
   100% {
     filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.3));
   }
+
   50% {
     filter: drop-shadow(0 0 16px rgba(192, 132, 252, 0.7));
   }
@@ -2664,8 +2933,7 @@
 
 .easter-strawberry.special {
   opacity: 1;
-  filter: drop-shadow(0 0 14px rgba(255, 127, 39, 0.75))
-    drop-shadow(0 14px 16px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 0 14px rgba(255, 127, 39, 0.75)) drop-shadow(0 14px 16px rgba(0, 0, 0, 0.35));
   outline: none;
   transform-origin: 50% 65%;
   animation: strawberryFloat 2.6s ease-in-out infinite;
@@ -2680,13 +2948,11 @@
   top: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 88, 88, 0.45) 0%,
-    rgba(255, 127, 39, 0.3) 42%,
-    rgba(255, 127, 39, 0.1) 62%,
-    rgba(255, 127, 39, 0) 100%
-  );
+  background: radial-gradient(circle,
+      rgba(255, 88, 88, 0.45) 0%,
+      rgba(255, 127, 39, 0.3) 42%,
+      rgba(255, 127, 39, 0.1) 62%,
+      rgba(255, 127, 39, 0) 100%);
   box-shadow:
     0 0 24px rgba(255, 92, 67, 0.6),
     0 0 38px rgba(255, 127, 39, 0.45);
@@ -2697,27 +2963,33 @@
 }
 
 @keyframes strawberryFloat {
+
   0%,
   100% {
     transform: translateY(0) rotate(0deg) scale(1);
   }
+
   25% {
     transform: translateY(-2px) rotate(-2deg) scale(1.03);
   }
+
   50% {
     transform: translateY(-4px) rotate(0deg) scale(1.05);
   }
+
   75% {
     transform: translateY(-2px) rotate(2deg) scale(1.03);
   }
 }
 
 @keyframes strawberryAuraPulse {
+
   0%,
   100% {
     opacity: 0.82;
     transform: translate(-50%, -50%) scale(0.94);
   }
+
   50% {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1.06);
@@ -2789,11 +3061,9 @@
 
 .easter-card-rare {
   border: 2px solid #8b5cf6;
-  background: linear-gradient(
-    135deg,
-    rgba(139, 92, 246, 0.08) 0%,
-    rgba(99, 102, 241, 0.04) 100%
-  );
+  background: linear-gradient(135deg,
+      rgba(139, 92, 246, 0.08) 0%,
+      rgba(99, 102, 241, 0.04) 100%);
   box-shadow:
     0 0 20px rgba(139, 92, 246, 0.3),
     inset 0 0 20px rgba(139, 92, 246, 0.1);
@@ -2821,12 +3091,14 @@
 }
 
 @keyframes neonPulse {
+
   0%,
   100% {
     box-shadow:
       0 0 20px rgba(139, 92, 246, 0.3),
       inset 0 0 20px rgba(139, 92, 246, 0.1);
   }
+
   50% {
     box-shadow:
       0 0 35px rgba(139, 92, 246, 0.6),
@@ -2838,6 +3110,7 @@
   0% {
     filter: hue-rotate(0deg);
   }
+
   100% {
     filter: hue-rotate(360deg);
   }
@@ -2888,16 +3161,12 @@
   max-width: none;
   margin: 0;
   background:
-    radial-gradient(
-      120% 220% at 0% 0%,
+    radial-gradient(120% 220% at 0% 0%,
       rgba(255, 127, 39, 0.3) 0%,
-      transparent 45%
-    ),
-    radial-gradient(
-      120% 220% at 100% 0%,
+      transparent 45%),
+    radial-gradient(120% 220% at 100% 0%,
       rgba(96, 165, 250, 0.2) 0%,
-      transparent 45%
-    ),
+      transparent 45%),
     linear-gradient(to right, #0a1020, #12182b);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
@@ -2910,14 +3179,12 @@
   right: 0;
   bottom: 0;
   height: 2px;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 127, 39, 0) 0%,
-    rgba(255, 127, 39, 0.9) 25%,
-    rgba(255, 200, 120, 1) 50%,
-    rgba(255, 127, 39, 0.9) 75%,
-    rgba(255, 127, 39, 0) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 127, 39, 0) 0%,
+      rgba(255, 127, 39, 0.9) 25%,
+      rgba(255, 200, 120, 1) 50%,
+      rgba(255, 127, 39, 0.9) 75%,
+      rgba(255, 127, 39, 0) 100%);
   box-shadow: 0 0 10px rgba(255, 127, 39, 0.6);
   pointer-events: none;
 }
@@ -3155,12 +3422,10 @@
 .account-user-menu__divider {
   height: 1px;
   margin: 10px 0;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 127, 39, 0) 0%,
-    rgba(255, 127, 39, 0.4) 50%,
-    rgba(255, 127, 39, 0) 100%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 127, 39, 0) 0%,
+      rgba(255, 127, 39, 0.4) 50%,
+      rgba(255, 127, 39, 0) 100%);
   box-shadow: 0 0 8px rgba(255, 127, 39, 0.12);
 }
 
@@ -3302,6 +3567,7 @@ body.account-nav-open .profile-mobile-nav {
 }
 
 @media (min-width: 861px) {
+
   /* На десктопе у кабинета есть сайдбар с вкладками — бургер не нужен */
   .account-page .account-burger {
     display: none;
@@ -3312,7 +3578,7 @@ body.account-nav-open .profile-mobile-nav {
     padding: 0;
   }
 
-  .account-page > .account-mobile-header {
+  .account-page>.account-mobile-header {
     width: 100%;
     margin: 0;
   }
@@ -3338,21 +3604,15 @@ body.account-nav-open .profile-mobile-nav {
     border: none;
     border-right: 1px solid rgba(255, 255, 255, 0.08);
     background:
-      radial-gradient(
-        130% 70% at 0% 0%,
+      radial-gradient(130% 70% at 0% 0%,
         rgba(255, 127, 39, 0.14) 0%,
-        transparent 52%
-      ),
-      radial-gradient(
-        100% 60% at 0% 100%,
+        transparent 52%),
+      radial-gradient(100% 60% at 0% 100%,
         rgba(96, 165, 250, 0.08) 0%,
-        transparent 50%
-      ),
-      linear-gradient(
-        180deg,
+        transparent 50%),
+      linear-gradient(180deg,
         rgba(7, 11, 24, 0.98) 0%,
-        rgba(11, 17, 34, 0.96) 100%
-      );
+        rgba(11, 17, 34, 0.96) 100%);
     box-shadow: 8px 0 36px rgba(0, 0, 0, 0.28);
     z-index: 2;
   }
@@ -3364,13 +3624,11 @@ body.account-nav-open .profile-mobile-nav {
     right: 0;
     bottom: 0;
     width: 2px;
-    background: linear-gradient(
-      180deg,
-      rgba(255, 127, 39, 0.55) 0%,
-      rgba(255, 127, 39, 0.1) 40%,
-      rgba(96, 165, 250, 0.1) 60%,
-      rgba(96, 165, 250, 0.4) 100%
-    );
+    background: linear-gradient(180deg,
+        rgba(255, 127, 39, 0.55) 0%,
+        rgba(255, 127, 39, 0.1) 40%,
+        rgba(96, 165, 250, 0.1) 60%,
+        rgba(96, 165, 250, 0.4) 100%);
     pointer-events: none;
   }
 
@@ -3389,33 +3647,22 @@ body.account-nav-open .profile-mobile-nav {
     padding: 11px 14px;
   }
 
-  .account-page
-    .account-sidebar:not(.profile-mobile-nav)
-    .account-nav
-    button:hover {
+  .account-page .account-sidebar:not(.profile-mobile-nav) .account-nav button:hover {
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.14);
     color: #fff;
   }
 
-  .account-page
-    .account-sidebar:not(.profile-mobile-nav)
-    .account-nav
-    button.active {
-    background: linear-gradient(
-      135deg,
-      rgba(255, 127, 39, 0.22) 0%,
-      rgba(255, 127, 39, 0.08) 100%
-    );
+  .account-page .account-sidebar:not(.profile-mobile-nav) .account-nav button.active {
+    background: linear-gradient(135deg,
+        rgba(255, 127, 39, 0.22) 0%,
+        rgba(255, 127, 39, 0.08) 100%);
     border-color: rgba(255, 127, 39, 0.38);
     color: #fff;
     box-shadow: 0 4px 16px rgba(255, 127, 39, 0.14);
   }
 
-  .account-page
-    .account-sidebar:not(.profile-mobile-nav)
-    .account-nav
-    button.active::before {
+  .account-page .account-sidebar:not(.profile-mobile-nav) .account-nav button.active::before {
     content: "";
     position: absolute;
     left: 0;
@@ -3435,21 +3682,17 @@ body.account-nav-open .profile-mobile-nav {
     position: relative;
   }
 
-  .account-page
-    .account-sidebar:not(.profile-mobile-nav)
-    .account-actions:has(#adminPanelBtn)::before {
+  .account-page .account-sidebar:not(.profile-mobile-nav) .account-actions:has(#adminPanelBtn)::before {
     content: "";
     position: absolute;
     top: -1px;
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(
-      90deg,
-      rgba(34, 240, 230, 0) 0%,
-      rgba(34, 240, 230, 0.85) 50%,
-      rgba(34, 240, 230, 0) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(34, 240, 230, 0) 0%,
+        rgba(34, 240, 230, 0.85) 50%,
+        rgba(34, 240, 230, 0) 100%);
     box-shadow: 0 0 10px rgba(34, 240, 230, 0.35);
     pointer-events: none;
   }
@@ -3472,21 +3715,15 @@ body.account-nav-open .profile-mobile-nav {
     padding: 28px 32px;
     border-radius: 16px;
     background:
-      radial-gradient(
-        120% 80% at 100% 0%,
+      radial-gradient(120% 80% at 100% 0%,
         rgba(96, 165, 250, 0.1) 0%,
-        transparent 48%
-      ),
-      radial-gradient(
-        90% 60% at 0% 100%,
+        transparent 48%),
+      radial-gradient(90% 60% at 0% 100%,
         rgba(255, 127, 39, 0.06) 0%,
-        transparent 45%
-      ),
-      linear-gradient(
-        180deg,
+        transparent 45%),
+      linear-gradient(180deg,
         rgba(255, 255, 255, 0.055) 0%,
-        rgba(255, 255, 255, 0.025) 100%
-      );
+        rgba(255, 255, 255, 0.025) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.04) inset,
@@ -3557,7 +3794,7 @@ body.account-nav-open .profile-mobile-nav {
   }
 }
 
-.account-page > .auth-footer {
+.account-page>.auth-footer {
   position: static;
   margin-top: auto;
   flex-shrink: 0;
@@ -3566,7 +3803,7 @@ body.account-nav-open .profile-mobile-nav {
 /* Десктоп: футер прилипает к низу видимой области,
    остаётся виден даже при открытой панели разработчика */
 @media (min-width: 861px) {
-  .account-page > .auth-footer {
+  .account-page>.auth-footer {
     position: sticky;
     bottom: 0;
     z-index: 60;
@@ -3574,6 +3811,7 @@ body.account-nav-open .profile-mobile-nav {
 }
 
 @media (max-width: 860px) {
+
   /* На мобильном аватар не показываем — есть бургер-меню */
   .account-avatar-btn {
     display: none;
@@ -3720,7 +3958,7 @@ body.account-nav-open .profile-mobile-nav {
   }
 
   .account-header-row,
-  .account-header-row + .account-divider {
+  .account-header-row+.account-divider {
     display: none;
   }
 
@@ -3731,7 +3969,7 @@ body.account-nav-open .profile-mobile-nav {
     padding: 16px;
   }
 
-  .account-page > .auth-footer {
+  .account-page>.auth-footer {
     height: auto;
     padding: 12px 16px 16px;
   }
@@ -3778,11 +4016,9 @@ body.account-nav-open .profile-mobile-nav {
     margin-bottom: 0;
     border-radius: 14px;
     background:
-      radial-gradient(
-        700px 260px at 0% 0%,
+      radial-gradient(700px 260px at 0% 0%,
         rgba(180, 120, 255, 0.08),
-        transparent 55%
-      ),
+        transparent 55%),
       rgba(0, 0, 0, 0.16);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
   }
@@ -4183,6 +4419,7 @@ body:has(.is-chat-view),
     transform: scale(0.97) translateY(10px);
     filter: blur(4px);
   }
+
   100% {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -4196,8 +4433,8 @@ body:has(.is-chat-view),
   filter: blur(4px) !important;
   pointer-events: none;
   transition: opacity 0.15s cubic-bezier(0.25, 1, 0.5, 1),
-              transform 0.15s cubic-bezier(0.25, 1, 0.5, 1),
-              filter 0.15s ease !important;
+    transform 0.15s cubic-bezier(0.25, 1, 0.5, 1),
+    filter 0.15s ease !important;
 }
 
 .stg-section--visible {
@@ -4664,12 +4901,12 @@ body:has(.is-chat-view),
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
-.stg-toggle input:checked + .stg-toggle__track {
+.stg-toggle input:checked+.stg-toggle__track {
   background: rgba(99, 102, 241, 0.4);
   border-color: rgba(99, 102, 241, 0.5);
 }
 
-.stg-toggle input:checked + .stg-toggle__track::after {
+.stg-toggle input:checked+.stg-toggle__track::after {
   background: #818cf8;
   transform: translateX(20px);
 }
