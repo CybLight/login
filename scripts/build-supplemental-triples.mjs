@@ -15,6 +15,7 @@ const T = {
   ...(await import('./supplemental-part2.json', { with: { type: 'json' } })).default,
   ...(await import('./supplemental-part3.json', { with: { type: 'json' } })).default,
   ...(await import('./supplemental-part4.json', { with: { type: 'json' } })).default,
+  ...(await import('./supplemental-part5.json', { with: { type: 'json' } })).default,
 };
 
 // Keys already in base gen-i18n-maps or regex false positives — skip.
