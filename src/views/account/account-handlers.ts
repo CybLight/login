@@ -12,7 +12,7 @@ import { bindSessionsHandlers } from './sessions';
 import { bindFriendsHandlers } from './friends';
 import { bindMessagesHandlers, loadMessagesTab as loadMessagesListTab } from './messages-list';
 import type { ChatLoadOptions } from './chat-core';
-import { openChatInMessagesTab } from './messages-tab';
+import { openChatInMessagesTab, openSystemChatInMessagesTab } from './messages-tab';
 import {
   showAccountConfirmModal,
   showAccountDeleteConfirmModal,
@@ -359,6 +359,21 @@ export function bindAccountHandlers(
       stopAccountChatAutoRefresh: callbacks.stopAccountChatAutoRefresh,
       setAccountChatFriendId: callbacks.setAccountChatFriendId,
       openChatInMessagesTab: openChatWrapper,
+      openSystemChatInMessagesTab: (apiMsg) => {
+        void openSystemChatInMessagesTab(apiMsg, () => {
+          void loadMessagesListTab(api, {
+            stopAccountChatAutoRefresh: callbacks.stopAccountChatAutoRefresh,
+            setAccountChatFriendId: callbacks.setAccountChatFriendId,
+            openChatInMessagesTab: openChatWrapper,
+            openSystemChatInMessagesTab: (aMsg) => {
+              void openSystemChatInMessagesTab(aMsg, () => {});
+            },
+            updateChatUnreadBadges,
+            fetchUnreadSummaryData,
+            setNavBadge,
+          });
+        });
+      },
       updateChatUnreadBadges,
       fetchUnreadSummaryData,
       setNavBadge,

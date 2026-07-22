@@ -31,6 +31,7 @@ type MessagesDeps = {
   stopAccountChatAutoRefresh: () => void;
   setAccountChatFriendId: (friendId: string | null) => void;
   openChatInMessagesTab: (friendId: string, friendUsername: string, api: ApiMessage) => void;
+  openSystemChatInMessagesTab: (api: ApiMessage) => void;
   updateChatUnreadBadges: () => Promise<void>;
   fetchUnreadSummaryData: () => Promise<UnreadSummary | null>;
   setNavBadge: (type: 'pending-requests' | 'unread-messages', count: number) => void;
@@ -155,43 +156,51 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
 
       ${renderMessagesEncryptionReminder()}
 
-      ${
-        friends.length > 0
-          ? `<div class="chat-list">${sortedFriends
-              .map(
-                (friend: FriendListItem) => {
-                  const friendId = String(friend.id || '');
-                  const latestAt = Number(conversationPreviews[friendId]?.latestAt || 0);
-                  const chatTimeLabel = latestAt ? formatChatListTime(latestAt) : '';
+      <div class="chat-list">
+        <button class="chat-card chat-card--system" data-action="open-system-chat" type="button" aria-label="${escapeHtml(t('Системные сообщения'))}">
+          <div class="chat-avatar">
+            <div style="background: linear-gradient(135deg, var(--accent, #c86b3c), #e07a48); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; width: 44px; height: 44px; border-radius: 50%;">📢</div>
+          </div>
+          <div class="chat-info">
+            <div class="chat-info-head">
+              <span class="chat-username" style="color: var(--accent, #c86b3c); font-weight: 700;">${escapeHtml(t('Системные сообщения'))}</span>
+            </div>
+            <div class="chat-preview">${escapeHtml(t('Объявления и важные сообщения от администрации'))}</div>
+          </div>
+        </button>
+        ${sortedFriends
+          .map(
+            (friend: FriendListItem) => {
+              const friendId = String(friend.id || '');
+              const latestAt = Number(conversationPreviews[friendId]?.latestAt || 0);
+              const chatTimeLabel = latestAt ? formatChatListTime(latestAt) : '';
 
-                  return `
-              <button class="chat-card" data-action="open-chat" data-id="${escapeHtml(friendId)}" data-username="${escapeHtml(String(friend.username || ''))}" data-presence-user-id="${escapeHtml(friendId)}" type="button" aria-label="${escapeHtml(String(friend.username || 'Unknown'))} ${escapeHtml(formatPresenceLabel(friend))}">
-                <div class="chat-avatar">${avatarHtml(friend)}</div>
-                <div class="chat-info">
-                  <div class="chat-info-head">
-                    <span
-                      class="chat-username chat-username-link"
-                      data-action="profile"
-                      data-username="${escapeHtml(String(friend.username || ''))}"
-                      role="link"
-                      tabindex="0"
-                    >${escapeHtml(String(friend.username || 'Unknown'))}</span>
-                    ${
-                      chatTimeLabel
-                        ? `<span class="chat-card-time">${escapeHtml(chatTimeLabel)}</span>`
-                        : ''
-                    }
-                  </div>
-                  ${chatPreviewHtml(friend)}
-                </div>
-                <div class="chat-unread-badge is-hidden" data-unread-badge="${escapeHtml(friendId)}"></div>
-              </button>
-            `;
+              return `
+          <button class="chat-card" data-action="open-chat" data-id="${escapeHtml(friendId)}" data-username="${escapeHtml(String(friend.username || ''))}" data-presence-user-id="${escapeHtml(friendId)}" type="button" aria-label="${escapeHtml(String(friend.username || 'Unknown'))} ${escapeHtml(formatPresenceLabel(friend))}">
+            <div class="chat-avatar">${avatarHtml(friend)}</div>
+            <div class="chat-info">
+              <div class="chat-info-head">
+                <span
+                  class="chat-username chat-username-link"
+                  data-action="profile"
+                  data-username="${escapeHtml(String(friend.username || ''))}"
+                  role="link"
+                  tabindex="0"
+                >${escapeHtml(String(friend.username || 'Unknown'))}</span>
+                ${
+                  chatTimeLabel
+                    ? `<span class="chat-card-time">${escapeHtml(chatTimeLabel)}</span>`
+                    : ''
                 }
-              )
-              .join('')}</div>`
-          : `<div class="messages-empty"><div class="messages-empty-icon">💬</div><p>${t('Нет доступных чатов')}</p><p class="messages-empty-sub">${t('Добавьте друзей, чтобы начать общение')}</p></div>`
-      }
+              </div>
+              ${chatPreviewHtml(friend)}
+            </div>
+            <div class="chat-unread-badge is-hidden" data-unread-badge="${escapeHtml(friendId)}"></div>
+          </button>
+        `;
+            }
+          )
+          .join('')}</div>
     `;
 
     bindEncryptionReminderHandlers(container);
@@ -232,6 +241,13 @@ export async function loadMessagesTab(api: ApiMessage, deps: MessagesDeps): Prom
         event.preventDefault();
         event.stopPropagation();
         openProfileFromTarget(target);
+        return;
+      }
+
+      if (target?.closest('[data-action="open-system-chat"]')) {
+        event.preventDefault();
+        event.stopPropagation();
+        deps.openSystemChatInMessagesTab(api);
         return;
       }
 

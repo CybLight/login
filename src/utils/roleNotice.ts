@@ -4,13 +4,55 @@ import { escapeHtml } from './string';
 import { setupAccessibleModal } from './keyboard';
 import { getRoleDescription, getRoleDisplayName, getRoleNoticeIcon } from './roles';
 
+const KNOWN_ROLES = ['owner', 'admin', 'moderator', 'support', 'registrar', 'tester', 'user'];
+
 export async function showPendingRoleNotice(roleNotice?: string | null): Promise<void> {
   if (!roleNotice) return;
 
-  const roleKey = roleNotice.toLowerCase();
-  const roleLabel = getRoleDisplayName(roleNotice);
-  const roleDescription = getRoleDescription(roleNotice);
-  const roleIcon = getRoleNoticeIcon(roleNotice);
+  const rawNotice = roleNotice.trim();
+  const lowerNotice = rawNotice.toLowerCase();
+  const isRoleAssignment = KNOWN_ROLES.includes(lowerNotice);
+
+  let titleHtml = '';
+  let badgeHtml = '';
+  let leadTextHtml = '';
+  let descHtml = '';
+  let cardClass = 'account-notice-card--role';
+
+  if (isRoleAssignment) {
+    const roleKey = lowerNotice;
+    const roleLabel = getRoleDisplayName(roleNotice);
+    const roleDescription = getRoleDescription(roleNotice);
+    const roleIcon = getRoleNoticeIcon(roleNotice);
+
+    titleHtml = `${roleIcon} ${escapeHtml(t('Новая роль'))}`;
+    badgeHtml = `<span class="chip chip-role chip-${escapeHtml(roleKey)}">${escapeHtml(roleLabel)}</span>`;
+    leadTextHtml = escapeHtml(t('Вам назначена роль: {role}', { role: roleLabel }));
+    descHtml = roleDescription
+      ? `<p id="roleNoticeDesc" class="account-notice-desc">${escapeHtml(roleDescription)}</p>`
+      : '<p id="roleNoticeDesc" class="account-notice-desc is-hidden"></p>';
+  } else {
+    cardClass = 'account-notice-card--system';
+
+    let headerTitle = t('Сообщение от администрации');
+    let bodyText = rawNotice;
+
+    // Поддержка разделения "Заголовок|Текст сообщения" или "Заголовок\nТекст сообщения"
+    if (rawNotice.includes('|')) {
+      const parts = rawNotice.split('|');
+      headerTitle = parts[0].trim() || headerTitle;
+      bodyText = parts.slice(1).join('|').trim();
+    } else if (rawNotice.includes('\n')) {
+      const lines = rawNotice.split(/\r?\n/);
+      headerTitle = lines[0].trim() || headerTitle;
+      bodyText = lines.slice(1).join('\n').trim();
+    }
+
+    titleHtml = `📢 ${escapeHtml(headerTitle)}`;
+    badgeHtml = `<span class="chip chip-role chip-admin">📢 ${escapeHtml(t('Системное объявление'))}</span>`;
+    leadTextHtml = escapeHtml(bodyText);
+    descHtml = '<p id="roleNoticeDesc" class="account-notice-desc is-hidden"></p>';
+  }
 
   document.getElementById('roleNoticeModal')?.remove();
 
@@ -21,26 +63,22 @@ export async function showPendingRoleNotice(roleNotice?: string | null): Promise
   wrap.innerHTML = `
     <div class="account-notice-backdrop" aria-hidden="true"></div>
     <div
-      class="account-notice-card account-notice-card--role"
+      class="account-notice-card ${cardClass}"
       role="dialog"
       aria-modal="true"
       aria-labelledby="roleNoticeTitle"
       aria-describedby="roleNoticeDesc"
     >
       <div id="roleNoticeTitle" class="account-notice-head is-success">
-        ${roleIcon} ${escapeHtml(t('Новая роль'))}
+        ${titleHtml}
       </div>
       <div class="account-notice-role">
-        <span class="chip chip-role chip-${escapeHtml(roleKey)}">${escapeHtml(roleLabel)}</span>
+        ${badgeHtml}
       </div>
-      <p class="account-notice-lead">
-        ${escapeHtml(t('Вам назначена роль: {role}', { role: roleLabel }))}
+      <p class="account-notice-lead" style="white-space: pre-wrap;">
+        ${leadTextHtml}
       </p>
-      ${
-        roleDescription
-          ? `<p id="roleNoticeDesc" class="account-notice-desc">${escapeHtml(roleDescription)}</p>`
-          : '<p id="roleNoticeDesc" class="account-notice-desc is-hidden"></p>'
-      }
+      ${descHtml}
       <div class="account-notice-actions">
         <button type="button" class="btn btn-primary" id="roleNoticeOkBtn">
           ${escapeHtml(t('Понятно'))}

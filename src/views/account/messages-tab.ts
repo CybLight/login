@@ -545,6 +545,9 @@ export function openChatInMessagesTab(
         openChatInMessagesTab: (fId: string, fUn: string) => {
           openChatInMessagesTab(fId, fUn, deps);
         },
+        openSystemChatInMessagesTab: (apiMsg) => {
+          void openSystemChatInMessagesTab(apiMsg, () => {});
+        },
         updateChatUnreadBadges: callbacks.updateChatUnreadBadges,
         fetchUnreadSummaryData: callbacks.fetchUnreadSummaryData,
         setNavBadge: callbacks.setNavBadge,
@@ -1391,4 +1394,77 @@ export function openChatInMessagesTab(
     cancelSelection();
     reloadOpenChatMessages();
   });
+}
+
+export async function openSystemChatInMessagesTab(
+  _api: any,
+  onBack: () => void
+): Promise<void> {
+  const container = document.getElementById('messagesContent');
+  if (!container) return;
+
+  unsubscribeMessagesListWebSocket();
+  setAccountChatViewActive(true);
+
+  container.innerHTML = `
+    <div class="chat-container">
+      <div class="chat-back-row">
+        <button id="systemChatBackBtn" class="chat-close-btn" type="button" aria-label="${escapeHtml(t('← Назад'))}">${escapeHtml(t('← Назад'))}</button>
+      </div>
+      <div class="chat-header">
+        <div class="chat-header-main">
+          <div class="chat-header-title" style="font-weight: 700; color: var(--accent);">📢 ${escapeHtml(t('Системные сообщения'))}</div>
+          <div class="chat-header-presence">${escapeHtml(t('Официальные объявления администрации'))}</div>
+        </div>
+      </div>
+      <div id="systemNoticesList" style="padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; flex: 1;">
+        <div class="chat-loading">${escapeHtml(t('Загрузка системных сообщений...'))}</div>
+      </div>
+    </div>
+  `;
+
+  container.querySelector('#systemChatBackBtn')?.addEventListener('click', () => {
+    setAccountChatViewActive(false);
+    onBack();
+  });
+
+  try {
+    const res = await apiCall('/messages/system', { credentials: 'include' });
+    const data = await res.json().catch(() => ({}));
+    const listEl = container.querySelector('#systemNoticesList');
+    if (!listEl) return;
+
+    const notices = Array.isArray(data.notices) ? data.notices : [];
+
+    if (notices.length === 0) {
+      listEl.innerHTML = `
+        <div style="text-align: center; color: var(--muted); padding: 40px 20px;">
+          <div style="font-size: 32px; margin-bottom: 8px;">📢</div>
+          <div style="font-weight: bold; margin-bottom: 4px; font-size: 16px;">${escapeHtml(t('История пуста'))}</div>
+          <div style="font-size: 13px;">${escapeHtml(t('Здесь будут сохраняться все важные объявления и сообщения от администрации.'))}</div>
+        </div>
+      `;
+      return;
+    }
+
+    listEl.innerHTML = notices
+      .map((item: any) => {
+        const dateStr = item.created_at ? new Date(item.created_at).toLocaleString() : '';
+        return `
+          <div style="background: rgba(200, 107, 60, 0.08); border: 1px solid rgba(200, 107, 60, 0.25); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(200, 107, 60, 0.15); padding-bottom: 8px;">
+              <span style="font-weight: bold; color: var(--accent); font-size: 15px;">📢 ${escapeHtml(item.title || t('Системное объявление'))}</span>
+              <span style="font-size: 11px; color: var(--muted);">${escapeHtml(dateStr)}</span>
+            </div>
+            <div style="font-size: 14px; line-height: 1.5; white-space: pre-wrap; color: var(--ink);">${escapeHtml(item.body || '')}</div>
+          </div>
+        `;
+      })
+      .join('');
+  } catch (err) {
+    const listEl = container.querySelector('#systemNoticesList');
+    if (listEl) {
+      listEl.innerHTML = `<div class="sec-error-text">${escapeHtml(t('Ошибка загрузки системных сообщений'))}</div>`;
+    }
+  }
 }
