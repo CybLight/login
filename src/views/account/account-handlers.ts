@@ -266,6 +266,10 @@ export function bindAccountHandlers(
     });
   });
 
+  document.getElementById('linkEmailBannerBtn')?.addEventListener('click', () => {
+    Router.navigate('account-settings');
+  });
+
   // Logout handler (кнопка в сайдбаре + в меню аватара)
   document.querySelectorAll('#logoutBtn, #headerLogoutBtn').forEach((logoutBtn) => {
     logoutBtn.addEventListener('click', async () => {

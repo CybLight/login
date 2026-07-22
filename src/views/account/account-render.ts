@@ -201,6 +201,33 @@ export function renderAccountPage(tab: string, user: AppUser): string {
           <div class="account-divider"></div>
 
           <div id="accBody" class="account-body">
+            ${
+              !user.email
+                ? `
+                  <div class="unverified-email-banner" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 260px;">
+                      <span style="font-size: 28px; line-height: 1;">⚠️</span>
+                      <div>
+                        <div style="font-weight: 700; color: #dc2626; font-size: 15px; margin-bottom: 2px;">
+                          ${t('Внимание! К аккаунту не привязан Email')}
+                        </div>
+                        <div style="font-size: 13px; color: var(--muted, #666); line-height: 1.4;">
+                          ${t('Неподтвержденные аккаунты без Email автоматически удаляются системой через 30 дней после создания.')} 
+                          ${
+                            (maybe as any).daysUntilDeletion !== null && (maybe as any).daysUntilDeletion !== undefined
+                              ? `<span style="font-weight: 700; color: #dc2626; margin-left: 4px;">(${t('До авто-удаления осталось:')} ${(maybe as any).daysUntilDeletion} ${t('дн.')})</span>`
+                              : ''
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    <button class="btn btn-sm" id="linkEmailBannerBtn" type="button" style="background: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                      ${t('Привязать Email')}
+                    </button>
+                  </div>
+                `
+                : ''
+            }
             ${renderTabContent(tab, user)}
           </div>
         </main>
