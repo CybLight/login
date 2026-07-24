@@ -94,11 +94,17 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
 
   const label = document.getElementById('secDriveBackupStatus');
   const signInBtn = document.getElementById('secDriveBackupSignInBtn');
+  const uploadBtn = document.getElementById('secDriveBackupUploadBtn');
+  const restoreBtn = document.getElementById('secDriveBackupRestoreBtn');
+  const deleteBtn = document.getElementById('secDriveBackupDeleteBtn');
   const disconnectBtn = document.getElementById('secDriveBackupDisconnectBtn');
 
   if (!isGoogleDriveConfigured()) {
     if (label) label.textContent = t('Google Drive не настроен на этом сервере.');
     signInBtn?.classList.add('is-hidden');
+    uploadBtn?.classList.add('is-hidden');
+    restoreBtn?.classList.add('is-hidden');
+    deleteBtn?.classList.add('is-hidden');
     disconnectBtn?.classList.add('is-hidden');
     return;
   }
@@ -106,11 +112,17 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
   if (!hasGoogleDriveSession()) {
     if (label) label.textContent = t('Войдите через Google, чтобы сохранить или восстановить копию.');
     signInBtn?.classList.remove('is-hidden');
+    uploadBtn?.classList.add('is-hidden');
+    restoreBtn?.classList.add('is-hidden');
+    deleteBtn?.classList.add('is-hidden');
     disconnectBtn?.classList.add('is-hidden');
     return;
   }
 
   signInBtn?.classList.add('is-hidden');
+  uploadBtn?.classList.remove('is-hidden');
+  restoreBtn?.classList.remove('is-hidden');
+  deleteBtn?.classList.remove('is-hidden');
   disconnectBtn?.classList.remove('is-hidden');
 
   if (!label) return;

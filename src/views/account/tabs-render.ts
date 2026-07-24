@@ -1245,10 +1245,10 @@ function renderSecurityTab(user: User): string {
             </div>
             <div class="sec-actions sec-mt-12 sec-actions--wrap">
               <button class="btn btn-primary" id="secDriveBackupSignInBtn" type="button">${t('Войти через Google')}</button>
-              <button class="btn btn-primary" id="secDriveBackupUploadBtn" type="button">${t('Сохранить в Google Drive')}</button>
-              <button class="btn btn-outline" id="secDriveBackupRestoreBtn" type="button">${t('Восстановить из Google Drive')}</button>
-              <button class="btn btn-outline btn-danger-outline" id="secDriveBackupDeleteBtn" type="button">${t('Удалить из Drive')}</button>
-              <button class="btn btn-outline" id="secDriveBackupDisconnectBtn" type="button">${t('Выйти из Google')}</button>
+              <button class="btn btn-primary is-hidden" id="secDriveBackupUploadBtn" type="button">${t('Сохранить в Google Drive')}</button>
+              <button class="btn btn-outline is-hidden" id="secDriveBackupRestoreBtn" type="button">${t('Восстановить из Google Drive')}</button>
+              <button class="btn btn-outline btn-danger-outline is-hidden" id="secDriveBackupDeleteBtn" type="button">${t('Удалить из Drive')}</button>
+              <button class="btn btn-outline is-hidden" id="secDriveBackupDisconnectBtn" type="button">${t('Выйти из Google')}</button>
             </div>
           </div>
 
