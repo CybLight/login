@@ -2409,6 +2409,11 @@ body.no-strawberries .strawberry-ring-wave {
 }
 
 .is-hidden {
+  display: none;
+}
+
+.btn.is-hidden,
+[hidden] {
   display: none !important;
 }
 

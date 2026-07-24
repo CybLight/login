@@ -158,9 +158,11 @@ export function updateSecurityIndicator(
     if (panelSecurityCheck) {
       if (score < 100) {
         panelSecurityCheck.style.display = 'block';
+        panelSecurityCheck.classList.remove('is-hidden');
         itemSecurityCheck?.classList.add('is-open');
       } else {
         panelSecurityCheck.style.display = 'none';
+        panelSecurityCheck.classList.add('is-hidden');
         itemSecurityCheck?.classList.remove('is-open');
       }
     }

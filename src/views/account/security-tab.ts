@@ -56,12 +56,18 @@ function setSecPanelOpen(
 ): void {
   if (!panel) return;
   panel.style.display = open ? 'block' : 'none';
+  panel.classList.toggle('is-hidden', !open);
+  if (open) {
+    panel.removeAttribute('hidden');
+  } else {
+    panel.setAttribute('hidden', '');
+  }
   item?.classList.toggle('is-open', open);
 }
 
 function toggleSecPanel(item: HTMLElement | null, panel: HTMLElement | null): boolean {
   if (!panel) return false;
-  const open = panel.style.display === 'none';
+  const open = panel.style.display === 'none' || panel.classList.contains('is-hidden');
   setSecPanelOpen(item, panel, open);
   return open;
 }
