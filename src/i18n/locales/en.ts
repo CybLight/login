@@ -562,6 +562,7 @@ export const en: Record<string, string> = {
   "На CybLight с": "On CybLight since",
   "На главную": "Home",
   "На сайте": "On the website",
+  "Нажмите, чтобы открыть управление хранилищем Google": "Click to open Google Storage management",
   "На указанный адрес отправлено письмо для подтверждения смены email.": "A confirmation email has been sent to the specified address.",
   "Навигация аккаунта": "Account navigation",
   "Навигация по настройкам": "Settings navigation",

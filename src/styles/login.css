@@ -2503,12 +2503,38 @@ body.no-strawberries .strawberry-ring-wave {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  position: relative;
+}
+
+.sec-drive-stat-box--link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sec-drive-stat-box--link:hover {
+  background: rgba(255, 127, 39, 0.08);
+  border-color: rgba(255, 127, 39, 0.35);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.sec-drive-stat-box--link:hover .sec-drive-stat-ext-icon {
+  color: #ff7f27;
+  transform: translate(1px, -1px);
+}
+
+.sec-drive-stat-ext-icon {
+  margin-left: auto;
+  color: #9ca3af;
+  transition: all 0.2s ease;
 }
 
 .sec-drive-stat-head {
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
 }
 
 .sec-drive-stat-icon {
@@ -2521,15 +2547,6 @@ body.no-strawberries .strawberry-ring-wave {
   letter-spacing: 0.5px;
   font-weight: 600;
   color: #9ca3af;
-}
-
-.sec-drive-stat-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  margin-top: 2px;
-  min-width: 0;
 }
 
 .sec-drive-stat-val {
@@ -2551,28 +2568,11 @@ body.no-strawberries .strawberry-ring-wave {
   color: #fb923c;
   border: 1px solid rgba(251, 146, 60, 0.3);
   white-space: nowrap;
-  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .sec-drive-stat-tag.is-hidden {
   display: none !important;
-}
-
-.sec-drive-storage-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background: rgba(255, 127, 39, 0.15);
-  color: #fb923c;
-  border: 1px solid rgba(255, 127, 39, 0.3);
-  text-decoration: none;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .sec-drive-storage-btn:hover {

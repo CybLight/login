@@ -1249,30 +1249,23 @@ function renderSecurityTab(user: User): string {
                   <div class="sec-drive-stat-head">
                     <span class="sec-drive-stat-icon">🕒</span>
                     <span class="sec-drive-stat-label">${t('Последнее сохранение')}</span>
+                    <span class="sec-drive-stat-tag is-hidden" id="secDriveLastBackupSizeTag">0 КБ</span>
                   </div>
-                  <div class="sec-drive-stat-row">
-                    <div class="sec-drive-stat-val" id="secDriveLastBackupDate">${t('Загрузка…')}</div>
-                    <div class="sec-drive-stat-tag is-hidden" id="secDriveLastBackupSizeTag">0 КБ</div>
-                  </div>
+                  <div class="sec-drive-stat-val" id="secDriveLastBackupDate">${t('Загрузка…')}</div>
                 </div>
 
-                <div class="sec-drive-stat-box">
+                <a class="sec-drive-stat-box sec-drive-stat-box--link" href="https://one.google.com/storage" target="_blank" rel="noopener noreferrer" title="${t('Нажмите, чтобы открыть управление хранилищем Google')}">
                   <div class="sec-drive-stat-head">
                     <span class="sec-drive-stat-icon">☁️</span>
                     <span class="sec-drive-stat-label">${t('Хранилище Google')}</span>
+                    <svg class="sec-drive-stat-ext-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      <polyline points="15 3 21 3 21 9"></polyline>
+                      <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
                   </div>
-                  <div class="sec-drive-stat-row">
-                    <div class="sec-drive-stat-val" id="secDriveStorageVal">${t('Загрузка…')}</div>
-                    <a class="sec-drive-storage-btn" href="https://one.google.com/storage" target="_blank" rel="noopener noreferrer">
-                      <span>${t('Управление')}</span>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                        <polyline points="15 3 21 3 21 9"></polyline>
-                        <line x1="10" y1="14" x2="21" y2="3"></line>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
+                  <div class="sec-drive-stat-val" id="secDriveStorageVal">${t('Загрузка…')}</div>
+                </a>
               </div>
             </div>
             <div class="sec-form-row">
