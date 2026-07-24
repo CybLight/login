@@ -2626,48 +2626,83 @@ body.no-strawberries .strawberry-ring-wave {
   }
 
   .account-sidebar.is-collapsed {
-    width: 56px !important;
-    flex: 0 0 56px !important;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-    align-items: center;
+    width: 64px !important;
+    flex: 0 0 64px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    align-items: center !important;
   }
 
   .account-sidebar.is-collapsed .sidebar-collapse-btn {
-    width: 36px;
-    margin-left: auto;
-    margin-right: auto;
+    width: 44px !important;
+    height: 44px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-bottom: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .account-sidebar.is-collapsed .account-nav {
-    width: 100%;
-    align-items: center;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
   }
 
   .account-sidebar.is-collapsed .account-nav button {
-    justify-content: center;
-    padding: 10px 0;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 46px !important;
+    height: 46px !important;
+    padding: 0 !important;
+    margin: 0 auto 6px auto !important;
     font-size: 0 !important;
-    width: 100%;
-    min-width: 0;
-    border-radius: 10px;
+    min-width: 0 !important;
+    border-radius: 12px !important;
+    position: relative !important;
+    box-sizing: border-box !important;
   }
 
   .account-sidebar.is-collapsed .account-nav button .nav-icon {
-    margin-right: 0 !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .account-sidebar.is-collapsed .account-nav button.active::before {
+    left: 0 !important;
+    top: 10px !important;
+    bottom: 10px !important;
+    width: 3px !important;
+    border-radius: 0 3px 3px 0 !important;
+    z-index: 2 !important;
   }
 
   .account-sidebar.is-collapsed .account-actions {
-    padding: 0;
-    width: 100%;
+    padding: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
   }
 
   .account-sidebar.is-collapsed .account-actions #logoutBtn,
   .account-sidebar.is-collapsed .account-actions #adminPanelBtn {
     font-size: 0 !important;
-    padding: 10px 0 !important;
-    justify-content: center;
-    width: 100%;
+    width: 46px !important;
+    height: 46px !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 12px !important;
   }
 
   /* Center right content card when sidebar is collapsed */
