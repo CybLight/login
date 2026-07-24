@@ -1268,14 +1268,14 @@ function renderSecurityTab(user: User): string {
                 </a>
               </div>
             </div>
-            <div class="sec-form-row">
+            <div class="sec-form-row" id="secDriveBackupPasswordRow">
               <label class="label sec-label" for="secDriveBackupPassword">${t('Пароль резервной копии')}</label>
               <div class="pass-wrap">
                 <input class="input" id="secDriveBackupPassword" type="password" autocomplete="current-password" placeholder="${t('Пароль от резервной копии')}" />
                 <button type="button" class="pass-eye" data-target="secDriveBackupPassword" aria-label="${t('Показать пароль')}"></button>
               </div>
             </div>
-            <div class="sec-form-row sec-mt-8">
+            <div class="sec-form-row sec-mt-8" id="secDriveBackupRememberPasswordRow">
               <label class="checkbox-label" for="secDriveBackupRememberPassword">
                 <input type="checkbox" id="secDriveBackupRememberPassword" />
                 <span>${t('Запомнить пароль и больше не спрашивать')}</span>

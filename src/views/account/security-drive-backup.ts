@@ -145,12 +145,17 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
   const deleteBtn = document.getElementById('secDriveBackupDeleteBtn');
   const disconnectBtn = document.getElementById('secDriveBackupDisconnectBtn');
 
+  const passRow = document.getElementById('secDriveBackupPasswordRow');
+  const rememberRow = document.getElementById('secDriveBackupRememberPasswordRow');
+
   if (!isGoogleDriveConfigured()) {
     if (label) {
       label.textContent = t('Google Drive не настроен на этом сервере.');
       toggleElementVisible(label, true);
     }
     toggleElementVisible(infoCard, false);
+    toggleElementVisible(passRow, false);
+    toggleElementVisible(rememberRow, false);
     toggleElementVisible(signInBtn, false);
     toggleElementVisible(uploadBtn, false);
     toggleElementVisible(restoreBtn, false);
@@ -165,6 +170,8 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
       toggleElementVisible(label, true);
     }
     toggleElementVisible(infoCard, false);
+    toggleElementVisible(passRow, false);
+    toggleElementVisible(rememberRow, false);
     toggleElementVisible(signInBtn, true);
     toggleElementVisible(uploadBtn, false);
     toggleElementVisible(restoreBtn, false);
@@ -176,6 +183,8 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
   // User is signed in! Hide raw status text and show card
   toggleElementVisible(label, false);
   toggleElementVisible(infoCard, true);
+  toggleElementVisible(passRow, true);
+  toggleElementVisible(rememberRow, true);
 
   toggleElementVisible(signInBtn, false);
   toggleElementVisible(uploadBtn, true);
