@@ -2704,11 +2704,14 @@ body.no-strawberries .strawberry-ring-wave {
 
 @media (max-width: 640px) {
   .sec-quicknav-wrap {
-    position: relative;
-    top: 0;
+    position: sticky;
+    top: 10px;
+    z-index: 100;
     padding: 8px 10px;
     margin-bottom: 12px;
     border-radius: 10px;
+    background: rgba(18, 20, 26, 0.95);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   }
 
   .sec-quicknav-bar {
