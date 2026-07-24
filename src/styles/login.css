@@ -2586,7 +2586,7 @@ body.no-strawberries .strawberry-ring-wave {
   position: sticky;
   top: 60px;
   z-index: 90;
-  margin-top: 12px;
+  margin-top: 0;
   margin-bottom: 16px;
   background: rgba(18, 20, 26, 0.88);
   backdrop-filter: blur(14px);
@@ -2599,6 +2599,7 @@ body.no-strawberries .strawberry-ring-wave {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .sec-quicknav-bar {

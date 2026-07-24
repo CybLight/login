@@ -942,6 +942,65 @@ function renderSecurityTab(user: User): string {
 
   return `
     ${pendingCard}
+    <div class="sec-quicknav-wrap" id="secQuickNav">
+      <div class="sec-quicknav-bar" role="navigation" aria-label="${t('Быстрая навигация')}">
+        <div class="sec-quicknav-pills">
+          <button type="button" class="sec-pill" data-target="secEmailItem">
+            <span class="sec-pill-icon">✉️</span>
+            <span>${t('Email')}</span>
+          </button>
+          <button type="button" class="sec-pill" data-target="secPassItem">
+            <span class="sec-pill-icon">🔑</span>
+            <span>${t('Пароль')}</span>
+          </button>
+          <button type="button" class="sec-pill" data-target="sec2FAItem">
+            <span class="sec-pill-icon">🛡️</span>
+            <span>${t('2FA')}</span>
+          </button>
+          <button type="button" class="sec-pill" data-target="secPasskeysItem">
+            <span class="sec-pill-icon">🗝️</span>
+            <span>${t('Passkeys')}</span>
+          </button>
+          <button type="button" class="sec-pill" data-target="secBackupItem">
+            <span class="sec-pill-icon">☁️</span>
+            <span>${t('Резервная копия')}</span>
+          </button>
+          <button type="button" class="sec-pill sec-pill--sub is-hidden" data-target="secQrSyncBlock" data-parent="secBackupItem">
+            <span class="sec-pill-icon">📱</span>
+            <span>${t('QR')}</span>
+          </button>
+          <button type="button" class="sec-pill sec-pill--sub is-hidden" data-target="secDriveBlock" data-parent="secBackupItem">
+            <span class="sec-pill-icon">☁️</span>
+            <span>${t('Drive')}</span>
+          </button>
+          <button type="button" class="sec-pill sec-pill--sub is-hidden" data-target="secExportBlock" data-parent="secBackupItem">
+            <span class="sec-pill-icon">📤</span>
+            <span>${t('Экспорт')}</span>
+          </button>
+          <button type="button" class="sec-pill sec-pill--sub is-hidden" data-target="secImportBlock" data-parent="secBackupItem">
+            <span class="sec-pill-icon">📥</span>
+            <span>${t('Импорт')}</span>
+          </button>
+          <button type="button" class="sec-pill" data-target="secDevicesItem">
+            <span class="sec-pill-icon">💻</span>
+            <span>${t('Устройства')}</span>
+          </button>
+          <button type="button" class="sec-pill" data-target="secHistoryItem">
+            <span class="sec-pill-icon">📜</span>
+            <span>${t('История')}</span>
+          </button>
+        </div>
+        <div class="sec-quicknav-actions">
+          <button type="button" class="sec-quicknav-toggle-btn" id="secQuickNavToggleAll" title="${t('Раскрыть все разделы')}">
+            <svg class="sec-quicknav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="7 13 12 18 17 13"></polyline>
+              <polyline points="7 6 12 11 17 6"></polyline>
+            </svg>
+            <span class="sec-quicknav-toggle-label">${t('Все')}</span>
+          </button>
+        </div>
+      </div>
+    </div>
     <div class="sec-list">
       <button class="sec-item" id="secSecurityCheckItem" type="button" aria-label="${securityAriaLabel}">
         <div class="sec-left">
@@ -1015,66 +1074,6 @@ function renderSecurityTab(user: User): string {
             </div>
           `
     }
-          </div>
-        </div>
-      </div>
-
-      <div class="sec-quicknav-wrap" id="secQuickNav">
-        <div class="sec-quicknav-bar" role="navigation" aria-label="${t('Быстрая навигация')}">
-          <div class="sec-quicknav-pills">
-            <button type="button" class="sec-pill" data-target="secEmailItem">
-              <span class="sec-pill-icon">✉️</span>
-              <span>${t('Email')}</span>
-            </button>
-            <button type="button" class="sec-pill" data-target="secPassItem">
-              <span class="sec-pill-icon">🔑</span>
-              <span>${t('Пароль')}</span>
-            </button>
-            <button type="button" class="sec-pill" data-target="sec2FAItem">
-              <span class="sec-pill-icon">🛡️</span>
-              <span>${t('2FA')}</span>
-            </button>
-            <button type="button" class="sec-pill" data-target="secPasskeysItem">
-              <span class="sec-pill-icon">🗝️</span>
-              <span>${t('Passkeys')}</span>
-            </button>
-            <button type="button" class="sec-pill" data-target="secBackupItem">
-              <span class="sec-pill-icon">☁️</span>
-              <span>${t('Резервная копия')}</span>
-            </button>
-            <button type="button" class="sec-pill sec-pill--sub is-hidden" data-target="secQrSyncBlock" data-parent="secBackupItem">
-              <span class="sec-pill-icon">📱</span>
-              <span>${t('QR')}</span>
-            </button>
-            <button type="button" class="sec-pill sec-pill--sub is-hidden" data-target="secDriveBlock" data-parent="secBackupItem">
-              <span class="sec-pill-icon">☁️</span>
-              <span>${t('Drive')}</span>
-            </button>
-            <button type="button" class="sec-pill sec-pill--sub is-hidden" data-target="secExportBlock" data-parent="secBackupItem">
-              <span class="sec-pill-icon">📤</span>
-              <span>${t('Экспорт')}</span>
-            </button>
-            <button type="button" class="sec-pill sec-pill--sub is-hidden" data-target="secImportBlock" data-parent="secBackupItem">
-              <span class="sec-pill-icon">📥</span>
-              <span>${t('Импорт')}</span>
-            </button>
-            <button type="button" class="sec-pill" data-target="secDevicesItem">
-              <span class="sec-pill-icon">💻</span>
-              <span>${t('Устройства')}</span>
-            </button>
-            <button type="button" class="sec-pill" data-target="secHistoryItem">
-              <span class="sec-pill-icon">📜</span>
-              <span>${t('История')}</span>
-            </button>
-          </div>
-          <div class="sec-quicknav-actions">
-            <button type="button" class="sec-quicknav-toggle-btn" id="secQuickNavToggleAll" title="${t('Раскрыть все разделы')}">
-              <svg class="sec-quicknav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="7 13 12 18 17 13"></polyline>
-                <polyline points="7 6 12 11 17 6"></polyline>
-              </svg>
-              <span class="sec-quicknav-toggle-label">${t('Все')}</span>
-            </button>
           </div>
         </div>
       </div>
