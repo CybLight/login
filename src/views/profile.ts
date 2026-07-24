@@ -37,6 +37,7 @@ interface PublicProfile {
 interface CurrentUser {
   id?: string;
   username?: string;
+  role?: string;
 }
 
 // Стандартные аватары
@@ -315,7 +316,7 @@ function buildProfileLangSwitcher(profileRoute: string): string {
   `;
 }
 
-function buildProfileHeader(profileRoute: string, isLoggedIn: boolean, subtitle?: string): string {
+function buildProfileHeader(profileRoute: string, isLoggedIn: boolean, subtitle?: string, userRole?: string): string {
   const locale = getLocale();
   const homeUrl = sitePath('', locale);
   const displayName = subtitle ?? profileRoute;
@@ -366,11 +367,23 @@ function buildProfileHeader(profileRoute: string, isLoggedIn: boolean, subtitle?
             </span> ${t('Друзья')}
           </button>
           <button data-tab="messages" type="button" aria-label="💬 ${t('Сообщения')}"><span class="nav-icon">💬</span> ${t('Сообщения')}</button>
+
+          <div class="nav-divider"></div>
+
           <button data-tab="security" type="button" aria-label="🛡️ ${t('Безопасность')}"><span class="nav-icon">🛡️</span> ${t('Безопасность')}</button>
           <button data-tab="sessions" type="button" aria-label="🧩 ${t('Сессии')}"><span class="nav-icon">🧩</span> ${t('Сессии')}</button>
+          <button data-tab="settings" type="button" aria-label="⚙️ ${t('Настройки')}"><span class="nav-icon">⚙️</span> ${t('Настройки')}</button>
+
+          <div class="nav-divider"></div>
+
           <button data-tab="easter" type="button" aria-label="🍓 ${t('Пасхалки')}"><span class="nav-icon">🍓</span> ${t('Пасхалки')}</button>
         </nav>
         <div class="account-actions">
+          ${
+            userRole === 'admin'
+              ? `<button class="btn btn-outline" id="profileAdminPanelBtn" type="button" title="${t('Панель администратора')}" aria-label="⚙️ ${t('Панель администратора')}">⚙️ ${t('Панель администратора')}</button>`
+              : ''
+          }
           <button class="btn btn-primary" id="profileLogoutBtn" type="button" aria-label="${t('Выйти')}">${t('Выйти')}</button>
         </div>
       </aside>
@@ -493,6 +506,12 @@ function bindProfileHeaderHandlers(): void {
       const route = targetTab === 'easter' ? 'account-easter-eggs' : `account-${targetTab}`;
       Router.navigate(route);
     });
+  });
+
+  const adminBtn = document.getElementById('profileAdminPanelBtn');
+  adminBtn?.addEventListener('click', () => {
+    closeNav();
+    window.open('https://admin.cyblight.org', '_blank');
   });
 
   const logoutBtn = document.getElementById('profileLogoutBtn');
@@ -1325,7 +1344,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
 
   app.innerHTML = `
     ${profileStyles}
-    ${buildProfileHeader(username, Boolean(currentUser), String(profile.username || profile.login || username))}
+    ${buildProfileHeader(username, Boolean(currentUser), String(profile.username || profile.login || username), currentUser?.role)}
     <div class="profile-container">
       <div class="profile-header">
         <div class="profile-info">

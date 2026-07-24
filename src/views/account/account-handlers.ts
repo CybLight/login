@@ -1096,7 +1096,7 @@ function bindSidebarToggleAndSettings(): void {
   }
 }
 
-async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
+async function bindBlockedUsersHandlers(_api: ApiMessage): Promise<void> {
   const openBtn = document.getElementById('openBlockedUsersModalBtn');
   const modal = document.getElementById('blockedUsersModal');
   const backdrop = document.getElementById('blockedUsersModalBackdrop');
@@ -1105,7 +1105,30 @@ async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
   const modalBadge = document.getElementById('stgBlockedUsersModalBadge');
   const container = document.getElementById('stgBlockedUsersList');
 
+  const noticeEl = document.getElementById('stgBlockedUsersModalNotice');
+  const noticeText = document.getElementById('stgBlockedUsersModalNoticeText');
+  const noticeCloseBtn = document.getElementById('stgBlockedUsersModalNoticeCloseBtn');
+
   if (!container) return;
+
+  const showModalNotice = (text: string, isError = false) => {
+    if (!noticeEl || !noticeText) return;
+    noticeText.textContent = text;
+    if (isError) {
+      noticeEl.style.background = 'rgba(239, 68, 68, 0.12)';
+      noticeEl.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+      noticeEl.style.color = '#f87171';
+    } else {
+      noticeEl.style.background = 'rgba(34, 197, 94, 0.12)';
+      noticeEl.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+      noticeEl.style.color = '#4ade80';
+    }
+    noticeEl.style.display = 'flex';
+  };
+
+  noticeCloseBtn?.addEventListener('click', () => {
+    if (noticeEl) noticeEl.style.display = 'none';
+  });
 
   const updateBadges = (count: number) => {
     if (cardBadge) cardBadge.textContent = String(count);
@@ -1128,20 +1151,20 @@ async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
         }
 
         container.innerHTML = users.map((u: any) => `
-          <div class="stg-blocked-user-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; margin-bottom: 10px; transition: background 0.2s;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 40px; height: 40px; border-radius: 50%; background: #374151; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; color: #fff; border: 1px solid rgba(255, 255, 255, 0.15);">
+          <div class="stg-blocked-user-row" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+              <div style="width: 34px; height: 34px; border-radius: 50%; background: #374151; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; color: #fff; border: 1px solid rgba(255, 255, 255, 0.15); flex-shrink: 0; font-size: 13px;">
                 ${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" style="width: 100%; height: 100%; object-fit: cover;" />` : escapeHtml((u.username || 'U')[0].toUpperCase())}
               </div>
-              <div>
-                <div style="font-weight: 600; font-size: 14px; color: #f3f4f6;">${escapeHtml(u.username || u.id)}</div>
-                <div style="font-size: 12px; color: #9ca3af; display: flex; align-items: center; gap: 6px;">
+              <div style="min-width: 0;">
+                <div style="font-weight: 600; font-size: 13px; color: #f3f4f6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escapeHtml(u.username || u.id)}</div>
+                <div style="font-size: 11px; color: #9ca3af; display: flex; align-items: center; gap: 6px;">
                   <span>CYB-${u.public_id || u.id?.slice(0, 8)}</span>
                   ${u.reason ? `<span style="color: #f87171;">• ${escapeHtml(u.reason)}</span>` : ''}
                 </div>
               </div>
             </div>
-            <button type="button" class="btn btn-outline unblock-user-btn" data-user-id="${u.id}" style="padding: 6px 14px; font-size: 12px; border-color: rgba(239, 68, 68, 0.4); color: #f87171; border-radius: 8px;">
+            <button type="button" class="btn btn-outline unblock-user-btn" data-user-id="${u.id}" style="width: auto !important; flex-shrink: 0 !important; margin: 0 !important; padding: 4px 10px !important; font-size: 11px !important; height: auto !important; min-height: 0 !important; border-color: rgba(239, 68, 68, 0.35); color: #f87171; border-radius: 6px; white-space: nowrap;">
               ${t('Разблокировать')}
             </button>
           </div>
@@ -1159,14 +1182,14 @@ async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
                 credentials: 'include',
               });
               if (unblockRes.ok) {
-                api.showMsg('ok', t('Пользователь разблокирован'));
+                showModalNotice(t('Пользователь разблокирован'));
                 loadBlockedList();
               } else {
-                api.showMsg('error', t('Не удалось разблокировать пользователя'));
+                showModalNotice(t('Не удалось разблокировать пользователя'), true);
               }
             } catch (err) {
               console.error('Error unblocking user:', err);
-              api.showMsg('error', t('Ошибка сети'));
+              showModalNotice(t('Ошибка сети'), true);
             }
           });
         });
@@ -1180,6 +1203,7 @@ async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
   };
 
   const openModal = () => {
+    if (noticeEl) noticeEl.style.display = 'none';
     if (modal) {
       document.body.appendChild(modal);
       modal.style.display = 'grid';
@@ -1189,6 +1213,7 @@ async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
 
   const closeModal = () => {
     if (modal) modal.style.display = 'none';
+    if (noticeEl) noticeEl.style.display = 'none';
   };
 
   openBtn?.addEventListener('click', openModal);

@@ -843,8 +843,16 @@ function renderSettingsTab(user: User): string {
             <button type="button" id="blockedUsersModalCloseBtn" style="background: none; border: none; font-size: 24px; color: #9ca3af; cursor: pointer; line-height: 1; padding: 4px;" aria-label="${t('Закрыть')}">&times;</button>
           </div>
 
-          <div style="font-size: 13px; color: #9ca3af; margin-bottom: 16px;">
+          <div style="font-size: 13px; color: #9ca3af; margin-bottom: 14px;">
             ${t('Пользователи в чёрном списке не могут отправлять вам личные сообщения')}
+          </div>
+
+          <div id="stgBlockedUsersModalNotice" style="display: none; align-items: center; justify-content: space-between; padding: 10px 14px; margin-bottom: 14px; border-radius: 10px; background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34, 197, 94, 0.3); color: #4ade80; font-size: 13px; font-weight: 500;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>✅</span>
+              <span id="stgBlockedUsersModalNoticeText"></span>
+            </div>
+            <button type="button" id="stgBlockedUsersModalNoticeCloseBtn" style="background: none; border: none; color: #4ade80; cursor: pointer; font-size: 16px; padding: 0 4px; line-height: 1;" aria-label="${t('Закрыть')}">&times;</button>
           </div>
 
           <div id="stgBlockedUsersList" class="stg-blocked-users-list" style="overflow-y: auto; max-height: 55vh; padding-right: 4px;">
