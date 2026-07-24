@@ -2596,6 +2596,9 @@ body.no-strawberries .strawberry-ring-wave {
   padding: 8px 12px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
   transition: all 0.2s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .sec-quicknav-bar {
@@ -2603,6 +2606,10 @@ body.no-strawberries .strawberry-ring-wave {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .sec-quicknav-pills {
@@ -2610,6 +2617,8 @@ body.no-strawberries .strawberry-ring-wave {
   align-items: center;
   gap: 6px;
   overflow-x: auto;
+  min-width: 0;
+  flex: 1 1 auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding: 2px 0;
