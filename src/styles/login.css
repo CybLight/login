@@ -2617,7 +2617,7 @@ body.no-strawberries .strawberry-ring-wave {
   border-color: rgba(148, 163, 184, 0.5);
 }
 
-.sec-form-block--drive .sec-actions {
+.sec-drive-actions {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2625,18 +2625,30 @@ body.no-strawberries .strawberry-ring-wave {
   width: 100%;
 }
 
-.sec-form-block--drive .sec-actions .btn {
-  width: auto;
-  min-width: 240px;
+.sec-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.sec-actions-row .btn {
+  flex: 0 1 auto;
+  min-width: 210px;
   max-width: 100%;
-  padding: 9px 20px;
+  padding: 9px 18px;
   font-size: 13.5px;
   border-radius: 8px;
   justify-content: center;
 }
 
 @media (max-width: 560px) {
-  .sec-form-block--drive .sec-actions .btn {
+  .sec-actions-row {
+    flex-direction: column;
+  }
+  .sec-actions-row .btn {
     width: 100%;
     min-width: 0;
   }
