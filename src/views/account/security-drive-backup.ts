@@ -131,11 +131,14 @@ function toggleElementVisible(el: HTMLElement | null, visible: boolean): void {
 }
 
 export async function refreshDriveBackupStatusLabel(): Promise<void> {
-  await refreshDriveBackupAccountLabel();
-
   const label = document.getElementById('secDriveBackupStatus');
-  const storageEl = document.getElementById('secDriveBackupStorage');
-  const storageWrapEl = document.getElementById('secDriveBackupStorageWrap');
+  const infoCard = document.getElementById('secDriveInfoCard');
+  const accountNameEl = document.getElementById('secDriveAccountName');
+  const accountEmailEl = document.getElementById('secDriveAccountEmail');
+  const lastBackupDateEl = document.getElementById('secDriveLastBackupDate');
+  const lastBackupSizeTagEl = document.getElementById('secDriveLastBackupSizeTag');
+  const storageValEl = document.getElementById('secDriveStorageVal');
+
   const signInBtn = document.getElementById('secDriveBackupSignInBtn');
   const uploadBtn = document.getElementById('secDriveBackupUploadBtn');
   const restoreBtn = document.getElementById('secDriveBackupRestoreBtn');
@@ -143,67 +146,92 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
   const disconnectBtn = document.getElementById('secDriveBackupDisconnectBtn');
 
   if (!isGoogleDriveConfigured()) {
-    if (label) label.textContent = t('Google Drive не настроен на этом сервере.');
+    if (label) {
+      label.textContent = t('Google Drive не настроен на этом сервере.');
+      toggleElementVisible(label, true);
+    }
+    toggleElementVisible(infoCard, false);
     toggleElementVisible(signInBtn, false);
     toggleElementVisible(uploadBtn, false);
     toggleElementVisible(restoreBtn, false);
     toggleElementVisible(deleteBtn, false);
     toggleElementVisible(disconnectBtn, false);
-    toggleElementVisible(storageEl, false);
-    toggleElementVisible(storageWrapEl, false);
     return;
   }
 
   if (!hasGoogleDriveSession()) {
-    if (label) label.textContent = t('Войдите через Google, чтобы сохранить или восстановить копию.');
+    if (label) {
+      label.textContent = t('Войдите через Google, чтобы сохранить или восстановить копию.');
+      toggleElementVisible(label, true);
+    }
+    toggleElementVisible(infoCard, false);
     toggleElementVisible(signInBtn, true);
     toggleElementVisible(uploadBtn, false);
     toggleElementVisible(restoreBtn, false);
     toggleElementVisible(deleteBtn, false);
     toggleElementVisible(disconnectBtn, false);
-    toggleElementVisible(storageEl, false);
-    toggleElementVisible(storageWrapEl, false);
     return;
   }
+
+  // User is signed in! Hide raw status text and show card
+  toggleElementVisible(label, false);
+  toggleElementVisible(infoCard, true);
 
   toggleElementVisible(signInBtn, false);
   toggleElementVisible(uploadBtn, true);
   toggleElementVisible(restoreBtn, true);
   toggleElementVisible(deleteBtn, true);
   toggleElementVisible(disconnectBtn, true);
-  toggleElementVisible(storageWrapEl, true);
 
-  void fetchDriveStorageQuota().then((quota) => {
-    if (quota && storageEl) {
-      storageEl.textContent = formatStorageQuotaText(quota);
-      toggleElementVisible(storageEl, true);
+  // Update account details
+  void resolveGoogleDriveAccountLabel().then((accountLabel) => {
+    if (accountLabel) {
+      if (accountLabel.includes('(') && accountLabel.endsWith(')')) {
+        const parts = accountLabel.split(' (');
+        const name = parts[0];
+        const email = parts[1].slice(0, -1);
+        if (accountNameEl) accountNameEl.textContent = name;
+        if (accountEmailEl) accountEmailEl.textContent = email;
+      } else {
+        if (accountNameEl) accountNameEl.textContent = t('Вход выполнен');
+        if (accountEmailEl) accountEmailEl.textContent = accountLabel;
+      }
     } else {
-      toggleElementVisible(storageEl, false);
+      if (accountNameEl) accountNameEl.textContent = t('Вход выполнен');
+      if (accountEmailEl) accountEmailEl.textContent = '—';
     }
   });
 
-  if (!label) return;
+  // Fetch storage quota in background
+  void fetchDriveStorageQuota().then((quota) => {
+    if (quota && storageValEl) {
+      storageValEl.textContent = formatStorageQuotaText(quota);
+    } else if (storageValEl) {
+      storageValEl.textContent = '—';
+    }
+  });
 
+  // Fetch backup metadata
   try {
-    const metadata = await fetchDriveBackupMetadata(label.dataset.userId || '');
+    const userId = label?.dataset.userId || '';
+    const metadata = await fetchDriveBackupMetadata(userId);
     if (!metadata) {
-      label.textContent = t('В Google Drive пока нет резервной копии.');
+      if (lastBackupDateEl) lastBackupDateEl.textContent = t('Нет резервной копии');
+      toggleElementVisible(lastBackupSizeTagEl, false);
       return;
     }
     const dateStr = formatDriveBackupTime(metadata.file.modifiedTime);
     const sizeStr = formatFileSize(metadata.file.size);
-    if (sizeStr) {
-      label.textContent = t('Последнее сохранение в Drive: {date} · {size}', {
-        date: dateStr,
-        size: sizeStr,
-      });
+    if (lastBackupDateEl) lastBackupDateEl.textContent = dateStr;
+    if (sizeStr && lastBackupSizeTagEl) {
+      lastBackupSizeTagEl.textContent = sizeStr;
+      toggleElementVisible(lastBackupSizeTagEl, true);
     } else {
-      label.textContent = t('Последнее сохранение в Drive: {date}', {
-        date: dateStr,
-      });
+      toggleElementVisible(lastBackupSizeTagEl, false);
     }
   } catch {
-    label.textContent = t('Не удалось получить статус Google Drive.');
+    if (lastBackupDateEl) lastBackupDateEl.textContent = t('Ошибка загрузки');
+    toggleElementVisible(lastBackupSizeTagEl, false);
   }
 }
 
