@@ -798,6 +798,106 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
   });
   window.__history_scroll_bound = true;
 
+  // Initialize Security Quick-Nav Bar
+  initSecurityQuickNav();
+
   // Update visibility on load
   window.__history_scroll_handler?.();
+}
+
+function initSecurityQuickNav(): void {
+  const navWrap = document.getElementById('secQuickNav');
+  if (!navWrap) return;
+
+  const toggleAllBtn = document.getElementById('secQuickNavToggleAll');
+  const pills = navWrap.querySelectorAll<HTMLButtonElement>('.sec-pill');
+
+  const ensurePanelOpen = (itemId: string): HTMLElement | null => {
+    const item = document.getElementById(itemId);
+    if (!item) return null;
+    const panelId = itemId.replace('Item', 'Panel');
+    const panel = document.getElementById(panelId);
+    if (panel && (panel.style.display === 'none' || panel.classList.contains('is-hidden'))) {
+      item.click();
+    }
+    return panel;
+  };
+
+  pills.forEach((pill) => {
+    pill.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = pill.getAttribute('data-target');
+      const parentId = pill.getAttribute('data-parent');
+
+      if (parentId) {
+        ensurePanelOpen(parentId);
+      }
+
+      if (targetId) {
+        if (targetId.endsWith('Item')) {
+          ensurePanelOpen(targetId);
+        }
+
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          setTimeout(() => {
+            const yOffset = -120;
+            const y = targetEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+          }, 60);
+        }
+      }
+
+      pills.forEach((p) => p.classList.remove('is-active'));
+      pill.classList.add('is-active');
+    });
+  });
+
+  let allExpanded = false;
+  toggleAllBtn?.addEventListener('click', () => {
+    allExpanded = !allExpanded;
+
+    const mainItems = [
+      'secEmailItem',
+      'secPassItem',
+      'sec2FAItem',
+      'secPasskeysItem',
+      'secBackupItem',
+      'secDevicesItem',
+      'secHistoryItem',
+    ];
+
+    mainItems.forEach((itemId) => {
+      const item = document.getElementById(itemId);
+      const panelId = itemId.replace('Item', 'Panel');
+      const panel = document.getElementById(panelId);
+      if (item && panel) {
+        const isClosed = panel.style.display === 'none' || panel.classList.contains('is-hidden');
+        if ((allExpanded && isClosed) || (!allExpanded && !isClosed)) {
+          item.click();
+        }
+      }
+    });
+
+    const labelEl = toggleAllBtn.querySelector('.sec-quicknav-toggle-label');
+    if (labelEl) {
+      labelEl.textContent = allExpanded ? t('Свернуть') : t('Все');
+    }
+
+    const subPills = navWrap.querySelectorAll('.sec-pill--sub');
+    subPills.forEach((sp) => {
+      sp.classList.toggle('is-hidden', !allExpanded);
+    });
+  });
+
+  // Toggle sub-pills when Backup panel toggles
+  const backupItem = document.getElementById('secBackupItem');
+  backupItem?.addEventListener('click', () => {
+    setTimeout(() => {
+      const panelBackup = document.getElementById('secBackupPanel');
+      const isOpen = panelBackup && panelBackup.style.display !== 'none' && !panelBackup.classList.contains('is-hidden');
+      const subPills = navWrap.querySelectorAll('.sec-pill--sub');
+      subPills.forEach((sp) => sp.classList.toggle('is-hidden', !isOpen));
+    }, 60);
+  });
 }
