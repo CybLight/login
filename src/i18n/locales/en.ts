@@ -215,6 +215,8 @@ export const en: Record<string, string> = {
   "Открепить": "Unpin",
   "Переслать": "Forward",
   "Пожаловаться": "Report",
+  "Жалоба успешно отправлена!": "Report submitted successfully!",
+  "Ваша жалоба отправлена и будет рассмотрена в течение 1-3 рабочих дней.": "Your report has been submitted and will be reviewed within 1-3 business days.",
   "Заблокировать": "Block",
   "Разблокировать": "Unblock",
   "Текущая сессия": "Current session",

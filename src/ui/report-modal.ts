@@ -44,6 +44,20 @@ function ensureReportModal(): HTMLElement {
           <button class="btn btn-primary" type="submit" id="reportSubmit" aria-label="${t('Отправить')}">${t('Отправить')}</button>
         </div>
       </form>
+      <div id="reportSuccessView" class="cyb-report-modal__success" style="display: none; text-align: center; padding: 12px 0;">
+        <div style="font-size: 56px; margin-bottom: 12px; line-height: 1;">✅</div>
+        <div style="font-size: 20px; font-weight: 800; color: #10b981; margin-bottom: 12px;">
+          ${t('Жалоба успешно отправлена!')}
+        </div>
+        <div style="font-size: 14px; color: rgba(231, 236, 255, 0.95); line-height: 1.6; margin-bottom: 24px; background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 14px; padding: 16px 18px; text-align: center;">
+          ${t('Ваша жалоба отправлена и будет рассмотрена в течение 1-3 рабочих дней.')}
+        </div>
+        <div class="cyb-report-modal__actions" style="justify-content: center;">
+          <button type="button" class="btn btn-primary" id="reportSuccessClose" style="min-width: 160px; font-weight: 700;">
+            ${t('Понятно')}
+          </button>
+        </div>
+      </div>
     </div>
   `;
 
@@ -54,6 +68,10 @@ function ensureReportModal(): HTMLElement {
   });
 
   modal.querySelector('#reportCancel')?.addEventListener('click', () => {
+    modal?.classList.remove('is-open');
+  });
+
+  modal.querySelector('#reportSuccessClose')?.addEventListener('click', () => {
     modal?.classList.remove('is-open');
   });
 
@@ -88,12 +106,19 @@ export function openReportModal(targetUserId?: string, targetUsername?: string):
   const targetIdInput = modal.querySelector('#reportTargetUserId') as HTMLInputElement | null;
   const emailField = modal.querySelector('#reportEmailField') as HTMLElement | null;
 
+  const form = modal.querySelector('#reportForm') as HTMLElement | null;
+  const successView = modal.querySelector('#reportSuccessView') as HTMLElement | null;
+
+  if (form) form.style.display = 'flex';
+  if (successView) successView.style.display = 'none';
+
   if (warning) warning.style.display = 'none';
   if (success) success.style.display = 'none';
 
   if (targetIdInput) targetIdInput.value = currentTargetUserId || '';
 
   if (currentTargetUserId && title && categorySelect) {
+    title.style.display = 'block';
     title.textContent = `${t('Пожаловаться на пользователя')} @${currentTargetUsername}`;
     if (emailField) emailField.style.display = 'none';
     categorySelect.innerHTML = `
@@ -105,6 +130,7 @@ export function openReportModal(targetUserId?: string, targetUsername?: string):
       <option value="other">${t('❓ Другое нарушение')}</option>
     `;
   } else if (title && categorySelect) {
+    title.style.display = 'block';
     title.textContent = t('Сообщить о проблеме');
     if (emailField) emailField.style.display = 'block';
     categorySelect.innerHTML = `
@@ -132,6 +158,9 @@ async function handleReportSubmit(event: Event): Promise<void> {
   const submitBtn = modal.querySelector('#reportSubmit') as HTMLButtonElement | null;
   const warning = modal.querySelector('#reportWarning') as HTMLElement | null;
   const success = modal.querySelector('#reportSuccess') as HTMLElement | null;
+  const form = modal.querySelector('#reportForm') as HTMLElement | null;
+  const successView = modal.querySelector('#reportSuccessView') as HTMLElement | null;
+  const title = modal.querySelector('#cyb-report-title') as HTMLElement | null;
 
   if (!categorySelect || !messageInput || !submitBtn || !warning || !success) return;
 
@@ -190,15 +219,13 @@ async function handleReportSubmit(event: Event): Promise<void> {
     });
 
     if (response.ok) {
-      success.textContent = t('✓ Спасибо! Ваш отчёт отправлен администраторам.');
-      success.style.display = 'block';
+      if (form) form.style.display = 'none';
+      if (title) title.style.display = 'none';
+      if (successView) successView.style.display = 'block';
+
       (modal.querySelector('#reportForm') as HTMLFormElement | null)?.reset();
       currentTargetUserId = null;
       currentTargetUsername = null;
-
-      window.setTimeout(() => {
-        modal.classList.remove('is-open');
-      }, 2000);
     } else {
       const errorData = await response.json().catch(() => ({}) as { message?: string });
       warning.textContent = errorData.message || t('Ошибка при отправке. Попробуйте позже.');
