@@ -128,7 +128,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
                   <path class="profile-user-body" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                   <circle class="profile-user-head" cx="12" cy="7" r="4"></circle>
                 </svg>
-              </span> ${t('Профиль')}
+              </span> <span class="nav-text">${t('Профиль')}</span>
             </button>
             <button data-tab="friends" ${tab === 'friends' ? 'class="active"' : ''} title="${t('Друзья')}" aria-label="${t('Друзья')}">
               <span class="nav-icon nav-icon--svg">
@@ -142,7 +142,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                   </g>
                 </svg>
-              </span> ${t('Друзья')}
+              </span> <span class="nav-text">${t('Друзья')}</span>
               <span class="nav-badge is-hidden" data-badge-type="pending-requests"></span>
             </button>
             <button data-tab="messages" ${tab === 'messages' ? 'class="active"' : ''} title="${t('Сообщения')}" aria-label="${t('Сообщения')}">
@@ -153,14 +153,14 @@ export function renderAccountPage(tab: string, user: AppUser): string {
                   <circle class="typing-dot typing-dot--2" cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"></circle>
                   <circle class="typing-dot typing-dot--3" cx="16" cy="12" r="1.2" fill="currentColor" stroke="none"></circle>
                 </svg>
-              </span> ${t('Сообщения')}
+              </span> <span class="nav-text">${t('Сообщения')}</span>
               <span class="nav-badge is-hidden" data-badge-type="unread-messages"></span>
             </button>
 
             <div class="nav-divider"></div>
 
             <button data-tab="security" ${tab === 'security' ? 'class="active"' : ''} title="${t('Безопасность')}" aria-label="🛡️ ${t('Безопасность')}">
-              <span class="nav-icon">🛡️</span> ${t('Безопасность')}
+              <span class="nav-icon">🛡️</span> <span class="nav-text">${t('Безопасность')}</span>
             </button>
             <button data-tab="sessions" ${tab === 'sessions' ? 'class="active"' : ''} title="${t('Сессии')}" aria-label="${t('Сессии')}">
               <span class="nav-icon nav-icon--svg">
@@ -172,16 +172,16 @@ export function renderAccountPage(tab: string, user: AppUser): string {
                   <!-- Outer waves -->
                   <path class="broadcast-wave-outer" d="M12.733 1.457a.75.75 0 0 1 1.06.026A7.976 7.976 0 0 1 16 7c0 2.139-.84 4.083-2.207 5.517a.75.75 0 1 1-1.086-1.034A6.474 6.474 0 0 0 14.5 7a6.474 6.474 0 0 0-1.793-4.483.75.75 0 0 1 .026-1.06Zm-9.466 0c.3.286.312.76.026 1.06A6.474 6.474 0 0 0 1.5 7a6.47 6.47 0 0 0 1.793 4.483.75.75 0 0 1-1.086 1.034A7.973 7.973 0 0 1 0 7c0-2.139.84-4.083 2.207-5.517a.75.75 0 0 1 1.06-.026Z"></path>
                 </svg>
-              </span> ${t('Сессии')}
+              </span> <span class="nav-text">${t('Сессии')}</span>
             </button>
             <button data-tab="settings" ${tab === 'settings' ? 'class="active"' : ''} title="${t('Настройки')}" aria-label="⚙️ ${t('Настройки')}">
-              <span class="nav-icon">⚙️</span> ${t('Настройки')}
+              <span class="nav-icon">⚙️</span> <span class="nav-text">${t('Настройки')}</span>
             </button>
 
             <div class="nav-divider"></div>
 
             <button data-tab="easter" ${tab === 'easter' ? 'class="active"' : ''} title="${t('Пасхалки')}" aria-label="🍓 ${t('Пасхалки')}">
-              <span class="nav-icon">🍓</span> ${t('Пасхалки')}
+              <span class="nav-icon">🍓</span> <span class="nav-text">${t('Пасхалки')}</span>
             </button>
           </nav>
 

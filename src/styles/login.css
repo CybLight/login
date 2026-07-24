@@ -2654,6 +2654,11 @@ body.no-strawberries .strawberry-ring-wave {
     align-items: center !important;
   }
 
+  .account-sidebar.is-collapsed .nav-text,
+  .account-sidebar.is-collapsed .nav-badge {
+    display: none !important;
+  }
+
   .account-sidebar.is-collapsed .account-nav button {
     display: flex !important;
     align-items: center !important;
@@ -2662,8 +2667,6 @@ body.no-strawberries .strawberry-ring-wave {
     height: 44px !important;
     padding: 0 !important;
     margin: 0 auto 6px auto !important;
-    font-size: 0 !important;
-    min-width: 0 !important;
     border-radius: 10px !important;
     position: relative !important;
     box-sizing: border-box !important;
@@ -2671,11 +2674,18 @@ body.no-strawberries .strawberry-ring-wave {
 
   .account-sidebar.is-collapsed .account-nav button .nav-icon {
     margin: 0 auto !important;
+    padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     width: 20px !important;
     height: 20px !important;
+  }
+
+  .account-sidebar.is-collapsed .account-nav button .nav-icon--svg svg {
+    width: 20px !important;
+    height: 20px !important;
+    margin: 0 auto !important;
   }
 
   .account-sidebar.is-collapsed .account-nav button.active::before {
