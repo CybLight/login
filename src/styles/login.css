@@ -2617,17 +2617,28 @@ body.no-strawberries .strawberry-ring-wave {
   border-color: rgba(148, 163, 184, 0.5);
 }
 
+.sec-form-block--drive .sec-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
 .sec-form-block--drive .sec-actions .btn {
   width: auto;
-  min-width: 0;
-  padding: 8px 16px;
-  font-size: 13px;
+  min-width: 240px;
+  max-width: 100%;
+  padding: 9px 20px;
+  font-size: 13.5px;
   border-radius: 8px;
+  justify-content: center;
 }
 
 @media (max-width: 560px) {
   .sec-form-block--drive .sec-actions .btn {
     width: 100%;
+    min-width: 0;
   }
 }
 
