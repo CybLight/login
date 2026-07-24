@@ -3590,15 +3590,18 @@ body.account-nav-open .profile-mobile-nav {
     min-height: calc(100dvh - 56px);
   }
 
-  /* Сайдбар — отдельная тёмная колонка на всю высоту */
+  /* Сайдбар — отдельная тёмная колонка на всю высоту, закреленная при скролле */
   .account-page .account-sidebar:not(.profile-mobile-nav) {
     display: flex;
     flex-direction: column;
     width: 272px;
     flex-shrink: 0;
-    align-self: stretch;
-    min-height: 100%;
-    position: relative;
+    align-self: flex-start;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 64px;
+    max-height: calc(100vh - 74px);
+    overflow-y: auto;
     padding: 22px 14px 28px;
     border-radius: 0;
     border: none;
@@ -3614,7 +3617,13 @@ body.account-nav-open .profile-mobile-nav {
         rgba(7, 11, 24, 0.98) 0%,
         rgba(11, 17, 34, 0.96) 100%);
     box-shadow: 8px 0 36px rgba(0, 0, 0, 0.28);
-    z-index: 2;
+    z-index: 20;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .account-page .account-sidebar:not(.profile-mobile-nav)::-webkit-scrollbar {
+    display: none;
   }
 
   .account-page .account-sidebar:not(.profile-mobile-nav)::after {
