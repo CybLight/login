@@ -2682,10 +2682,18 @@ body.no-strawberries .strawberry-ring-wave {
     height: 20px !important;
   }
 
-  .account-sidebar.is-collapsed .account-nav button .nav-icon--svg svg {
-    width: 20px !important;
-    height: 20px !important;
-    margin: 0 auto !important;
+  .account-sidebar.is-collapsed .nav-divider {
+    display: block !important;
+    width: 36px !important;
+    height: 1px !important;
+    margin: 8px auto !important;
+    background: linear-gradient(
+      90deg,
+      rgba(34, 240, 230, 0) 0%,
+      rgba(34, 240, 230, 0.6) 50%,
+      rgba(34, 240, 230, 0) 100%
+    ) !important;
+    box-shadow: 0 0 6px rgba(34, 240, 230, 0.3) !important;
   }
 
   .account-sidebar.is-collapsed .account-nav button.active::before {
