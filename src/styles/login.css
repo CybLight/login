@@ -2490,7 +2490,7 @@ body.no-strawberries .strawberry-ring-wave {
 
 .sec-drive-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
 }
 
@@ -2502,6 +2502,7 @@ body.no-strawberries .strawberry-ring-wave {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .sec-drive-stat-head {
@@ -2529,12 +2530,18 @@ body.no-strawberries .strawberry-ring-wave {
   gap: 8px;
   margin-top: 2px;
   min-height: 26px;
+  min-width: 0;
 }
 
 .sec-drive-stat-val {
   font-size: 13px;
   font-weight: 500;
   color: #e5e7eb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 .sec-drive-stat-tag {
@@ -2546,6 +2553,7 @@ body.no-strawberries .strawberry-ring-wave {
   color: #fb923c;
   border: 1px solid rgba(251, 146, 60, 0.3);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .sec-drive-stat-tag.is-hidden {
@@ -2566,6 +2574,7 @@ body.no-strawberries .strawberry-ring-wave {
   text-decoration: none;
   transition: all 0.2s ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .sec-drive-storage-btn:hover {
