@@ -9,6 +9,7 @@ import { allowsFunctionalConsent } from '@/utils/privacy-guard';
 import { Router } from '@/router/Router';
 import { showAppConfirm, showAppPrompt } from '@/ui';
 import { buildAuthFooter } from '@/ui/auth-footer';
+import { openReportUserModal } from '@/ui/report-modal';
 
 interface PublicProfile {
   id?: string;
@@ -257,6 +258,19 @@ async function getFriendshipStatus(friendId: string): Promise<FriendshipStatus> 
     console.error('Error getting friendship status:', error);
     return { status: null, pendingDirection: null };
   }
+}
+
+async function checkIsUserBlocked(targetUserId: string): Promise<boolean> {
+  try {
+    const res = await apiCall('/users/blocked', { credentials: 'include' });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && Array.isArray(data.blockedUsers)) {
+      return data.blockedUsers.some((u: any) => u.id === targetUserId || u.public_id === targetUserId);
+    }
+  } catch (err) {
+    console.error('Error checking blocked status:', err);
+  }
+  return false;
 }
 
 function mapFriendApiError(error: string | undefined): string {
@@ -605,6 +619,56 @@ function bindProfileFriendActions(profileRoute: string): void {
           return;
         }
         showProfileToast(mapFriendApiError(data?.error));
+      }
+
+      if (action === 'report-user') {
+        openReportUserModal(friendId || friendUsername, friendUsername);
+        return;
+      }
+
+      if (action === 'block-user') {
+        if (!friendId) return;
+        const confirmed = await showAppConfirm(
+          t('Вы действительно хотите заблокировать пользователя {name}?', { name: friendUsername }),
+          {
+            title: t('Заблокировать пользователя'),
+            confirmLabel: t('Заблокировать'),
+            cancelLabel: t('Отмена'),
+            destructive: true,
+          }
+        );
+        if (!confirmed) return;
+
+        const response = await apiCall('/users/block', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetUserId: friendId }),
+        });
+        if (response.ok) {
+          showProfileToast(t('🚫 Пользователь {name} заблокирован', { name: friendUsername }));
+          await renderPublicProfile(profileRoute);
+        } else {
+          showProfileToast(t('Ошибка при блокировке пользователя'));
+        }
+        return;
+      }
+
+      if (action === 'unblock-user') {
+        if (!friendId) return;
+        const response = await apiCall('/users/unblock', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ targetUserId: friendId }),
+        });
+        if (response.ok) {
+          showProfileToast(t('🔓 Пользователь {name} разблокирован', { name: friendUsername }));
+          await renderPublicProfile(profileRoute);
+        } else {
+          showProfileToast(t('Ошибка при разблокировке пользователя'));
+        }
+        return;
       }
     });
   });
@@ -1160,8 +1224,12 @@ export async function renderPublicProfile(username: string): Promise<void> {
   const profileUserId = String(profile.id || '');
 
   let friendship: FriendshipStatus = { status: null, pendingDirection: null };
+  let isBlockedByMe = false;
   if (currentUser && !isSelf && profile.id) {
-    friendship = await getFriendshipStatus(profile.id);
+    [friendship, isBlockedByMe] = await Promise.all([
+      getFriendshipStatus(profile.id),
+      checkIsUserBlocked(profile.id),
+    ]);
   }
 
   const createdAt = profile.createdAt
@@ -1179,6 +1247,21 @@ export async function renderPublicProfile(username: string): Promise<void> {
   if (isSelf) {
     actionButtons = '';
   } else if (currentUser) {
+    const extraButtonsHtml = `
+      <button class="btn btn-secondary" type="button" data-action="report-user" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="🚩 ${t('Пожаловаться')}" title="${t('Пожаловаться на пользователя')}">
+        🚩 ${t('Пожаловаться')}
+      </button>
+      ${isBlockedByMe ? `
+        <button class="btn btn-secondary" type="button" data-action="unblock-user" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="🔓 ${t('Разблокировать')}">
+          🔓 ${t('Разблокировать')}
+        </button>
+      ` : `
+        <button class="btn btn-secondary" type="button" data-action="block-user" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="🚫 ${t('Заблокировать')}" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">
+          🚫 ${t('Заблокировать')}
+        </button>
+      `}
+    `;
+
     if (friendship.status === 'accepted') {
       actionButtons = `
         <div class="profile-actions">
@@ -1188,6 +1271,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
           <button class="btn btn-secondary" type="button" data-action="remove-friend" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="✕ ${t('Удалить из друзей')}">
             ✕ ${t('Удалить из друзей')}
           </button>
+          ${extraButtonsHtml}
         </div>
       `;
     } else if (friendship.status === 'pending' && friendship.pendingDirection === 'incoming') {
@@ -1199,6 +1283,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
           <button class="btn btn-secondary" type="button" data-action="reject-friend" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="❌ ${t('Отклонить')}">
             ❌ ${t('Отклонить')}
           </button>
+          ${extraButtonsHtml}
         </div>
       `;
     } else if (friendship.status === 'pending') {
@@ -1207,6 +1292,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
           <button class="btn btn-secondary" disabled aria-label="⏳ ${t('Запрос на добавление отправлен')}">
             ⏳ ${t('Запрос на добавление отправлен')}
           </button>
+          ${extraButtonsHtml}
         </div>
       `;
     } else {
@@ -1215,6 +1301,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
           <button class="btn btn-primary" type="button" data-action="add-friend" data-user-id="${escapeHtml(profileUserId)}" data-username="${escapeHtml(profileUsername)}" aria-label="➕ ${t('Добавить в друзья')}">
             ➕ ${t('Добавить в друзья')}
           </button>
+          ${extraButtonsHtml}
         </div>
       `;
     }
