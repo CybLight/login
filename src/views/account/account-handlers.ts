@@ -316,6 +316,7 @@ export function bindAccountHandlers(
     bindSettingsAccountFieldsHandlers(user, api);
     bindSettingsSecurityTransitions(user);
     void bindSettingsPrivacyHandlers(api);
+    void bindBlockedUsersHandlers(api);
   }
 
   // Sessions tab handlers
@@ -1093,5 +1094,73 @@ function bindSidebarToggleAndSettings(): void {
     }, { passive: true });
     window.__cyb_sidebar_scroll_bound = true;
   }
+}
+
+async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
+  const container = document.getElementById('stgBlockedUsersList');
+  if (!container) return;
+
+  const loadBlockedList = async () => {
+    container.innerHTML = `<div style="font-size: 13px; color: #9ca3af;">${t('Загрузка списка заблокированных...')}</div>`;
+    try {
+      const res = await apiCall('/users/blocked', { credentials: 'include' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.blockedUsers) {
+        const users = data.blockedUsers || [];
+        if (users.length === 0) {
+          container.innerHTML = `<div style="font-size: 13px; color: #9ca3af; padding: 8px 0;">${t('У вас нет заблокированных пользователей')}</div>`;
+          return;
+        }
+
+        container.innerHTML = users.map((u: any) => `
+          <div class="stg-blocked-user-row" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 36px; height: 36px; border-radius: 50%; background: #374151; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; color: #fff;">
+                ${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" style="width: 100%; height: 100%; object-fit: cover;" />` : escapeHtml((u.username || 'U')[0].toUpperCase())}
+              </div>
+              <div>
+                <div style="font-weight: 600; font-size: 14px; color: #f3f4f6;">${escapeHtml(u.username || u.id)}</div>
+                <div style="font-size: 12px; color: #9ca3af;">CYB-${u.public_id || u.id?.slice(0, 8)}</div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline unblock-user-btn" data-user-id="${u.id}" style="padding: 6px 12px; font-size: 12px;">
+              ${t('Разблокировать')}
+            </button>
+          </div>
+        `).join('');
+
+        container.querySelectorAll('.unblock-user-btn').forEach((btn) => {
+          btn.addEventListener('click', async () => {
+            const targetId = btn.getAttribute('data-user-id');
+            if (!targetId) return;
+            try {
+              const unblockRes = await apiCall('/users/unblock', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetUserId: targetId }),
+                credentials: 'include',
+              });
+              if (unblockRes.ok) {
+                api.showMsg('ok', t('Пользователь разблокирован'));
+                loadBlockedList();
+              } else {
+                api.showMsg('error', t('Не удалось разблокировать пользователя'));
+              }
+            } catch (err) {
+              console.error('Error unblocking user:', err);
+              api.showMsg('error', t('Ошибка сети'));
+            }
+          });
+        });
+      } else {
+        container.innerHTML = `<div style="font-size: 13px; color: #ef4444;">${t('Не удалось загрузить список')}</div>`;
+      }
+    } catch (err) {
+      console.error('Failed to load blocked users:', err);
+      container.innerHTML = `<div style="font-size: 13px; color: #ef4444;">${t('Ошибка загрузки')}</div>`;
+    }
+  };
+
+  loadBlockedList();
 }
 

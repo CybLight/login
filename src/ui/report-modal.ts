@@ -1,6 +1,8 @@
 import { t } from '@/i18n';
 import { apiCall, parseUA } from '@/utils';
-import { trapFocus } from '@/utils/focus';
+
+let currentTargetUserId: string | null = null;
+let currentTargetUsername: string | null = null;
 
 function ensureReportModal(): HTMLElement {
   let modal = document.getElementById('cybReportModal');
@@ -15,7 +17,8 @@ function ensureReportModal(): HTMLElement {
       <div id="cyb-report-title" class="cyb-report-modal__title">${t('Сообщить о проблеме')}</div>
       <div id="cyb-report-desc" class="sr-only">${t('Форма для отправки сообщения администратору')}</div>
       <form id="reportForm" class="cyb-report-modal__form">
-        <div class="field">
+        <input type="hidden" id="reportTargetUserId" value="" />
+        <div class="field" id="reportEmailField">
           <label class="label" for="reportEmail">${t('Email (опционально)')}</label>
           <input class="input" id="reportEmail" type="email" placeholder="your@email.com" />
         </div>
@@ -31,7 +34,7 @@ function ensureReportModal(): HTMLElement {
           </select>
         </div>
         <div class="field">
-          <label class="label" for="reportMessage">${t('Описание проблемы')}</label>
+          <label class="label" for="reportMessage">${t('Описание проблемы / Нарушения')}</label>
           <textarea class="input" id="reportMessage" rows="5" placeholder="${t('Подробно опишите проблему...')}" required style="resize: vertical; font-family: inherit;"></textarea>
         </div>
         <div class="msg msg--warn" id="reportWarning" style="display: none;"></div>
@@ -65,47 +68,56 @@ function ensureReportModal(): HTMLElement {
   return modal;
 }
 
-function openReportModal(): void {
-  if (window.CybPrivacy && !window.CybPrivacy.allows('diagnostic')) {
-    const modal = ensureReportModal();
-    const warning = modal.querySelector('#reportWarning') as HTMLElement | null;
-    if (warning) {
-      warning.textContent = t(
-        'Отправка отключена в настройках конфиденциальности. Включите «Отправлять диагностические данные».',
-      );
-      warning.style.display = 'block';
-    }
-    modal.classList.add('is-open');
-    return;
+export function openReportUserModal(targetUserId: string, targetUsername?: string): void {
+  currentTargetUserId = targetUserId;
+  currentTargetUsername = targetUsername || targetUserId;
+  openReportModal();
+}
+
+export function openReportModal(targetUserId?: string, targetUsername?: string): void {
+  if (targetUserId) {
+    currentTargetUserId = targetUserId;
+    currentTargetUsername = targetUsername || targetUserId;
   }
 
   const modal = ensureReportModal();
-  const form = modal.querySelector('#reportForm') as HTMLFormElement | null;
   const warning = modal.querySelector('#reportWarning') as HTMLElement | null;
   const success = modal.querySelector('#reportSuccess') as HTMLElement | null;
+  const title = modal.querySelector('#cyb-report-title') as HTMLElement | null;
+  const categorySelect = modal.querySelector('#reportCategory') as HTMLSelectElement | null;
+  const targetIdInput = modal.querySelector('#reportTargetUserId') as HTMLInputElement | null;
+  const emailField = modal.querySelector('#reportEmailField') as HTMLElement | null;
 
-  form?.reset();
   if (warning) warning.style.display = 'none';
   if (success) success.style.display = 'none';
 
+  if (targetIdInput) targetIdInput.value = currentTargetUserId || '';
+
+  if (currentTargetUserId && title && categorySelect) {
+    title.textContent = `${t('Пожаловаться на пользователя')} @${currentTargetUsername}`;
+    if (emailField) emailField.style.display = 'none';
+    categorySelect.innerHTML = `
+      <option value="">${t('-- Выберите причину жалобы --')}</option>
+      <option value="spam">${t('📢 Спам / Реклама')}</option>
+      <option value="harassment">${t('🤬 Оскорбления / Травля')}</option>
+      <option value="inappropriate_content">${t('🔞 Запрещённый контент')}</option>
+      <option value="fraud">${t('⚠️ Мошенничество')}</option>
+      <option value="other">${t('❓ Другое нарушение')}</option>
+    `;
+  } else if (title && categorySelect) {
+    title.textContent = t('Сообщить о проблеме');
+    if (emailField) emailField.style.display = 'block';
+    categorySelect.innerHTML = `
+      <option value="">${t('-- Выберите категорию --')}</option>
+      <option value="bug">${t('Ошибка/Баг')}</option>
+      <option value="performance">${t('Проблема с производительностью')}</option>
+      <option value="security">${t('Проблема безопасности')}</option>
+      <option value="feature">${t('Предложение функции')}</option>
+      <option value="other">${t('Прочее')}</option>
+    `;
+  }
+
   modal.classList.add('is-open');
-
-  // Trap focus
-  const cleanup = trapFocus(modal as HTMLElement);
-
-  // Cleanup when modal closed
-  const observer = new MutationObserver(() => {
-    if (!modal.classList.contains('is-open')) {
-      try {
-        cleanup();
-      } catch {
-        /* ignore cleanup errors */
-      }
-      observer.disconnect();
-    }
-  });
-
-  observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
 }
 
 async function handleReportSubmit(event: Event): Promise<void> {
@@ -121,19 +133,12 @@ async function handleReportSubmit(event: Event): Promise<void> {
   const warning = modal.querySelector('#reportWarning') as HTMLElement | null;
   const success = modal.querySelector('#reportSuccess') as HTMLElement | null;
 
-  if (!emailInput || !categorySelect || !messageInput || !submitBtn || !warning || !success) return;
+  if (!categorySelect || !messageInput || !submitBtn || !warning || !success) return;
 
-  if (window.CybPrivacy && !window.CybPrivacy.allows('diagnostic')) {
-    warning.textContent = t(
-      'Отправка отключена в настройках конфиденциальности. Включите «Отправлять диагностические данные».',
-    );
-    warning.style.display = 'block';
-    return;
-  }
-
-  const email = emailInput.value.trim();
+  const email = emailInput?.value.trim() || '';
   const category = categorySelect.value;
   const message = messageInput.value.trim();
+  const targetUserId = currentTargetUserId;
 
   if (!message) {
     warning.textContent = t('Пожалуйста, опишите проблему');
@@ -154,23 +159,33 @@ async function handleReportSubmit(event: Event): Promise<void> {
 
   try {
     const ua = parseUA(navigator.userAgent);
+    const endpoint = targetUserId ? '/reports/user' : '/error/report';
 
-    const response = await apiCall('/error/report', {
+    const payload = targetUserId
+      ? {
+          targetUserId,
+          category,
+          reason: message,
+          details: `URL: ${window.location.href}`,
+        }
+      : {
+          type: category || 'unknown',
+          email: email || null,
+          category,
+          message,
+          userAgent: navigator.userAgent,
+          browser: ua.browser,
+          os: ua.os,
+          timestamp: new Date().toISOString(),
+          url: window.location.href,
+        };
+
+    const response = await apiCall(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        type: category || 'unknown',
-        email: email || null,
-        category,
-        message,
-        userAgent: navigator.userAgent,
-        browser: ua.browser,
-        os: ua.os,
-        timestamp: new Date().toISOString(),
-        url: window.location.href,
-      }),
+      body: JSON.stringify(payload),
       credentials: 'include',
     });
 
@@ -178,6 +193,8 @@ async function handleReportSubmit(event: Event): Promise<void> {
       success.textContent = t('✓ Спасибо! Ваш отчёт отправлен администраторам.');
       success.style.display = 'block';
       (modal.querySelector('#reportForm') as HTMLFormElement | null)?.reset();
+      currentTargetUserId = null;
+      currentTargetUsername = null;
 
       window.setTimeout(() => {
         modal.classList.remove('is-open');
@@ -200,6 +217,17 @@ async function handleReportSubmit(event: Event): Promise<void> {
 export function initReportModalTriggers(): void {
   document.addEventListener('click', (event: MouseEvent) => {
     const target = event.target as HTMLElement | null;
+    const reportUserTrigger = target?.closest('[data-report-user-id]') as HTMLElement | null;
+    if (reportUserTrigger) {
+      event.preventDefault();
+      const userId = reportUserTrigger.getAttribute('data-report-user-id') || '';
+      const username = reportUserTrigger.getAttribute('data-report-username') || userId;
+      if (userId) {
+        openReportUserModal(userId, username);
+        return;
+      }
+    }
+
     const trigger = target?.closest('[data-report-modal-open]') as HTMLElement | null;
     if (!trigger) return;
 

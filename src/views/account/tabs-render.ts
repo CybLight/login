@@ -817,6 +817,12 @@ function renderSettingsTab(user: User): string {
             <option value="friends">${t('Только друзья')}</option>
             <option value="nobody">${t('Никто')}</option>
           </select>
+        <div class="stg-row stg-row--block" id="stgBlockedUsersSection" style="margin-top: 20px;">
+          <div class="stg-row__label">${t('Заблокированные пользователи')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 12px;">${t('Пользователи в чёрном списке не могут отправлять вам личные сообщения')}</div>
+          <div id="stgBlockedUsersList" class="stg-blocked-users-list">
+            <div style="font-size: 13px; color: #9ca3af;">${t('Загрузка списка заблокированных...')}</div>
+          </div>
         </div>
       </section>
 
