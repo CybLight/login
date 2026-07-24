@@ -1028,10 +1028,6 @@ function bindSidebarToggleAndSettings(): void {
   const updateCollapseBtnState = () => {
     if (!collapseBtn || !sidebar) return;
     const isCollapsed = sidebar.classList.contains('is-collapsed');
-    const textEl = collapseBtn.querySelector('.sidebar-collapse-text');
-    if (textEl) {
-      textEl.textContent = isCollapsed ? t('Раскрыть') : t('Свернуть');
-    }
     collapseBtn.setAttribute('title', isCollapsed ? t('Раскрыть панель') : t('Свернуть панель'));
   };
 

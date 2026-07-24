@@ -2592,25 +2592,27 @@ body.no-strawberries .strawberry-ring-wave {
 .sidebar-collapse-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 10px;
-  color: #94a3b8;
-  font-size: 12.5px;
-  font-weight: 600;
+  color: #cbd5e1;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .sidebar-collapse-btn:hover {
   color: #ffffff;
-  background: rgba(255, 127, 39, 0.15);
-  border-color: rgba(255, 127, 39, 0.4);
+  background: linear-gradient(135deg, rgba(255, 127, 39, 0.3) 0%, rgba(249, 115, 22, 0.2) 100%);
+  border-color: rgba(255, 127, 39, 0.6);
+  box-shadow: 0 0 12px rgba(255, 127, 39, 0.3);
+  transform: scale(1.05);
 }
 
 .sidebar-collapse-icon {
@@ -2624,19 +2626,22 @@ body.no-strawberries .strawberry-ring-wave {
   }
 
   .account-sidebar.is-collapsed {
-    width: 58px !important;
+    width: 56px !important;
+    flex: 0 0 56px !important;
     padding-left: 6px !important;
     padding-right: 6px !important;
-  }
-
-  .account-sidebar.is-collapsed .sidebar-collapse-text {
-    display: none !important;
+    align-items: center;
   }
 
   .account-sidebar.is-collapsed .sidebar-collapse-btn {
-    justify-content: center;
-    padding: 8px 0;
+    width: 36px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .account-sidebar.is-collapsed .account-nav {
     width: 100%;
+    align-items: center;
   }
 
   .account-sidebar.is-collapsed .account-nav button {
@@ -2645,6 +2650,7 @@ body.no-strawberries .strawberry-ring-wave {
     font-size: 0 !important;
     width: 100%;
     min-width: 0;
+    border-radius: 10px;
   }
 
   .account-sidebar.is-collapsed .account-nav button .nav-icon {
@@ -2653,6 +2659,7 @@ body.no-strawberries .strawberry-ring-wave {
 
   .account-sidebar.is-collapsed .account-actions {
     padding: 0;
+    width: 100%;
   }
 
   .account-sidebar.is-collapsed .account-actions #logoutBtn,
@@ -2661,6 +2668,12 @@ body.no-strawberries .strawberry-ring-wave {
     padding: 10px 0 !important;
     justify-content: center;
     width: 100%;
+  }
+
+  /* Center right content card when sidebar is collapsed */
+  .account-wrap:has(.account-sidebar.is-collapsed) .account-main {
+    margin-inline: auto;
+    max-width: 920px;
   }
 }
 

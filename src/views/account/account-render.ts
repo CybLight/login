@@ -113,17 +113,16 @@ export function renderAccountPage(tab: string, user: AppUser): string {
       <div class="account-wrap">
         <!-- Боковая панель -->
         <aside class="account-sidebar" id="accountSidebar">
-          <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="${t('Свернуть панель')}">
-            <svg class="sidebar-collapse-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="${t('Свернуть / Раскрыть панель')}">
+            <svg class="sidebar-collapse-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
             </svg>
-            <span class="sidebar-collapse-text">${t('Свернуть')}</span>
           </button>
           <!-- Навигация вкладок -->
           <nav class="account-nav">
-            <button data-tab="profile" ${tab === 'profile' ? 'class="active"' : ''} aria-label="${t('Профиль')}">
+            <button data-tab="profile" ${tab === 'profile' ? 'class="active"' : ''} title="${t('Профиль')}" aria-label="${t('Профиль')}">
               <span class="nav-icon nav-icon--svg">
                 <svg class="profile-icon-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path class="profile-user-body" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -131,7 +130,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
                 </svg>
               </span> ${t('Профиль')}
             </button>
-            <button data-tab="friends" ${tab === 'friends' ? 'class="active"' : ''} aria-label="${t('Друзья')}">
+            <button data-tab="friends" ${tab === 'friends' ? 'class="active"' : ''} title="${t('Друзья')}" aria-label="${t('Друзья')}">
               <span class="nav-icon nav-icon--svg">
                 <svg class="friends-icon-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <g class="friends-user-main">
@@ -146,7 +145,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
               </span> ${t('Друзья')}
               <span class="nav-badge is-hidden" data-badge-type="pending-requests"></span>
             </button>
-            <button data-tab="messages" ${tab === 'messages' ? 'class="active"' : ''} aria-label="${t('Сообщения')}">
+            <button data-tab="messages" ${tab === 'messages' ? 'class="active"' : ''} title="${t('Сообщения')}" aria-label="${t('Сообщения')}">
               <span class="nav-icon nav-icon--svg">
                 <svg class="messages-bubble-svg" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -160,10 +159,10 @@ export function renderAccountPage(tab: string, user: AppUser): string {
 
             <div class="nav-divider"></div>
 
-            <button data-tab="security" ${tab === 'security' ? 'class="active"' : ''} aria-label="🛡️ ${t('Безопасность')}">
+            <button data-tab="security" ${tab === 'security' ? 'class="active"' : ''} title="${t('Безопасность')}" aria-label="🛡️ ${t('Безопасность')}">
               <span class="nav-icon">🛡️</span> ${t('Безопасность')}
             </button>
-            <button data-tab="sessions" ${tab === 'sessions' ? 'class="active"' : ''} aria-label="${t('Сессии')}">
+            <button data-tab="sessions" ${tab === 'sessions' ? 'class="active"' : ''} title="${t('Сессии')}" aria-label="${t('Сессии')}">
               <span class="nav-icon nav-icon--svg">
                 <svg aria-hidden="true" viewBox="0 0 16 16" version="1.1" fill="currentColor">
                   <!-- Spire -->
@@ -175,13 +174,13 @@ export function renderAccountPage(tab: string, user: AppUser): string {
                 </svg>
               </span> ${t('Сессии')}
             </button>
-            <button data-tab="settings" ${tab === 'settings' ? 'class="active"' : ''} aria-label="⚙️ ${t('Настройки')}">
+            <button data-tab="settings" ${tab === 'settings' ? 'class="active"' : ''} title="${t('Настройки')}" aria-label="⚙️ ${t('Настройки')}">
               <span class="nav-icon">⚙️</span> ${t('Настройки')}
             </button>
 
             <div class="nav-divider"></div>
 
-            <button data-tab="easter" ${tab === 'easter' ? 'class="active"' : ''} aria-label="🍓 ${t('Пасхалки')}">
+            <button data-tab="easter" ${tab === 'easter' ? 'class="active"' : ''} title="${t('Пасхалки')}" aria-label="🍓 ${t('Пасхалки')}">
               <span class="nav-icon">🍓</span> ${t('Пасхалки')}
             </button>
           </nav>
@@ -190,10 +189,10 @@ export function renderAccountPage(tab: string, user: AppUser): string {
           <div class="account-actions">
             ${
               isAdminOrOwner
-                ? `<button class="btn btn-outline" id="adminPanelBtn" type="button" data-open-url="https://admin.cyblight.org" aria-label="⚙️ ${t('Панель администратора')}">⚙️ ${t('Панель администратора')}</button>`
+                ? `<button class="btn btn-outline" id="adminPanelBtn" type="button" title="${t('Панель администратора')}" data-open-url="https://admin.cyblight.org" aria-label="⚙️ ${t('Панель администратора')}">⚙️ ${t('Панель администратора')}</button>`
                 : ''
             }
-            <button class="btn btn-primary" id="logoutBtn" type="button" aria-label="${t('Выйти')}">${t('Выйти')}</button>
+            <button class="btn btn-primary" id="logoutBtn" type="button" title="${t('Выйти')}" aria-label="${t('Выйти')}">${t('Выйти')}</button>
           </div>
         </aside>
 
