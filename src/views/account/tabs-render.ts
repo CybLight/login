@@ -749,6 +749,27 @@ function renderSettingsTab(user: User): string {
           </div>
         </header>
 
+        <!-- Blocked Users Card at top of Privacy -->
+        <div class="stg-row stg-row--block stg-blocked-users-card" id="openBlockedUsersModalBtn" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 14px; margin-bottom: 24px; transition: all 0.2s ease;">
+          <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(239, 68, 68, 0.15); display: flex; align-items: center; justify-content: center; font-size: 22px; color: #ef4444;">
+              🚫
+            </div>
+            <div>
+              <div style="font-weight: 600; font-size: 15px; color: #f87171; display: flex; align-items: center; gap: 8px;">
+                ${t('Заблокированные пользователи')}
+                <span id="stgBlockedUsersCountBadge" style="display: inline-flex; align-items: center; justify-content: center; padding: 2px 8px; font-size: 12px; font-weight: 700; background: #ef4444; color: #ffffff; border-radius: 20px; min-width: 22px;">0</span>
+              </div>
+              <div style="font-size: 12px; color: #9ca3af; margin-top: 2px;">
+                ${t('Пользователи в чёрном списке не могут отправлять вам личные сообщения')}
+              </div>
+            </div>
+          </div>
+          <div style="font-size: 13px; color: #f87171; font-weight: 600; padding: 6px 12px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; display: flex; align-items: center; gap: 4px;">
+            ${t('Открыть')} &rsaquo;
+          </div>
+        </div>
+
         <div class="stg-row stg-row--block">
           <div class="stg-row__label">${t('Кто может видеть мой аватар')}</div>
           <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости вашего аватара')}</div>
@@ -817,14 +838,31 @@ function renderSettingsTab(user: User): string {
             <option value="friends">${t('Только друзья')}</option>
             <option value="nobody">${t('Никто')}</option>
           </select>
-        <div class="stg-row stg-row--block" id="stgBlockedUsersSection" style="margin-top: 20px;">
-          <div class="stg-row__label">${t('Заблокированные пользователи')}</div>
-          <div class="stg-row__hint" style="margin-bottom: 12px;">${t('Пользователи в чёрном списке не могут отправлять вам личные сообщения')}</div>
-          <div id="stgBlockedUsersList" class="stg-blocked-users-list">
-            <div style="font-size: 13px; color: #9ca3af;">${t('Загрузка списка заблокированных...')}</div>
-          </div>
         </div>
       </section>
+
+      <!-- Blocked Users Modal -->
+      <div id="blockedUsersModal" class="account-notice-modal" style="display: none; align-items: center; justify-content: center; position: fixed; inset: 0; z-index: 9999;">
+        <div class="account-notice-backdrop" id="blockedUsersModalBackdrop"></div>
+        <div class="account-notice-card" role="dialog" aria-modal="true" style="width: min(92vw, 560px); max-height: 85vh; display: flex; flex-direction: column; padding: 20px; border-radius: 16px; position: relative; z-index: 2;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">
+            <div style="font-size: 17px; font-weight: 700; color: #f87171; display: flex; align-items: center; gap: 10px;">
+              <span>🚫</span>
+              <span>${t('Заблокированные пользователи')}</span>
+              <span id="stgBlockedUsersModalBadge" style="font-size: 12px; font-weight: 700; background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); padding: 2px 8px; border-radius: 12px;">0</span>
+            </div>
+            <button type="button" id="blockedUsersModalCloseBtn" style="background: none; border: none; font-size: 24px; color: #9ca3af; cursor: pointer; line-height: 1; padding: 4px;" aria-label="${t('Закрыть')}">&times;</button>
+          </div>
+
+          <div style="font-size: 13px; color: #9ca3af; margin-bottom: 16px;">
+            ${t('Пользователи в чёрном списке не могут отправлять вам личные сообщения')}
+          </div>
+
+          <div id="stgBlockedUsersList" class="stg-blocked-users-list" style="overflow-y: auto; max-height: 55vh; padding-right: 4px;">
+            <div style="font-size: 13px; color: #9ca3af; text-align: center; padding: 20px 0;">${t('Загрузка списка...')}</div>
+          </div>
+        </div>
+      </div>
 
     </div>
   `;

@@ -1097,34 +1097,51 @@ function bindSidebarToggleAndSettings(): void {
 }
 
 async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
+  const openBtn = document.getElementById('openBlockedUsersModalBtn');
+  const modal = document.getElementById('blockedUsersModal');
+  const backdrop = document.getElementById('blockedUsersModalBackdrop');
+  const closeBtn = document.getElementById('blockedUsersModalCloseBtn');
+  const cardBadge = document.getElementById('stgBlockedUsersCountBadge');
+  const modalBadge = document.getElementById('stgBlockedUsersModalBadge');
   const container = document.getElementById('stgBlockedUsersList');
+
   if (!container) return;
 
+  const updateBadges = (count: number) => {
+    if (cardBadge) cardBadge.textContent = String(count);
+    if (modalBadge) modalBadge.textContent = String(count);
+  };
+
   const loadBlockedList = async () => {
-    container.innerHTML = `<div style="font-size: 13px; color: #9ca3af;">${t('Загрузка списка заблокированных...')}</div>`;
+    container.innerHTML = `<div style="font-size: 13px; color: #9ca3af; text-align: center; padding: 20px 0;">${t('Загрузка списка заблокированных...')}</div>`;
     try {
       const res = await apiCall('/users/blocked', { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       const blockedList = data.blockedUsers || data.data?.blockedUsers;
       if (res.ok && Array.isArray(blockedList)) {
         const users = blockedList || [];
+        updateBadges(users.length);
+
         if (users.length === 0) {
-          container.innerHTML = `<div style="font-size: 13px; color: #9ca3af; padding: 8px 0;">${t('У вас нет заблокированных пользователей')}</div>`;
+          container.innerHTML = `<div style="font-size: 13px; color: #9ca3af; text-align: center; padding: 24px 0;">${t('У вас нет заблокированных пользователей')}</div>`;
           return;
         }
 
         container.innerHTML = users.map((u: any) => `
-          <div class="stg-blocked-user-row" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; margin-bottom: 8px;">
+          <div class="stg-blocked-user-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; margin-bottom: 10px; transition: background 0.2s;">
             <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="width: 36px; height: 36px; border-radius: 50%; background: #374151; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; color: #fff;">
+              <div style="width: 40px; height: 40px; border-radius: 50%; background: #374151; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; color: #fff; border: 1px solid rgba(255, 255, 255, 0.15);">
                 ${u.avatar_url ? `<img src="${escapeHtml(u.avatar_url)}" style="width: 100%; height: 100%; object-fit: cover;" />` : escapeHtml((u.username || 'U')[0].toUpperCase())}
               </div>
               <div>
                 <div style="font-weight: 600; font-size: 14px; color: #f3f4f6;">${escapeHtml(u.username || u.id)}</div>
-                <div style="font-size: 12px; color: #9ca3af;">CYB-${u.public_id || u.id?.slice(0, 8)}</div>
+                <div style="font-size: 12px; color: #9ca3af; display: flex; align-items: center; gap: 6px;">
+                  <span>CYB-${u.public_id || u.id?.slice(0, 8)}</span>
+                  ${u.reason ? `<span style="color: #f87171;">• ${escapeHtml(u.reason)}</span>` : ''}
+                </div>
               </div>
             </div>
-            <button type="button" class="btn btn-outline unblock-user-btn" data-user-id="${u.id}" style="padding: 6px 12px; font-size: 12px;">
+            <button type="button" class="btn btn-outline unblock-user-btn" data-user-id="${u.id}" style="padding: 6px 14px; font-size: 12px; border-color: rgba(239, 68, 68, 0.4); color: #f87171; border-radius: 8px;">
               ${t('Разблокировать')}
             </button>
           </div>
@@ -1154,14 +1171,28 @@ async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
           });
         });
       } else {
-        container.innerHTML = `<div style="font-size: 13px; color: #ef4444;">${t('Не удалось загрузить список')}</div>`;
+        container.innerHTML = `<div style="font-size: 13px; color: #ef4444; text-align: center; padding: 20px 0;">${t('Не удалось загрузить список')}</div>`;
       }
     } catch (err) {
       console.error('Failed to load blocked users:', err);
-      container.innerHTML = `<div style="font-size: 13px; color: #ef4444;">${t('Ошибка загрузки')}</div>`;
+      container.innerHTML = `<div style="font-size: 13px; color: #ef4444; text-align: center; padding: 20px 0;">${t('Ошибка загрузки')}</div>`;
     }
   };
 
+  const openModal = () => {
+    if (modal) modal.style.display = 'flex';
+    loadBlockedList();
+  };
+
+  const closeModal = () => {
+    if (modal) modal.style.display = 'none';
+  };
+
+  openBtn?.addEventListener('click', openModal);
+  closeBtn?.addEventListener('click', closeModal);
+  backdrop?.addEventListener('click', closeModal);
+
+  // Initial load to set counter badge
   loadBlockedList();
 }
 
