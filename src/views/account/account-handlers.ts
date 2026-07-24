@@ -1180,7 +1180,10 @@ async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
   };
 
   const openModal = () => {
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+      document.body.appendChild(modal);
+      modal.style.display = 'grid';
+    }
     loadBlockedList();
   };
 

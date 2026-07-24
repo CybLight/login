@@ -5267,3 +5267,71 @@ body:has(.is-chat-view),
 }
 
 /* ==================== END SETTINGS FIELD CARDS ==================== */
+
+/* Blocked Users Card */
+.stg-blocked-card {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 14px 18px !important;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stg-blocked-card:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+.stg-blocked-card__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stg-blocked-card__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #ef4444;
+  flex-shrink: 0;
+}
+
+.stg-blocked-card__title {
+  font-weight: 600;
+  font-size: 14px;
+  color: #f87171;
+}
+
+.stg-blocked-card__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 12px;
+  min-width: 22px;
+}
+
+.stg-blocked-card__arrow {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f87171;
+  opacity: 0.8;
+  line-height: 1;
+}
