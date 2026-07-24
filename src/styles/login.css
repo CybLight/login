@@ -2409,7 +2409,7 @@ body.no-strawberries .strawberry-ring-wave {
 }
 
 .is-hidden {
-  display: none;
+  display: none !important;
 }
 
 .sec-head-row {

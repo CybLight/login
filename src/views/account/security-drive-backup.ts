@@ -89,6 +89,19 @@ export async function refreshDriveBackupAccountLabel(): Promise<void> {
   accountEl.classList.remove('is-hidden');
 }
 
+function toggleElementVisible(el: HTMLElement | null, visible: boolean): void {
+  if (!el) return;
+  if (visible) {
+    el.classList.remove('is-hidden');
+    el.removeAttribute('hidden');
+    el.style.display = '';
+  } else {
+    el.classList.add('is-hidden');
+    el.setAttribute('hidden', '');
+    el.style.display = 'none';
+  }
+}
+
 export async function refreshDriveBackupStatusLabel(): Promise<void> {
   await refreshDriveBackupAccountLabel();
 
@@ -101,29 +114,29 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
 
   if (!isGoogleDriveConfigured()) {
     if (label) label.textContent = t('Google Drive не настроен на этом сервере.');
-    signInBtn?.classList.add('is-hidden');
-    uploadBtn?.classList.add('is-hidden');
-    restoreBtn?.classList.add('is-hidden');
-    deleteBtn?.classList.add('is-hidden');
-    disconnectBtn?.classList.add('is-hidden');
+    toggleElementVisible(signInBtn, false);
+    toggleElementVisible(uploadBtn, false);
+    toggleElementVisible(restoreBtn, false);
+    toggleElementVisible(deleteBtn, false);
+    toggleElementVisible(disconnectBtn, false);
     return;
   }
 
   if (!hasGoogleDriveSession()) {
     if (label) label.textContent = t('Войдите через Google, чтобы сохранить или восстановить копию.');
-    signInBtn?.classList.remove('is-hidden');
-    uploadBtn?.classList.add('is-hidden');
-    restoreBtn?.classList.add('is-hidden');
-    deleteBtn?.classList.add('is-hidden');
-    disconnectBtn?.classList.add('is-hidden');
+    toggleElementVisible(signInBtn, true);
+    toggleElementVisible(uploadBtn, false);
+    toggleElementVisible(restoreBtn, false);
+    toggleElementVisible(deleteBtn, false);
+    toggleElementVisible(disconnectBtn, false);
     return;
   }
 
-  signInBtn?.classList.add('is-hidden');
-  uploadBtn?.classList.remove('is-hidden');
-  restoreBtn?.classList.remove('is-hidden');
-  deleteBtn?.classList.remove('is-hidden');
-  disconnectBtn?.classList.remove('is-hidden');
+  toggleElementVisible(signInBtn, false);
+  toggleElementVisible(uploadBtn, true);
+  toggleElementVisible(restoreBtn, true);
+  toggleElementVisible(deleteBtn, true);
+  toggleElementVisible(disconnectBtn, true);
 
   if (!label) return;
 
