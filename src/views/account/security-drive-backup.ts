@@ -13,7 +13,6 @@ import {
   uploadBackupToGoogleDrive,
 } from '@/integrations/google-drive';
 import { showAccountConfirmModal, showAccountNoticeModal } from './modals';
-import { enhanceFileBackupImportSuccess } from './backup-ui-utils';
 import { driveBackupProgress } from './backup-progress';
 
 type DriveBackupDeps = {
@@ -175,17 +174,10 @@ export function bindDriveBackupHandlers(deps: DriveBackupDeps): void {
     api.clearMsg();
     showDriveRestoreProgress(0);
     try {
-      // Read skipChats from checkbox
-      const skipChats = (document.getElementById('secDriveBackupRestoreSkipChats') as HTMLInputElement | null)?.checked ?? true;
-      const result = await restoreBackupFromGoogleDrive(userId, password, showDriveRestoreProgress, { skipChats });
+      await restoreBackupFromGoogleDrive(userId, password, showDriveRestoreProgress, { skipChats: true });
       resetActiveSignalContext();
       showDriveRestoreProgress(100);
-
-      if (skipChats) {
-          showAccountNoticeModal('success', t('Ключи шифрования успешно восстановлены из Google Drive. Сообщения пропущены.'));
-      } else {
-          showAccountNoticeModal('success', enhanceFileBackupImportSuccess(result));
-      }
+      showAccountNoticeModal('success', t('Ключи шифрования успешно восстановлены из Google Drive.'));
       await refreshDriveBackupStatusLabel();
     } catch (error) {
       const code = error instanceof Error ? error.message : 'backup_failed';

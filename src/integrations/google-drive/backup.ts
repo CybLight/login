@@ -45,7 +45,7 @@ export async function uploadBackupToGoogleDrive(
   report(2);
   const accessToken = await getGoogleDriveAccessToken();
   report(10);
-  const content = await createBackupFile(userId, password, { includeChats: true });
+  const content = await createBackupFile(userId, password, { includeChats: false });
   report(48);
   const file = await uploadDriveBackupFile(accessToken, userId, login, content);
   report(100);
@@ -80,7 +80,7 @@ export async function restoreBackupFromGoogleDrive(
     (restorePercent) => {
       report(32 + (restorePercent * 68) / 100);
     },
-    options,
+    { ...options, skipChats: true },
   );
 }
 

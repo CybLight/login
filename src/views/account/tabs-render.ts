@@ -1224,7 +1224,7 @@ function renderSecurityTab(user: User): string {
               </span>
               <div class="sec-form-title">${t('Google Drive')}</div>
             </div>
-            <p class="sec-hint">${t('Сохраните зашифрованную копию в ваш Google Drive. Доступ только у приложения CybLight и только к созданным им файлам.')}</p>
+            <p class="sec-hint">${t('Сохранение и восстановление только ключей шифрования в Google Drive. Доступ только у приложения CybLight и только к созданным им файлам.')}</p>
             <p class="sec-status sec-status-muted sec-drive-account is-hidden" id="secDriveBackupAccount"></p>
             <p class="sec-status sec-status-muted" id="secDriveBackupStatus">${t('Загрузка статуса…')}</p>
             <div class="sec-form-row">
@@ -1233,13 +1233,6 @@ function renderSecurityTab(user: User): string {
                 <input class="input" id="secDriveBackupPassword" type="password" autocomplete="current-password" placeholder="${t('Пароль от резервной копии')}" />
                 <button type="button" class="pass-eye" data-target="secDriveBackupPassword" aria-label="${t('Показать пароль')}"></button>
               </div>
-            </div>
-            <div class="sec-form-row sec-mt-8">
-              <label class="checkbox-label" for="secDriveBackupRestoreSkipChats">
-                <input type="checkbox" id="secDriveBackupRestoreSkipChats" checked />
-                <span>${t('Восстановить только ключи шифрования (мгновенно)')}</span>
-              </label>
-              <p class="sec-hint">${t('Рекомендуемый способ. Восстанавливает доступ к чатам без загрузки старой истории сообщений.')}</p>
             </div>
             <div class="sec-backup-progress sec-backup-progress--drive is-hidden" id="secDriveBackupProgress" aria-live="polite" aria-busy="false">
               <div class="sec-backup-progress__head">
