@@ -247,6 +247,7 @@ export function bindAccountHandlers(
   document.body.classList.remove('account-nav-open');
   bindAccountMobileNav();
   bindAccountHeaderMenus();
+  bindSidebarToggleAndSettings();
 
   // Bind copy buttons (copy to clipboard)
   bindCopyButtons(api);
@@ -999,6 +1000,102 @@ async function loadSettingsSecurityScore(user: AppUser): Promise<void> {
     }
   } catch (err) {
     console.error('Error loading passkeys for settings score:', err);
+  }
+}
+
+declare global {
+  interface Window {
+    __cyb_sidebar_scroll_bound?: boolean;
+  }
+}
+
+function bindSidebarToggleAndSettings(): void {
+  const sidebar = document.getElementById('accountSidebar');
+  const collapseBtn = document.getElementById('sidebarCollapseBtn');
+  const compactCheckbox = document.getElementById('stgCompactSidebar') as HTMLInputElement | null;
+  const autoHideCheckbox = document.getElementById('stgAutoHideSidebar') as HTMLInputElement | null;
+  const stickyNavCheckbox = document.getElementById('stgStickyNav') as HTMLInputElement | null;
+
+  // Restore states from localStorage
+  const isCompact = localStorage.getItem('cyb_compact_sidebar') === 'true';
+  const isAutoHide = localStorage.getItem('cyb_autohide_sidebar') === 'true';
+  const isStickyDisabled = localStorage.getItem('cyb_sticky_nav_disabled') === 'true';
+
+  if (sidebar && isCompact) {
+    sidebar.classList.add('is-collapsed');
+  }
+
+  const updateCollapseBtnState = () => {
+    if (!collapseBtn || !sidebar) return;
+    const isCollapsed = sidebar.classList.contains('is-collapsed');
+    const textEl = collapseBtn.querySelector('.sidebar-collapse-text');
+    if (textEl) {
+      textEl.textContent = isCollapsed ? t('Раскрыть') : t('Свернуть');
+    }
+    collapseBtn.setAttribute('title', isCollapsed ? t('Раскрыть панель') : t('Свернуть панель'));
+  };
+
+  if (compactCheckbox) {
+    compactCheckbox.checked = isCompact;
+    compactCheckbox.addEventListener('change', () => {
+      const checked = compactCheckbox.checked;
+      localStorage.setItem('cyb_compact_sidebar', checked ? 'true' : 'false');
+      sidebar?.classList.toggle('is-collapsed', checked);
+      updateCollapseBtnState();
+    });
+  }
+
+  if (autoHideCheckbox) {
+    autoHideCheckbox.checked = isAutoHide;
+    autoHideCheckbox.addEventListener('change', () => {
+      localStorage.setItem('cyb_autohide_sidebar', autoHideCheckbox.checked ? 'true' : 'false');
+    });
+  }
+
+  if (stickyNavCheckbox) {
+    stickyNavCheckbox.checked = !isStickyDisabled;
+    stickyNavCheckbox.addEventListener('change', () => {
+      const disabled = !stickyNavCheckbox.checked;
+      localStorage.setItem('cyb_sticky_nav_disabled', disabled ? 'true' : 'false');
+      document.body.classList.toggle('no-sticky-nav', disabled);
+    });
+  }
+
+  if (isStickyDisabled) {
+    document.body.classList.add('no-sticky-nav');
+  }
+
+  collapseBtn?.addEventListener('click', () => {
+    if (!sidebar) return;
+    const nowCollapsed = sidebar.classList.toggle('is-collapsed');
+    localStorage.setItem('cyb_compact_sidebar', nowCollapsed ? 'true' : 'false');
+    if (compactCheckbox) compactCheckbox.checked = nowCollapsed;
+    updateCollapseBtnState();
+  });
+
+  updateCollapseBtnState();
+
+  // Auto-hide sidebar on scroll down if auto-hide setting is active
+  let lastY = window.pageYOffset;
+  if (!window.__cyb_sidebar_scroll_bound) {
+    window.addEventListener('scroll', () => {
+      if (localStorage.getItem('cyb_autohide_sidebar') !== 'true') return;
+      const curY = window.pageYOffset;
+      const sb = document.getElementById('accountSidebar');
+      if (!sb) return;
+
+      if (curY > 180 && curY > lastY + 15) {
+        sb.classList.add('is-collapsed');
+        updateCollapseBtnState();
+      } else if (curY < lastY - 25) {
+        if (localStorage.getItem('cyb_compact_sidebar') !== 'true') {
+          sb.classList.remove('is-collapsed');
+          updateCollapseBtnState();
+        }
+      }
+      lastY = curY;
+    }, { passive: true });
+    window.__cyb_sidebar_scroll_bound = true;
   }
 }
 

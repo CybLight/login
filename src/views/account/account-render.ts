@@ -113,6 +113,12 @@ export function renderAccountPage(tab: string, user: AppUser): string {
       <div class="account-wrap">
         <!-- Боковая панель -->
         <aside class="account-sidebar" id="accountSidebar">
+          <button type="button" class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="${t('Свернуть панель')}">
+            <svg class="sidebar-collapse-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            <span class="sidebar-collapse-text">${t('Свернуть')}</span>
+          </button>
           <!-- Навигация вкладок -->
           <nav class="account-nav">
             <button data-tab="profile" ${tab === 'profile' ? 'class="active"' : ''} aria-label="${t('Профиль')}">

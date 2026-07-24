@@ -2588,6 +2588,84 @@ body.no-strawberries .strawberry-ring-wave {
   overflow-x: clip !important;
 }
 
+/* Sidebar Collapse Toggle & Compact Mode */
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #94a3b8;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.sidebar-collapse-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 127, 39, 0.15);
+  border-color: rgba(255, 127, 39, 0.4);
+}
+
+.sidebar-collapse-icon {
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+@media (min-width: 861px) {
+  .account-sidebar {
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease;
+  }
+
+  .account-sidebar.is-collapsed {
+    width: 72px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .account-sidebar.is-collapsed .sidebar-collapse-icon {
+    transform: rotate(180deg);
+  }
+
+  .account-sidebar.is-collapsed .sidebar-collapse-text {
+    display: none !important;
+  }
+
+  .account-sidebar.is-collapsed .sidebar-collapse-btn {
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  .account-sidebar.is-collapsed .account-nav button {
+    justify-content: center;
+    padding: 12px 0;
+    font-size: 0 !important;
+  }
+
+  .account-sidebar.is-collapsed .account-nav button .nav-icon {
+    margin-right: 0 !important;
+  }
+
+  .account-sidebar.is-collapsed .account-actions #logoutBtn,
+  .account-sidebar.is-collapsed .account-actions #adminPanelBtn {
+    font-size: 0 !important;
+    padding: 10px 0 !important;
+    justify-content: center;
+  }
+}
+
+body.no-sticky-nav .sec-quicknav-wrap,
+body.no-sticky-nav .account-sidebar {
+  position: relative !important;
+  top: 0 !important;
+}
+
 @keyframes secNavGlow {
   0% {
     border-color: rgba(255, 127, 39, 0.55);

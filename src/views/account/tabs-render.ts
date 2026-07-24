@@ -483,6 +483,32 @@ function renderSettingsTab(user: User): string {
             </button>
           </div>
         </div>
+
+        <div class="stg-row stg-row--block" style="margin-top: 20px;">
+          <div class="stg-row__label">${t('Панель навигации сайдбара')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 12px;">${t('Настройки отображения боковой панели аккаунта')}</div>
+          
+          <div class="sec-form-row" style="margin-bottom: 10px;">
+            <label class="checkbox-label" for="stgCompactSidebar">
+              <input type="checkbox" id="stgCompactSidebar" />
+              <span>${t('Компактная панель навигации (только иконки)')}</span>
+            </label>
+          </div>
+
+          <div class="sec-form-row" style="margin-bottom: 10px;">
+            <label class="checkbox-label" for="stgAutoHideSidebar">
+              <input type="checkbox" id="stgAutoHideSidebar" />
+              <span>${t('Автоматически скрывать панель навигации при скролле')}</span>
+            </label>
+          </div>
+
+          <div class="sec-form-row">
+            <label class="checkbox-label" for="stgStickyNav">
+              <input type="checkbox" id="stgStickyNav" checked />
+              <span>${t('Закреплять навигацию при скролле')}</span>
+            </label>
+          </div>
+        </div>
       </section>
 
       <!-- ============ NOTIFICATIONS ============ -->
