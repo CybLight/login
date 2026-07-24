@@ -2607,8 +2607,8 @@ body.no-strawberries .strawberry-ring-wave {
 .sec-quicknav-wrap {
   position: -webkit-sticky;
   position: sticky;
-  top: 10px;
-  z-index: 999;
+  top: 64px;
+  z-index: 990;
   margin-top: 0;
   margin-bottom: 18px;
   background: linear-gradient(135deg, rgba(26, 29, 41, 0.94) 0%, rgba(17, 19, 28, 0.96) 100%);
@@ -2732,7 +2732,7 @@ body.no-strawberries .strawberry-ring-wave {
   .sec-quicknav-wrap {
     position: -webkit-sticky;
     position: sticky;
-    top: 58px;
+    top: 64px;
     z-index: 900;
     padding: 10px;
     margin-bottom: 14px;
