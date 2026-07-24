@@ -22,6 +22,14 @@ import {
   renderPendingSubHtml,
 } from './account-utils';
 
+declare global {
+  interface Window {
+    __history_scroll_bound?: boolean;
+    __history_scroll_handler?: () => void;
+    __sec_quicknav_scroll_handler?: () => void;
+  }
+}
+
 type SecurityUser = AppUser & {
   login?: string;
   email_verified?: boolean | number | string;
@@ -812,6 +820,9 @@ function initSecurityQuickNav(): void {
   const toggleAllBtn = document.getElementById('secQuickNavToggleAll');
   const pills = navWrap.querySelectorAll<HTMLButtonElement>('.sec-pill');
 
+  let isClickScrolling = false;
+  let clickTimeout: ReturnType<typeof setTimeout> | null = null;
+
   const ensurePanelOpen = (itemId: string): HTMLElement | null => {
     const item = document.getElementById(itemId);
     if (!item) return null;
@@ -833,6 +844,9 @@ function initSecurityQuickNav(): void {
         ensurePanelOpen(parentId);
       }
 
+      pills.forEach((p) => p.classList.remove('is-active'));
+      pill.classList.add('is-active');
+
       if (targetId) {
         if (targetId.endsWith('Item')) {
           ensurePanelOpen(targetId);
@@ -840,18 +854,64 @@ function initSecurityQuickNav(): void {
 
         const targetEl = document.getElementById(targetId);
         if (targetEl) {
+          isClickScrolling = true;
+          if (clickTimeout) clearTimeout(clickTimeout);
+
           setTimeout(() => {
             const yOffset = -120;
             const y = targetEl.getBoundingClientRect().top + window.pageYOffset + yOffset;
             window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+
+            clickTimeout = setTimeout(() => {
+              isClickScrolling = false;
+            }, 600);
           }, 60);
         }
       }
-
-      pills.forEach((p) => p.classList.remove('is-active'));
-      pill.classList.add('is-active');
     });
   });
+
+  // ScrollSpy function to highlight active pill as user scrolls
+  const handleScrollSpy = () => {
+    if (isClickScrolling) return;
+
+    const navWrap = document.getElementById('secQuickNav');
+    if (!navWrap) return;
+
+    const pillsArr = Array.from(navWrap.querySelectorAll<HTMLButtonElement>('.sec-pill'));
+    const scrollY = window.pageYOffset || document.documentElement.scrollTop;
+    const threshold = scrollY + 160;
+
+    let activePill: HTMLButtonElement | null = null;
+
+    for (const pill of pillsArr) {
+      const targetId = pill.getAttribute('data-target');
+      if (!targetId) continue;
+      const targetEl = document.getElementById(targetId);
+      if (!targetEl) continue;
+
+      const rect = targetEl.getBoundingClientRect();
+      const topPos = rect.top + scrollY;
+
+      if (topPos <= threshold) {
+        activePill = pill;
+      }
+    }
+
+    if (activePill) {
+      pillsArr.forEach((p) => p.classList.remove('is-active'));
+      activePill.classList.add('is-active');
+    }
+  };
+
+  if (window.__sec_quicknav_scroll_handler) {
+    window.removeEventListener('scroll', window.__sec_quicknav_scroll_handler);
+  }
+  window.__sec_quicknav_scroll_handler = handleScrollSpy;
+  window.addEventListener('scroll', window.__sec_quicknav_scroll_handler, { passive: true });
+
+  // Initial update
+  handleScrollSpy();
 
   let allExpanded = false;
   toggleAllBtn?.addEventListener('click', () => {
