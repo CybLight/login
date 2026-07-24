@@ -70,8 +70,14 @@ function showDriveRestoreProgressModal(): DriveRestoreProgressModal {
   };
 }
 
-function showBackupPasswordModal(title: string, hint: string): Promise<string | null> {
+import {
+  getRememberedBackupPassword,
+  setRememberedBackupPassword,
+} from '@/utils/backup-password-storage';
+
+function showBackupPasswordModal(userId: string, title: string, hint: string): Promise<string | null> {
   return new Promise((resolve) => {
+    const remembered = getRememberedBackupPassword(userId);
     const wrap = document.createElement('div');
     wrap.className = 'account-notice-modal';
     wrap.innerHTML = `
@@ -80,8 +86,14 @@ function showBackupPasswordModal(title: string, hint: string): Promise<string | 
         <div class="account-notice-head">${escapeHtml(title)}</div>
         <p class="account-notice-text">${escapeHtml(hint)}</p>
         <div class="pass-wrap">
-          <input class="input" id="driveRestorePasswordInput" type="password" autocomplete="current-password" />
+          <input class="input" id="driveRestorePasswordInput" type="password" autocomplete="current-password" value="${remembered ? escapeHtml(remembered) : ''}" />
           <button type="button" class="pass-eye" data-target="driveRestorePasswordInput" aria-label="${escapeHtml(t('Показать пароль'))}"></button>
+        </div>
+        <div class="sec-form-row sec-mt-8" style="text-align: left;">
+          <label class="checkbox-label" for="driveRestorePasswordRemember">
+            <input type="checkbox" id="driveRestorePasswordRemember" ${remembered ? 'checked' : ''} />
+            <span>${escapeHtml(t('Запомнить пароль и больше не спрашивать'))}</span>
+          </label>
         </div>
         <div class="account-notice-actions">
           <button type="button" class="btn btn-outline" id="driveRestoreCancelBtn">${escapeHtml(t('Отмена'))}</button>
@@ -92,7 +104,11 @@ function showBackupPasswordModal(title: string, hint: string): Promise<string | 
     initPasswordEyes(wrap);
 
     const input = wrap.querySelector('#driveRestorePasswordInput') as HTMLInputElement;
+    const rememberCb = wrap.querySelector('#driveRestorePasswordRemember') as HTMLInputElement;
     const close = (value: string | null) => {
+      if (value && rememberCb) {
+        setRememberedBackupPassword(userId, value, rememberCb.checked);
+      }
       wrap.remove();
       resolve(value);
     };
@@ -449,6 +465,7 @@ export async function promptGoogleDriveRestoreIfNeeded(
     }
 
     const password = await showBackupPasswordModal(
+      userId,
       t('Введите пароль резервной копии'),
       t('Пароль, заданный при сохранении копии в Google Drive.'),
     );

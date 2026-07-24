@@ -1,5 +1,6 @@
 /** Auto-generated — run: node scripts/gen-i18n-maps.mjs */
 export const en: Record<string, string> = {
+  "Запомнить пароль и больше не спрашивать": "Remember password and don't ask again",
   "Перейти к основному содержимому": "Skip to main content",
   "Ваша сессия истекла. Пожалуйста, войдите снова.": "Your session has expired. Please sign in again.",
   "Ошибка инициализации": "Initialization error",

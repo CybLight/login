@@ -75,6 +75,12 @@ function hideBackupRestoreProgress(): void {
   track.setAttribute('aria-valuenow', '0');
 }
 
+import {
+  bindRememberBackupPasswordHandler,
+  getRememberedBackupPassword,
+  setRememberedBackupPassword,
+} from '@/utils/backup-password-storage';
+
 export function bindBackupHandlers(deps: BackupDeps): void {
   const { userId, login, api } = deps;
   const exportBtn = document.getElementById('secBackupExportBtn');
@@ -89,9 +95,20 @@ export function bindBackupHandlers(deps: BackupDeps): void {
   bindDriveBackupHandlers({ userId, login, api, ...backupHelpers });
   bindQrSyncHandlers({ userId, api });
 
+  bindRememberBackupPasswordHandler(userId, 'secBackupExportPassword', 'secBackupExportRememberPassword');
+  bindRememberBackupPasswordHandler(userId, 'secBackupImportPassword', 'secBackupImportRememberPassword');
+
   exportBtn?.addEventListener('click', async () => {
-    const password = readPasswordInput('secBackupExportPassword');
-    const confirm = readPasswordInput('secBackupExportPasswordConfirm');
+    let password = readPasswordInput('secBackupExportPassword');
+    let confirm = readPasswordInput('secBackupExportPasswordConfirm');
+    const rememberCb = document.getElementById('secBackupExportRememberPassword') as HTMLInputElement | null;
+    const shouldRemember = rememberCb?.checked ?? false;
+
+    if (!password) {
+      password = getRememberedBackupPassword(userId) || '';
+      confirm = password;
+    }
+
     if (password.length < 8) {
       api.showMsg('error', t('Пароль резервной копии должен быть не короче 8 символов.'));
       return;
@@ -100,6 +117,8 @@ export function bindBackupHandlers(deps: BackupDeps): void {
       api.showMsg('error', t('Пароли не совпадают.'));
       return;
     }
+
+    setRememberedBackupPassword(userId, password, shouldRemember);
 
     setBackupBusy(true);
     api.clearMsg();
@@ -124,11 +143,20 @@ export function bindBackupHandlers(deps: BackupDeps): void {
     fileInput.value = '';
     if (!file) return;
 
-    const password = readPasswordInput('secBackupImportPassword');
+    let password = readPasswordInput('secBackupImportPassword');
+    const rememberCb = document.getElementById('secBackupImportRememberPassword') as HTMLInputElement | null;
+    const shouldRemember = rememberCb?.checked ?? false;
+
+    if (!password) {
+      password = getRememberedBackupPassword(userId) || '';
+    }
+
     if (!password) {
       api.showMsg('error', t('Введите пароль резервной копии.'));
       return;
     }
+
+    setRememberedBackupPassword(userId, password, shouldRemember);
 
     setBackupBusy(true);
     api.clearMsg();

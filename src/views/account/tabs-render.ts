@@ -1275,6 +1275,12 @@ function renderSecurityTab(user: User): string {
                 <button type="button" class="pass-eye" data-target="secDriveBackupPassword" aria-label="${t('Показать пароль')}"></button>
               </div>
             </div>
+            <div class="sec-form-row sec-mt-8">
+              <label class="checkbox-label" for="secDriveBackupRememberPassword">
+                <input type="checkbox" id="secDriveBackupRememberPassword" />
+                <span>${t('Запомнить пароль и больше не спрашивать')}</span>
+              </label>
+            </div>
             <div class="sec-backup-progress sec-backup-progress--drive is-hidden" id="secDriveBackupProgress" aria-live="polite" aria-busy="false">
               <div class="sec-backup-progress__head">
                 <span class="sec-backup-progress__label" id="secDriveBackupProgressLabel">${t('Подготовка…')}</span>
@@ -1354,6 +1360,12 @@ function renderSecurityTab(user: User): string {
                 <button type="button" class="pass-eye" data-target="secBackupExportPasswordConfirm" aria-label="${t('Показать пароль')}"></button>
               </div>
             </div>
+            <div class="sec-form-row sec-mt-8">
+              <label class="checkbox-label" for="secBackupExportRememberPassword">
+                <input type="checkbox" id="secBackupExportRememberPassword" />
+                <span>${t('Запомнить пароль и больше не спрашивать')}</span>
+              </label>
+            </div>
             <div class="sec-actions sec-mt-12">
               <button class="btn btn-primary" id="secBackupExportBtn" type="button">${t('Скачать .cyblight-backup')}</button>
             </div>
@@ -1371,6 +1383,12 @@ function renderSecurityTab(user: User): string {
                 <input class="input" id="secBackupImportPassword" type="password" autocomplete="current-password" placeholder="${t('Пароль от файла резервной копии')}" />
                 <button type="button" class="pass-eye" data-target="secBackupImportPassword" aria-label="${t('Показать пароль')}"></button>
               </div>
+            </div>
+            <div class="sec-form-row sec-mt-8">
+              <label class="checkbox-label" for="secBackupImportRememberPassword">
+                <input type="checkbox" id="secBackupImportRememberPassword" />
+                <span>${t('Запомнить пароль и больше не спрашивать')}</span>
+              </label>
             </div>
             <div class="sec-form-row sec-mt-8">
               <label class="checkbox-label" for="secBackupImportSkipChats">

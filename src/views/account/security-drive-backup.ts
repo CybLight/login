@@ -235,8 +235,16 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
   }
 }
 
+import {
+  bindRememberBackupPasswordHandler,
+  getRememberedBackupPassword,
+  setRememberedBackupPassword,
+} from '@/utils/backup-password-storage';
+
 export function bindDriveBackupHandlers(deps: DriveBackupDeps): void {
   const { userId, login, api, readPassword, setBackupBusy } = deps;
+
+  bindRememberBackupPasswordHandler(userId, 'secDriveBackupPassword', 'secDriveBackupRememberPassword');
 
   const status = document.getElementById('secDriveBackupStatus');
   if (status) {
@@ -278,11 +286,20 @@ export function bindDriveBackupHandlers(deps: DriveBackupDeps): void {
   });
 
   uploadBtn?.addEventListener('click', async () => {
-    const password = readPassword('secDriveBackupPassword');
+    let password = readPassword('secDriveBackupPassword');
+    const rememberCb = document.getElementById('secDriveBackupRememberPassword') as HTMLInputElement | null;
+    const shouldRemember = rememberCb?.checked ?? false;
+
+    if (!password) {
+      password = getRememberedBackupPassword(userId) || '';
+    }
+
     if (password.length < 8) {
       api.showMsg('error', t('Пароль резервной копии должен быть не короче 8 символов.'));
       return;
     }
+
+    setRememberedBackupPassword(userId, password, shouldRemember);
 
     setBackupBusy(true);
     api.clearMsg();
@@ -302,11 +319,20 @@ export function bindDriveBackupHandlers(deps: DriveBackupDeps): void {
   });
 
   restoreBtn?.addEventListener('click', async () => {
-    const password = readPassword('secDriveBackupPassword');
+    let password = readPassword('secDriveBackupPassword');
+    const rememberCb = document.getElementById('secDriveBackupRememberPassword') as HTMLInputElement | null;
+    const shouldRemember = rememberCb?.checked ?? false;
+
+    if (!password) {
+      password = getRememberedBackupPassword(userId) || '';
+    }
+
     if (!password) {
       api.showMsg('error', t('Введите пароль резервной копии.'));
       return;
     }
+
+    setRememberedBackupPassword(userId, password, shouldRemember);
 
     setBackupBusy(true);
     api.clearMsg();
