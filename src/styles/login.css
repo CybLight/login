@@ -2624,13 +2624,9 @@ body.no-strawberries .strawberry-ring-wave {
   }
 
   .account-sidebar.is-collapsed {
-    width: 72px !important;
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-  }
-
-  .account-sidebar.is-collapsed .sidebar-collapse-icon {
-    transform: rotate(180deg);
+    width: 58px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
   }
 
   .account-sidebar.is-collapsed .sidebar-collapse-text {
@@ -2639,17 +2635,24 @@ body.no-strawberries .strawberry-ring-wave {
 
   .account-sidebar.is-collapsed .sidebar-collapse-btn {
     justify-content: center;
-    padding: 10px 0;
+    padding: 8px 0;
+    width: 100%;
   }
 
   .account-sidebar.is-collapsed .account-nav button {
     justify-content: center;
-    padding: 12px 0;
+    padding: 10px 0;
     font-size: 0 !important;
+    width: 100%;
+    min-width: 0;
   }
 
   .account-sidebar.is-collapsed .account-nav button .nav-icon {
     margin-right: 0 !important;
+  }
+
+  .account-sidebar.is-collapsed .account-actions {
+    padding: 0;
   }
 
   .account-sidebar.is-collapsed .account-actions #logoutBtn,
@@ -2657,6 +2660,7 @@ body.no-strawberries .strawberry-ring-wave {
     font-size: 0 !important;
     padding: 10px 0 !important;
     justify-content: center;
+    width: 100%;
   }
 }
 
