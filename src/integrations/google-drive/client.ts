@@ -183,3 +183,35 @@ export async function deleteDriveBackupFile(accessToken: string, userId: string)
   }
   return deletedAny;
 }
+
+export type GoogleDriveStorageQuota = {
+  usageBytes: number;
+  limitBytes?: number;
+};
+
+type DriveAboutResponse = {
+  storageQuota?: {
+    limit?: string;
+    usage?: string;
+  };
+};
+
+export async function fetchDriveStorageQuota(
+  accessToken: string,
+): Promise<GoogleDriveStorageQuota | null> {
+  try {
+    const url = `${GOOGLE_DRIVE_API_BASE}/about?fields=${encodeURIComponent('storageQuota(limit,usage)')}`;
+    const response = await driveFetch(accessToken, url);
+    if (!response.ok) return null;
+    const data = (await response.json()) as DriveAboutResponse;
+    const quota = data.storageQuota;
+    if (!quota?.usage) return null;
+    const usageBytes = Number(quota.usage);
+    if (isNaN(usageBytes)) return null;
+    const limitNum = quota.limit ? Number(quota.limit) : 0;
+    const limitBytes = limitNum > 0 ? limitNum : undefined;
+    return { usageBytes, limitBytes };
+  } catch {
+    return null;
+  }
+}

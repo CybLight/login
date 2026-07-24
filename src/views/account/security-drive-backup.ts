@@ -6,12 +6,14 @@ import {
   clearGoogleDriveToken,
   deleteGoogleDriveBackup,
   fetchDriveBackupMetadata,
+  fetchDriveStorageQuota,
   getGoogleDriveAccessToken,
   hasGoogleDriveSession,
   isGoogleDriveConfigured,
   resolveGoogleDriveAccountLabel,
   restoreBackupFromGoogleDrive,
   uploadBackupToGoogleDrive,
+  type GoogleDriveStorageQuota,
 } from '@/integrations/google-drive';
 import { showAccountConfirmModal, showAccountNoticeModal } from './modals';
 import { driveBackupProgress } from './backup-progress';
@@ -34,6 +36,32 @@ function formatDriveBackupTime(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatFileSize(bytesNumOrStr?: number | string): string {
+  if (bytesNumOrStr === undefined || bytesNumOrStr === null) return '';
+  const bytes = Number(bytesNumOrStr);
+  if (isNaN(bytes) || bytes < 0) return '';
+  const gib = bytes / (1024 * 1024 * 1024);
+  if (gib >= 0.05) {
+    const rounded = gib >= 10 && Math.abs(gib - Math.round(gib)) < 0.05 ? Math.round(gib).toString() : gib.toFixed(1);
+    return t('{amount} ГБ', { amount: rounded });
+  }
+  const mib = bytes / (1024 * 1024);
+  if (mib >= 0.1) {
+    return t('{amount} МБ', { amount: mib.toFixed(0) });
+  }
+  const kib = Math.max(0, Math.round(bytes / 1024));
+  return t('{amount} КБ', { amount: kib.toString() });
+}
+
+function formatStorageQuotaText(quota: GoogleDriveStorageQuota): string {
+  const used = formatFileSize(quota.usageBytes);
+  if (quota.limitBytes) {
+    const limit = formatFileSize(quota.limitBytes);
+    return t('Использовано: {used} из {limit}', { used, limit });
+  }
+  return t('Использовано: {used}', { used });
 }
 
 function googleDriveErrorMessage(code: string): string {
@@ -106,6 +134,8 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
   await refreshDriveBackupAccountLabel();
 
   const label = document.getElementById('secDriveBackupStatus');
+  const storageEl = document.getElementById('secDriveBackupStorage');
+  const storageWrapEl = document.getElementById('secDriveBackupStorageWrap');
   const signInBtn = document.getElementById('secDriveBackupSignInBtn');
   const uploadBtn = document.getElementById('secDriveBackupUploadBtn');
   const restoreBtn = document.getElementById('secDriveBackupRestoreBtn');
@@ -119,6 +149,8 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
     toggleElementVisible(restoreBtn, false);
     toggleElementVisible(deleteBtn, false);
     toggleElementVisible(disconnectBtn, false);
+    toggleElementVisible(storageEl, false);
+    toggleElementVisible(storageWrapEl, false);
     return;
   }
 
@@ -129,6 +161,8 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
     toggleElementVisible(restoreBtn, false);
     toggleElementVisible(deleteBtn, false);
     toggleElementVisible(disconnectBtn, false);
+    toggleElementVisible(storageEl, false);
+    toggleElementVisible(storageWrapEl, false);
     return;
   }
 
@@ -137,6 +171,16 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
   toggleElementVisible(restoreBtn, true);
   toggleElementVisible(deleteBtn, true);
   toggleElementVisible(disconnectBtn, true);
+  toggleElementVisible(storageWrapEl, true);
+
+  void fetchDriveStorageQuota().then((quota) => {
+    if (quota && storageEl) {
+      storageEl.textContent = formatStorageQuotaText(quota);
+      toggleElementVisible(storageEl, true);
+    } else {
+      toggleElementVisible(storageEl, false);
+    }
+  });
 
   if (!label) return;
 
@@ -146,9 +190,18 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
       label.textContent = t('В Google Drive пока нет резервной копии.');
       return;
     }
-    label.textContent = t('Последнее сохранение в Drive: {date}', {
-      date: formatDriveBackupTime(metadata.file.modifiedTime),
-    });
+    const dateStr = formatDriveBackupTime(metadata.file.modifiedTime);
+    const sizeStr = formatFileSize(metadata.file.size);
+    if (sizeStr) {
+      label.textContent = t('Последнее сохранение в Drive: {date} · {size}', {
+        date: dateStr,
+        size: sizeStr,
+      });
+    } else {
+      label.textContent = t('Последнее сохранение в Drive: {date}', {
+        date: dateStr,
+      });
+    }
   } catch {
     label.textContent = t('Не удалось получить статус Google Drive.');
   }

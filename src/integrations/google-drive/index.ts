@@ -10,6 +10,10 @@ export {
 export {
   deleteGoogleDriveBackup,
   fetchDriveBackupMetadata,
+  fetchDriveStorageQuota,
   restoreBackupFromGoogleDrive,
   uploadBackupToGoogleDrive,
+  type DriveBackupFile,
+  type DriveBackupMetadata,
+  type GoogleDriveStorageQuota,
 } from './backup';

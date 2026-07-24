@@ -2417,6 +2417,31 @@ body.no-strawberries .strawberry-ring-wave {
   display: none !important;
 }
 
+.sec-drive-storage-wrap {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.sec-drive-storage-wrap.is-hidden {
+  display: none !important;
+}
+
+.sec-drive-storage-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #fb923c;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.sec-drive-storage-link:hover {
+  color: #ff7f27;
+  text-decoration: underline;
+}
+
 .sec-head-row {
   display: flex;
   align-items: center;

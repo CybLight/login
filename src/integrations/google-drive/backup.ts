@@ -3,14 +3,27 @@ import { getGoogleDriveAccessToken } from './auth';
 import {
   deleteDriveBackupFile,
   downloadDriveBackupFile,
+  fetchDriveStorageQuota as fetchDriveStorageQuotaClient,
   findDriveBackupFile,
   uploadDriveBackupFile,
   type DriveBackupFile,
+  type GoogleDriveStorageQuota,
 } from './client';
+
+export type { DriveBackupFile, GoogleDriveStorageQuota };
 
 export type DriveBackupMetadata = {
   file: DriveBackupFile;
 };
+
+export async function fetchDriveStorageQuota(): Promise<GoogleDriveStorageQuota | null> {
+  try {
+    const accessToken = await getGoogleDriveAccessToken({ interactive: false });
+    return fetchDriveStorageQuotaClient(accessToken);
+  } catch {
+    return null;
+  }
+}
 
 export async function fetchDriveBackupMetadata(
   userId: string,

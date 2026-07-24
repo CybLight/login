@@ -1227,6 +1227,17 @@ function renderSecurityTab(user: User): string {
             <p class="sec-hint">${t('Сохранение и восстановление только ключей шифрования в Google Drive. Доступ только у приложения CybLight и только к созданным им файлам.')}</p>
             <p class="sec-status sec-status-muted sec-drive-account is-hidden" id="secDriveBackupAccount"></p>
             <p class="sec-status sec-status-muted" id="secDriveBackupStatus">${t('Загрузка статуса…')}</p>
+            <p class="sec-status sec-status-muted is-hidden" id="secDriveBackupStorage"></p>
+            <div class="sec-drive-storage-wrap is-hidden" id="secDriveBackupStorageWrap">
+              <a class="sec-drive-storage-link" href="https://one.google.com/storage" target="_blank" rel="noopener noreferrer">
+                <span>${t('Управление хранилищем Google')}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+            </div>
             <div class="sec-form-row">
               <label class="label sec-label" for="secDriveBackupPassword">${t('Пароль резервной копии')}</label>
               <div class="pass-wrap">
