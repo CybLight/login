@@ -1105,8 +1105,9 @@ async function bindBlockedUsersHandlers(api: ApiMessage): Promise<void> {
     try {
       const res = await apiCall('/users/blocked', { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.blockedUsers) {
-        const users = data.blockedUsers || [];
+      const blockedList = data.blockedUsers || data.data?.blockedUsers;
+      if (res.ok && Array.isArray(blockedList)) {
+        const users = blockedList || [];
         if (users.length === 0) {
           container.innerHTML = `<div style="font-size: 13px; color: #9ca3af; padding: 8px 0;">${t('У вас нет заблокированных пользователей')}</div>`;
           return;

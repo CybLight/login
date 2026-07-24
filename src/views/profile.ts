@@ -264,8 +264,9 @@ async function checkIsUserBlocked(targetUserId: string): Promise<boolean> {
   try {
     const res = await apiCall('/users/blocked', { credentials: 'include' });
     const data = await res.json().catch(() => ({}));
-    if (res.ok && Array.isArray(data.blockedUsers)) {
-      return data.blockedUsers.some((u: any) => u.id === targetUserId || u.public_id === targetUserId);
+    const blockedList = data.blockedUsers || data.data?.blockedUsers;
+    if (res.ok && Array.isArray(blockedList)) {
+      return blockedList.some((u: any) => u.id === targetUserId || u.public_id === targetUserId);
     }
   } catch (err) {
     console.error('Error checking blocked status:', err);
