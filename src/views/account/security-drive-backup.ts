@@ -6,6 +6,7 @@ import {
   clearGoogleDriveToken,
   deleteGoogleDriveBackup,
   fetchDriveBackupMetadata,
+  getGoogleDriveAccessToken,
   hasGoogleDriveSession,
   isGoogleDriveConfigured,
   resolveGoogleDriveAccountLabel,
@@ -42,6 +43,8 @@ function googleDriveErrorMessage(code: string): string {
     case 'google_drive_auth_denied':
       return t('Доступ к Google Drive не был предоставлен.');
     case 'google_drive_auth_failed':
+    case 'google_drive_auth_required':
+      return t('Не удалось авторизоваться в Google.');
     case 'google_script_load_failed':
       return t('Не удалось войти через Google.');
     case 'google_drive_no_backup':
@@ -90,17 +93,27 @@ export async function refreshDriveBackupStatusLabel(): Promise<void> {
   await refreshDriveBackupAccountLabel();
 
   const label = document.getElementById('secDriveBackupStatus');
-  if (!label) return;
+  const signInBtn = document.getElementById('secDriveBackupSignInBtn');
+  const disconnectBtn = document.getElementById('secDriveBackupDisconnectBtn');
 
   if (!isGoogleDriveConfigured()) {
-    label.textContent = t('Google Drive не настроен на этом сервере.');
+    if (label) label.textContent = t('Google Drive не настроен на этом сервере.');
+    signInBtn?.classList.add('is-hidden');
+    disconnectBtn?.classList.add('is-hidden');
     return;
   }
 
   if (!hasGoogleDriveSession()) {
-    label.textContent = t('Войдите через Google, чтобы сохранить или восстановить копию.');
+    if (label) label.textContent = t('Войдите через Google, чтобы сохранить или восстановить копию.');
+    signInBtn?.classList.remove('is-hidden');
+    disconnectBtn?.classList.add('is-hidden');
     return;
   }
+
+  signInBtn?.classList.add('is-hidden');
+  disconnectBtn?.classList.remove('is-hidden');
+
+  if (!label) return;
 
   try {
     const metadata = await fetchDriveBackupMetadata(label.dataset.userId || '');
@@ -124,6 +137,7 @@ export function bindDriveBackupHandlers(deps: DriveBackupDeps): void {
     status.dataset.userId = userId;
   }
 
+  const signInBtn = document.getElementById('secDriveBackupSignInBtn');
   const uploadBtn = document.getElementById('secDriveBackupUploadBtn');
   const restoreBtn = document.getElementById('secDriveBackupRestoreBtn');
   const deleteBtn = document.getElementById('secDriveBackupDeleteBtn');
@@ -131,6 +145,7 @@ export function bindDriveBackupHandlers(deps: DriveBackupDeps): void {
   const configured = isGoogleDriveConfigured();
 
   if (!configured) {
+    signInBtn?.setAttribute('disabled', 'true');
     uploadBtn?.setAttribute('disabled', 'true');
     restoreBtn?.setAttribute('disabled', 'true');
     deleteBtn?.setAttribute('disabled', 'true');
@@ -138,6 +153,23 @@ export function bindDriveBackupHandlers(deps: DriveBackupDeps): void {
   }
 
   void refreshDriveBackupStatusLabel();
+
+  signInBtn?.addEventListener('click', async () => {
+    setBackupBusy(true);
+    api.clearMsg();
+    try {
+      await getGoogleDriveAccessToken({ interactive: true });
+      await refreshDriveBackupStatusLabel();
+      api.showMsg('success', t('Вход в Google выполнен успешно.'));
+    } catch (error) {
+      const code = error instanceof Error ? error.message : 'auth_failed';
+      if (code !== 'google_drive_auth_denied') {
+        api.showMsg('error', googleDriveErrorMessage(code));
+      }
+    } finally {
+      setBackupBusy(false);
+    }
+  });
 
   uploadBtn?.addEventListener('click', async () => {
     const password = readPassword('secDriveBackupPassword');

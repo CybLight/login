@@ -431,6 +431,8 @@ export const en: Record<string, string> = {
   "Выбор языка": "Language selection",
   "Выбрано: {count}": "Selected: {count}",
   "Выбрать файл и восстановить": "Choose file and restore",
+  "Войти через Google": "Sign in with Google",
+  "Вход в Google выполнен успешно.": "Signed in to Google successfully.",
   "Выйти из Google": "Sign out of Google",
   "Выполнено": "Done",
   "Высший уровень доступа: полное управление проектом CybLight.": "Highest access level: full management of the CybLight project.",

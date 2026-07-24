@@ -31,6 +31,7 @@ function setBackupBusy(busy: boolean): void {
   const exportBtn = document.getElementById('secBackupExportBtn') as HTMLButtonElement | null;
   const importBtn = document.getElementById('secBackupImportBtn') as HTMLButtonElement | null;
   const importPassword = document.getElementById('secBackupImportPassword') as HTMLInputElement | null;
+  const driveSignInBtn = document.getElementById('secDriveBackupSignInBtn') as HTMLButtonElement | null;
   const driveUploadBtn = document.getElementById('secDriveBackupUploadBtn') as HTMLButtonElement | null;
   const driveRestoreBtn = document.getElementById('secDriveBackupRestoreBtn') as HTMLButtonElement | null;
   const driveDeleteBtn = document.getElementById('secDriveBackupDeleteBtn') as HTMLButtonElement | null;
@@ -38,6 +39,7 @@ function setBackupBusy(busy: boolean): void {
   if (exportBtn) exportBtn.disabled = busy;
   if (importBtn) importBtn.disabled = busy;
   if (importPassword) importPassword.disabled = busy;
+  if (driveSignInBtn) driveSignInBtn.disabled = busy;
   if (driveUploadBtn) driveUploadBtn.disabled = busy;
   if (driveRestoreBtn) driveRestoreBtn.disabled = busy;
   if (driveDeleteBtn) driveDeleteBtn.disabled = busy;
