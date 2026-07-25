@@ -3,7 +3,7 @@
  */
 
 import { t, localeTag, getLocale } from '@/i18n';
-import { buildAuthFooter } from '@/ui/auth-footer';
+import { buildAuthFooter, initFooterLangSwitcher } from '@/ui/auth-footer';
 import { apiCall, escapeHtml } from '@/utils';
 import { Router } from '@/router/Router';
 
@@ -30,7 +30,7 @@ interface EditableProfile {
 }
 
 // Доступные аватары
-const STANDARD_AVATARS = [
+export const STANDARD_AVATARS = [
   { id: 'avatar-cat', emoji: '🐱', label: 'Кот' },
   { id: 'avatar-dog', emoji: '🐶', label: 'Пёс' },
   { id: 'avatar-fox', emoji: '🦊', label: 'Лиса' },
@@ -43,7 +43,7 @@ const STANDARD_AVATARS = [
   { id: 'avatar-tiger', emoji: '🐯', label: 'Тигр' },
 ];
 
-const EXCLUSIVE_AVATARS = [
+export const EXCLUSIVE_AVATARS = [
   { id: 'avatar-crown', emoji: '👑', label: 'Корона' },
   { id: 'avatar-shield', emoji: '🛡️', label: 'Щит' },
   { id: 'avatar-code', emoji: '💻', label: 'Код' },
@@ -142,9 +142,14 @@ async function updateProfile(
 /**
  * Проверить доступность эксклюзивного аватара
  */
-function canUseExclusiveAvatar(profile: EditableProfile, avatarId: string): boolean {
+export function canUseExclusiveAvatar(profile: EditableProfile, avatarId: string): boolean {
   const flags = profile.flags || [];
-  const role = profile.role || '';
+  const role = (profile.role || '').toLowerCase();
+
+  // Owner имеет доступ ко всем эксклюзивным аватарам
+  if (role === 'owner' || flags.includes('owner')) {
+    return true;
+  }
 
   // Корона - для админов
   if (avatarId === 'avatar-crown') {
@@ -233,30 +238,39 @@ export async function renderEditProfile(): Promise<void> {
     };
   }
 
-  // Определяем доступные аватары
-  const availableExclusiveAvatars = EXCLUSIVE_AVATARS.filter((avatar) =>
-    canUseExclusiveAvatar(profile, avatar.id)
-  );
-
-  const allAvatars = [...STANDARD_AVATARS, ...availableExclusiveAvatars];
-
-  const avatarOptionsHtml = allAvatars
-    .map(
-      (avatar) => `
+  const standardAvatarOptionsHtml = STANDARD_AVATARS.map(
+    (avatar) => `
     <div class="avatar-option ${profile.avatar === avatar.id ? 'selected' : ''}" 
          data-avatar="${avatar.id}"
          title="${t(avatar.label)}">
       <div class="avatar-badge">${avatar.emoji}</div>
     </div>
   `
-    )
-    .join('');
+  ).join('');
+
+  const exclusiveAvatarOptionsHtml = EXCLUSIVE_AVATARS.map((avatar) => {
+    const isUnlocked = canUseExclusiveAvatar(profile, avatar.id);
+    const isSelected = profile.avatar === avatar.id;
+    const lockTitle = isUnlocked
+      ? t(avatar.label)
+      : `${t(avatar.label)} (${t('Доступно только для специальных ролей')})`;
+
+    return `
+      <div class="avatar-option ${isSelected ? 'selected' : ''} ${!isUnlocked ? 'locked' : ''}" 
+           data-avatar="${avatar.id}"
+           title="${escapeHtml(lockTitle)}">
+        <div class="avatar-badge">${avatar.emoji}</div>
+        ${!isUnlocked ? `<div class="avatar-lock-icon">🔒</div>` : ''}
+      </div>
+    `;
+  }).join('');
 
   let selectedAvatar = profile.avatar || 'avatar-cat';
 
   // Получаем текущие значения для отображения
-  const currentAvatar = allAvatars.find((a) => a.id === profile.avatar);
+  const currentAvatar = [...STANDARD_AVATARS, ...EXCLUSIVE_AVATARS].find((a) => a.id === profile.avatar);
   const currentAvatarEmoji = currentAvatar?.emoji || '👤';
+  const currentAvatarLabel = currentAvatar ? t(currentAvatar.label) : t('Аватар');
   const currentBio = profile.bio
     ? profile.bio.length > 40
       ? profile.bio.substring(0, 40) + '...'
@@ -292,7 +306,10 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>👤 ${t('Имя пользователя')}</h2>
+              <div class="accordion-header-title-row">
+                <span class="accordion-header-icon">👤</span>
+                <h2>${t('Имя пользователя')}</h2>
+              </div>
               <span class="current-value">${escapeHtml(profile.username || '')}</span>
             </div>
             <button class="btn-accordion" data-section="username" aria-label="${t('Изменить')}">${t('Изменить')}</button>
@@ -312,18 +329,17 @@ export async function renderEditProfile(): Promise<void> {
               </button>
             </div>
             <div id="usernameHint" class="field-hint" style="color: #ef4444; font-size: 12px; margin-top: 6px; ${profile.canChangeUsername ? 'display: none;' : ''}">
-              ${
-                profile.canChangeUsername
-                  ? ''
-                  : profile.usernameChangedAt
-                    ? t('Можно изменить через {days} дней', {
-                        days: Math.ceil(
-                          (30 * 24 * 60 * 60 * 1000 - (Date.now() - profile.usernameChangedAt)) /
-                            (24 * 60 * 60 * 1000)
-                        ),
-                      })
-                    : t('Изменение временно недоступно')
-              }
+              ${profile.canChangeUsername
+      ? ''
+      : profile.usernameChangedAt
+        ? t('Можно изменить через {days} дней', {
+          days: Math.ceil(
+            (30 * 24 * 60 * 60 * 1000 - (Date.now() - profile.usernameChangedAt)) /
+            (24 * 60 * 60 * 1000)
+          ),
+        })
+        : t('Изменение временно недоступно')
+    }
             </div>
             <div id="usernameHints" style="margin-top: 10px; margin-bottom: 8px;"></div>
             <div class="username-limit-warning" style="font-size: 12px; color: #ff9800; background: rgba(255, 152, 0, 0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 152, 0, 0.2); margin-top: 12px; line-height: 1.4;">
@@ -336,14 +352,29 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>🎨 ${t('Аватар')}</h2>
-              <span class="current-value">${currentAvatarEmoji}</span>
+              <div class="accordion-header-title-row">
+                <span class="accordion-header-icon" id="editProfileAvatarHeaderIcon" style="font-size: 24px;">${currentAvatarEmoji}</span>
+                <h2>${t('Аватар')}</h2>
+              </div>
+              <span class="current-value" id="editProfileAvatarValueText">${escapeHtml(currentAvatarLabel)}</span>
             </div>
             <button class="btn-accordion" data-section="avatar" aria-label="${t('Изменить')}">${t('Изменить')}</button>
           </div>
           <div class="accordion-content" id="section-avatar" style="display:none;">
-            <div class="avatar-grid">
-              ${avatarOptionsHtml}
+            <div class="avatar-section">
+              <h3 class="avatar-section-title">${t('Стандартные')}</h3>
+              <div class="avatar-grid">
+                ${standardAvatarOptionsHtml}
+              </div>
+            </div>
+            <div class="avatar-section" style="margin-top: 20px;">
+              <div class="avatar-section-header">
+                <h3 class="avatar-section-title">${t('Эксклюзивные')}</h3>
+                <p class="avatar-section-subtitle">${t('Эти аватары доступны только администраторам, VIP и разработчикам.')}</p>
+              </div>
+              <div class="avatar-grid">
+                ${exclusiveAvatarOptionsHtml}
+              </div>
             </div>
             <div class="privacy-setting">
               <label>${t('Кому видно:')}</label>
@@ -360,7 +391,10 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>✍️ ${t('О себе (кратко)')}</h2>
+              <div class="accordion-header-title-row">
+                <span class="accordion-header-icon">✍️</span>
+                <h2>${t('О себе (кратко)')}</h2>
+              </div>
               <span class="current-value">${escapeHtml(currentBio)}</span>
             </div>
             <button class="btn-accordion" data-section="bio" aria-label="${t('Изменить')}">${t('Изменить')}</button>
@@ -389,7 +423,10 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>📖 ${t('О себе (подробно)')}</h2>
+              <div class="accordion-header-title-row">
+                <span class="accordion-header-icon">📖</span>
+                <h2>${t('О себе (подробно)')}</h2>
+              </div>
               <span class="current-value">${escapeHtml(currentAboutMe)}</span>
             </div>
             <button class="btn-accordion" data-section="about" aria-label="${t('Изменить')}">${t('Изменить')}</button>
@@ -418,7 +455,10 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>⚥️ ${t('Пол')}</h2>
+              <div class="accordion-header-title-row">
+                <span class="accordion-header-icon">⚥️</span>
+                <h2>${t('Пол')}</h2>
+              </div>
               <span class="current-value">${escapeHtml(currentGender)}</span>
             </div>
             <button class="btn-accordion" data-section="gender" aria-label="${t('Изменить')}">${t('Изменить')}</button>
@@ -444,7 +484,26 @@ export async function renderEditProfile(): Promise<void> {
         <div class="accordion-item">
           <div class="accordion-header">
             <div class="accordion-header-left">
-              <h2>🎂 ${t('Дата рождения')}</h2>
+              <div class="accordion-header-title-row">
+                <span class="accordion-header-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="4" width="18" height="18" rx="4" stroke="url(#editDobPageGrad)" stroke-width="2"/>
+                    <path d="M16 2v4M8 2v4M3 10h18" stroke="url(#editDobPageGrad)" stroke-width="2" stroke-linecap="round"/>
+                    <circle cx="8" cy="14" r="1" fill="#38bdf8"/>
+                    <circle cx="12" cy="14" r="1" fill="#38bdf8"/>
+                    <circle cx="16" cy="14" r="1" fill="#38bdf8"/>
+                    <circle cx="8" cy="18" r="1" fill="#38bdf8"/>
+                    <circle cx="12" cy="18" r="1" fill="#38bdf8"/>
+                    <defs>
+                      <linearGradient id="editDobPageGrad" x1="3" y1="2" x2="21" y2="22" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#818cf8"/>
+                        <stop offset="1" stop-color="#38bdf8"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </span>
+                <h2>${t('Дата рождения')}</h2>
+              </div>
               <span class="current-value">${escapeHtml(currentDob)}</span>
             </div>
             <button class="btn-accordion" data-section="dob" aria-label="${t('Изменить')}">${t('Изменить')}</button>
@@ -474,9 +533,12 @@ export async function renderEditProfile(): Promise<void> {
         </div>
       </div>
     </div>
-    ${buildAuthFooter({ showLangSwitcher: false })}
+    ${buildAuthFooter({ showLangSwitcher: true })}
     </div>
   `;
+
+  // Инициализируем переключатель языков в футере
+  initFooterLangSwitcher();
 
   // Добавляем стили
   addEditProfileStyles();
@@ -515,29 +577,30 @@ function addEditProfileStyles(): void {
     .edit-profile-container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 10px 16px;
       flex: 1 0 auto;
     }
     
     .edit-profile-header {
       display: flex;
       align-items: center;
-      gap: 15px;
-      margin-bottom: 30px;
+      gap: 12px;
+      margin-bottom: 12px;
     }
     
     .edit-profile-header h1 {
       margin: 0;
-      font-size: 28px;
+      font-size: 20px;
     }
     
     .btn-back {
       background: rgba(255, 255, 255, 0.1);
       border: 1px solid rgba(255, 255, 255, 0.2);
       color: var(--text, #fff);
-      padding: 8px 16px;
+      padding: 6px 12px;
       border-radius: 8px;
       cursor: pointer;
+      font-size: 12px;
       transition: all 0.2s;
     }
     
@@ -549,14 +612,14 @@ function addEditProfileStyles(): void {
     .edit-profile-content {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 12px;
-      padding: 20px;
+      padding: 14px 16px;
     }
     
     .accordion-item {
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 10px;
-      margin-bottom: 15px;
+      margin-bottom: 8px;
       overflow: hidden;
       transition: all 0.3s;
     }
@@ -570,9 +633,9 @@ function addEditProfileStyles(): void {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 16px;
+      padding: 8px 12px;
       cursor: pointer;
-      gap: 16px;
+      gap: 12px;
     }
     
     .accordion-header-left {
@@ -585,9 +648,30 @@ function addEditProfileStyles(): void {
       border-right: 1px solid rgba(255, 255, 255, 0.1);
     }
     
+    .accordion-header-title-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .accordion-header-icon {
+      font-size: 18px;
+      line-height: 1;
+      width: 50px;
+      height: 50px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, rgba(56, 189, 248, 0.12) 100%);
+      border-radius: 10px;
+      border: 1px solid rgba(129, 140, 248, 0.25);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
     .accordion-header h2 {
       margin: 0;
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
       color: rgba(255, 255, 255, 0.95);
     }
@@ -600,24 +684,29 @@ function addEditProfileStyles(): void {
       text-overflow: ellipsis;
       white-space: nowrap;
       font-style: italic;
-      padding-left: 2px;
+      text-align: center;
+      padding-left: 0;
+      width: 100%;
     }
     
     .btn-accordion {
-      background: rgba(76, 175, 80, 0.2);
-      border: 1px solid rgba(76, 175, 80, 0.4);
-      color: #4CAF50;
-      padding: 3px 10px;
-      border-radius: 4px;
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, rgba(56, 189, 248, 0.15) 100%);
+      border: 1px solid rgba(129, 140, 248, 0.3);
+      color: #93c5fd;
+      padding: 8px 18px;
+      border-radius: 10px;
       cursor: pointer;
-      font-size: 11px;
-      transition: all 0.2s;
-      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.2s ease;
+      font-weight: 600;
     }
     
     .btn-accordion:hover {
-      background: rgba(76, 175, 80, 0.3);
-      border-color: rgba(76, 175, 80, 0.6);
+      background: linear-gradient(135deg, rgba(129, 140, 248, 0.3) 0%, rgba(56, 189, 248, 0.3) 100%);
+      border-color: rgba(129, 140, 248, 0.6);
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(129, 140, 248, 0.25);
     }
     
     .btn-accordion.active {
@@ -733,6 +822,20 @@ function addEditProfileStyles(): void {
       transition: color 0.2s;
     }
     
+    .avatar-section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 8px;
+    }
+    
+    .avatar-section-subtitle {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    
     .avatar-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
@@ -757,6 +860,29 @@ function addEditProfileStyles(): void {
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.3);
       transform: scale(1.05);
+    }
+    
+    .avatar-option.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+      filter: grayscale(0.2);
+    }
+    
+    .avatar-option.locked:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: none;
+    }
+    
+    .avatar-lock-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18px;
+      line-height: 1;
+      pointer-events: none;
+      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.8));
     }
     
     .avatar-option.selected {
@@ -808,9 +934,9 @@ function addEditProfileStyles(): void {
     
     .edit-actions {
       display: flex;
-      gap: 15px;
-      margin-top: 30px;
-      padding-top: 20px;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 14px;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
     
@@ -980,12 +1106,20 @@ function initAvatarSelection(setSelectedAvatar: (avatarId: string) => void): voi
 
   avatarOptions.forEach((option) => {
     option.addEventListener('click', () => {
+      if (option.classList.contains('locked')) {
+        return;
+      }
       avatarOptions.forEach((opt) => opt.classList.remove('selected'));
       option.classList.add('selected');
 
       const avatarId = (option as HTMLElement).dataset.avatar;
       if (avatarId) {
         setSelectedAvatar(avatarId);
+        const selectedObj = [...STANDARD_AVATARS, ...EXCLUSIVE_AVATARS].find((a) => a.id === avatarId);
+        const headerIconEl = document.getElementById('editProfileAvatarHeaderIcon');
+        if (headerIconEl && selectedObj) headerIconEl.textContent = selectedObj.emoji;
+        const valTextEl = document.getElementById('editProfileAvatarValueText');
+        if (valTextEl && selectedObj) valTextEl.textContent = t(selectedObj.label);
       }
     });
   });
@@ -1223,8 +1357,8 @@ function initSaveProfile(profile: EditableProfile, getSelectedAvatar: () => stri
         setTimeout(() => {
           Router.navigate(
             (typeof updateData.username === 'string' ? updateData.username : undefined) ||
-              profile.username ||
-              'account-profile'
+            profile.username ||
+            'account-profile'
           );
         }, 1500);
       } else {

@@ -9,6 +9,10 @@ export interface User {
   email: string;
   emailVerified: boolean;
   avatar?: string;
+  bio?: string;
+  aboutMe?: string;
+  gender?: string;
+  dateOfBirth?: string;
   role: 'user' | 'moderator' | 'admin';
   flags: string[];
   roleNotice?: string | null;
@@ -16,7 +20,6 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   easter?: UserEasterFlags;
-  gender?: string;
 }
 
 export interface UserProfile {

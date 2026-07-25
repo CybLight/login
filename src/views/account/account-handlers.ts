@@ -19,9 +19,17 @@ import {
   showAccountNoticeModal,
   showSettingsUsernameModal,
   showSettingsEmailModal,
+  showSettingsAvatarModal,
+  showSettingsBioModal,
+  showSettingsAboutModal,
+  showSettingsGenderModal,
+  showSettingsDobModal,
 } from './modals';
 import { updateNavBadges, setNavBadge, updateChatUnreadBadges, fetchUnreadSummaryData } from './unread';
 import { isEmailVerified } from './account-utils';
+import { getAvatarInnerHtml } from './avatar';
+import { STANDARD_AVATARS, EXCLUSIVE_AVATARS } from '../edit-profile';
+import { getLocale, localeTag } from '@/i18n';
 
 interface ApiMessage {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -929,6 +937,282 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
       });
     });
   }
+
+  const changeAvatarBtn = document.getElementById('stgChangeAvatarBtn') as HTMLButtonElement | null;
+  const changeBioBtn = document.getElementById('stgChangeBioBtn') as HTMLButtonElement | null;
+  const changeAboutBtn = document.getElementById('stgChangeAboutBtn') as HTMLButtonElement | null;
+  const changeGenderBtn = document.getElementById('stgChangeGenderBtn') as HTMLButtonElement | null;
+  const changeDobBtn = document.getElementById('stgChangeDobBtn') as HTMLButtonElement | null;
+
+  let loadedProfile: Record<string, any> = {
+    avatar: user.avatar,
+    bio: user.bio,
+    aboutMe: user.aboutMe,
+    gender: user.gender,
+    dateOfBirth: user.dateOfBirth,
+    role: user.role,
+    flags: user.flags,
+  };
+
+  const updateAvatarDisplay = (avatarId?: string) => {
+    const avatarSource = avatarId || loadedProfile.avatar || user.avatar || 'avatar-cat';
+    const avatarEmoji = getAvatarInnerHtml(avatarSource, user.username || 'User');
+    const avatarObj = [...STANDARD_AVATARS, ...EXCLUSIVE_AVATARS].find((a) => a.id === avatarSource);
+    const avatarLabel = avatarObj ? t(avatarObj.label) : t('Аватар');
+
+    const iconEl = document.getElementById('stgAvatarIcon');
+    if (iconEl) iconEl.innerHTML = avatarEmoji;
+
+    const valEl = document.getElementById('stgAvatarValue');
+    if (valEl) valEl.textContent = avatarLabel;
+  };
+
+  // Загружаем актуальный профиль
+  apiCall('/profile/me').then(async (res) => {
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok && data.profile) {
+        loadedProfile = { ...loadedProfile, ...data.profile };
+        if (data.profile.avatar) user.avatar = data.profile.avatar;
+        if (data.profile.bio) user.bio = data.profile.bio;
+        if (data.profile.aboutMe) user.aboutMe = data.profile.aboutMe;
+        if (data.profile.gender) user.gender = data.profile.gender;
+        if (data.profile.dateOfBirth) user.dateOfBirth = data.profile.dateOfBirth;
+
+        // Обновляем значения на странице
+        updateAvatarDisplay(data.profile.avatar);
+
+        const bioValEl = document.getElementById('stgBioValue');
+        if (bioValEl) {
+          const bioStr = data.profile.bio || '';
+          bioValEl.textContent = bioStr ? (bioStr.length > 40 ? bioStr.substring(0, 40) + '...' : bioStr) : t('Не указано');
+        }
+
+        const aboutValEl = document.getElementById('stgAboutValue');
+        if (aboutValEl) {
+          const aboutStr = data.profile.aboutMe || '';
+          aboutValEl.textContent = aboutStr ? (aboutStr.length > 40 ? aboutStr.substring(0, 40) + '...' : aboutStr) : t('Не указано');
+        }
+
+        const genderValEl = document.getElementById('stgGenderValue');
+        if (genderValEl) {
+          const g = data.profile.gender;
+          genderValEl.textContent = g === 'male' ? t('Мужской') : g === 'female' ? t('Женский') : t('Не указано');
+        }
+
+        const dobValEl = document.getElementById('stgDobValue');
+        if (dobValEl) {
+          const dobStr = data.profile.dateOfBirth;
+          dobValEl.textContent = dobStr ? new Date(dobStr).toLocaleDateString(localeTag(getLocale())) : t('Не указано');
+        }
+
+        // Обновляем настройки приватности
+        if (data.profile.privacy) {
+          const p = data.profile.privacy;
+          const elAvatar = document.getElementById('stgPrivacyAvatar') as HTMLSelectElement | null;
+          if (elAvatar && p.avatar) elAvatar.value = p.avatar;
+          const elBio = document.getElementById('stgPrivacyBio') as HTMLSelectElement | null;
+          if (elBio && p.bio) elBio.value = p.bio;
+          const elAbout = document.getElementById('stgPrivacyAbout') as HTMLSelectElement | null;
+          if (elAbout && p.about) elAbout.value = p.about;
+          const elGender = document.getElementById('stgPrivacyGender') as HTMLSelectElement | null;
+          if (elGender && p.gender) elGender.value = p.gender;
+          const elDob = document.getElementById('stgPrivacyDob') as HTMLSelectElement | null;
+          if (elDob && p.dob) elDob.value = p.dob;
+        }
+      }
+    }
+  }).catch(() => {});
+
+  if (changeAvatarBtn) {
+    changeAvatarBtn.addEventListener('click', () => {
+      showSettingsAvatarModal({
+        profile: {
+          avatar: user.avatar || loadedProfile.avatar,
+          role: user.role || loadedProfile.role,
+          flags: user.flags || loadedProfile.flags,
+        },
+        onSave: async (newAvatar) => {
+          try {
+            const res = await apiCall('/profile/update', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ avatar: newAvatar }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+              user.avatar = newAvatar;
+              loadedProfile.avatar = newAvatar;
+              updateAvatarDisplay(newAvatar);
+              api.showMsg('ok', t('Аватар успешно обновлён'));
+              return { ok: true };
+            } else {
+              return { ok: false, error: data.error || t('Не удалось обновить аватар') };
+            }
+          } catch {
+            return { ok: false, error: t('Ошибка сети или сервера') };
+          }
+        },
+      });
+    });
+  }
+
+  if (changeBioBtn) {
+    changeBioBtn.addEventListener('click', () => {
+      showSettingsBioModal({
+        currentBio: user.bio || loadedProfile.bio || '',
+        onSave: async (newBio) => {
+          try {
+            const res = await apiCall('/profile/update', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bio: newBio }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+              user.bio = newBio;
+              loadedProfile.bio = newBio;
+              const valEl = document.getElementById('stgBioValue');
+              if (valEl) {
+                valEl.textContent = newBio ? (newBio.length > 40 ? newBio.substring(0, 40) + '...' : newBio) : t('Не указано');
+              }
+              api.showMsg('ok', t('Краткое описание успешно обновлено'));
+              return { ok: true };
+            } else {
+              return { ok: false, error: data.error || t('Не удалось обновить описание') };
+            }
+          } catch {
+            return { ok: false, error: t('Ошибка сети или сервера') };
+          }
+        },
+      });
+    });
+  }
+
+  if (changeAboutBtn) {
+    changeAboutBtn.addEventListener('click', () => {
+      showSettingsAboutModal({
+        currentAbout: user.aboutMe || loadedProfile.aboutMe || '',
+        onSave: async (newAbout) => {
+          try {
+            const res = await apiCall('/profile/update', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ aboutMe: newAbout }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+              user.aboutMe = newAbout;
+              loadedProfile.aboutMe = newAbout;
+              const valEl = document.getElementById('stgAboutValue');
+              if (valEl) {
+                valEl.textContent = newAbout ? (newAbout.length > 40 ? newAbout.substring(0, 40) + '...' : newAbout) : t('Не указано');
+              }
+              api.showMsg('ok', t('Подробное описание успешно обновлено'));
+              return { ok: true };
+            } else {
+              return { ok: false, error: data.error || t('Не удалось обновить информацию') };
+            }
+          } catch {
+            return { ok: false, error: t('Ошибка сети или сервера') };
+          }
+        },
+      });
+    });
+  }
+
+  if (changeGenderBtn) {
+    changeGenderBtn.addEventListener('click', () => {
+      showSettingsGenderModal({
+        currentGender: user.gender || loadedProfile.gender || 'not_specified',
+        onSave: async (newGender) => {
+          try {
+            const res = await apiCall('/profile/update', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ gender: newGender }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+              user.gender = newGender;
+              loadedProfile.gender = newGender;
+              const valEl = document.getElementById('stgGenderValue');
+              if (valEl) {
+                valEl.textContent = newGender === 'male' ? t('Мужской') : newGender === 'female' ? t('Женский') : t('Не указано');
+              }
+              api.showMsg('ok', t('Пол успешно обновлён'));
+              return { ok: true };
+            } else {
+              return { ok: false, error: data.error || t('Не удалось обновить пол') };
+            }
+          } catch {
+            return { ok: false, error: t('Ошибка сети или сервера') };
+          }
+        },
+      });
+    });
+  }
+
+  if (changeDobBtn) {
+    changeDobBtn.addEventListener('click', () => {
+      showSettingsDobModal({
+        currentDob: user.dateOfBirth || loadedProfile.dateOfBirth || '',
+        onSave: async (newDob) => {
+          try {
+            const res = await apiCall('/profile/update', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ dateOfBirth: newDob }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+              user.dateOfBirth = newDob;
+              loadedProfile.dateOfBirth = newDob;
+              const valEl = document.getElementById('stgDobValue');
+              if (valEl) {
+                valEl.textContent = newDob ? new Date(newDob).toLocaleDateString(localeTag(getLocale())) : t('Не указано');
+              }
+              api.showMsg('ok', t('Дата рождения успешно обновлена'));
+              return { ok: true };
+            } else {
+              return { ok: false, error: data.error || t('Не удалось обновить дату рождения') };
+            }
+          } catch {
+            return { ok: false, error: t('Ошибка сети или сервера') };
+          }
+        },
+      });
+    });
+  }
+
+  // Обработчики изменения настроек приватности
+  document.querySelectorAll<HTMLSelectElement>('.stg-privacy-select').forEach((sel) => {
+    sel.addEventListener('change', async () => {
+      const key = sel.dataset.key;
+      if (!key) return;
+      try {
+        const res = await apiCall('/profile/update', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ privacy: { [key]: sel.value } }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.ok) {
+          api.showMsg('ok', t('Настройка приватности сохранена'));
+        } else {
+          api.showMsg('error', t('Не удалось сохранить приватность'));
+        }
+      } catch {
+        api.showMsg('error', t('Ошибка сети или сервера'));
+      }
+    });
+  });
 }
 
 function bindSettingsSecurityTransitions(user: AppUser): void {

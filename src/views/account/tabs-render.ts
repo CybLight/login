@@ -16,6 +16,7 @@ import {
   renderV010AppEasterCards,
   V010_APP_EGGS_TOTAL,
 } from "./easter-v010-render";
+import { STANDARD_AVATARS, EXCLUSIVE_AVATARS } from "../edit-profile";
 
 type User = {
   id?: string;
@@ -25,6 +26,12 @@ type User = {
   avatar?: string;
   avatarUrl?: string;
   avatar_url?: string;
+  bio?: string;
+  aboutMe?: string;
+  about_me?: string;
+  gender?: string;
+  dateOfBirth?: string;
+  date_of_birth?: string;
   emailVerified?: boolean;
   email_verified?: boolean | number | string;
   email_verified_at?: string;
@@ -310,6 +317,38 @@ function renderSettingsTab(user: User): string {
   const login = escapeHtml((user as any).login || user.username || '');
   const email = escapeHtml(user.email || '');
 
+  const avatarSource = user.avatar || (user as any).avatarUrl || (user as any).avatar_url || 'avatar-cat';
+  const currentAvatarEmoji = getAvatarInnerHtml(avatarSource, login);
+  const currentAvatarObj = [...STANDARD_AVATARS, ...EXCLUSIVE_AVATARS].find((a) => a.id === avatarSource);
+  const currentAvatarLabel = currentAvatarObj ? t(currentAvatarObj.label) : t('Аватар');
+
+  const bio = user.bio || (user as any).bio || '';
+  const currentBio = bio
+    ? bio.length > 40
+      ? bio.substring(0, 40) + '...'
+      : bio
+    : t('Не указано');
+
+  const aboutMe = user.aboutMe || (user as any).about_me || (user as any).aboutMe || '';
+  const currentAboutMe = aboutMe
+    ? aboutMe.length > 40
+      ? aboutMe.substring(0, 40) + '...'
+      : aboutMe
+    : t('Не указано');
+
+  const gender = user.gender || (user as any).gender;
+  const currentGenderText =
+    gender === 'male'
+      ? t('Мужской')
+      : gender === 'female'
+        ? t('Женский')
+        : t('Не указано');
+
+  const dob = user.dateOfBirth || (user as any).date_of_birth || (user as any).dateOfBirth;
+  const currentDobText = dob
+    ? new Date(dob).toLocaleDateString(localeTag(getLocale()))
+    : t('Не указано');
+
   const emailVerified = isEmailVerified(user);
   const twoFAOn = !!(user.twoFactorEnabled || user.totp_enabled);
   const passChanged =
@@ -383,7 +422,18 @@ function renderSettingsTab(user: User): string {
 
         <div class="stg-field">
           <div class="stg-field__left">
-            <span class="stg-field__icon">✉️</span>
+            <span class="stg-field__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="url(#stgEmailIconGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M22 6l-10 7L2 6" stroke="url(#stgEmailIconGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <defs>
+                  <linearGradient id="stgEmailIconGrad" x1="2" y1="4" x2="22" y2="20" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#818cf8"/>
+                    <stop offset="1" stop-color="#38bdf8"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
             <div class="stg-field__body">
               <div class="stg-field__label">${t('Электронная почта')}</div>
               <div class="stg-field__value" id="stgEmailValue">${email || t('Не указана')}</div>
@@ -391,6 +441,82 @@ function renderSettingsTab(user: User): string {
             </div>
           </div>
           <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeEmailBtn">${t('Изменить')}</button>
+        </div>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
+            <span class="stg-field__icon" id="stgAvatarIcon" style="font-size: 24px;">${currentAvatarEmoji}</span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('Аватар')}</div>
+              <div class="stg-field__value" id="stgAvatarValue">${escapeHtml(currentAvatarLabel)}</div>
+              <div class="stg-field__hint">${t('Иконка вашего профиля')}</div>
+            </div>
+          </div>
+          <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeAvatarBtn">${t('Изменить')}</button>
+        </div>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
+            <span class="stg-field__icon">✍️</span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('О себе (кратко)')}</div>
+              <div class="stg-field__value" id="stgBioValue">${escapeHtml(currentBio)}</div>
+              <div class="stg-field__hint">${t('Краткое описание профиля (до 500 символов)')}</div>
+            </div>
+          </div>
+          <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeBioBtn">${t('Изменить')}</button>
+        </div>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
+            <span class="stg-field__icon">📖</span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('О себе (подробно)')}</div>
+              <div class="stg-field__value" id="stgAboutValue">${escapeHtml(currentAboutMe)}</div>
+              <div class="stg-field__hint">${t('Подробная информация о себе (до 1000 символов)')}</div>
+            </div>
+          </div>
+          <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeAboutBtn">${t('Изменить')}</button>
+        </div>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
+            <span class="stg-field__icon">⚥️</span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('Пол')}</div>
+              <div class="stg-field__value" id="stgGenderValue">${escapeHtml(currentGenderText)}</div>
+              <div class="stg-field__hint">${t('Указание пола в профиле')}</div>
+            </div>
+          </div>
+          <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeGenderBtn">${t('Изменить')}</button>
+        </div>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
+            <span class="stg-field__icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="4" width="18" height="18" rx="4" stroke="url(#stgDobIconGrad)" stroke-width="2"/>
+                <path d="M16 2v4M8 2v4M3 10h18" stroke="url(#stgDobIconGrad)" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="8" cy="14" r="1" fill="#38bdf8"/>
+                <circle cx="12" cy="14" r="1" fill="#38bdf8"/>
+                <circle cx="16" cy="14" r="1" fill="#38bdf8"/>
+                <circle cx="8" cy="18" r="1" fill="#38bdf8"/>
+                <circle cx="12" cy="18" r="1" fill="#38bdf8"/>
+                <defs>
+                  <linearGradient id="stgDobIconGrad" x1="3" y1="2" x2="21" y2="22" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#818cf8"/>
+                    <stop offset="1" stop-color="#38bdf8"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('Дата рождения')}</div>
+              <div class="stg-field__value" id="stgDobValue">${escapeHtml(currentDobText)}</div>
+              <div class="stg-field__hint">${t('Ваша дата рождения')}</div>
+            </div>
+          </div>
+          <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeDobBtn">${t('Изменить')}</button>
         </div>
       </section>
 
