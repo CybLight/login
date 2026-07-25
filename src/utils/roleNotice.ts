@@ -48,9 +48,37 @@ export async function showPendingRoleNotice(roleNotice?: string | null): Promise
       bodyText = lines.slice(1).join('\n').trim();
     }
 
-    titleHtml = `📢 ${escapeHtml(headerTitle)}`;
-    badgeHtml = `<span class="chip chip-role chip-admin">📢 ${escapeHtml(t('Системное объявление'))}</span>`;
-    leadTextHtml = escapeHtml(bodyText);
+    // Clean title: avoid prepending duplicate emoji if title already has one
+    const hasEmojiPrefix = /^[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u.test(headerTitle);
+    const cleanTitle = hasEmojiPrefix ? headerTitle : `📢 ${headerTitle}`;
+
+    titleHtml = escapeHtml(cleanTitle);
+    badgeHtml = `<span class="chip-sys-badge">📢 ${escapeHtml(t('Системное объявление'))}</span>`;
+
+    // Separate main message from admin note if present
+    let mainMessage = bodyText;
+    let adminNote = '';
+
+    const noteMarkerRegex = /(?:Примечание администратора|Admin note|Примітка адміністратора)\s*:\s*(.*)/i;
+    const match = bodyText.match(noteMarkerRegex);
+    if (match) {
+      mainMessage = bodyText.substring(0, match.index).trim();
+      adminNote = match[1].trim();
+    }
+
+    leadTextHtml = `
+      <div class="account-notice-main-text">${escapeHtml(mainMessage)}</div>
+      ${
+        adminNote
+          ? `
+            <div class="account-notice-admin-box">
+              <div class="account-notice-admin-box__title">💬 ${escapeHtml(t('Примечание администратора'))}</div>
+              <div class="account-notice-admin-box__text">${escapeHtml(adminNote)}</div>
+            </div>
+          `
+          : ''
+      }
+    `;
     descHtml = '<p id="roleNoticeDesc" class="account-notice-desc is-hidden"></p>';
   }
 
@@ -69,15 +97,15 @@ export async function showPendingRoleNotice(roleNotice?: string | null): Promise
       aria-labelledby="roleNoticeTitle"
       aria-describedby="roleNoticeDesc"
     >
-      <div id="roleNoticeTitle" class="account-notice-head is-success">
+      <div id="roleNoticeTitle" class="account-notice-head">
         ${titleHtml}
       </div>
       <div class="account-notice-role">
         ${badgeHtml}
       </div>
-      <p class="account-notice-lead" style="white-space: pre-wrap;">
+      <div class="account-notice-content">
         ${leadTextHtml}
-      </p>
+      </div>
       ${descHtml}
       <div class="account-notice-actions">
         <button type="button" class="btn btn-primary" id="roleNoticeOkBtn">
