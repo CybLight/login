@@ -955,16 +955,44 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
   };
 
   const updateAvatarDisplay = (avatarId?: string) => {
-    const avatarSource = avatarId || loadedProfile.avatar || user.avatar || 'avatar-cat';
+    const avatarSource =
+      avatarId ||
+      loadedProfile.avatar ||
+      (loadedProfile as any).avatarUrl ||
+      user.avatar ||
+      (user as any).avatarUrl ||
+      (user as any).avatar_url ||
+      'avatar-cat';
+
+    user.avatar = avatarSource;
+    (user as any).avatarUrl = avatarSource;
+    (user as any).avatar_url = avatarSource;
+    loadedProfile.avatar = avatarSource;
+    (loadedProfile as any).avatarUrl = avatarSource;
+
     const avatarEmoji = getAvatarInnerHtml(avatarSource, user.username || 'User');
     const avatarObj = [...STANDARD_AVATARS, ...EXCLUSIVE_AVATARS].find((a) => a.id === avatarSource);
-    const avatarLabel = avatarObj ? t(avatarObj.label) : t('Аватар');
+    const avatarLabel = avatarObj ? t(avatarObj.label) : (avatarSource.startsWith('avatar-') ? t('Аватар') : avatarSource);
 
+    // 1. Поле Аватара в настройках Аккаунта (#settings-account)
     const iconEl = document.getElementById('stgAvatarIcon');
     if (iconEl) iconEl.innerHTML = avatarEmoji;
 
     const valEl = document.getElementById('stgAvatarValue');
     if (valEl) valEl.textContent = avatarLabel;
+
+    // 2. Кнопка аватара в шапке сайта (Top-Right Header button #accountAvatarBtn)
+    const headerAvatarBtn = document.getElementById('accountAvatarBtn');
+    if (headerAvatarBtn) headerAvatarBtn.innerHTML = avatarEmoji;
+
+    // 3. Все элементы кнопок аватаров
+    document.querySelectorAll('.account-avatar-btn').forEach((btn) => {
+      btn.innerHTML = avatarEmoji;
+    });
+
+    // 4. Аватарка на вкладке Профиль (#accountProfileAvatar)
+    const profileAvatarEl = document.getElementById('accountProfileAvatar');
+    if (profileAvatarEl) profileAvatarEl.innerHTML = avatarEmoji;
   };
 
   // Загружаем актуальный профиль
@@ -973,14 +1001,29 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
       const data = await res.json();
       if (data.ok && data.profile) {
         loadedProfile = { ...loadedProfile, ...data.profile };
-        if (data.profile.avatar) user.avatar = data.profile.avatar;
+        const serverAvatar =
+          data.profile.avatar ||
+          data.profile.avatarUrl ||
+          data.profile.avatar_url ||
+          user.avatar ||
+          (user as any).avatarUrl ||
+          (user as any).avatar_url;
+
+        if (serverAvatar) {
+          user.avatar = serverAvatar;
+          (user as any).avatarUrl = serverAvatar;
+          (user as any).avatar_url = serverAvatar;
+          loadedProfile.avatar = serverAvatar;
+          (loadedProfile as any).avatarUrl = serverAvatar;
+        }
+
         if (data.profile.bio) user.bio = data.profile.bio;
         if (data.profile.aboutMe) user.aboutMe = data.profile.aboutMe;
         if (data.profile.gender) user.gender = data.profile.gender;
         if (data.profile.dateOfBirth) user.dateOfBirth = data.profile.dateOfBirth;
 
         // Обновляем значения на странице
-        updateAvatarDisplay(data.profile.avatar);
+        updateAvatarDisplay(serverAvatar);
 
         const bioValEl = document.getElementById('stgBioValue');
         if (bioValEl) {
