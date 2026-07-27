@@ -22,6 +22,9 @@ import { initReportModalTriggers } from '@/ui/report-modal';
 import { initPrivacySettings } from '@/ui/privacy-settings';
 import { setSignalUserId } from '@/crypto/signal/session-context';
 
+import { maintainChatWebSocket } from '@/services/chat-ws';
+import { ensureSignalKeysRegistered } from '@/crypto/signal/manager';
+
 /** Удаляем legacy-токен устройства из localStorage (теперь HttpOnly cookie). */
 try {
   localStorage.removeItem('cyb_device_token');
@@ -185,18 +188,14 @@ export async function initApp(): Promise<void> {
   if (user) {
     logger.info('User logged in', { username: user.username });
     setSignalUserId(user.id);
-    void import('@/services/chat-ws')
-      .then((m) => {
-        m.maintainChatWebSocket();
-      })
-      .catch((error) => {
-        console.warn('[chat-ws] connect failed:', error);
-      });
-    void import('@/crypto/signal/manager')
-      .then((m) => m.ensureSignalKeysRegistered(user.id))
-      .catch((error) => {
-        console.error('[Signal] key registration failed:', error);
-      });
+    try {
+      maintainChatWebSocket();
+    } catch (error) {
+      console.warn('[chat-ws] connect failed:', error);
+    }
+    ensureSignalKeysRegistered(user.id).catch((error) => {
+      console.error('[Signal] key registration failed:', error);
+    });
   } else {
     setSignalUserId(null);
     logger.info('User not logged in');

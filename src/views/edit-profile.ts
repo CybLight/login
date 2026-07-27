@@ -6,6 +6,7 @@ import { t, localeTag, getLocale } from '@/i18n';
 import { buildAuthFooter, initFooterLangSwitcher } from '@/ui/auth-footer';
 import { apiCall, escapeHtml } from '@/utils';
 import { Router } from '@/router/Router';
+import { pushLocalEasterFlagsToServer } from '@/services';
 
 interface EditableProfile {
   id?: string;
@@ -295,8 +296,11 @@ export async function renderEditProfile(): Promise<void> {
     <div class="edit-profile-page">
     <div class="edit-profile-container">
       <div class="edit-profile-header">
-        <button class="btn-back" type="button" data-route="account-profile" aria-label="${t('← Назад')}">${t('← Назад')}</button>
-        <h1>✏️ ${t('Редактирование профиля')}</h1>
+        <div class="edit-profile-nav-buttons">
+          <button class="btn-back" type="button" data-route="account-profile" aria-label="${t('← Назад')}">${t('← Назад')}</button>
+          <button class="btn-back" type="button" data-route="account-settings" aria-label="${t('Все настройки Аккаунта')}">⚙️ ${t('Все настройки Аккаунта')}</button>
+        </div>
+        <h1 id="editProfileEasterTitle" style="margin: 0; font-size: 24px; cursor: pointer; user-select: none;" title="${t('Здесь живет секрет художников...')}">✏️ ${t('Редактирование профиля')}</h1>
       </div>
       
       <div class="edit-profile-content">
@@ -342,7 +346,7 @@ export async function renderEditProfile(): Promise<void> {
     }
             </div>
             <div id="usernameHints" style="margin-top: 10px; margin-bottom: 8px;"></div>
-            <div class="username-limit-warning" style="font-size: 12px; color: #ff9800; background: rgba(255, 152, 0, 0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 152, 0, 0.2); margin-top: 12px; line-height: 1.4;">
+            <div class="username-limit-warning" style="font-size: 12px; color: #ff9800; background: rgba(255, 152, 0, 0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 152, 0, 0.2); margin-top: 12px; line-height: 1.4; ${profile.canChangeUsername ? '' : 'display: none;'}">
               ⚠️ ${t('Имя пользователя можно менять не чаще одного раза в 30 дней.')}
             </div>
           </div>
@@ -555,6 +559,7 @@ export async function renderEditProfile(): Promise<void> {
   initAvatarSelection(setSelectedAvatar);
   initUsernameCheck(profile);
   initSaveProfile(profile, getSelectedAvatar);
+  initCyberArtistEasterEgg();
 }
 
 /**
@@ -583,30 +588,109 @@ function addEditProfileStyles(): void {
     
     .edit-profile-header {
       display: flex;
+      flex-direction: column;
       align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .edit-profile-nav-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
       gap: 12px;
-      margin-bottom: 12px;
+      flex-wrap: wrap;
     }
     
     .edit-profile-header h1 {
       margin: 0;
-      font-size: 20px;
+      font-size: 24px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: -0.01em;
     }
     
     .btn-back {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       color: var(--text, #fff);
-      padding: 6px 12px;
-      border-radius: 8px;
+      padding: 8px 16px;
+      border-radius: 10px;
       cursor: pointer;
-      font-size: 12px;
-      transition: all 0.2s;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(8px);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      overflow: hidden;
     }
     
     .btn-back:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25), 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-back:active {
+      transform: translateY(0) scale(0.96);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    @keyframes cyberRain {
+      0% { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(90vh) rotate(360deg); opacity: 0; }
+    }
+
+    .cyber-confetti-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 99999;
+      animation: cyberRain linear forwards;
+    }
+
+    .easter-tap-shake {
+      animation: tapShake 0.3s ease;
+    }
+
+    @keyframes tapShake {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15) rotate(4deg); }
+    }
+
+    body.cyber-artist-theme #editProfileEasterTitle {
+      background: linear-gradient(90deg, #ff007f, #7928ca, #00dfd8, #ff007f);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rgbGlow 3s ease infinite;
+      filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.7));
+    }
+
+    @keyframes rgbGlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    body.cyber-artist-theme .accordion-item {
+      border: 1px solid rgba(168, 85, 247, 0.4) !important;
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.2) !important;
+      transition: all 0.3s ease;
+    }
+
+    body.cyber-artist-theme .avatar-option {
+      animation: avatarFloat 2.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes avatarFloat {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-4px) scale(1.04); }
     }
     
     .edit-profile-content {
@@ -1372,4 +1456,104 @@ function initSaveProfile(profile: EditableProfile, getSelectedAvatar: () => stri
       saveBtn.textContent = t('💾 Сохранить изменения');
     }
   });
+}
+
+/**
+ * Скрытая пасхалка "Кибер-Художник / Neon Cyber Artist"
+ */
+function initCyberArtistEasterEgg(): void {
+  const title = document.getElementById('editProfileEasterTitle');
+  if (!title) return;
+
+  let clicks = 0;
+  let clickTimeout: number | undefined;
+
+  const triggerConfetti = () => {
+    const emojis = ['🎨', '💎', '⚡', '🚀', '🌟', '🍓', '🔥', '👾', '🌈', '✨'];
+    for (let i = 0; i < 35; i++) {
+      const p = document.createElement('div');
+      p.className = 'cyber-confetti-particle';
+      p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      p.style.left = `${Math.random() * 95}vw`;
+      p.style.top = `${Math.random() * 30 + 10}vh`;
+      p.style.fontSize = `${Math.random() * 18 + 16}px`;
+      p.style.animationDuration = `${Math.random() * 2 + 1.8}s`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 3800);
+    }
+  };
+
+  const activateEasterEgg = () => {
+    const isActive = document.body.classList.toggle('cyber-artist-theme');
+    
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([80, 40, 80, 40, 150]);
+    }
+
+    if (isActive) {
+      triggerConfetti();
+      localStorage.setItem('cyb_easter_cyber_artist', 'true');
+      void pushLocalEasterFlagsToServer();
+
+      const oldModal = document.getElementById('cyberEasterNoticeModal');
+      oldModal?.remove();
+
+      const modal = document.createElement('div');
+      modal.id = 'cyberEasterNoticeModal';
+      modal.className = 'account-notice-modal';
+      modal.innerHTML = `
+        <div class="account-notice-backdrop" style="background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px);"></div>
+        <div class="account-notice-card" style="width: min(92vw, 450px); text-align: center; padding: 32px 24px; border-radius: 24px; border: 1px solid rgba(168, 85, 247, 0.45); background: linear-gradient(145deg, rgba(24, 16, 44, 0.95), rgba(15, 23, 42, 0.98)); backdrop-filter: blur(16px); box-shadow: 0 20px 50px rgba(168, 85, 247, 0.35), 0 0 20px rgba(236, 72, 153, 0.2); position: relative; overflow: hidden;">
+          <div style="font-size: 52px; margin-bottom: 12px; display: inline-block; filter: drop-shadow(0 4px 12px rgba(168, 85, 247, 0.5));">🏆✨</div>
+          
+          <h2 style="font-size: 24px; font-weight: 800; color: #fff; margin-bottom: 6px; letter-spacing: -0.01em;">🎉 ${t('Поздравляем!')}</h2>
+          
+          <div style="font-size: 16px; font-weight: 700; background: linear-gradient(135deg, #c084fc, #f472b6, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 14px;">
+            ${t('Пасхалка найдена: «Кибер-Художник»!')} 🎨
+          </div>
+
+          <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); font-size: 12px; font-weight: 600; color: #e9d5ff; margin-bottom: 16px;">
+            🌟 ${t('Секретное достижение разблокировано')}
+          </div>
+
+          <p style="font-size: 14px; color: #cbd5e1; line-height: 1.55; margin-bottom: 24px; padding: 0 8px;">
+            ${t('Вы открыли секретный неоновый режим редактирования профиля! Аватарки и интерфейс получили квантовое сияние.')}
+          </p>
+
+          <button type="button" class="btn btn-primary" id="cyberEasterCloseBtn" style="width: 100%; padding: 12px 24px; font-size: 15px; font-weight: 700; background: linear-gradient(135deg, #a855f7, #ec4899); border: none; border-radius: 12px; color: #fff; cursor: pointer; box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);">
+            🚀 ${t('Вау, круто!')}
+          </button>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+
+      const closeBtn = modal.querySelector('#cyberEasterCloseBtn');
+      const backdrop = modal.querySelector('.account-notice-backdrop');
+      const close = () => modal.remove();
+      closeBtn?.addEventListener('click', close);
+      backdrop?.addEventListener('click', close);
+    } else {
+      localStorage.removeItem('cyb_easter_cyber_artist');
+    }
+  };
+
+  title.addEventListener('click', () => {
+    clicks++;
+    title.classList.add('easter-tap-shake');
+    setTimeout(() => title.classList.remove('easter-tap-shake'), 300);
+
+    if (clickTimeout) clearTimeout(clickTimeout);
+
+    if (clicks >= 5) {
+      clicks = 0;
+      activateEasterEgg();
+    } else {
+      clickTimeout = window.setTimeout(() => { clicks = 0; }, 1500);
+    }
+  });
+
+  if (localStorage.getItem('cyb_easter_cyber_artist') === 'true') {
+    document.body.classList.add('cyber-artist-theme');
+  }
 }

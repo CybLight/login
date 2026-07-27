@@ -1740,7 +1740,7 @@ function easterProgressHtml(current: number, total: number): string {
   )}</div>`;
 }
 
-const EASTER_SITE_TOTAL = 7;
+const EASTER_SITE_TOTAL = 8;
 const EASTER_APP_BASE_TOTAL = 5;
 const EASTER_BRIDGE_TOTAL = 2;
 const EASTER_EGGS_TOTAL = EASTER_SITE_TOTAL + EASTER_APP_BASE_TOTAL + V010_APP_EGGS_TOTAL + EASTER_BRIDGE_TOTAL;
@@ -1789,6 +1789,10 @@ function renderEasterTab(user: User): string {
   const hasSkipCatcher =
     localStorage.getItem("cyb_skip_catcher_unlocked") === "1" ||
     !!user.easter?.skipCatcher;
+  const hasCyberArtist =
+    localStorage.getItem("cyb_easter_cyber_artist") === "true" ||
+    localStorage.getItem("cyb_easter_cyber_artist") === "1" ||
+    !!(user.easter as any)?.cyberArtist;
   const hasNightGuard = !!user.easter?.nightGuard;
   const hasTrustedFingerprint = !!user.easter?.trustedFingerprint;
   const hasBridge = !!user.easter?.bridge;
@@ -1810,6 +1814,7 @@ function renderEasterTab(user: User): string {
     hasDeveloperMode,
     hasThemeFlux,
     hasSkipCatcher,
+    hasCyberArtist,
   ].filter(Boolean).length;
 
   const appFoundCount =
@@ -2096,6 +2101,35 @@ function renderEasterTab(user: User): string {
               `
     }
         </div>
+
+        <div class="easter-card easter-card--cyber-artist ${hasCyberArtist ? "easter-card-rare" : "locked"}">
+          ${hasCyberArtist
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
+          <span class="easter-card-icon">🎨</span>
+          <div class="easter-card-title">
+            ${t('Кибер-Художник')}
+          </div>
+          <div class="easter-card-desc">
+            ${hasCyberArtist
+      ? t('Ты открыл секретный неоновый режим и квантовое сияние профиля 🎨✨')
+      : t('Загляни в редактирование профиля и прояви свой творческий подход')
+    }
+          </div>
+          ${hasCyberArtist
+      ? `<button type="button" class="btn btn-outline easter-action-btn" data-route="edit-profile">
+                  <span class="easter-action-icon">✏️</span>
+                  <span>${t('Редактировать профиль')}</span>
+                </button>`
+      : `<div class="easter-hint">${t('💡 Подсказка: верхушка карандаша скрывает ритм творчества...')}</div>`
+    }
+          ${hasCyberArtist
+      ? `<div class="easter-hint">${t('🎊 Творческий потенциал разблокирован!')}</div>`
+      : ""
+    }
+        </div>
+      </div>
       </div>
       </div>
 

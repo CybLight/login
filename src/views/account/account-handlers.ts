@@ -811,14 +811,32 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
       changeUsernameBtn.disabled = true;
       let canChangeUsername = true;
       let usernameChangedAt: number | null = null;
+      let currentUsername = (user as any).login || user.username || '';
 
       try {
-        const res = await apiCall('/profile/me');
+        let res = await apiCall('/profile/me');
+        if (res.status === 404) {
+          const meRes = await apiCall('/auth/me');
+          if (meRes.ok) {
+            const meData = await meRes.json();
+            const uname = meData.user?.login || meData.user?.username;
+            if (uname) {
+              res = await apiCall(`/profile/${encodeURIComponent(uname)}`);
+            }
+          }
+        }
+
         if (res.ok) {
           const data = await res.json();
           if (data.ok && data.profile) {
-            canChangeUsername = data.profile.canChangeUsername;
-            usernameChangedAt = data.profile.usernameChangedAt ? Number(data.profile.usernameChangedAt) : null;
+            if (typeof data.profile.canChangeUsername === 'boolean') {
+              canChangeUsername = data.profile.canChangeUsername;
+            }
+            if (data.profile.usernameChangedAt !== undefined && data.profile.usernameChangedAt !== null) {
+              usernameChangedAt = Number(data.profile.usernameChangedAt);
+            }
+            if (data.profile.username) currentUsername = data.profile.username;
+            else if (data.profile.login) currentUsername = data.profile.login;
           }
         }
       } catch (err) {
@@ -828,7 +846,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
       }
 
       showSettingsUsernameModal({
-        currentUsername: user.username || '',
+        currentUsername,
         canChangeUsername,
         usernameChangedAt,
         onSave: async (newUsername) => {
@@ -843,6 +861,8 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
             const data = await res.json().catch(() => ({}));
             if (res.ok && data.ok) {
               user.username = newUsername;
+              (user as any).login = newUsername;
+              (user as any).usernameChangedAt = Date.now();
               const valEl = document.getElementById('stgUsernameValue');
               if (valEl) valEl.textContent = newUsername;
 

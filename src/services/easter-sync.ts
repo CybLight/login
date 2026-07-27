@@ -14,6 +14,7 @@ import {
   DEVELOPER_MODE_KEY,
   THEME_FLUX_KEY,
   SKIP_CATCHER_KEY,
+  CYBER_ARTIST_KEY,
 } from '@/config/constants';
 
 type ResolvedEasterFlags = {
@@ -22,6 +23,7 @@ type ResolvedEasterFlags = {
   profileMirror?: boolean;
   lightCatcher?: boolean;
   skipCatcher?: boolean;
+  cyberArtist?: boolean;
   postmaster?: boolean;
   developerMode?: boolean;
   themeFlux?: boolean;
@@ -90,6 +92,11 @@ const EASTER_SYNC_TARGETS = [
     storageKey: SKIP_CATCHER_KEY,
     flag: 'skipCatcher' as const,
     endpoint: '/auth/easter/skip-catcher',
+  },
+  {
+    storageKey: CYBER_ARTIST_KEY,
+    flag: 'cyberArtist' as const,
+    endpoint: '/auth/easter/cyber-artist',
   },
 ] as const;
 
