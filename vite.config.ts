@@ -34,6 +34,9 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
         secure: true,
         ws: true,
+        cookieDomainRewrite: {
+          '*': '',
+        },
       },
     },
   },
