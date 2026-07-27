@@ -849,6 +849,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
         currentUsername,
         canChangeUsername,
         usernameChangedAt,
+        role: user.role,
         onSave: async (newUsername) => {
           try {
             const res = await apiCall('/profile/update', {

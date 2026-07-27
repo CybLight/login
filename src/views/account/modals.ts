@@ -335,6 +335,7 @@ export function showSettingsUsernameModal(opts: {
   currentUsername: string;
   canChangeUsername?: boolean;
   usernameChangedAt?: number | null;
+  role?: string;
   onSave: (newUsername: string) => Promise<{ ok: boolean; error?: string }>;
 }): Promise<void> {
   const old = document.getElementById('settingsUsernameModal');
@@ -345,13 +346,21 @@ export function showSettingsUsernameModal(opts: {
     wrap.id = 'settingsUsernameModal';
     wrap.className = 'account-notice-modal';
 
+    const role = (opts.role || '').toLowerCase();
+    const isPrivileged =
+      role === 'creator' ||
+      role === 'owner' ||
+      role === 'admin' ||
+      role === 'moderator' ||
+      role === 'mod';
+
     const cooldownMs = 30 * 24 * 60 * 60 * 1000;
     const changedAtTime = opts.usernameChangedAt ? Number(opts.usernameChangedAt) : null;
     const timeSinceChange = changedAtTime ? Date.now() - changedAtTime : null;
     const isWithinCooldown = timeSinceChange !== null && timeSinceChange < cooldownMs;
 
-    // Смена заблокирована, если явно передано canChangeUsername: false ИЛИ с момента последней смены прошло менее 30 дней
-    const canChange = opts.canChangeUsername !== false && !isWithinCooldown;
+    // Для Создателя, Администраторов и Модераторов ограничение 30 дней не применяется
+    const canChange = isPrivileged || (opts.canChangeUsername !== false && !isWithinCooldown);
 
     const getCountdownString = (): string => {
       const changedAt = changedAtTime || Date.now();

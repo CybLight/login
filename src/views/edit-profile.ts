@@ -292,6 +292,11 @@ export async function renderEditProfile(): Promise<void> {
     ? new Date(profile.dateOfBirth).toLocaleDateString(localeTag(getLocale()))
     : t('Не указано');
 
+  const userRole = (profile.role || '').toLowerCase();
+  if (userRole === 'creator' || userRole === 'owner' || userRole === 'admin' || userRole === 'moderator' || userRole === 'mod') {
+    profile.canChangeUsername = true;
+  }
+
   app.innerHTML = `
     <div class="edit-profile-page">
     <div class="edit-profile-container">
