@@ -20,6 +20,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   easter?: UserEasterFlags;
+  privacy?: EditableProfile['privacy'];
 }
 
 export interface UserProfile {
@@ -53,6 +54,9 @@ export interface EditableProfile {
     about?: string;
     gender?: string;
     dob?: string;
+    profile?: string;
+    online?: string;
+    [key: string]: string | undefined; // Support for privacy_ prefix aliases
   };
 }
 

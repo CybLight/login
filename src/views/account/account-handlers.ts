@@ -323,7 +323,7 @@ export function bindAccountHandlers(
     bindSettingsNotificationsHandlers(user);
     bindSettingsAccountFieldsHandlers(user, api);
     bindSettingsSecurityTransitions(user);
-    void bindSettingsPrivacyHandlers(api);
+    void bindSettingsPrivacyHandlers(user, api);
     void bindBlockedUsersHandlers(api);
   }
 
@@ -549,7 +549,7 @@ function bindSettingsNotificationsHandlers(user: AppUser): void {
 /**
  * Привязать обработчики для настроек конфиденциальности
  */
-async function bindSettingsPrivacyHandlers(api: ApiMessage): Promise<void> {
+async function bindSettingsPrivacyHandlers(user: AppUser, api: ApiMessage): Promise<void> {
   const selects = document.querySelectorAll('.stg-privacy-select') as NodeListOf<HTMLSelectElement>;
   if (selects.length === 0) return;
 
@@ -566,13 +566,17 @@ async function bindSettingsPrivacyHandlers(api: ApiMessage): Promise<void> {
 
     if (res.ok) {
       const data = await res.json();
-      const privacy = data?.profile?.privacy;
+      // ✅ Проверяем и корневой объект privacy, и вложенный в profile для надежности
+      const privacy = data?.privacy || data?.profile?.privacy;
       if (privacy) {
         // Устанавливаем значения из БД
         selects.forEach(select => {
           const key = select.dataset.key;
-          if (key && privacy[key]) {
-            select.value = privacy[key];
+          if (!key) return;
+          // ✅ Поддерживаем оба формата ключей (с префиксом и без)
+          const value = privacy[key] || privacy[`privacy_${key}`];
+          if (value !== undefined && value !== null) {
+            select.value = value;
           }
         });
       }
@@ -611,6 +615,11 @@ async function bindSettingsPrivacyHandlers(api: ApiMessage): Promise<void> {
 
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.ok) {
+          // ✅ Обновляем локальный объект пользователя для синхронизации вкладок
+          if (!user.privacy) user.privacy = {};
+          if (user.privacy) {
+            user.privacy[key] = newValue;
+          }
           api.showMsg('ok', t('Настройки приватности успешно сохранены'));
         } else {
           api.showMsg('error', t('Не удалось сохранить настройки приватности'));
@@ -1068,21 +1077,6 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
         if (dobValEl) {
           const dobStr = data.profile.dateOfBirth;
           dobValEl.textContent = dobStr ? new Date(dobStr).toLocaleDateString(localeTag(getLocale())) : t('Не указано');
-        }
-
-        // Обновляем настройки приватности
-        if (data.profile.privacy) {
-          const p = data.profile.privacy;
-          const elAvatar = document.getElementById('stgPrivacyAvatar') as HTMLSelectElement | null;
-          if (elAvatar && p.avatar) elAvatar.value = p.avatar;
-          const elBio = document.getElementById('stgPrivacyBio') as HTMLSelectElement | null;
-          if (elBio && p.bio) elBio.value = p.bio;
-          const elAbout = document.getElementById('stgPrivacyAbout') as HTMLSelectElement | null;
-          if (elAbout && p.about) elAbout.value = p.about;
-          const elGender = document.getElementById('stgPrivacyGender') as HTMLSelectElement | null;
-          if (elGender && p.gender) elGender.value = p.gender;
-          const elDob = document.getElementById('stgPrivacyDob') as HTMLSelectElement | null;
-          if (elDob && p.dob) elDob.value = p.dob;
         }
       }
     }
