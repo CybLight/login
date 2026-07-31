@@ -5,6 +5,12 @@ import { resetActiveSignalContext } from '@/crypto/signal/manager';
 import { showAccountNoticeModal } from './modals';
 import { apiCall } from '@/utils';
 
+declare global {
+  interface Window {
+    QRCode?: new (el: HTMLElement | null, options: Record<string, unknown>) => void;
+  }
+}
+
 type QrSyncDeps = {
   userId: string;
   api: {
@@ -77,7 +83,7 @@ export async function showQrSyncModal(userId: string, api: QrSyncDeps['api']): P
 
   try {
     await startQrSyncFlow(container, { userId, api }, () => isPolling);
-  } catch (err) {
+  } catch {
     container.innerHTML = `<p class="sec-error-text">${t('Ошибка инициализации')}</p>`;
   }
 }
@@ -107,7 +113,7 @@ async function startQrSyncFlow(
   `;
 
   await ensureQRCodeLoaded();
-  const qrCtor = (window as any).QRCode;
+  const qrCtor = window.QRCode;
   if (qrCtor) {
     new qrCtor(document.getElementById('sync-qrcode'), {
       text: qrData,

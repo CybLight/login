@@ -6,21 +6,40 @@
 export interface User {
   id: string;
   username: string;
+  login?: string;
   email: string;
   emailVerified: boolean;
+  email_verified?: boolean | number | string;
+  email_verified_at?: string;
   avatar?: string;
+  avatarUrl?: string;
+  avatar_url?: string;
   bio?: string;
   aboutMe?: string;
+  about_me?: string;
   gender?: string;
   dateOfBirth?: string;
+  date_of_birth?: string;
   role: 'user' | 'moderator' | 'admin';
   flags: string[];
   roleNotice?: string | null;
   twoFactorEnabled: boolean;
+  totpEnabled?: boolean;
+  totp_enabled?: boolean;
+  password_changed_at?: number | string | null;
+  passwordChangedAt?: number | string | null;
+  passChangedAt?: string | null;
+  pass_changed_at?: string | null;
+  passkeysCount?: number;
+  passkeyCount?: number;
+  webauthnDevices?: unknown[];
+  systemEmailsDisabled?: boolean;
+  daysUntilDeletion?: number | null;
+  usernameChangedAt?: number | string | null;
   createdAt: string;
   updatedAt: string;
   easter?: UserEasterFlags;
-  privacy?: EditableProfile['privacy'];
+  privacy?: Record<string, string>;
 }
 
 export interface UserProfile {
@@ -282,6 +301,7 @@ export interface UserEasterFlags {
   silence?: boolean;
   reactionStreak?: boolean;
   reaction_streak?: boolean;
+  cyberArtist?: boolean;
 }
 
 export interface EasterLoginPayload {

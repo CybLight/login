@@ -23,10 +23,10 @@ export const authService = {
         if (data.user) {
           // Нормализуем свойства под интерфейс User на клиенте
           if (data.user.twoFactorEnabled === undefined) {
-            data.user.twoFactorEnabled = !!((data.user as any).totpEnabled || (data.user as any).totp_enabled);
+            data.user.twoFactorEnabled = !!(data.user.totpEnabled || data.user.totp_enabled);
           }
           if (data.user.emailVerified === undefined) {
-            data.user.emailVerified = !!((data.user as any).email_verified || (data.user as any).email_verified_at || (data.user as any).emailVerified);
+            data.user.emailVerified = !!(data.user.email_verified || data.user.email_verified_at || data.user.emailVerified);
           }
         }
         if (data.user && typeof data.user.gender === 'string') {

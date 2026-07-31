@@ -79,7 +79,7 @@ export function insertChatFormatting(
 
   // Strip conflicting markers from within selection
   if (startToken === '`' || startToken === '```') {
-    selectedText = selectedText.replace(/[\*_~\|]+/g, '');
+    selectedText = selectedText.replace(/[*_~|]+/g, '');
   } else {
     selectedText = selectedText.replace(/`/g, '');
   }

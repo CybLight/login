@@ -6,6 +6,7 @@
 import { Router } from '@/router/Router';
 import { setAppContent } from '@/ui';
 import { authService, extractEasterFlags, pushLocalEasterFlagsToServer } from '@/services';
+import { apiCall } from '@/utils';
 import { ensureSignalKeysRegistered, getSignalKeyIssueMessage, setSignalUserId } from '@/crypto/signal';
 import '@/styles/account.css';
 import '@/styles/account-render.css';
@@ -47,7 +48,26 @@ export async function renderAccount(tab: string = 'profile'): Promise<void> {
   document.body.classList.add('no-strawberries');
 
   // Check authorization and get user data
-  const user = await authService.checkSession();
+  let user = await authService.checkSession();
+  if (!user) {
+    Router.navigate('username');
+    return;
+  }
+
+  // Fetch full profile to get all settings
+  try {
+    const res = await apiCall('/profile/me');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.ok) {
+        // Merge full profile into user object
+        user = { ...user, ...data.profile, privacy: data.privacy || data.profile?.privacy };
+      }
+    }
+  } catch {
+    // ignore, proceed with basic user object
+  }
+
   if (!user) {
     Router.navigate('username');
     return;

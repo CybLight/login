@@ -416,7 +416,7 @@ export async function renderEditProfile(): Promise<void> {
               rows="3" 
               placeholder="${t('Расскажите о себе кратко...')}"
             >${profile.bio || ''}</textarea>
-            <div class="field-hint">${t('До 500 символов')}</div>
+            <div class="field-hint" id="bioCharCount">${(profile.bio || '').length} / 500</div>
             <div class="privacy-setting">
               <label>${t('Кому видно:')}</label>
               <select id="privacyBio" class="input">
@@ -434,7 +434,7 @@ export async function renderEditProfile(): Promise<void> {
             <div class="accordion-header-left">
               <div class="accordion-header-title-row">
                 <span class="accordion-header-icon">📖</span>
-                <h2>${t('О себе (подробно)')}</h2>
+                <h2>${t('О себе')}</h2>
               </div>
               <span class="current-value">${escapeHtml(currentAboutMe)}</span>
             </div>
@@ -448,7 +448,7 @@ export async function renderEditProfile(): Promise<void> {
               rows="5" 
               placeholder="${t('Расскажите о себе подробнее...')}"
             >${profile.aboutMe || ''}</textarea>
-            <div class="field-hint">${t('До 1000 символов')}</div>
+            <div class="field-hint" id="aboutMeCharCount">${(profile.aboutMe || '').length} / 1000</div>
             <div class="privacy-setting">
               <label>${t('Кому видно:')}</label>
               <select id="privacyAbout" class="input">
@@ -1392,6 +1392,18 @@ function initSaveProfile(profile: EditableProfile, getSelectedAvatar: () => stri
     // Прокручиваем к сообщению
     msgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   };
+
+  const bioInpEl = document.getElementById('bioInput') as HTMLTextAreaElement | null;
+  const bioCountEl = document.getElementById('bioCharCount');
+  bioInpEl?.addEventListener('input', () => {
+    if (bioCountEl) bioCountEl.textContent = `${bioInpEl.value.length} / 500`;
+  });
+
+  const aboutInpEl = document.getElementById('aboutMeInput') as HTMLTextAreaElement | null;
+  const aboutCountEl = document.getElementById('aboutMeCharCount');
+  aboutInpEl?.addEventListener('input', () => {
+    if (aboutCountEl) aboutCountEl.textContent = `${aboutInpEl.value.length} / 1000`;
+  });
 
   saveBtn.addEventListener('click', async () => {
     try {

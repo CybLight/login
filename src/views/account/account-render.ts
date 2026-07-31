@@ -221,8 +221,8 @@ export function renderAccountPage(tab: string, user: AppUser): string {
                         <div style="font-size: 13px; color: var(--muted, #666); line-height: 1.4;">
                           ${t('Неподтвержденные аккаунты без Email автоматически удаляются системой через 30 дней после создания.')} 
                           ${
-                            (maybe as any).daysUntilDeletion !== null && (maybe as any).daysUntilDeletion !== undefined
-                              ? `<span style="font-weight: 700; color: #dc2626; margin-left: 4px;">(${t('До авто-удаления осталось:')} ${(maybe as any).daysUntilDeletion} ${t('дн.')})</span>`
+                            user.daysUntilDeletion !== null && user.daysUntilDeletion !== undefined
+                              ? `<span style="font-weight: 700; color: #dc2626; margin-left: 4px;">(${t('До авто-удаления осталось:')} ${user.daysUntilDeletion} ${t('дн.')})</span>`
                               : ''
                           }
                         </div>

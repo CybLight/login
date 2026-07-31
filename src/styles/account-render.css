@@ -684,6 +684,7 @@
   background: linear-gradient(135deg,
       rgba(17, 24, 39, 0.97) 0%,
       rgba(30, 41, 59, 0.96) 100%);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
   animation: slideDown 0.25s ease-out;
@@ -1053,6 +1054,7 @@ select.input option {
   position: absolute;
   inset: 0;
   background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
 }
 
@@ -1736,6 +1738,7 @@ select.input option {
   font-size: 14px;
   line-height: 1.4;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -1879,6 +1882,7 @@ select.input option {
 }
 
 .messages-encryption-reminder__link {
+  -webkit-appearance: none;
   appearance: none;
   border: none;
   padding: 0;
@@ -2103,6 +2107,7 @@ select.input option {
   vertical-align: middle;
   border-radius: 4px;
   cursor: default;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -3023,6 +3028,7 @@ select.input option {
   font-size: 44px;
   line-height: 1;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.25));
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -3145,6 +3151,7 @@ select.input option {
   top: 12px;
   right: 12px;
   z-index: 10;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
@@ -3424,6 +3431,7 @@ select.input option {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   background: rgba(10, 15, 31, 0.98);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
   z-index: 1100;
@@ -3623,6 +3631,7 @@ body.account-nav-open .account-nav-overlay {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-top: none;
   background: rgba(10, 15, 31, 0.98);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
@@ -3635,12 +3644,17 @@ body.account-nav-open .profile-mobile-nav {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  scrollbar-width: none;
   -ms-overflow-style: none;
   flex-direction: column;
   flex-wrap: nowrap;
   margin-bottom: 0;
   position: static;
+}
+
+@supports (scrollbar-width: none) {
+  .profile-mobile-nav .account-nav {
+    scrollbar-width: none;
+  }
 }
 
 .profile-mobile-nav .account-nav::-webkit-scrollbar {
@@ -3730,8 +3744,13 @@ body.account-nav-open .profile-mobile-nav {
         rgba(11, 17, 34, 0.96) 100%);
     box-shadow: 8px 0 36px rgba(0, 0, 0, 0.28);
     z-index: 20;
-    scrollbar-width: none;
     -ms-overflow-style: none;
+  }
+
+  @supports (scrollbar-width: none) {
+    .account-page .account-sidebar:not(.profile-mobile-nav) {
+      scrollbar-width: none;
+    }
   }
 
   .account-page .account-sidebar:not(.profile-mobile-nav)::-webkit-scrollbar {
@@ -3849,6 +3868,7 @@ body.account-nav-open .profile-mobile-nav {
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.04) inset,
       0 18px 44px rgba(0, 0, 0, 0.3);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
   }
 
@@ -3965,6 +3985,7 @@ body.account-nav-open .profile-mobile-nav {
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-top: none;
     background: rgba(10, 15, 31, 0.98);
+    -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
   }
@@ -4406,6 +4427,7 @@ body:has(.is-chat-view),
 }
 
 .account-radio-item input[type="radio"] {
+  -webkit-appearance: none;
   appearance: none;
   width: 20px;
   height: 20px;
@@ -5102,10 +5124,16 @@ body:has(.is-chat-view),
   position: sticky;
   top: 8px;
   z-index: 50;
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   overflow-x: auto;
-  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+@supports (scrollbar-width: none) {
+  .stg-quicknav {
+    scrollbar-width: none;
+  }
 }
 
 .stg-quicknav::-webkit-scrollbar {
@@ -5483,6 +5511,7 @@ body:has(.is-chat-view),
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
+  -webkit-user-select: none;
   user-select: none;
 }
 

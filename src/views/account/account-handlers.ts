@@ -532,7 +532,7 @@ function bindSettingsNotificationsHandlers(user: AppUser): void {
       });
 
       if (res && res.ok) {
-        (user as any).systemEmailsDisabled = !isChecked;
+        user.systemEmailsDisabled = !isChecked;
       } else {
         checkbox.checked = !isChecked;
         console.error('Failed to update notification settings:', res);
@@ -553,11 +553,25 @@ async function bindSettingsPrivacyHandlers(user: AppUser, api: ApiMessage): Prom
   const selects = document.querySelectorAll('.stg-privacy-select') as NodeListOf<HTMLSelectElement>;
   if (selects.length === 0) return;
 
-  // Отключаем все селекты во время загрузки текущих настроек
-  selects.forEach(select => {
-    select.disabled = true;
-  });
+  const applyPrivacyValues = (privacyObj: Record<string, unknown>) => {
+    selects.forEach(select => {
+      const key = select.dataset.key;
+      if (!key) return;
+      const defaultVal = (key === 'gender' || key === 'dob') ? 'friends' : 'everyone';
+      const val = privacyObj[key] ?? privacyObj[`privacy_${key}`] ?? defaultVal;
+      if (val !== undefined && val !== null) {
+        select.value = String(val);
+      }
+    });
+  };
 
+  // 1. Сразу применяем имеющиеся локальные настройки из объекта пользователя
+  const initialPrivacy = (user.privacy || user) as Record<string, unknown>;
+  if (initialPrivacy) {
+    applyPrivacyValues(initialPrivacy);
+  }
+
+  // 2. Асинхронно фетчим актуальный профиль с сервера
   try {
     const res = await apiCall('/profile/me', {
       method: 'GET',
@@ -566,28 +580,15 @@ async function bindSettingsPrivacyHandlers(user: AppUser, api: ApiMessage): Prom
 
     if (res.ok) {
       const data = await res.json();
-      // ✅ Проверяем и корневой объект privacy, и вложенный в profile для надежности
-      const privacy = data?.privacy || data?.profile?.privacy;
+      const privacy = (data?.privacy || data?.profile?.privacy || data?.settings || user.privacy) as Record<string, unknown>;
       if (privacy) {
-        // Устанавливаем значения из БД
-        selects.forEach(select => {
-          const key = select.dataset.key;
-          if (!key) return;
-          // ✅ Поддерживаем оба формата ключей (с префиксом и без)
-          const value = privacy[key] || privacy[`privacy_${key}`];
-          if (value !== undefined && value !== null) {
-            select.value = value;
-          }
-        });
+        if (!user.privacy) user.privacy = {};
+        Object.assign(user.privacy, privacy);
+        applyPrivacyValues(privacy);
       }
     }
   } catch (err) {
     console.error('Error fetching privacy settings:', err);
-  } finally {
-    // Включаем селекты обратно
-    selects.forEach(select => {
-      select.disabled = false;
-    });
   }
 
   // Привязываем обработчик события 'change' к каждому селекту
@@ -643,7 +644,7 @@ function bindProfileTabHandlers(user: AppUser, api: ApiMessage): void {
   if (!deleteBtn) return;
 
   deleteBtn.addEventListener('click', async () => {
-    const login = (user as any).login || user.username || 'User';
+    const login = user.login || user.username || 'User';
     const { confirmed, password } = await showAccountDeleteConfirmModal({
       title: 'Удаление аккаунта',
       text: `
@@ -820,7 +821,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
       changeUsernameBtn.disabled = true;
       let canChangeUsername = true;
       let usernameChangedAt: number | null = null;
-      let currentUsername = (user as any).login || user.username || '';
+      let currentUsername = user.login || user.username || '';
 
       try {
         let res = await apiCall('/profile/me');
@@ -871,8 +872,8 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
             const data = await res.json().catch(() => ({}));
             if (res.ok && data.ok) {
               user.username = newUsername;
-              (user as any).login = newUsername;
-              (user as any).usernameChangedAt = Date.now();
+              user.login = newUsername;
+              user.usernameChangedAt = Date.now();
               const valEl = document.getElementById('stgUsernameValue');
               if (valEl) valEl.textContent = newUsername;
 
@@ -974,7 +975,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
   const changeGenderBtn = document.getElementById('stgChangeGenderBtn') as HTMLButtonElement | null;
   const changeDobBtn = document.getElementById('stgChangeDobBtn') as HTMLButtonElement | null;
 
-  let loadedProfile: Record<string, any> = {
+  let loadedProfile: Partial<AppUser> = {
     avatar: user.avatar,
     bio: user.bio,
     aboutMe: user.aboutMe,
@@ -988,17 +989,17 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
     const avatarSource =
       avatarId ||
       loadedProfile.avatar ||
-      (loadedProfile as any).avatarUrl ||
+      loadedProfile.avatarUrl ||
       user.avatar ||
-      (user as any).avatarUrl ||
-      (user as any).avatar_url ||
+      user.avatarUrl ||
+      user.avatar_url ||
       'avatar-cat';
 
     user.avatar = avatarSource;
-    (user as any).avatarUrl = avatarSource;
-    (user as any).avatar_url = avatarSource;
+    user.avatarUrl = avatarSource;
+    user.avatar_url = avatarSource;
     loadedProfile.avatar = avatarSource;
-    (loadedProfile as any).avatarUrl = avatarSource;
+    loadedProfile.avatarUrl = avatarSource;
 
     const avatarEmoji = getAvatarInnerHtml(avatarSource, user.username || 'User');
     const avatarObj = [...STANDARD_AVATARS, ...EXCLUSIVE_AVATARS].find((a) => a.id === avatarSource);
@@ -1036,15 +1037,15 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
           data.profile.avatarUrl ||
           data.profile.avatar_url ||
           user.avatar ||
-          (user as any).avatarUrl ||
-          (user as any).avatar_url;
+          user.avatarUrl ||
+          user.avatar_url;
 
         if (serverAvatar) {
           user.avatar = serverAvatar;
-          (user as any).avatarUrl = serverAvatar;
-          (user as any).avatar_url = serverAvatar;
+          user.avatarUrl = serverAvatar;
+          user.avatar_url = serverAvatar;
           loadedProfile.avatar = serverAvatar;
-          (loadedProfile as any).avatarUrl = serverAvatar;
+          loadedProfile.avatarUrl = serverAvatar;
         }
 
         if (data.profile.bio) user.bio = data.profile.bio;
@@ -1492,7 +1493,15 @@ async function bindBlockedUsersHandlers(_api: ApiMessage): Promise<void> {
           return;
         }
 
-        container.innerHTML = users.map((u: any) => `
+        interface BlockedUserItem {
+          id: string;
+          username?: string;
+          avatar_url?: string;
+          public_id?: string;
+          reason?: string;
+        }
+
+        container.innerHTML = (users as BlockedUserItem[]).map((u) => `
           <div class="stg-blocked-user-row" style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; padding: 10px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; margin-bottom: 8px;">
             <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
               <div style="width: 34px; height: 34px; border-radius: 50%; background: #374151; display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; color: #fff; border: 1px solid rgba(255, 255, 255, 0.15); flex-shrink: 0; font-size: 13px;">

@@ -38,6 +38,12 @@ import {
   syncChatRichInputMirror,
 } from './chat-rich-input';
 import { showAccountConfirmModal } from './modals';
+
+declare global {
+  interface Window {
+    __chatEscHandler?: (event: KeyboardEvent) => void;
+  }
+}
 import {
   appendOptimisticSentMessage,
   finalizeOptimisticSentMessage,
@@ -534,9 +540,9 @@ export function openChatInMessagesTab(
       document.removeEventListener('click', state.accountChatDocClickHandler);
       callbacks.setAccountChatDocClickHandler(null);
     }
-    if ((window as any).__chatEscHandler) {
-      document.removeEventListener('keydown', (window as any).__chatEscHandler);
-      delete (window as any).__chatEscHandler;
+    if (window.__chatEscHandler) {
+      document.removeEventListener('keydown', window.__chatEscHandler);
+      delete window.__chatEscHandler;
     }
     void callbacks
       .loadMessagesListTab(api, {
@@ -834,7 +840,7 @@ export function openChatInMessagesTab(
       }
     }
   };
-  (window as any).__chatEscHandler = escHandler;
+  window.__chatEscHandler = escHandler;
   document.addEventListener('keydown', escHandler);
   // Add to cleanup if necessary, though the tab handles its own destruction usually.
 
@@ -860,7 +866,7 @@ export function openChatInMessagesTab(
     }
 
     if (editingId) {
-      const originalMessage = state.accountChatMessageMap.get(editingId) as any;
+      const originalMessage = state.accountChatMessageMap.get(editingId) as { content?: string } | undefined;
       const originalRawContent = originalMessage?.content || '';
       if (originalRawContent) {
         const oldReplyToken = extractReplyTokenRaw(originalRawContent);
@@ -1397,7 +1403,7 @@ export function openChatInMessagesTab(
 }
 
 export async function openSystemChatInMessagesTab(
-  _api: any,
+  _api: { showMsg: (type: string, text: string, persist?: boolean) => void; clearMsg: () => void },
   onBack: () => void
 ): Promise<void> {
   const container = document.getElementById('messagesContent');
@@ -1448,7 +1454,7 @@ export async function openSystemChatInMessagesTab(
     }
 
     listEl.innerHTML = notices
-      .map((item: any) => {
+      .map((item: { title?: string; created_at?: string | number; body?: string }) => {
         const dateStr = item.created_at ? new Date(item.created_at).toLocaleString() : '';
         return `
           <div style="background: rgba(200, 107, 60, 0.08); border: 1px solid rgba(200, 107, 60, 0.25); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
@@ -1461,7 +1467,7 @@ export async function openSystemChatInMessagesTab(
         `;
       })
       .join('');
-  } catch (err) {
+  } catch {
     const listEl = container.querySelector('#systemNoticesList');
     if (listEl) {
       listEl.innerHTML = `<div class="sec-error-text">${escapeHtml(t('Ошибка загрузки системных сообщений'))}</div>`;

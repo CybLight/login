@@ -2,6 +2,7 @@ import { t } from '@/i18n';
 import { escapeHtml, apiCall } from '@/utils';
 import { setupAccessibleModal } from '@/utils/keyboard';
 import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, canUseExclusiveAvatar } from '../edit-profile';
+import { initPasswordEyes } from '@/components/password/password-helpers';
 
 function createModalCloser(
   wrap: HTMLElement,
@@ -169,7 +170,6 @@ export function showAccountDeleteConfirmModal(opts: {
 
     // Initialize password eyes for the new modal
     try {
-      const { initPasswordEyes } = require('@/components/password/password-helpers');
       initPasswordEyes(wrap);
     } catch (e) {
       console.warn('Failed to init password eyes in delete modal', e);
@@ -563,7 +563,7 @@ export function showSettingsUsernameModal(opts: {
           saveBtn.disabled = false;
           saveBtn.textContent = oldText;
         }
-      } catch (err) {
+      } catch {
         input.classList.add('input--invalid');
         errorDiv.textContent = t('Ошибка при отправке запроса');
         errorDiv.style.display = 'block';
@@ -657,7 +657,6 @@ export function showSettingsEmailModal(opts: {
 
     // Initialize password eyes for the new modal
     try {
-      const { initPasswordEyes } = require('@/components/password/password-helpers');
       initPasswordEyes(wrap);
     } catch (e) {
       console.warn('Failed to init password eyes in email modal', e);
@@ -709,7 +708,7 @@ export function showSettingsEmailModal(opts: {
           saveBtn.disabled = false;
           saveBtn.textContent = oldText;
         }
-      } catch (err) {
+      } catch {
         errorDiv.textContent = t('Ошибка при отправке запроса');
         errorDiv.style.display = 'block';
         saveBtn.disabled = false;
@@ -854,12 +853,12 @@ export function showSettingsBioModal(opts: {
     wrap.innerHTML = `
       <div class="account-notice-backdrop"></div>
       <div class="account-notice-card" style="width: min(92vw, 480px) !important; padding: 28px !important; border-radius: 20px !important;" role="dialog" aria-modal="true" aria-labelledby="stgBioTitle">
-        <div id="stgBioTitle" class="account-notice-head" style="font-size: 20px !important; font-weight: 700 !important; margin-bottom: 16px !important;">✍️ ${t('О себе (кратко)')}</div>
+        <div id="stgBioTitle" class="account-notice-head" style="font-size: 20px !important; font-weight: 700 !important; margin-bottom: 16px !important;">✍️ ${t('Подпись')}</div>
         
         <div class="sec-form-row">
-          <label class="label" for="stgBioInp" style="margin-bottom: 8px !important; display: block !important;">${t('Краткое описание профиля')}</label>
-          <textarea class="input" id="stgBioInp" rows="3" maxlength="500" placeholder="${t('Расскажите о себе кратко...')}" style="width: 100%; font-size: 14px !important; resize: vertical;">${escapeHtml(opts.currentBio)}</textarea>
-          <div class="field-hint" style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">${t('До 500 символов')}</div>
+          <label class="label" for="stgBioInp" style="margin-bottom: 8px !important; display: block !important;">${t('Ваша персональная подпись')}</label>
+          <textarea class="input" id="stgBioInp" rows="3" maxlength="500" placeholder="${t('Введите вашу подпись...')}" style="width: 100%; font-size: 14px !important; resize: vertical;">${escapeHtml(opts.currentBio)}</textarea>
+          <div class="field-hint" id="stgBioCharCount" style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; text-align: right;">${opts.currentBio.length} / 500</div>
           <div id="stgBioError" class="input-error-msg" style="color: #f87171; font-size: 12px; margin-top: 6px; display: none;"></div>
         </div>
 
@@ -877,6 +876,11 @@ export function showSettingsBioModal(opts: {
     const saveBtn = wrap.querySelector('#stgBioSaveBtn') as HTMLButtonElement;
     const errorEl = wrap.querySelector('#stgBioError') as HTMLDivElement;
     const bioInp = wrap.querySelector('#stgBioInp') as HTMLTextAreaElement;
+    const bioCharCountEl = wrap.querySelector('#stgBioCharCount');
+
+    bioInp.addEventListener('input', () => {
+      if (bioCharCountEl) bioCharCountEl.textContent = `${bioInp.value.length} / 500`;
+    });
 
     const close = createModalCloser(wrap, dialogEl, resolve);
 
@@ -913,12 +917,12 @@ export function showSettingsAboutModal(opts: {
     wrap.innerHTML = `
       <div class="account-notice-backdrop"></div>
       <div class="account-notice-card" style="width: min(92vw, 480px) !important; padding: 28px !important; border-radius: 20px !important;" role="dialog" aria-modal="true" aria-labelledby="stgAboutTitle">
-        <div id="stgAboutTitle" class="account-notice-head" style="font-size: 20px !important; font-weight: 700 !important; margin-bottom: 16px !important;">📖 ${t('О себе (подробно)')}</div>
+        <div id="stgAboutTitle" class="account-notice-head" style="font-size: 20px !important; font-weight: 700 !important; margin-bottom: 16px !important;">📖 ${t('О себе')}</div>
         
         <div class="sec-form-row">
           <label class="label" for="stgAboutInp" style="margin-bottom: 8px !important; display: block !important;">${t('Подробная информация о себе')}</label>
-          <textarea class="input" id="stgAboutInp" rows="5" maxlength="1000" placeholder="${t('Расскажите о себе подробнее...')}" style="width: 100%; font-size: 14px !important; resize: vertical;">${escapeHtml(opts.currentAbout)}</textarea>
-          <div class="field-hint" style="font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px;">${t('До 1000 символов')}</div>
+          <textarea class="input" id="stgAboutInp" rows="5" maxlength="1000" placeholder="${t('Расскажите о себе подробнее (до 1000 символов)...')}" style="width: 100%; font-size: 14px !important; resize: vertical;">${escapeHtml(opts.currentAbout)}</textarea>
+          <div class="field-hint" id="stgAboutCharCount" style="font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; text-align: right;">${opts.currentAbout.length} / 1000</div>
           <div id="stgAboutError" class="input-error-msg" style="color: #f87171; font-size: 12px; margin-top: 6px; display: none;"></div>
         </div>
 
@@ -936,6 +940,11 @@ export function showSettingsAboutModal(opts: {
     const saveBtn = wrap.querySelector('#stgAboutSaveBtn') as HTMLButtonElement;
     const errorEl = wrap.querySelector('#stgAboutError') as HTMLDivElement;
     const aboutInp = wrap.querySelector('#stgAboutInp') as HTMLTextAreaElement;
+    const aboutCharCountEl = wrap.querySelector('#stgAboutCharCount');
+
+    aboutInp.addEventListener('input', () => {
+      if (aboutCharCountEl) aboutCharCountEl.textContent = `${aboutInp.value.length} / 1000`;
+    });
 
     const close = createModalCloser(wrap, dialogEl, resolve);
 

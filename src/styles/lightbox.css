@@ -10,6 +10,7 @@
   justify-content: center;
   padding: 18px;
   background: rgba(0, 0, 0, 0.82);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   z-index: 99999;
   touch-action: pan-y;
@@ -32,6 +33,7 @@
   transition:
     opacity 160ms ease,
     transform 160ms ease;
+  -webkit-user-select: none;
   user-select: none;
 
   /* важно для touch */
@@ -100,6 +102,7 @@
   display: grid;
   place-items: center;
   font-size: 22px;
+  -webkit-user-select: none;
   user-select: none;
 }
 

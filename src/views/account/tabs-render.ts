@@ -44,10 +44,10 @@ type User = {
   publicId?: string;
   sessionsCount?: number;
   isBlocked?: boolean;
-  password_changed_at?: number;
-  passwordChangedAt?: number | string;
-  passChangedAt?: number | string;
-  pass_changed_at?: number | string;
+  password_changed_at?: number | string | null;
+  passwordChangedAt?: number | string | null;
+  passChangedAt?: number | string | null;
+  pass_changed_at?: number | string | null;
   easter?: UserEasterFlags;
   pendingEmail?: string | null;
   pending_email?: string | null;
@@ -55,6 +55,10 @@ type User = {
   pending_email_verified_at?: number | null;
   pendingEmailCompletesAt?: number | null;
   pending_email_completes_at?: number | null;
+  passkeysCount?: number;
+  passkeyCount?: number;
+  webauthnDevices?: unknown[];
+  systemEmailsDisabled?: boolean;
 };
 
 function isEmailVerified(user: User): boolean {
@@ -314,29 +318,29 @@ function renderProfileTab(user: User): string {
 function renderSettingsTab(user: User): string {
   const locale = getLocale();
   const route = 'account-settings';
-  const login = escapeHtml((user as any).login || user.username || '');
+  const login = escapeHtml(user.login || user.username || '');
   const email = escapeHtml(user.email || '');
 
-  const avatarSource = user.avatar || (user as any).avatarUrl || (user as any).avatar_url || 'avatar-cat';
+  const avatarSource = user.avatar || user.avatarUrl || user.avatar_url || 'avatar-cat';
   const currentAvatarEmoji = getAvatarInnerHtml(avatarSource, login);
   const currentAvatarObj = [...STANDARD_AVATARS, ...EXCLUSIVE_AVATARS].find((a) => a.id === avatarSource);
   const currentAvatarLabel = currentAvatarObj ? t(currentAvatarObj.label) : t('Аватар');
 
-  const bio = user.bio || (user as any).bio || '';
+  const bio = user.bio || '';
   const currentBio = bio
     ? bio.length > 40
       ? bio.substring(0, 40) + '...'
       : bio
     : t('Не указано');
 
-  const aboutMe = user.aboutMe || (user as any).about_me || (user as any).aboutMe || '';
+  const aboutMe = user.aboutMe || user.about_me || '';
   const currentAboutMe = aboutMe
     ? aboutMe.length > 40
       ? aboutMe.substring(0, 40) + '...'
       : aboutMe
     : t('Не указано');
 
-  const gender = user.gender || (user as any).gender;
+  const gender = user.gender;
   const currentGenderText =
     gender === 'male'
       ? t('Мужской')
@@ -344,7 +348,7 @@ function renderSettingsTab(user: User): string {
         ? t('Женский')
         : t('Не указано');
 
-  const dob = user.dateOfBirth || (user as any).date_of_birth || (user as any).dateOfBirth;
+  const dob = user.dateOfBirth || user.date_of_birth;
   const currentDobText = dob
     ? new Date(dob).toLocaleDateString(localeTag(getLocale()))
     : t('Не указано');
@@ -362,7 +366,7 @@ function renderSettingsTab(user: User): string {
   let securityScore = 0;
   if (emailVerified) securityScore += 30;
   if (twoFAOn) securityScore += 40;
-  const hasPasskey = !!((user as any).passkeysCount || (user as any).passkeyCount || (user as any).webauthnDevices?.length);
+  const hasPasskey = !!(user.passkeysCount || user.passkeyCount || user.webauthnDevices?.length);
   if (hasPasskey) securityScore += 30;
 
   const securityLevelClass =
@@ -371,6 +375,12 @@ function renderSettingsTab(user: User): string {
       : securityScore >= 50
         ? "security-level--medium"
         : "security-level--low";
+
+  const userPrivacy = (((user as Record<string, unknown>).privacy as Record<string, unknown> | undefined) || user) as Record<string, unknown>;
+  const getPrivacyOpt = (key: string, defaultVal: string = 'everyone') => {
+    const val = userPrivacy[key] ?? userPrivacy[`privacy_${key}`] ?? defaultVal;
+    return String(val);
+  };
 
   return `
     <div class="settings-tab-view" style="max-width: 760px;">
@@ -459,9 +469,9 @@ function renderSettingsTab(user: User): string {
           <div class="stg-field__left">
             <span class="stg-field__icon">✍️</span>
             <div class="stg-field__body">
-              <div class="stg-field__label">${t('О себе (кратко)')}</div>
+              <div class="stg-field__label">${t('Подпись')}</div>
               <div class="stg-field__value" id="stgBioValue">${escapeHtml(currentBio)}</div>
-              <div class="stg-field__hint">${t('Краткое описание профиля (до 500 символов)')}</div>
+              <div class="stg-field__hint">${t('Персональная подпись в профиле')}</div>
             </div>
           </div>
           <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeBioBtn">${t('Изменить')}</button>
@@ -471,7 +481,7 @@ function renderSettingsTab(user: User): string {
           <div class="stg-field__left">
             <span class="stg-field__icon">📖</span>
             <div class="stg-field__body">
-              <div class="stg-field__label">${t('О себе (подробно)')}</div>
+              <div class="stg-field__label">${t('О себе')}</div>
               <div class="stg-field__value" id="stgAboutValue">${escapeHtml(currentAboutMe)}</div>
               <div class="stg-field__hint">${t('Подробная информация о себе (до 1000 символов)')}</div>
             </div>
@@ -678,7 +688,7 @@ function renderSettingsTab(user: User): string {
               <div class="stg-notif-row__hint">${t('Важные уведомления о безопасности и аккаунте')}</div>
             </div>
             <label class="stg-toggle">
-              <input type="checkbox" id="stgNotifSystemEmails" ${!(user as any).systemEmailsDisabled ? 'checked' : ''} />
+              <input type="checkbox" id="stgNotifSystemEmails" ${!user.systemEmailsDisabled ? 'checked' : ''} />
               <span class="stg-toggle__track"></span>
             </label>
           </div>
@@ -889,19 +899,19 @@ function renderSettingsTab(user: User): string {
           <div class="stg-row__label">${t('Кто может видеть мой аватар')}</div>
           <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости вашего аватара')}</div>
           <select class="input stg-privacy-select" id="stgPrivacyAvatar" data-key="avatar" style="cursor: pointer;">
-            <option value="everyone">${t('Все пользователи')}</option>
-            <option value="friends">${t('Только друзья')}</option>
-            <option value="nobody">${t('Никто')}</option>
+            <option value="everyone" ${getPrivacyOpt('avatar', 'everyone') === 'everyone' ? 'selected' : ''}>${t('Все пользователи')}</option>
+            <option value="friends" ${getPrivacyOpt('avatar', 'everyone') === 'friends' ? 'selected' : ''}>${t('Только друзья')}</option>
+            <option value="nobody" ${getPrivacyOpt('avatar', 'everyone') === 'nobody' ? 'selected' : ''}>${t('Никто')}</option>
           </select>
         </div>
 
         <div class="stg-row stg-row--block">
-          <div class="stg-row__label">${t('Кто может видеть моё краткое описание (Bio)')}</div>
-          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости короткого описания профиля')}</div>
+          <div class="stg-row__label">${t('Кто может видеть мою подпись')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости вашей подписи в профиле')}</div>
           <select class="input stg-privacy-select" id="stgPrivacyBio" data-key="bio" style="cursor: pointer;">
-            <option value="everyone">${t('Все пользователи')}</option>
-            <option value="friends">${t('Только друзья')}</option>
-            <option value="nobody">${t('Никто')}</option>
+            <option value="everyone" ${getPrivacyOpt('bio', 'everyone') === 'everyone' ? 'selected' : ''}>${t('Все пользователи')}</option>
+            <option value="friends" ${getPrivacyOpt('bio', 'everyone') === 'friends' ? 'selected' : ''}>${t('Только друзья')}</option>
+            <option value="nobody" ${getPrivacyOpt('bio', 'everyone') === 'nobody' ? 'selected' : ''}>${t('Никто')}</option>
           </select>
         </div>
 
@@ -909,9 +919,9 @@ function renderSettingsTab(user: User): string {
           <div class="stg-row__label">${t('Кто может видеть раздел «О себе»')}</div>
           <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости подробного раздела о себе')}</div>
           <select class="input stg-privacy-select" id="stgPrivacyAbout" data-key="about" style="cursor: pointer;">
-            <option value="everyone">${t('Все пользователи')}</option>
-            <option value="friends">${t('Только друзья')}</option>
-            <option value="nobody">${t('Никто')}</option>
+            <option value="everyone" ${getPrivacyOpt('about', 'everyone') === 'everyone' ? 'selected' : ''}>${t('Все пользователи')}</option>
+            <option value="friends" ${getPrivacyOpt('about', 'everyone') === 'friends' ? 'selected' : ''}>${t('Только друзья')}</option>
+            <option value="nobody" ${getPrivacyOpt('about', 'everyone') === 'nobody' ? 'selected' : ''}>${t('Никто')}</option>
           </select>
         </div>
 
@@ -919,9 +929,9 @@ function renderSettingsTab(user: User): string {
           <div class="stg-row__label">${t('Кто может видеть мой пол')}</div>
           <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости вашего пола в профиле')}</div>
           <select class="input stg-privacy-select" id="stgPrivacyGender" data-key="gender" style="cursor: pointer;">
-            <option value="everyone">${t('Все пользователи')}</option>
-            <option value="friends">${t('Только друзья')}</option>
-            <option value="nobody">${t('Никто')}</option>
+            <option value="everyone" ${getPrivacyOpt('gender', 'friends') === 'everyone' ? 'selected' : ''}>${t('Все пользователи')}</option>
+            <option value="friends" ${getPrivacyOpt('gender', 'friends') === 'friends' ? 'selected' : ''}>${t('Только друзья')}</option>
+            <option value="nobody" ${getPrivacyOpt('gender', 'friends') === 'nobody' ? 'selected' : ''}>${t('Никто')}</option>
           </select>
         </div>
 
@@ -929,9 +939,9 @@ function renderSettingsTab(user: User): string {
           <div class="stg-row__label">${t('Кто может видеть мою дату рождения')}</div>
           <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости даты вашего рождения')}</div>
           <select class="input stg-privacy-select" id="stgPrivacyDob" data-key="dob" style="cursor: pointer;">
-            <option value="everyone">${t('Все пользователи')}</option>
-            <option value="friends">${t('Только друзья')}</option>
-            <option value="nobody">${t('Никто')}</option>
+            <option value="everyone" ${getPrivacyOpt('dob', 'friends') === 'everyone' ? 'selected' : ''}>${t('Все пользователи')}</option>
+            <option value="friends" ${getPrivacyOpt('dob', 'friends') === 'friends' ? 'selected' : ''}>${t('Только друзья')}</option>
+            <option value="nobody" ${getPrivacyOpt('dob', 'friends') === 'nobody' ? 'selected' : ''}>${t('Никто')}</option>
           </select>
         </div>
 
@@ -939,9 +949,9 @@ function renderSettingsTab(user: User): string {
           <div class="stg-row__label">${t('Профиль виден другим пользователям')}</div>
           <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости вашей учетной записи в поиске и списках')}</div>
           <select class="input stg-privacy-select" id="stgPrivacyProfile" data-key="profile" style="cursor: pointer;">
-            <option value="everyone">${t('Все пользователи')}</option>
-            <option value="friends">${t('Только друзья')}</option>
-            <option value="nobody">${t('Никто')}</option>
+            <option value="everyone" ${getPrivacyOpt('profile', 'everyone') === 'everyone' ? 'selected' : ''}>${t('Все пользователи')}</option>
+            <option value="friends" ${getPrivacyOpt('profile', 'everyone') === 'friends' ? 'selected' : ''}>${t('Только друзья')}</option>
+            <option value="nobody" ${getPrivacyOpt('profile', 'everyone') === 'nobody' ? 'selected' : ''}>${t('Никто')}</option>
           </select>
         </div>
 
@@ -949,9 +959,19 @@ function renderSettingsTab(user: User): string {
           <div class="stg-row__label">${t('Показывать онлайн-статус')}</div>
           <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка отображения вашей сетевой активности')}</div>
           <select class="input stg-privacy-select" id="stgPrivacyOnline" data-key="online" style="cursor: pointer;">
-            <option value="everyone">${t('Все пользователи')}</option>
-            <option value="friends">${t('Только друзья')}</option>
-            <option value="nobody">${t('Никто')}</option>
+            <option value="everyone" ${getPrivacyOpt('online', 'everyone') === 'everyone' ? 'selected' : ''}>${t('Все пользователи')}</option>
+            <option value="friends" ${getPrivacyOpt('online', 'everyone') === 'friends' ? 'selected' : ''}>${t('Только друзья')}</option>
+            <option value="nobody" ${getPrivacyOpt('online', 'everyone') === 'nobody' ? 'selected' : ''}>${t('Никто')}</option>
+          </select>
+        </div>
+
+        <div class="stg-row stg-row--block">
+          <div class="stg-row__label">${t('Кто может видеть список и количество моих друзей')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 8px;">${t('Настройка видимости ваших друзей в профиле')}</div>
+          <select class="input stg-privacy-select" id="stgPrivacyFriends" data-key="friends" style="cursor: pointer;">
+            <option value="everyone" ${getPrivacyOpt('friends', 'everyone') === 'everyone' ? 'selected' : ''}>${t('Все пользователи')}</option>
+            <option value="friends" ${getPrivacyOpt('friends', 'everyone') === 'friends' ? 'selected' : ''}>${t('Только друзья')}</option>
+            <option value="nobody" ${getPrivacyOpt('friends', 'everyone') === 'nobody' ? 'selected' : ''}>${t('Никто')}</option>
           </select>
         </div>
       </section>
@@ -1792,7 +1812,7 @@ function renderEasterTab(user: User): string {
   const hasCyberArtist =
     localStorage.getItem("cyb_easter_cyber_artist") === "true" ||
     localStorage.getItem("cyb_easter_cyber_artist") === "1" ||
-    !!(user.easter as any)?.cyberArtist;
+    !!user.easter?.cyberArtist;
   const hasNightGuard = !!user.easter?.nightGuard;
   const hasTrustedFingerprint = !!user.easter?.trustedFingerprint;
   const hasBridge = !!user.easter?.bridge;

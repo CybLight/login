@@ -683,7 +683,7 @@ export async function decryptIncomingMessage(
             ctx.kyberPreKeyStore,
           );
           return new TextDecoder().decode(plaintext);
-        } catch (e) {
+        } catch {
           // ignore, fall back
         }
       }

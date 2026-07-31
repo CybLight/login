@@ -81,19 +81,21 @@ function getMarkdownOffset(root: HTMLElement, targetNode: Node, targetOffset: nu
             startTag = '`'; endTag = '`';
           }
           break;
-        case 'PRE':
+        case 'PRE': {
           const codeElement = element.querySelector('code');
           const lang = codeElement?.className?.replace('language-', '') || '';
           startTag = `\`\`\`${lang}\n`;
           endTag = '\n```';
           break;
+        }
         case 'BLOCKQUOTE':
           startTag = '> '; break;
-        case 'A':
+        case 'A': {
           startTag = '[';
           const href = element.getAttribute('href') || '';
           endTag = `](${href})`;
           break;
+        }
         case 'BR':
           startTag = '\n'; break;
       }
@@ -182,19 +184,21 @@ function setSelectionRangeFromMarkdown(root: HTMLElement, startOffset: number, e
             startTag = '`'; endTag = '`';
           }
           break;
-        case 'PRE':
+        case 'PRE': {
           const codeElement = element.querySelector('code');
           const lang = codeElement?.className?.replace('language-', '') || '';
           startTag = `\`\`\`${lang}\n`;
           endTag = '\n```';
           break;
+        }
         case 'BLOCKQUOTE':
           startTag = '> '; break;
-        case 'A':
+        case 'A': {
           startTag = '[';
           const href = element.getAttribute('href') || '';
           endTag = `](${href})`;
           break;
+        }
         case 'BR':
           startTag = '\n'; break;
       }
@@ -225,7 +229,7 @@ function setSelectionRangeFromMarkdown(root: HTMLElement, startOffset: number, e
   try {
     range.setStart(startNode, startNodeOffset);
     range.setEnd(endNode, endNodeOffset);
-  } catch (e) {
+  } catch {
     range.selectNodeContents(root);
     range.collapse(false);
   }
@@ -298,17 +302,23 @@ export function updateToolbarActiveStates(input: HTMLElement): void {
   });
 }
 
-export function syncChatRichInputMirror(input: any): void {
+export function syncChatRichInputMirror(input: HTMLElement): void {
   const field = input.closest('.chat-input-field');
   const text = input.innerText || '';
   field?.classList.toggle('is-empty', !text.trim());
 }
 
-export function adjustChatInputHeight(_input: any, _maxHeight = 150): void {
+export function adjustChatInputHeight(_input: HTMLElement, _maxHeight = 150): void {
   // contenteditable div handles dynamic height automatically
 }
 
-export function bindChatRichInput(input: any): void {
+export type RichInputHTMLElement = HTMLElement & {
+  selectionStart?: number;
+  selectionEnd?: number;
+  setSelectionRange?: (start: number, end: number) => void;
+};
+
+export function bindChatRichInput(input: RichInputHTMLElement): void {
   if (input.dataset.richInputBound === '1') return;
   input.dataset.richInputBound = '1';
   input.classList.add('chat-input--rich');
@@ -352,7 +362,7 @@ export function bindChatRichInput(input: any): void {
       return getMarkdownOffset(input, range.startContainer, range.startOffset);
     },
     set(val) {
-      setSelectionRangeFromMarkdown(input, val, input.selectionEnd);
+      setSelectionRangeFromMarkdown(input, val, (input as RichInputHTMLElement).selectionEnd ?? 0);
     },
     configurable: true
   });
@@ -365,7 +375,7 @@ export function bindChatRichInput(input: any): void {
       return getMarkdownOffset(input, range.endContainer, range.endOffset);
     },
     set(val) {
-      setSelectionRangeFromMarkdown(input, input.selectionStart, val);
+      setSelectionRangeFromMarkdown(input, (input as RichInputHTMLElement).selectionStart ?? 0, val);
     },
     configurable: true
   });
@@ -385,7 +395,7 @@ export function bindChatRichInput(input: any): void {
   updateEmptyState();
 }
 
-export function handleChatInputFormatShortcut(event: KeyboardEvent, input: any): boolean {
+export function handleChatInputFormatShortcut(event: KeyboardEvent, input: HTMLTextAreaElement): boolean {
   if (!(event.ctrlKey || event.metaKey)) return false;
 
   const key = event.key.toLowerCase();

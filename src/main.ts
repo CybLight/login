@@ -20,6 +20,7 @@ import {
 } from '@/components/easter';
 import { initReportModalTriggers } from '@/ui/report-modal';
 import { initPrivacySettings } from '@/ui/privacy-settings';
+import { initExternalLinkGuard } from '@/ui/external-link-modal';
 import { setSignalUserId } from '@/crypto/signal/session-context';
 
 import { maintainChatWebSocket } from '@/services/chat-ws';
@@ -91,6 +92,7 @@ function initGlobalUiDelegation(): void {
 
 export async function initApp(): Promise<void> {
   initPrivacySettings();
+  initExternalLinkGuard();
   initLocaleRouting();
 
   console.log('📱 CybLight Login - Initializing...');

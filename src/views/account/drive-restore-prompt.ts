@@ -366,7 +366,7 @@ function crumbleButton(btn: HTMLElement, onClose: () => void) {
     let posX = parseFloat(p.style.left);
     let posY = parseFloat(p.style.top);
     let velY = vy;
-    let velX = vx;
+    const velX = vx;
     const gravity = 0.45;
     const footerY = window.innerHeight + window.scrollY - 30;
 

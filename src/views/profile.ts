@@ -267,7 +267,7 @@ async function checkIsUserBlocked(targetUserId: string): Promise<boolean> {
     const data = await res.json().catch(() => ({}));
     const blockedList = data.blockedUsers || data.data?.blockedUsers;
     if (res.ok && Array.isArray(blockedList)) {
-      return blockedList.some((u: any) => u.id === targetUserId || u.public_id === targetUserId);
+      return blockedList.some((u: { id?: string; public_id?: string }) => u.id === targetUserId || u.public_id === targetUserId);
     }
   } catch (err) {
     console.error('Error checking blocked status:', err);
@@ -1032,22 +1032,80 @@ export async function renderPublicProfile(username: string): Promise<void> {
         border-color: rgba(52,211,153,.48);
         background: rgba(52,211,153,.15);
       }
-      .profile-joined,
-      .profile-bio,
-      .profile-about,
-      .profile-gender,
-      .profile-dob {
+      .profile-joined {
         margin: 10px 0 0;
         color: rgba(238,242,255,.9);
         overflow-wrap: anywhere;
         word-break: break-word;
+      }
+      .profile-about-text {
+        margin: 10px 0 0;
+        color: rgba(238, 242, 255, 0.95);
+        font-size: 14.5px;
+        line-height: 1.6;
+        word-break: break-word;
         white-space: pre-wrap;
+      }
+      .profile-text-link {
+        color: #38bdf8;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+        word-break: break-all;
+        transition: color 0.15s ease;
+      }
+      .profile-text-link:hover {
+        color: #7dd3fc;
+      }
+      .profile-details-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .profile-detail-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 18px;
+        background: rgba(30, 41, 59, 0.65);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+      }
+      .profile-detail-card:hover {
+        border-color: rgba(56, 189, 248, 0.35);
+        background: rgba(30, 41, 59, 0.85);
+      }
+      .profile-detail-icon {
+        font-size: 20px;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .profile-detail-body {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .profile-detail-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: rgba(148, 163, 184, 0.85);
+        font-weight: 600;
+      }
+      .profile-detail-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #f1f5f9;
       }
       .profile-top-meta {
         margin-top: 12px;
         display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
       }
       .profile-friends-pill {
         display: inline-flex;
@@ -1067,6 +1125,31 @@ export async function renderPublicProfile(username: string): Promise<void> {
       .profile-friends-label {
         font-size: 13px;
         opacity: .9;
+      }
+      .profile-signature-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(192, 132, 252, .38);
+        background: linear-gradient(135deg, rgba(168, 85, 247, .16) 0%, rgba(147, 51, 234, .1) 100%);
+        color: #f3e8ff;
+        font-size: 13.5px;
+        font-weight: 500;
+        max-width: 100%;
+        box-sizing: border-box;
+      }
+      .profile-signature-icon {
+        font-size: 15px;
+        line-height: 1;
+        opacity: .9;
+        flex-shrink: 0;
+      }
+      .profile-signature-text {
+        font-style: italic;
+        color: #e9d5ff;
+        word-break: break-word;
       }
       .profile-share {
         display: flex;
@@ -1333,6 +1416,167 @@ export async function renderPublicProfile(username: string): Promise<void> {
     `;
   }
 
+  const renderTextWithLinks = (text: string): string => {
+    if (!text) return '';
+    const escaped = escapeHtml(text);
+    const urlRegex = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/gi;
+    return escaped.replace(urlRegex, (url) => {
+      let cleanUrl = url;
+      let suffix = '';
+      const lastChar = cleanUrl.slice(-1);
+      if (['.', ',', ';', '!', ')'].includes(lastChar)) {
+        suffix = lastChar;
+        cleanUrl = cleanUrl.slice(0, -1);
+      }
+      const href = cleanUrl.startsWith('www.') ? `https://${cleanUrl}` : cleanUrl;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer" class="profile-text-link">${cleanUrl}</a>${suffix}`;
+    });
+  };
+
+  const renderProfileExtraSection = (p: PublicProfile): string => {
+    const hasAbout = Boolean(p.aboutMe);
+    const hasGender = Boolean(p.gender && p.gender !== 'not_specified');
+    const hasDob = Boolean(p.dateOfBirth);
+
+    if (!hasAbout && !hasGender && !hasDob) return '';
+
+    const formattedDob = hasDob && p.dateOfBirth
+      ? new Date(p.dateOfBirth).toLocaleDateString(localeTag(getLocale()))
+      : '';
+
+    return `
+      <div class="profile-extra">
+        ${
+          hasAbout
+            ? `
+            <div class="profile-about-section">
+              <h3>${t('О себе')}</h3>
+              <p class="profile-about-text">${renderTextWithLinks(p.aboutMe || '')}</p>
+            </div>
+          `
+            : ''
+        }
+
+        ${
+          hasGender || hasDob
+            ? `
+            <div class="profile-details-grid" style="${hasAbout ? 'margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.08);' : ''}">
+              ${
+                hasGender
+                  ? `
+                  <div class="profile-detail-card">
+                    <span class="profile-detail-icon">${p.gender === 'male' ? '♂️' : '♀️'}</span>
+                    <div class="profile-detail-body">
+                      <span class="profile-detail-label">${t('Пол')}</span>
+                      <span class="profile-detail-value">${p.gender === 'male' ? t('Мужской') : t('Женский')}</span>
+                    </div>
+                  </div>
+                `
+                  : ''
+              }
+              ${
+                hasDob
+                  ? `
+                  <div class="profile-detail-card">
+                    <span class="profile-detail-icon">📅</span>
+                    <div class="profile-detail-body">
+                      <span class="profile-detail-label">${t('Дата рождения')}</span>
+                      <span class="profile-detail-value">${formattedDob}</span>
+                    </div>
+                  </div>
+                `
+                  : ''
+              }
+            </div>
+          `
+            : ''
+        }
+      </div>
+    `;
+  };
+
+  if (profile.isPrivate) {
+    document.title = `${String(profile.username || profile.login || username)} — CybLight`;
+    const avatarEmoji = getAvatarEmoji(profile.avatar || '');
+    const roleClass = getRoleClass(profile.role);
+    const roleLabel = getRoleLabel(profile.role, profile.flags);
+    const badgesHtml = buildProfileBadges(profile);
+    const presenceHtml = renderPresenceChip(profile);
+
+    app.innerHTML = `
+      ${profileStyles}
+      ${buildProfileHeader(username, Boolean(currentUser), String(profile.username || profile.login || username), currentUser?.role)}
+      <div class="profile-container">
+        <div class="profile-header">
+          <div class="profile-info">
+            <div class="profile-avatar" id="profileAvatar">${avatarEmoji}</div>
+            <div class="profile-details">
+              <h1>
+                ${escapeHtml(profile.username || profile.login || '')}
+                ${
+                  profile.verified
+                    ? '<span class="verified-badge" title="Verified"><svg class="verified-icon" style="width: 24px; height: 24px; display: inline-block;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#3b82f6"/><path d="M9 12l2 2 4-4" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>'
+                    : ''
+                }
+              </h1>
+              <div class="profile-status-badges">
+                <span class="chip status ${roleClass}" style="margin-right: 8px;">
+                  <span class="dot"></span> ${roleLabel}
+                </span>
+                ${presenceHtml}
+                ${badgesHtml}
+              </div>
+              <p class="profile-joined">${t('На CybLight с')} ${createdAt}</p>
+              ${
+                typeof profile.friendsCount === 'number' || profile.bio
+                  ? `
+                  <div class="profile-top-meta">
+                    ${
+                      typeof profile.friendsCount === 'number'
+                        ? `
+                        <div class="profile-friends-pill" title="${t('Количество друзей')}">
+                          <span class="profile-friends-value">${profile.friendsCount}</span>
+                          <span class="profile-friends-label">${t('друзей')}</span>
+                        </div>
+                      `
+                        : ''
+                    }
+                    ${
+                      profile.bio
+                        ? `
+                        <div class="profile-signature-pill" title="${t('Подпись')}">
+                          <span class="profile-signature-icon">✍️</span>
+                          <span class="profile-signature-text">${escapeHtml(profile.bio)}</span>
+                        </div>
+                      `
+                        : ''
+                    }
+                  </div>
+                `
+                  : ''
+              }
+            </div>
+          </div>
+        </div>
+
+        ${actionButtons}
+
+        ${renderProfileExtraSection(profile)}
+
+        <div class="profile-notfound" style="margin-top: 24px;">
+          <div style="font-size: 48px; margin-bottom: 12px;">🔒</div>
+          <h2>${t('Это закрытый профиль')}</h2>
+          <p style="color: rgba(238,242,255,.7); margin-top: 8px;">${t('Дополнительные разделы профиля доступны только друзьям пользователя.')}</p>
+        </div>
+      </div>
+      ${buildProfileFooter()}
+    `;
+
+    bindProfileHeaderHandlers();
+    bindProfileFriendActions(username);
+    return;
+  }
+
   document.title = `${String(profile.username || profile.login || username)} — CybLight`;
 
   const avatarEmoji = getAvatarEmoji(profile.avatar || '');
@@ -1340,7 +1584,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
   const roleLabel = getRoleLabel(profile.role, profile.flags);
   const badgesHtml = buildProfileBadges(profile);
   const presenceHtml = renderPresenceChip(profile);
-  const friendsCount = profile.friendsCount || 0;
+  const hasFriendsCount = typeof profile.friendsCount === 'number';
 
   app.innerHTML = `
     ${profileStyles}
@@ -1366,12 +1610,34 @@ export async function renderPublicProfile(username: string): Promise<void> {
               ${badgesHtml}
             </div>
             <p class="profile-joined">${t('На CybLight с')} ${createdAt}</p>
-            <div class="profile-top-meta">
-              <div class="profile-friends-pill" title="${t('Количество друзей')}">
-                <span class="profile-friends-value">${friendsCount}</span>
-                <span class="profile-friends-label">${t('друзей')}</span>
-              </div>
-            </div>
+            ${
+              hasFriendsCount || profile.bio
+                ? `
+                <div class="profile-top-meta">
+                  ${
+                    hasFriendsCount
+                      ? `
+                      <div class="profile-friends-pill" title="${t('Количество друзей')}">
+                        <span class="profile-friends-value">${profile.friendsCount}</span>
+                        <span class="profile-friends-label">${t('друзей')}</span>
+                      </div>
+                    `
+                      : ''
+                  }
+                  ${
+                    profile.bio
+                      ? `
+                      <div class="profile-signature-pill" title="${t('Подпись')}">
+                        <span class="profile-signature-icon">✍️</span>
+                        <span class="profile-signature-text">${escapeHtml(profile.bio)}</span>
+                      </div>
+                    `
+                      : ''
+                  }
+                </div>
+              `
+                : ''
+            }
           </div>
         </div>
 
@@ -1393,17 +1659,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
 
       ${actionButtons}
 
-      <div class="profile-extra">
-        <h3>${t('О себе')}</h3>
-        ${profile.bio ? `<p class="profile-bio">${escapeHtml(profile.bio)}</p>` : ''}
-        ${profile.aboutMe ? `<p class="profile-about">${escapeHtml(profile.aboutMe)}</p>` : ''}
-        ${
-          profile.gender && profile.gender !== 'not_specified'
-            ? `<p class="profile-gender">${t('Пол:')} ${profile.gender === 'male' ? t('Мужской') : t('Женский')}</p>`
-            : ''
-        }
-        ${profile.dateOfBirth ? `<p class="profile-dob">${t('Дата рождения:')} ${new Date(profile.dateOfBirth).toLocaleDateString(localeTag(getLocale()))}</p>` : ''}
-      </div>
+      ${renderProfileExtraSection(profile)}
 
       <div class="profile-content">
         <p>${t('Это профиль пользователя. Дополнительная информация скоро будет доступна.')}</p>

@@ -66,6 +66,8 @@ export type CyblightBackupFileV1 = {
   salt: string;
   iv: string;
   ciphertext: string;
+  saltBase64?: string;
+  ivBase64?: string;
 };
 
 export function defaultBackupRecords(): CyblightBackupRecords {
