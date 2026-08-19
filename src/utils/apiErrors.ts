@@ -68,6 +68,22 @@ export function formatApiError(rawError: string | undefined | null, fallbackMess
     case 'profanity_detected':
       return t('Текст содержит недопустимые или 18+ выражения.');
 
+    // Токены и подтверждение email
+    case 'token_used':
+      return t('Эта ссылка уже была использована ранее (email уже подтверждён). Вы можете войти в аккаунт.');
+    case 'token_expired':
+      return t('Срок действия ссылки подтверждения истёк. Пожалуйста, запросите новую ссылку в настройках аккаунта.');
+    case 'invalid_token':
+      return t('Недействительная или поврежденная ссылка подтверждения. Проверьте ссылку из письма.');
+    case 'token_required':
+      return t('Отсутствует токен подтверждения.');
+    case 'token_invalid_meta':
+      return t('Некорректные параметры ссылки подтверждения.');
+    case 'no_email':
+      return t('Email адрес для подтверждения не найден.');
+    case 'email_changed':
+      return t('Email адрес аккаунта уже был изменён на другой.');
+
     default:
       // Если это уже понятный текст на русском / с пробелами, возвращаем как есть
       if (rawError.includes(' ') || /[а-яА-ЯёЁ]/.test(rawError)) {

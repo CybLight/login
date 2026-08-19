@@ -1,7 +1,8 @@
-import { t } from '@/i18n';
+import { t, getLocale } from '@/i18n';
 import { escapeHtml, apiCall } from '@/utils';
 import { setupAccessibleModal } from '@/utils/keyboard';
-import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, canUseExclusiveAvatar } from '../edit-profile';
+import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, AVATAR_FRAMES, canUseExclusiveAvatar } from '../edit-profile';
+import { getAvatarEmoji, getAvatarFrameClass } from './avatar';
 import { initPasswordEyes } from '@/components/password/password-helpers';
 import type { User } from '@/types';
 import { Router } from '@/router/Router';
@@ -843,6 +844,158 @@ export function showSettingsAvatarModal(opts: {
   });
 }
 
+export function showSettingsAvatarFrameModal(opts: {
+  profile: { avatar?: string; avatarFrame?: string | null; avatar_frame?: string | null; isPremium?: boolean };
+  onSave: (selectedFrame: string) => Promise<{ ok: boolean; error?: string }>;
+  onOpenPremium?: () => void;
+}): Promise<void> {
+  const old = document.getElementById('settingsAvatarFrameModal');
+  old?.remove();
+
+  return new Promise((resolve) => {
+    const wrap = document.createElement('div');
+    wrap.id = 'settingsAvatarFrameModal';
+    wrap.className = 'account-notice-modal';
+
+    const isPremium = Boolean(opts.profile.isPremium);
+    const currentFrame = (opts.profile.avatarFrame || opts.profile.avatar_frame || (isPremium ? 'frame-neon-orange' : 'frame-none')).trim();
+    let selectedFrameId = currentFrame;
+
+    const avatarEmoji = getAvatarEmoji(opts.profile.avatar || 'avatar-cat') || '🐱';
+
+    const framesHtml = AVATAR_FRAMES.map((frame) => {
+      const isLocked = frame.premium && !isPremium;
+      const isSelected = selectedFrameId === frame.id;
+      const frameClass = getAvatarFrameClass(frame.id, false);
+      const lockTooltip = isLocked ? `${t(frame.label)} (${t('Только для Premium')})` : t(frame.label);
+
+      return `
+        <div class="frame-option ${isSelected ? 'selected' : ''} ${isLocked ? 'locked' : ''}" 
+             data-frame="${frame.id}" 
+             title="${escapeHtml(lockTooltip)}"
+             style="cursor: pointer; position: relative; padding: 12px 8px; border-radius: 14px; background: ${isSelected ? 'rgba(251, 191, 36, 0.12)' : 'rgba(255, 255, 255, 0.03)'}; border: 1.5px solid ${isSelected ? '#fbbf24' : isLocked ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.12)'}; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); user-select: none; -webkit-user-select: none;">
+          <div class="profile-avatar ${frameClass}" style="width: 48px; height: 48px; font-size: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); transition: all 0.2s;">
+            ${avatarEmoji}
+          </div>
+          <div style="font-size: 12px; font-weight: 700; color: ${isSelected ? '#fef08a' : '#cbd5e1'}; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            ${frame.icon} ${t(frame.label)}
+          </div>
+          ${isLocked ? `<div style="position: absolute; top: 6px; right: 6px; font-size: 11px; background: rgba(0,0,0,0.6); padding: 2px 5px; border-radius: 6px; color: #fbbf24;">🔒</div>` : ''}
+          ${frame.premium ? `<div style="font-size: 10px; font-weight: 800; color: #fbbf24; background: rgba(234, 179, 8, 0.15); padding: 1px 6px; border-radius: 999px;">PREMIUM</div>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    const activeFrameObj = AVATAR_FRAMES.find((f) => f.id === selectedFrameId) || AVATAR_FRAMES[0];
+    const initialPreviewClass = getAvatarFrameClass(selectedFrameId, false);
+
+    wrap.innerHTML = `
+      <div class="account-notice-backdrop"></div>
+      <div class="account-notice-card" style="width: min(94vw, 560px) !important; padding: 26px !important; border-radius: 24px !important; max-height: 88vh; overflow-y: auto; background: #0f172a !important; border: 1px solid rgba(234, 179, 8, 0.3) !important; box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(234, 179, 8, 0.15) !important;" role="dialog" aria-modal="true" aria-labelledby="stgAvatarFrameTitle">
+        <div id="stgAvatarFrameTitle" class="account-notice-head" style="font-size: 20px !important; font-weight: 800 !important; margin-bottom: 18px !important; display: flex; align-items: center; gap: 8px;">
+          <span>✨</span>
+          <span>${t('Эксклюзивные рамки аватара')}</span>
+        </div>
+
+        <!-- Live Preview Box -->
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; align-items: center; margin-bottom: 20px;">
+          <div class="profile-avatar ${initialPreviewClass}" id="stgFrameLivePreview" style="width: 80px; height: 80px; font-size: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); transition: all 0.25s;">
+            ${avatarEmoji}
+          </div>
+          <div id="stgFramePreviewLabel" style="font-size: 15px; font-weight: 800; color: #fbbf24; margin-top: 12px;">
+            ${activeFrameObj.icon} ${t(activeFrameObj.label)}
+          </div>
+          <div id="stgFramePreviewDesc" style="font-size: 12px; color: #94a3b8; margin-top: 2px;">
+            ${t(activeFrameObj.desc)}
+          </div>
+        </div>
+
+        <div style="font-size: 13px; font-weight: 700; color: #cbd5e1; margin-bottom: 10px;">
+          ${t('Выберите эффект оформления:')}
+        </div>
+
+        <div class="avatar-frames-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 260px; overflow-y: auto; padding: 4px;">
+          ${framesHtml}
+        </div>
+
+        <div id="stgAvatarFrameError" class="input-error-msg" style="color: #f87171; font-size: 13px; margin-top: 10px; display: none;"></div>
+
+        <div class="account-notice-actions account-notice-actions--end" style="display: flex !important; gap: 12px !important; justify-content: flex-end !important; margin-top: 22px !important;">
+          <button type="button" class="btn btn-outline" id="stgAvatarFrameCancelBtn">${t('Отмена')}</button>
+          <button type="button" class="btn btn-primary" id="stgAvatarFrameSaveBtn" style="background: linear-gradient(135deg, #f59e0b, #eab308); color: #000; font-weight: 800; border: none;">${t('Применить')}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(wrap);
+
+    const dialogEl = wrap.querySelector('.account-notice-card') as HTMLElement;
+    const cancelBtn = wrap.querySelector('#stgAvatarFrameCancelBtn') as HTMLButtonElement;
+    const saveBtn = wrap.querySelector('#stgAvatarFrameSaveBtn') as HTMLButtonElement;
+    const errorEl = wrap.querySelector('#stgAvatarFrameError') as HTMLDivElement;
+    const livePreviewEl = wrap.querySelector('#stgFrameLivePreview') as HTMLElement;
+    const previewLabelEl = wrap.querySelector('#stgFramePreviewLabel') as HTMLElement;
+    const previewDescEl = wrap.querySelector('#stgFramePreviewDesc') as HTMLElement;
+    const frameOptions = wrap.querySelectorAll('.frame-option');
+
+    function updateLivePreview(frameId: string) {
+      const frameObj = AVATAR_FRAMES.find((f) => f.id === frameId) || AVATAR_FRAMES[0];
+      const frameClass = getAvatarFrameClass(frameId, false);
+
+      // Remove all previous avatar-frame-- classes
+      livePreviewEl.className = `profile-avatar ${frameClass}`;
+      if (previewLabelEl) previewLabelEl.textContent = `${frameObj.icon} ${t(frameObj.label)}`;
+      if (previewDescEl) previewDescEl.textContent = t(frameObj.desc);
+    }
+
+    frameOptions.forEach((option) => {
+      option.addEventListener('click', () => {
+        const frameId = (option as HTMLElement).dataset.frame;
+        if (!frameId) return;
+
+        if (option.classList.contains('locked')) {
+          if (opts.onOpenPremium) {
+            close();
+            opts.onOpenPremium();
+          }
+          return;
+        }
+
+        frameOptions.forEach((opt) => {
+          opt.classList.remove('selected');
+          (opt as HTMLElement).style.borderColor = 'rgba(255, 255, 255, 0.12)';
+          (opt as HTMLElement).style.background = 'rgba(255, 255, 255, 0.03)';
+        });
+
+        option.classList.add('selected');
+        (option as HTMLElement).style.borderColor = '#fbbf24';
+        (option as HTMLElement).style.background = 'rgba(251, 191, 36, 0.12)';
+
+        selectedFrameId = frameId;
+        updateLivePreview(frameId);
+      });
+    });
+
+    const close = createModalCloser(wrap, dialogEl, resolve);
+
+    cancelBtn.addEventListener('click', () => close());
+    wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', () => close());
+
+    saveBtn.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      errorEl.style.display = 'none';
+      const res = await opts.onSave(selectedFrameId);
+      saveBtn.disabled = false;
+      if (res.ok) {
+        close();
+      } else if (res.error) {
+        errorEl.textContent = res.error;
+        errorEl.style.display = 'block';
+      }
+    });
+  });
+}
+
 export function showSettingsBioModal(opts: {
   currentBio: string;
   onSave: (newBio: string) => Promise<{ ok: boolean; error?: string }>;
@@ -1406,6 +1559,68 @@ export function showSettingsDobModal(opts: {
   });
 }
 
+/**
+ * Detects user's default currency based on:
+ * 1. Saved preference (localStorage)
+ * 2. Interface language (uk -> UAH)
+ * 3. Browser timezone / region (Ukraine -> UAH, EU -> EUR, other -> USD)
+ */
+export function detectUserCurrency(): 'USD' | 'EUR' | 'UAH' {
+  // 1. Saved user preference
+  try {
+    const saved = localStorage.getItem('cyb_preferred_currency') as 'USD' | 'EUR' | 'UAH' | null;
+    if (saved && (saved === 'USD' || saved === 'EUR' || saved === 'UAH')) {
+      return saved;
+    }
+  } catch {}
+
+  // 2. Language check (if user is on Ukrainian locale -> default to UAH)
+  try {
+    const currentLocale = getLocale();
+    if (currentLocale === 'uk') {
+      return 'UAH';
+    }
+  } catch {}
+
+  // 3. Timezone detection
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    if (
+      tz.includes('Kyiv') ||
+      tz.includes('Kiev') ||
+      tz.includes('Uzhgorod') ||
+      tz.includes('Zaporozhye') ||
+      tz.includes('Simferopol')
+    ) {
+      return 'UAH';
+    }
+
+    // Eurozone countries/cities
+    const euroZones = [
+      'Europe/Berlin', 'Europe/Paris', 'Europe/Rome', 'Europe/Madrid',
+      'Europe/Vienna', 'Europe/Amsterdam', 'Europe/Brussels', 'Europe/Dublin',
+      'Europe/Helsinki', 'Europe/Lisbon', 'Europe/Athens', 'Europe/Tallinn',
+      'Europe/Riga', 'Europe/Vilnius', 'Europe/Bratislava', 'Europe/Ljubljana',
+      'Europe/Nicosia', 'Europe/Valletta', 'Europe/Luxembourg', 'Europe/Warsaw',
+      'Europe/Prague', 'Europe/Budapest', 'Europe/Bucharest', 'Europe/Sofia'
+    ];
+    if (euroZones.some((ez) => tz.startsWith(ez) || tz === ez)) {
+      return 'EUR';
+    }
+  } catch {}
+
+  // 4. Browser languages
+  try {
+    const lang = (navigator.language || (navigator.languages && navigator.languages[0]) || '').toLowerCase();
+    if (lang.startsWith('uk')) return 'UAH';
+    if (['de', 'fr', 'it', 'es', 'nl', 'pt', 'el', 'fi', 'et', 'lv', 'lt', 'sk', 'sl'].some((l) => lang.startsWith(l))) {
+      return 'EUR';
+    }
+  } catch {}
+
+  return 'USD';
+}
+
 export function openPremiumModal(user: Partial<User> | Record<string, unknown>, onUpdated?: () => void): void {
   const old = document.getElementById('cyblightPremiumModal');
   old?.remove();
@@ -1414,7 +1629,7 @@ export function openPremiumModal(user: Partial<User> | Record<string, unknown>, 
   wrap.id = 'cyblightPremiumModal';
   wrap.className = 'account-notice-modal';
 
-  let selectedCurrency: 'USD' | 'EUR' | 'UAH' = 'USD';
+  let selectedCurrency: 'USD' | 'EUR' | 'UAH' = detectUserCurrency();
   let selectedPlanId = 'year_1';
 
   const plans = [
@@ -1585,6 +1800,9 @@ export function openPremiumModal(user: Partial<User> | Record<string, unknown>, 
         const curr = (e.currentTarget as HTMLElement).dataset.curr as 'USD' | 'EUR' | 'UAH' | undefined;
         if (curr) {
           selectedCurrency = curr;
+          try {
+            localStorage.setItem('cyb_preferred_currency', curr);
+          } catch {}
           wrap.innerHTML = renderModalHtml();
           bindEvents();
         }

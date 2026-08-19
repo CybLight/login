@@ -20,6 +20,7 @@ import {
   showSettingsUsernameModal,
   showSettingsEmailModal,
   showSettingsAvatarModal,
+  showSettingsAvatarFrameModal,
   showSettingsBioModal,
   showSettingsAboutModal,
   showSettingsGenderModal,
@@ -30,8 +31,8 @@ import {
 } from './modals';
 import { updateNavBadges, setNavBadge, updateChatUnreadBadges, fetchUnreadSummaryData } from './unread';
 import { isEmailVerified } from './account-utils';
-import { getAvatarInnerHtml } from './avatar';
-import { STANDARD_AVATARS, EXCLUSIVE_AVATARS } from '../edit-profile';
+import { getAvatarInnerHtml, getAvatarFrameClass } from './avatar';
+import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, AVATAR_FRAMES } from '../edit-profile';
 import { getLocale, localeTag } from '@/i18n';
 import { bindBadgeEasterEgg } from '@/components/easter/badge-easter';
 
@@ -1116,6 +1117,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
   }
 
   const changeAvatarBtn = document.getElementById('stgChangeAvatarBtn') as HTMLButtonElement | null;
+  const changeAvatarFrameBtn = document.getElementById('stgChangeAvatarFrameBtn') as HTMLButtonElement | null;
   const changeBioBtn = document.getElementById('stgChangeBioBtn') as HTMLButtonElement | null;
   const changeAboutBtn = document.getElementById('stgChangeAboutBtn') as HTMLButtonElement | null;
   const changeGenderBtn = document.getElementById('stgChangeGenderBtn') as HTMLButtonElement | null;
@@ -1124,6 +1126,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
 
   let loadedProfile: Partial<AppUser> = {
     avatar: user.avatar,
+    avatarFrame: user.avatarFrame || user.avatar_frame,
     bio: user.bio,
     aboutMe: user.aboutMe,
     gender: user.gender,
@@ -1131,6 +1134,42 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
     dateOfBirth: user.dateOfBirth,
     role: user.role,
     flags: user.flags,
+  };
+
+  const updateAvatarFrameDisplay = (frameId?: string) => {
+    const isPremium = Boolean(user.isPremium);
+    const activeFrame = frameId || user.avatarFrame || user.avatar_frame || loadedProfile.avatarFrame || (isPremium ? 'frame-neon-orange' : 'frame-none');
+    user.avatarFrame = activeFrame;
+    user.avatar_frame = activeFrame;
+    loadedProfile.avatarFrame = activeFrame;
+    loadedProfile.avatar_frame = activeFrame;
+
+    const frameObj = AVATAR_FRAMES.find((f) => f.id === activeFrame) || AVATAR_FRAMES[0];
+    const frameClass = getAvatarFrameClass(activeFrame, isPremium);
+
+    const iconEl = document.getElementById('stgFrameIcon');
+    if (iconEl) iconEl.textContent = frameObj.icon;
+
+    const valEl = document.getElementById('stgAvatarFrameValue');
+    if (valEl) {
+      valEl.innerHTML = `
+        <span class="chip badge badge--custom" style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.18), rgba(249, 115, 22, 0.18)) !important; border-color: rgba(234, 179, 8, 0.5) !important;">
+          ${escapeHtml(`${frameObj.icon} ${t(frameObj.label)}`)}
+        </span>
+      `;
+    }
+
+    // Обновляем классы рамок на всех аватарах на странице
+    const allFrameClassNames = AVATAR_FRAMES.map((f) => `avatar-frame--${f.id.replace(/^frame-/, '')}`);
+    const updateElFrame = (el: HTMLElement | null) => {
+      if (!el) return;
+      allFrameClassNames.forEach((cls) => el.classList.remove(cls));
+      if (frameClass) el.classList.add(frameClass);
+    };
+
+    updateElFrame(document.getElementById('accountAvatarBtn'));
+    updateElFrame(document.getElementById('accountProfileAvatar'));
+    document.querySelectorAll('.account-avatar-btn').forEach((el) => updateElFrame(el as HTMLElement));
   };
 
   const updateAvatarDisplay = (avatarId?: string) => {
@@ -1256,6 +1295,44 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
               return { ok: true };
             } else {
               return { ok: false, error: data.error || t('Не удалось обновить аватар') };
+            }
+          } catch {
+            return { ok: false, error: t('Ошибка сети или сервера') };
+          }
+        },
+      });
+    });
+  }
+
+  if (changeAvatarFrameBtn) {
+    changeAvatarFrameBtn.addEventListener('click', () => {
+      if (!user.isPremium) {
+        openPremiumModal(user);
+        return;
+      }
+      showSettingsAvatarFrameModal({
+        profile: {
+          avatar: user.avatar || loadedProfile.avatar,
+          avatarFrame: user.avatarFrame || user.avatar_frame || loadedProfile.avatarFrame,
+          avatar_frame: user.avatarFrame || user.avatar_frame || loadedProfile.avatarFrame,
+          isPremium: Boolean(user.isPremium),
+        },
+        onOpenPremium: () => openPremiumModal(user),
+        onSave: async (newFrame) => {
+          try {
+            const res = await apiCall('/profile/update', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ avatarFrame: newFrame }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+              updateAvatarFrameDisplay(newFrame);
+              api.showMsg('ok', t('Рамка аватара успешно обновлена'));
+              return { ok: true };
+            } else {
+              return { ok: false, error: data.error || t('Не удалось обновить рамку аватара') };
             }
           } catch {
             return { ok: false, error: t('Ошибка сети или сервера') };
@@ -1420,7 +1497,9 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
               loadedProfile.customBadge = newBadge;
               const valEl = document.getElementById('stgCustomBadgeValue');
               if (valEl) {
-                valEl.textContent = newBadge || t('Не установлен');
+                valEl.innerHTML = newBadge
+                  ? `<span class="chip badge badge--custom">${escapeHtml(newBadge)}</span>`
+                  : `<span style="color: #94a3b8; font-style: italic;">${t('Не установлен')}</span>`;
               }
               api.showMsg('ok', t('Кастомный бейдж успешно сохранен'));
               return { ok: true };

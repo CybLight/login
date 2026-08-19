@@ -16,7 +16,8 @@ import {
   renderV010AppEasterCards,
   V010_APP_EGGS_TOTAL,
 } from "./easter-v010-render";
-import { STANDARD_AVATARS, EXCLUSIVE_AVATARS } from "../edit-profile";
+import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, AVATAR_FRAMES } from "../edit-profile";
+import { detectUserCurrency } from "./modals";
 
 type User = {
   id?: string;
@@ -394,7 +395,7 @@ function renderProfileTab(user: User): string {
               </div>
               <div class="profile-premium-banner__right">
                 <button type="button" id="openPremiumCardBtn" class="profile-premium-btn">
-                  <span>⭐ ${t('Оформить от $4.99')}</span>
+                  <span>⭐ ${t('Оформить Premium')} (${detectUserCurrency() === 'UAH' ? '199 ₴' : detectUserCurrency() === 'EUR' ? '€4.59' : '$4.99'})</span>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
@@ -418,6 +419,10 @@ function renderSettingsTab(user: User): string {
   const currentAvatarEmoji = getAvatarInnerHtml(avatarSource, login);
   const currentAvatarObj = [...STANDARD_AVATARS, ...EXCLUSIVE_AVATARS].find((a) => a.id === avatarSource);
   const currentAvatarLabel = currentAvatarObj ? t(currentAvatarObj.label) : t('Аватар');
+
+  const userFrameId = (user.avatarFrame || user.avatar_frame || (user.isPremium ? 'frame-neon-orange' : 'frame-none')).trim();
+  const currentFrameObj = AVATAR_FRAMES.find((f) => f.id === userFrameId) || AVATAR_FRAMES[0];
+  const currentFrameLabel = `${currentFrameObj.icon} ${t(currentFrameObj.label)}`;
 
   const bio = user.bio || '';
   const currentBio = bio
@@ -560,6 +565,24 @@ function renderSettingsTab(user: User): string {
 
         <div class="stg-field">
           <div class="stg-field__left">
+            <span class="stg-field__icon" id="stgFrameIcon" style="font-size: 24px;">${currentFrameObj.icon}</span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('Рамка аватара')}</div>
+              <div class="stg-field__value stg-field__value--badge" id="stgAvatarFrameValue">
+                <span class="chip badge badge--custom" style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.18), rgba(249, 115, 22, 0.18)) !important; border-color: rgba(234, 179, 8, 0.5) !important;">
+                  ${escapeHtml(currentFrameLabel)}
+                </span>
+              </div>
+              <div class="stg-field__hint">${t('Эксклюзивная неоновая рамка вокруг аватара (только для Premium)')}</div>
+            </div>
+          </div>
+          <button type="button" class="stg-btn ${user.isPremium ? 'stg-btn--secondary' : 'stg-btn--primary'}" id="stgChangeAvatarFrameBtn">
+            ${user.isPremium ? t('Изменить') : t('⭐ Premium')}
+          </button>
+        </div>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
             <span class="stg-field__icon">✍️</span>
             <div class="stg-field__body">
               <div class="stg-field__label">${t('Подпись')}</div>
@@ -627,7 +650,12 @@ function renderSettingsTab(user: User): string {
             <span class="stg-field__icon">👑</span>
             <div class="stg-field__body">
               <div class="stg-field__label">${t('Кастомный титул / бейдж')}</div>
-              <div class="stg-field__value" id="stgCustomBadgeValue">${user.customBadge ? escapeHtml(user.customBadge) : t('Не установлен')}</div>
+              <div class="stg-field__value stg-field__value--badge" id="stgCustomBadgeValue">
+                ${user.customBadge
+                  ? `<span class="chip badge badge--custom">${escapeHtml(user.customBadge)}</span>`
+                  : `<span class="stg-field__empty">${t('Не установлен')}</span>`
+                }
+              </div>
               <div class="stg-field__hint">${t('Уникальный бейдж рядом с никнеймом (до 24 символов, только для Premium)')}</div>
             </div>
           </div>

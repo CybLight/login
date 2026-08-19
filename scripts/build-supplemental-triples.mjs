@@ -4,6 +4,7 @@
  */
 import fs from 'fs';
 import path from 'path';
+import process from 'node:process';
 import { fileURLToPath } from 'url';
 import missing from './missing-keys.json' with { type: 'json' };
 
@@ -47,10 +48,6 @@ if (gaps.length) {
   gaps.forEach((k) => console.error(' -', JSON.stringify(k)));
   process.exit(1);
 }
-
-const body = triples
-  .map(([ru, uk, en]) => `  [${JSON.stringify(ru)}, ${JSON.stringify(uk)}, ${JSON.stringify(en)}],`)
-  .join('\n');
 
 // Manual extras (presence labels, etc.) — not always in missing-keys scan
 const MANUAL_EXTRAS = Object.entries(

@@ -6,6 +6,7 @@ import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { apiCall } from '@/utils';
+import { formatApiError } from '@/utils/apiErrors';
 
 export async function renderVerifyEmail(): Promise<void> {
   // Убираем no-strawberries класс
@@ -109,10 +110,10 @@ async function performVerification(token: string): Promise<void> {
 
       contentEl.innerHTML = `
         <div style="font-size: 64px; margin-bottom: 16px; color: #10b981;">✓</div>
-        <p style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">
+        <p style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
           ${data?.pendingVerified ? t('Новый email подтверждён') : t('Email успешно подтверждён!')}
         </p>
-        <p style="font-size: 14px; color: var(--muted);">
+        <p style="font-size: 14px; color: var(--muted); line-height: 1.5;">
           ${pendingMsg}
         </p>
       `;
@@ -126,24 +127,67 @@ async function performVerification(token: string): Promise<void> {
         loginBtn.onclick = () => Router.navigate('username');
       }
     } else {
-      // Ошибка верификации
-      contentEl.innerHTML = `
-        <div style="font-size: 48px; margin-bottom: 16px; color: #ef4444;">✕</div>
-        <p style="font-size: 16px; color: var(--text-primary); margin-bottom: 8px;">
-          ${t('Ошибка подтверждения')}
-        </p>
-        <p style="font-size: 14px; color: var(--muted);">
-          ${data?.error || t('Неверная или устаревшая ссылка')}
-        </p>
-      `;
-      actionsEl.innerHTML = `
-        <button class="btn btn-primary" id="goBack" aria-label="${t('На главную')}">${t('На главную')}</button>
-      `;
-      actionsEl.style.display = 'block';
+      const rawError = String(data?.error || '').trim().toLowerCase();
 
-      const backBtn = document.getElementById('goBack');
-      if (backBtn) {
-        backBtn.onclick = () => Router.navigate('username');
+      // Пользователь уже подтвердил почту ранее и перешел по ссылке повторно
+      if (rawError === 'token_used') {
+        contentEl.innerHTML = `
+          <div style="font-size: 54px; margin-bottom: 16px;">📧</div>
+          <p style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+            ${t('Email уже подтверждён')}
+          </p>
+          <p style="font-size: 14px; color: var(--muted); line-height: 1.5;">
+            ${t('Этот адрес электронной почты уже был успешно подтверждён ранее. Вы можете войти в свой аккаунт.')}
+          </p>
+        `;
+        actionsEl.innerHTML = `
+          <button class="btn btn-primary" id="goLogin" aria-label="${t('Перейти к входу')}">${t('Перейти к входу')}</button>
+        `;
+        actionsEl.style.display = 'block';
+
+        const loginBtn = document.getElementById('goLogin');
+        if (loginBtn) {
+          loginBtn.onclick = () => Router.navigate('username');
+        }
+      } else if (rawError === 'token_expired') {
+        contentEl.innerHTML = `
+          <div style="font-size: 48px; margin-bottom: 16px; color: #f59e0b;">⏳</div>
+          <p style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+            ${t('Срок действия ссылки истёк')}
+          </p>
+          <p style="font-size: 14px; color: var(--muted); line-height: 1.5;">
+            ${t('Срок действия этой ссылки подтверждения истёк. Пожалуйста, запросите новую ссылку в настройках аккаунта.')}
+          </p>
+        `;
+        actionsEl.innerHTML = `
+          <button class="btn btn-primary" id="goBack" aria-label="${t('На главную')}">${t('На главную')}</button>
+        `;
+        actionsEl.style.display = 'block';
+
+        const backBtn = document.getElementById('goBack');
+        if (backBtn) {
+          backBtn.onclick = () => Router.navigate('username');
+        }
+      } else {
+        const errorMsg = formatApiError(data?.error, t('Неверная или устаревшая ссылка'));
+        contentEl.innerHTML = `
+          <div style="font-size: 48px; margin-bottom: 16px; color: #ef4444;">✕</div>
+          <p style="font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">
+            ${t('Ошибка подтверждения')}
+          </p>
+          <p style="font-size: 14px; color: var(--muted); line-height: 1.5;">
+            ${errorMsg}
+          </p>
+        `;
+        actionsEl.innerHTML = `
+          <button class="btn btn-primary" id="goBack" aria-label="${t('На главную')}">${t('На главную')}</button>
+        `;
+        actionsEl.style.display = 'block';
+
+        const backBtn = document.getElementById('goBack');
+        if (backBtn) {
+          backBtn.onclick = () => Router.navigate('username');
+        }
       }
     }
   } catch (err) {

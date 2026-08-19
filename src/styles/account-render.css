@@ -5071,10 +5071,28 @@ body:has(.is-chat-view),
 
 /* Custom badge chip */
 .badge--custom {
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(249, 115, 22, 0.15)) !important;
-  color: #fbbf24 !important;
-  border: 1px solid rgba(234, 179, 8, 0.4) !important;
-  font-weight: 700 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 4px 12px !important;
+  border-radius: 9999px !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #fef08a !important;
+  -webkit-text-fill-color: #fef08a !important;
+  border: 1px solid rgba(251, 191, 36, 0.75) !important;
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(245, 158, 11, 0.25) 100%) !important;
+  box-shadow: 0 0 14px rgba(234, 179, 8, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.3) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  vertical-align: middle !important;
+  line-height: 1.3 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+.badge--custom:hover {
+  transform: translateY(-1px) scale(1.05) !important;
+  border-color: #fef08a !important;
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
 }
 
 /* Theme variables overrides */
@@ -5520,6 +5538,25 @@ body:has(.is-chat-view),
   white-space: nowrap;
   font-family: inherit;
   letter-spacing: 0;
+}
+
+.stg-field__value--badge {
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  -webkit-text-fill-color: initial !important;
+  color: initial !important;
+  overflow: visible !important;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.stg-field__empty {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+  font-style: italic !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
 }
 
 .stg-field__hint {
@@ -6220,6 +6257,57 @@ body:has(.is-chat-view),
   100% {
     border-color: #ef4444;
     box-shadow: 0 0 18px rgba(239, 68, 68, 0.85), 0 0 35px rgba(245, 158, 11, 0.45);
+  }
+}
+
+.avatar-frame--sakura-pink {
+  border: 3px solid #f472b6 !important;
+  box-shadow: 0 0 18px rgba(244, 114, 182, 0.85), 0 0 36px rgba(236, 72, 153, 0.5), inset 0 0 10px rgba(244, 114, 182, 0.4) !important;
+  animation: sakuraPinkPulse 2.5s infinite alternate ease-in-out !important;
+}
+
+@keyframes sakuraPinkPulse {
+  0% {
+    box-shadow: 0 0 12px rgba(244, 114, 182, 0.65), 0 0 24px rgba(236, 72, 153, 0.35), inset 0 0 8px rgba(244, 114, 182, 0.25);
+    border-color: #f472b6;
+  }
+  100% {
+    box-shadow: 0 0 26px rgba(251, 113, 133, 0.95), 0 0 46px rgba(244, 114, 182, 0.7), inset 0 0 16px rgba(251, 113, 133, 0.5);
+    border-color: #fda4af;
+  }
+}
+
+.avatar-frame--ice-glacier {
+  border: 3px solid #38bdf8 !important;
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.85), 0 0 36px rgba(14, 165, 233, 0.5), inset 0 0 10px rgba(56, 189, 248, 0.4) !important;
+  animation: iceGlacierPulse 2.5s infinite alternate ease-in-out !important;
+}
+
+@keyframes iceGlacierPulse {
+  0% {
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.65), 0 0 24px rgba(14, 165, 233, 0.35), inset 0 0 8px rgba(56, 189, 248, 0.25);
+    border-color: #38bdf8;
+  }
+  100% {
+    box-shadow: 0 0 26px rgba(186, 230, 253, 0.95), 0 0 46px rgba(56, 189, 248, 0.7), inset 0 0 16px rgba(186, 230, 253, 0.55);
+    border-color: #e0f2fe;
+  }
+}
+
+.avatar-frame--crimson-blood {
+  border: 3px solid #ef4444 !important;
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.85), 0 0 36px rgba(185, 28, 28, 0.55), inset 0 0 10px rgba(239, 68, 68, 0.4) !important;
+  animation: crimsonBloodPulse 2.5s infinite alternate ease-in-out !important;
+}
+
+@keyframes crimsonBloodPulse {
+  0% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.65), 0 0 24px rgba(185, 28, 28, 0.35), inset 0 0 8px rgba(239, 68, 68, 0.25);
+    border-color: #ef4444;
+  }
+  100% {
+    box-shadow: 0 0 26px rgba(248, 113, 113, 0.95), 0 0 48px rgba(220, 38, 38, 0.75), inset 0 0 16px rgba(248, 113, 133, 0.5);
+    border-color: #fca5a5;
   }
 }
 

@@ -68,6 +68,9 @@ export const AVATAR_FRAMES = [
   { id: 'frame-amethyst-violet', icon: '🔮', label: 'Аметистовый Вихрь', desc: 'Магическое фиолетовое сияние', premium: true },
   { id: 'frame-emerald-matrix', icon: '💚', label: 'Изумрудная Матрица', desc: 'Кислотный кибер-неон', premium: true },
   { id: 'frame-rainbow-chroma', icon: '🌈', label: 'Хрома Волна', desc: 'RGB радужный спектр', premium: true },
+  { id: 'frame-sakura-pink', icon: '🌸', label: 'Сакура Неон', desc: 'Нежный неоновый розовый', premium: true },
+  { id: 'frame-ice-glacier', icon: '❄️', label: 'Ледяной Ледник', desc: 'Морозное ледяное сияние', premium: true },
+  { id: 'frame-crimson-blood', icon: '🩸', label: 'Багровое Пламя', desc: 'Рубиновый огненный неон', premium: true },
 ];
 
 /**
