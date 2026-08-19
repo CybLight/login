@@ -39,6 +39,7 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
     const currentSessionId = response.data?.current;
     const sessionsCount = meDataRaw?.sessionsCount || sessions.length || 0;
     const currentTtl = Number(meData.sessionsTtlDays || 0);
+    const isPremiumUser = Boolean(meData.isPremium || meDataRaw?.isPremium);
 
     const ttlOptions = [
       { value: 7, label: t('1 неделя') },
@@ -48,7 +49,16 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
       { value: 365, label: t('1 год') },
     ];
 
-    const currentTtlLabel = ttlOptions.find(o => o.value === currentTtl)?.label || t('по умолчанию');
+    if (isPremiumUser) {
+      ttlOptions.push({ value: -1, label: t('Бессрочно (⭐ Premium)') });
+    }
+
+    let currentTtlLabel = t('по умолчанию');
+    if (currentTtl === -1) {
+      currentTtlLabel = t('Бессрочно (⭐ Premium)');
+    } else {
+      currentTtlLabel = ttlOptions.find(o => o.value === currentTtl)?.label || t('по умолчанию');
+    }
 
     if (sessions.length === 0) {
       container.innerHTML = `<div class="sec-empty-text">${t('Нет активных сессий')}</div>`;

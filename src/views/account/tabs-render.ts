@@ -9,7 +9,7 @@ import {
   renderPendingStatusHtml,
   renderPendingSubHtml,
 } from "./account-utils";
-import { getAvatarInnerHtml } from "./avatar";
+import { getAvatarInnerHtml, getAvatarFrameClass } from "./avatar";
 import {
   countV010AppUnlockedEggs,
   renderFormatMirrorEasterCard,
@@ -26,6 +26,8 @@ type User = {
   avatar?: string;
   avatarUrl?: string;
   avatar_url?: string;
+  avatarFrame?: string | null;
+  avatar_frame?: string | null;
   bio?: string;
   aboutMe?: string;
   about_me?: string;
@@ -59,6 +61,10 @@ type User = {
   passkeyCount?: number;
   webauthnDevices?: unknown[];
   systemEmailsDisabled?: boolean;
+  isPremium?: boolean;
+  premiumUntil?: number | null;
+  premiumTier?: string | null;
+  customBadge?: string | null;
 };
 
 function isEmailVerified(user: User): boolean {
@@ -177,8 +183,12 @@ function buildBadges(
     badges.push({ label: "DEV", cls: "badge--dev" });
   }
 
-  if (flags.has("premium") || flags.has("sponsor")) {
-    badges.push({ label: "★", cls: "badge--premium", title: "Premium" });
+  if (user.isPremium || flags.has("premium") || flags.has("sponsor")) {
+    badges.push({ label: "⭐ Premium", cls: "badge--premium", title: "CybLight Premium" });
+  }
+
+  if (user.customBadge) {
+    badges.push({ label: escapeHtml(user.customBadge), cls: "badge--custom", title: "Кастомный титул Premium" });
   }
 
   if (flags.has("helper") || flags.has("contributor")) {
@@ -218,6 +228,7 @@ function renderProfileTab(user: User): string {
   const login = user.login || user.username || "User";
   const avatarSource = user.avatar || user.avatarUrl || user.avatar_url;
   const avatarInnerHtml = getAvatarInnerHtml(avatarSource, login);
+  const avatarFrameClass = getAvatarFrameClass(user.avatarFrame || user.avatar_frame, user.isPremium);
   const emailVerified = isEmailVerified(user);
   const pubId = formatPublicId(user.publicId);
   const createdAt = formatDate(user.createdAt) || "—";
@@ -241,7 +252,7 @@ function renderProfileTab(user: User): string {
   return `
     <section class="profile-hero">
       <div class="profile-hero__left">
-        <div class="profile-avatar" id="accountProfileAvatar" aria-hidden="true">
+        <div class="profile-avatar ${avatarFrameClass}" id="accountProfileAvatar" aria-hidden="true">
           ${avatarInnerHtml}
         </div>
         <div class="profile-hero__meta">
@@ -312,6 +323,88 @@ function renderProfileTab(user: User): string {
         <div class="info-card__hint">${t('Создано в системе')}</div>
       </article>
     </section>
+
+    ${(() => {
+      if (user.isPremium) {
+        let expiryHtml = `<strong style="color: #fff;">${t('Бессрочный доступ (VIP Lifetime)')}</strong>`;
+        if (user.premiumUntil) {
+          const daysLeft = Math.max(0, Math.ceil((Number(user.premiumUntil) - Date.now()) / (24 * 3600 * 1000)));
+          const formattedDate = new Date(Number(user.premiumUntil)).toLocaleDateString(localeTag(getLocale()), {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          });
+          expiryHtml = `${t('Действует до')} <strong style="color: #fff;">${formattedDate}</strong> <span style="opacity: 0.8;">(${t('осталось')} ${daysLeft} ${t('дн.')})</span>`;
+        }
+
+        return `
+          <section class="profile-premium-banner is-active">
+            <div class="profile-premium-banner__glow"></div>
+            <div class="profile-premium-banner__content">
+              <div class="profile-premium-banner__left">
+                <div class="profile-premium-banner__icon-wrap">
+                  <span class="profile-premium-banner__crown">👑</span>
+                </div>
+                <div class="profile-premium-banner__info">
+                  <div class="profile-premium-banner__title-row">
+                    <span class="profile-premium-banner__title">CybLight Premium</span>
+                    <span class="profile-premium-banner__badge">⭐ ${t('Активна')}</span>
+                  </div>
+                  <div class="profile-premium-banner__subtitle">
+                    ${expiryHtml}
+                  </div>
+                  <div class="profile-premium-banner__perks">
+                    <span class="profile-premium-perk-chip">⚡ ${t('10x Лимиты')}</span>
+                    <span class="profile-premium-perk-chip">🏠 ${t('Безлимитный Hub')}</span>
+                    <span class="profile-premium-perk-chip">🎨 ${t('Премиум темы')}</span>
+                    <span class="profile-premium-perk-chip">👑 ${t('Кастомный титул')}</span>
+                    <span class="profile-premium-perk-chip">💎 ${t('Эксклюзивные аватары')}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="profile-premium-banner__right">
+                <button type="button" id="openPremiumCardBtn" class="profile-premium-btn">
+                  <span>${t('Управление')}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </section>
+        `;
+      } else {
+        return `
+          <section class="profile-premium-banner">
+            <div class="profile-premium-banner__glow"></div>
+            <div class="profile-premium-banner__content">
+              <div class="profile-premium-banner__left">
+                <div class="profile-premium-banner__icon-wrap">
+                  <span class="profile-premium-banner__crown">👑</span>
+                </div>
+                <div class="profile-premium-banner__info">
+                  <div class="profile-premium-banner__title-row">
+                    <span class="profile-premium-banner__title">CybLight Premium</span>
+                    <span class="profile-premium-banner__tier-chip">⭐ ${t('Эксклюзив')}</span>
+                  </div>
+                  <div class="profile-premium-banner__subtitle">
+                    ${t('10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и VIP-комнаты')}
+                  </div>
+                </div>
+              </div>
+              <div class="profile-premium-banner__right">
+                <button type="button" id="openPremiumCardBtn" class="profile-premium-btn">
+                  <span>⭐ ${t('Оформить от $4.99')}</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </section>
+        `;
+      }
+    })()}
   `;
 }
 
@@ -528,6 +621,18 @@ function renderSettingsTab(user: User): string {
           </div>
           <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeDobBtn">${t('Изменить')}</button>
         </div>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
+            <span class="stg-field__icon">👑</span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('Кастомный титул / бейдж')}</div>
+              <div class="stg-field__value" id="stgCustomBadgeValue">${user.customBadge ? escapeHtml(user.customBadge) : t('Не установлен')}</div>
+              <div class="stg-field__hint">${t('Уникальный бейдж рядом с никнеймом (до 24 символов, только для Premium)')}</div>
+            </div>
+          </div>
+          <button type="button" class="stg-btn ${user.isPremium ? 'stg-btn--secondary' : 'stg-btn--primary'}" id="stgChangeCustomBadgeBtn">${user.isPremium ? t('Изменить') : t('⭐ Premium')}</button>
+        </div>
       </section>
 
       <!-- ============ DANGER ZONE ============ -->
@@ -586,10 +691,10 @@ function renderSettingsTab(user: User): string {
         </div>
 
         <div class="stg-row stg-row--block">
-          <div class="stg-row__label">${t('Тема')}</div>
-          <div class="stg-row__hint" style="margin-bottom: 12px;">${t('Тёмная тема активна по умолчанию')}</div>
+          <div class="stg-row__label">${t('Тема оформления')}</div>
+          <div class="stg-row__hint" style="margin-bottom: 12px;">${t('Выберите цветовую тему интерфейса')}</div>
           <div class="stg-theme-grid">
-            <button type="button" class="stg-theme-card is-active" data-theme="dark" disabled>
+            <button type="button" class="stg-theme-card is-active" data-theme="dark" id="themeCardDark">
               <div class="stg-theme-card__preview stg-theme-card__preview--dark">
                 <div class="stg-theme-preview-bar"></div>
                 <div class="stg-theme-preview-lines">
@@ -599,23 +704,38 @@ function renderSettingsTab(user: User): string {
               <span class="stg-theme-card__name">🌙 ${t('Тёмная')}</span>
               <span class="stg-theme-card__badge">${t('Активна')}</span>
             </button>
-            <button type="button" class="stg-theme-card stg-theme-card--soon" disabled>
-              <div class="stg-theme-card__preview stg-theme-card__preview--light">
-                <div class="stg-theme-preview-bar stg-theme-preview-bar--light"></div>
-                <div class="stg-theme-preview-lines stg-theme-preview-lines--light">
+
+            <button type="button" class="stg-theme-card" data-theme="theme-gold" data-premium-theme="true" id="themeCardGold">
+              <div class="stg-theme-card__preview stg-theme-card__preview--gold">
+                <div class="stg-theme-preview-bar stg-theme-preview-bar--gold"></div>
+                <div class="stg-theme-preview-lines stg-theme-preview-lines--gold">
                   <div></div><div></div><div></div>
                 </div>
               </div>
-              <span class="stg-theme-card__name">☀️ ${t('Светлая')}</span>
-              <span class="stg-theme-card__badge stg-theme-card__badge--soon">${t('Скоро')}</span>
+              <span class="stg-theme-card__name">👑 ${t('Золотая')}</span>
+              <span class="stg-theme-card__badge ${user.isPremium ? '' : 'stg-theme-card__badge--premium'}">${user.isPremium ? t('Выбрать') : '⭐ Premium'}</span>
             </button>
-            <button type="button" class="stg-theme-card stg-theme-card--soon" disabled>
-              <div class="stg-theme-card__preview stg-theme-card__preview--system">
-                <div class="stg-theme-preview-half stg-theme-preview-half--dark"></div>
-                <div class="stg-theme-preview-half stg-theme-preview-half--light"></div>
+
+            <button type="button" class="stg-theme-card" data-theme="theme-cyberpunk" data-premium-theme="true" id="themeCardCyberpunk">
+              <div class="stg-theme-card__preview stg-theme-card__preview--cyberpunk">
+                <div class="stg-theme-preview-bar stg-theme-preview-bar--cyberpunk"></div>
+                <div class="stg-theme-preview-lines stg-theme-preview-lines--cyberpunk">
+                  <div></div><div></div><div></div>
+                </div>
               </div>
-              <span class="stg-theme-card__name">🖥️ ${t('Системная')}</span>
-              <span class="stg-theme-card__badge stg-theme-card__badge--soon">${t('Скоро')}</span>
+              <span class="stg-theme-card__name">⚡ ${t('Киберпанк')}</span>
+              <span class="stg-theme-card__badge ${user.isPremium ? '' : 'stg-theme-card__badge--premium'}">${user.isPremium ? t('Выбрать') : '⭐ Premium'}</span>
+            </button>
+
+            <button type="button" class="stg-theme-card" data-theme="theme-amoled" data-premium-theme="true" id="themeCardAmoled">
+              <div class="stg-theme-card__preview stg-theme-card__preview--amoled">
+                <div class="stg-theme-preview-bar stg-theme-preview-bar--amoled"></div>
+                <div class="stg-theme-preview-lines stg-theme-preview-lines--amoled">
+                  <div></div><div></div><div></div>
+                </div>
+              </div>
+              <span class="stg-theme-card__name">🌌 ${t('AMOLED')}</span>
+              <span class="stg-theme-card__badge ${user.isPremium ? '' : 'stg-theme-card__badge--premium'}">${user.isPremium ? t('Выбрать') : '⭐ Premium'}</span>
             </button>
           </div>
         </div>
@@ -1760,7 +1880,7 @@ function easterProgressHtml(current: number, total: number): string {
   )}</div>`;
 }
 
-const EASTER_SITE_TOTAL = 8;
+const EASTER_SITE_TOTAL = 14;
 const EASTER_APP_BASE_TOTAL = 5;
 const EASTER_BRIDGE_TOTAL = 2;
 const EASTER_EGGS_TOTAL = EASTER_SITE_TOTAL + EASTER_APP_BASE_TOTAL + V010_APP_EGGS_TOTAL + EASTER_BRIDGE_TOTAL;
@@ -1813,6 +1933,31 @@ function renderEasterTab(user: User): string {
     localStorage.getItem("cyb_easter_cyber_artist") === "true" ||
     localStorage.getItem("cyb_easter_cyber_artist") === "1" ||
     !!user.easter?.cyberArtist;
+  const hasGoldenTouch =
+    localStorage.getItem("cyb_golden_touch_unlocked") === "1" ||
+    !!user.easter?.goldenTouch ||
+    !!user.easter?.golden_touch ||
+    !!user.isPremium;
+  const hasStarSpark =
+    localStorage.getItem("cyb_star_spark_unlocked") === "1" ||
+    !!user.easter?.starSpark ||
+    !!user.easter?.star_spark;
+  const hasFirstPulse =
+    localStorage.getItem("cyb_first_pulse_unlocked") === "1" ||
+    !!user.easter?.firstPulse ||
+    !!user.easter?.first_pulse;
+  const hasSeasonGuardian =
+    localStorage.getItem("cyb_season_guardian_unlocked") === "1" ||
+    !!user.easter?.seasonGuardian ||
+    !!user.easter?.season_guardian;
+  const hasEpochKeeper =
+    localStorage.getItem("cyb_epoch_keeper_unlocked") === "1" ||
+    !!user.easter?.epochKeeper ||
+    !!user.easter?.epoch_keeper;
+  const hasInfinityOverlord =
+    localStorage.getItem("cyb_infinity_overlord_unlocked") === "1" ||
+    !!user.easter?.infinityOverlord ||
+    !!user.easter?.infinity_overlord;
   const hasNightGuard = !!user.easter?.nightGuard;
   const hasTrustedFingerprint = !!user.easter?.trustedFingerprint;
   const hasBridge = !!user.easter?.bridge;
@@ -1835,6 +1980,12 @@ function renderEasterTab(user: User): string {
     hasThemeFlux,
     hasSkipCatcher,
     hasCyberArtist,
+    hasGoldenTouch,
+    hasStarSpark,
+    hasFirstPulse,
+    hasSeasonGuardian,
+    hasEpochKeeper,
+    hasInfinityOverlord,
   ].filter(Boolean).length;
 
   const appFoundCount =
@@ -2147,6 +2298,132 @@ function renderEasterTab(user: User): string {
           ${hasCyberArtist
       ? `<div class="easter-hint">${t('🎊 Творческий потенциал разблокирован!')}</div>`
       : ""
+    }
+        </div>
+
+        <div id="easterCardGoldenTouch" class="easter-card easter-card--golden-touch ${hasGoldenTouch ? "easter-card-rare" : "locked"}">
+          ${hasGoldenTouch
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
+          <span class="easter-card-icon">👑</span>
+          <div class="easter-card-title">
+            ${t('Золотое прикосновение')}
+          </div>
+          <div class="easter-card-desc">
+            ${hasGoldenTouch
+      ? t('Ты обрел статус CybLight Premium и золотое сияние превосходства 👑✨')
+      : t('Прикоснись к миру эксклюзивных возможностей и премиального статуса')
+    }
+          </div>
+          ${hasGoldenTouch
+      ? `<div class="easter-hint">${t('🎊 Золотой статус активирован!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на сайте')}</div>`
+    }
+        </div>
+
+        <div id="easterCardStarSpark" class="easter-card easter-card--star-spark ${hasStarSpark ? "easter-card-rare" : "locked"}">
+          ${hasStarSpark
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
+          <span class="easter-card-icon">⭐</span>
+          <div class="easter-card-title">
+            ${t('Звёздная искра')}
+          </div>
+          <div class="easter-card-desc">
+            ${hasStarSpark
+      ? t('Ты пробудил звёздный вихрь и тайную силу своего бейджа ⭐💫')
+      : t('Попробуй найти скрытую реакцию на элементы своего профиля')
+    }
+          </div>
+          ${hasStarSpark
+      ? `<div class="easter-hint">${t('🎊 Звёздный мастер пробуждён!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: тапни 5 раз подряд по своему бейджу в профиле')}</div>`
+    }
+        </div>
+
+        <div id="easterCardFirstPulse" class="easter-card easter-card--first-pulse ${hasFirstPulse ? "easter-card-rare" : "locked"}">
+          ${hasFirstPulse
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
+          <span class="easter-card-icon">🚀</span>
+          <div class="easter-card-title">
+            ${t('Первый импульс')}
+          </div>
+          <div class="easter-card-desc">
+            ${hasFirstPulse
+      ? t('Ты запустил свой первый месяц Premium и начал путь к вершине CybLight 🚀')
+      : t('Сделай первый решительный шаг в мир премиальных технологий')
+    }
+          </div>
+          ${hasFirstPulse
+      ? `<div class="easter-hint">${t('🎊 Месячный импульс на максимуме!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на 1 Месяц')}</div>`
+    }
+        </div>
+
+        <div id="easterCardSeasonGuardian" class="easter-card easter-card--season-guardian ${hasSeasonGuardian ? "easter-card-rare" : "locked"}">
+          ${hasSeasonGuardian
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
+          <span class="easter-card-icon">🛡️</span>
+          <div class="easter-card-title">
+            ${t('Сезонный страж')}
+          </div>
+          <div class="easter-card-desc">
+            ${hasSeasonGuardian
+      ? t('Полгода несокрушимой защиты и премиальной мощи аккаунта 🛡️⚡')
+      : t('Обеспечь полугодовую броню для своего виртуального дома')
+    }
+          </div>
+          ${hasSeasonGuardian
+      ? `<div class="easter-hint">${t('🎊 Полугодовой щит активен!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на 6 Месяцев')}</div>`
+    }
+        </div>
+
+        <div id="easterCardEpochKeeper" class="easter-card easter-card--epoch-keeper ${hasEpochKeeper ? "easter-card-rare" : "locked"}">
+          ${hasEpochKeeper
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
+          <span class="easter-card-icon">⏳</span>
+          <div class="easter-card-title">
+            ${t('Хранитель эпохи')}
+          </div>
+          <div class="easter-card-desc">
+            ${hasEpochKeeper
+      ? t('Целый год неограниченной свободы, высших лимитов и почета 🏛️⌛')
+      : t('Докажи преданность системе и стань годовым хранителем сети')
+    }
+          </div>
+          ${hasEpochKeeper
+      ? `<div class="easter-hint">${t('🎊 Годовая эпоха под контролем!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на 1 Год')}</div>`
+    }
+        </div>
+
+        <div id="easterCardInfinityOverlord" class="easter-card easter-card--infinity-overlord ${hasInfinityOverlord ? "easter-card-rare" : "locked"}">
+          ${hasInfinityOverlord
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
+          <span class="easter-card-icon">♾️</span>
+          <div class="easter-card-title">
+            ${t('Властелин бесконечности')}
+          </div>
+          <div class="easter-card-desc">
+            ${hasInfinityOverlord
+      ? t('Бессрочный статус Lifetime VIP и полный доступ ко всем возможностям CybLight 🌌👑')
+      : t('Получи бессрочный доступ ко всем возможностям экосистемы CybLight навсегда')
+    }
+          </div>
+          ${hasInfinityOverlord
+      ? `<div class="easter-hint">${t('🎊 Вечный статус навсегда вписан в историю!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: активируй бессрочный тариф Premium Навсегда')}</div>`
     }
         </div>
       </div>

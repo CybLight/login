@@ -40,6 +40,12 @@ export interface User {
   updatedAt: string;
   easter?: UserEasterFlags;
   privacy?: Record<string, string>;
+  isPremium?: boolean;
+  premiumUntil?: number | null;
+  premiumTier?: string | null;
+  customBadge?: string | null;
+  avatarFrame?: string | null;
+  avatar_frame?: string | null;
 }
 
 export interface UserProfile {
@@ -53,6 +59,12 @@ export interface UserProfile {
   twoFactorEnabled?: boolean;
   verified?: boolean;
   createdAt: string;
+  isPremium?: boolean;
+  premiumUntil?: number | null;
+  premiumTier?: string | null;
+  customBadge?: string | null;
+  avatarFrame?: string | null;
+  avatar_frame?: string | null;
   friendsCount: number;
   gender?: 'male' | 'female' | 'not_specified';
   dateOfBirth?: string;
@@ -63,6 +75,8 @@ export interface UserProfile {
 
 export interface EditableProfile {
   avatar?: string;
+  avatarFrame?: string | null;
+  avatar_frame?: string | null;
   bio?: string | null;
   aboutMe?: string | null;
   gender?: string;
@@ -302,6 +316,19 @@ export interface UserEasterFlags {
   reactionStreak?: boolean;
   reaction_streak?: boolean;
   cyberArtist?: boolean;
+  cyber_artist?: boolean;
+  goldenTouch?: boolean;
+  golden_touch?: boolean;
+  starSpark?: boolean;
+  star_spark?: boolean;
+  firstPulse?: boolean;
+  first_pulse?: boolean;
+  seasonGuardian?: boolean;
+  season_guardian?: boolean;
+  epochKeeper?: boolean;
+  epoch_keeper?: boolean;
+  infinityOverlord?: boolean;
+  infinity_overlord?: boolean;
 }
 
 export interface EasterLoginPayload {

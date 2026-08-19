@@ -1,0 +1,834 @@
+{
+  "-33% Хит": [
+    "-33% Хіт",
+    "-33% Hot"
+  ],
+  "1 Год": [
+    "1 Рік",
+    "1 Year"
+  ],
+  "1 Год Premium & Пасхалка открыта! ⏳": [
+    "1 Рік Premium & Великодку відкрито! ⏳",
+    "1 Year Premium & Easter Egg Unlocked! ⏳"
+  ],
+  "1 Месяц": [
+    "1 Місяць",
+    "1 Month"
+  ],
+  "1 Месяц Premium & Пасхалка открыта! 🚀": [
+    "1 Місяць Premium & Великодку відкрито! 🚀",
+    "1 Month Premium & Easter Egg Unlocked! 🚀"
+  ],
+  "10x Лимиты": [
+    "10x Ліміти",
+    "10x Limits"
+  ],
+  "10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и VIP-комнаты": [
+    "10x ліміти API, безлімітний SmartHome Hub, ексклюзивні теми, 2.5x монет та VIP-кімнати",
+    "10x API limits, unlimited SmartHome Hub, exclusive themes, 2.5x coins and VIP rooms"
+  ],
+  "6 Месяцев": [
+    "6 Місяців",
+    "6 Months"
+  ],
+  "6 Месяцев Premium & Пасхалка открыта! 🛡️": [
+    "6 Місяців Premium & Великодку відкрито! 🛡️",
+    "6 Months Premium & Easter Egg Unlocked! 🛡️"
+  ],
+  "Lifetime VIP & Высшая пасхалка открыта! 🌌👑": [
+    "Lifetime VIP & Найвищу великодку відкрито! 🌌👑",
+    "Lifetime VIP & Supreme Easter Egg Unlocked! 🌌👑"
+  ],
+  "{amount} ГБ": [
+    "{amount} ГБ",
+    "{amount} GB"
+  ],
+  "{amount} КБ": [
+    "{amount} КБ",
+    "{amount} KB"
+  ],
+  "{amount} МБ": [
+    "{amount} МБ",
+    "{amount} MB"
+  ],
+  "Администрация CybLight не несет ответственности за содержимое, безопасность и политику конфиденциальности сторонних ресурсов.": [
+    "Адміністрація CybLight не несе відповідальності за вміст, безпеку та політику конфіденційності сторонніх ресурсів.",
+    "CybLight administration is not responsible for the content, security, or privacy policies of third-party resources."
+  ],
+  "Базовый период": [
+    "Базовий період",
+    "Base period"
+  ],
+  "Безлимитный Hub": [
+    "Безлімітний Hub",
+    "Unlimited Hub"
+  ],
+  "Безлимитный SmartHome Hub": [
+    "Безлімітний SmartHome Hub",
+    "Unlimited SmartHome Hub"
+  ],
+  "Бессрочно (⭐ Premium)": [
+    "Безстроково (⭐ Premium)",
+    "Lifetime (⭐ Premium)"
+  ],
+  "Бессрочный доступ": [
+    "Безстроковий доступ",
+    "Lifetime access"
+  ],
+  "Бессрочный доступ (VIP Lifetime)": [
+    "Безстроковий доступ (VIP Lifetime)",
+    "Lifetime access (VIP Lifetime)"
+  ],
+  "Бессрочный статус Lifetime VIP и полный доступ ко всем возможностям CybLight 🌌👑": [
+    "Безстроковий статус Lifetime VIP і повний доступ до всіх можливостей CybLight 🌌👑",
+    "Lifetime VIP status and full access to all CybLight features forever 🌌👑"
+  ],
+  "Вам доступны 10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и кастомный титул.": [
+    "Вам доступні 10x ліміти API, безлімітний SmartHome Hub, ексклюзивні теми, 2.5x монет та кастомний титул.",
+    "You have access to 10x API limits, unlimited SmartHome Hub, exclusive themes, 2.5x coins, and a custom badge."
+  ],
+  "Вау, круто!": [
+    "Вау, круто!",
+    "Wow, cool!"
+  ],
+  "Ваш бейдж": [
+    "Ваш бейдж",
+    "Your badge"
+  ],
+  "Ваша персональная подпись": [
+    "Ваш персональний підпис",
+    "Your personal signature"
+  ],
+  "Введенные пароли не совпадают.": [
+    "Введені паролі не збігаються.",
+    "The entered passwords do not match."
+  ],
+  "Введите вашу подпись...": [
+    "Введіть ваш підпис...",
+    "Enter your signature..."
+  ],
+  "Великолепно! Вы разгадали секрет бейджа статуса, совершив 5 быстрых тапов, и пробудили звёздную силу CybLight!": [
+    "Чудово! Ви розгадали секрет бейджа статусу, зробивши 5 швидких тапів, і пробудили зоряну силу CybLight!",
+    "Magnificent! You solved the status badge secret with 5 quick taps and awakened the stellar power of CybLight!"
+  ],
+  "Властелин бесконечности": [
+    "Володар нескінченності",
+    "Infinity Overlord"
+  ],
+  "Внимание:": [
+    "Увага:",
+    "Warning:"
+  ],
+  "Войти через Google": [
+    "Увійти через Google",
+    "Sign in with Google"
+  ],
+  "Все": [
+    "Усі",
+    "All"
+  ],
+  "Все настройки Аккаунта": [
+    "Усі налаштування Акаунта",
+    "All Account Settings"
+  ],
+  "Вставить": [
+    "Вставити",
+    "Insert"
+  ],
+  "Вход в Google выполнен успешно.": [
+    "Вхід у Google виконано успішно.",
+    "Signed in to Google successfully."
+  ],
+  "Вход выполнен": [
+    "Вхід виконано",
+    "Signed in"
+  ],
+  "Вы можете сменить имя пользователя сейчас": [
+    "Ви можете змінити ім'я користувача зараз",
+    "You can change your username now"
+  ],
+  "Вы открыли секретный неоновый режим редактирования профиля! Аватарки и интерфейс получили квантовое сияние.": [
+    "Ви відкрили секретний неоновий режим редагування профілю! Аватарки та інтерфейс отримали квантове сяйво.",
+    "You unlocked the secret neon profile editing mode! Avatars and interface gained quantum luminescence."
+  ],
+  "Вы покидаете сайт CybLight и переходите на сторонний ресурс:": [
+    "Ви залишаєте сайт CybLight та переходите на сторонній ресурс:",
+    "You are leaving CybLight and proceeding to an external resource:"
+  ],
+  "Выберите валюту оплаты": [
+    "Оберіть валюту оплати",
+    "Select payment currency"
+  ],
+  "Выберите цветовую тему интерфейса": [
+    "Оберіть колірну тему інтерфейсу",
+    "Select interface color theme"
+  ],
+  "Выбран некорректный аватар.": [
+    "Обрано некоректний аватар.",
+    "Invalid avatar selected."
+  ],
+  "Выбрана некорректная рамка аватара.": [
+    "Обрано некоректну рамку аватара.",
+    "Invalid avatar frame selected."
+  ],
+  "Выбрать": [
+    "Обрати",
+    "Select"
+  ],
+  "Готовые варианты": [
+    "Готові варіанти",
+    "Presets"
+  ],
+  "Действует до": [
+    "Діє до",
+    "Valid until"
+  ],
+  "Для вас смена имени пользователя доступна без ограничений!": [
+    "Для вас зміна імені користувача доступна без обмежень!",
+    "Username change is available to you with no restrictions!"
+  ],
+  "Докажи преданность системе и стань годовым хранителем сети": [
+    "Доведи відданість системі та стань річним хранителем мережі",
+    "Prove your loyalty to the system and become an annual network keeper"
+  ],
+  "Дополнительные разделы профиля доступны только друзьям пользователя.": [
+    "Додаткові розділи профілю доступні лише друзям користувача.",
+    "Additional profile sections are only visible to the user's friends."
+  ],
+  "Доступ ко всем премиум-темам, стилям оформления и градиентам": [
+    "Доступ до всіх преміум-тем, стилів оформлення та градієнтів",
+    "Access to all premium themes, custom styles, and gradients"
+  ],
+  "Доступ ограничен. Недостаточно прав для выполнения этого действия.": [
+    "Доступ обмежено. Недостатньо прав для виконання цієї дії.",
+    "Access restricted. Insufficient permissions to perform this action."
+  ],
+  "Доступно для CybLight Premium": [
+    "Доступно для CybLight Premium",
+    "Available for CybLight Premium"
+  ],
+  "Загляни в редактирование профиля и прояви свой творческий подход": [
+    "Зазирни в редагування профілю та прояви свій творчий підхід",
+    "Take a look into profile editing and show your creative flair"
+  ],
+  "Загрузка списка...": [
+    "Завантаження списку...",
+    "Loading list..."
+  ],
+  "Загрузка…": [
+    "Завантаження…",
+    "Loading…"
+  ],
+  "Задайте свой персональный титул или бейдж (до 24 символов), который будет отображаться рядом с вашим никнеймом.": [
+    "Задайте свій персональний титул або бейдж (до 24 символів), який відображатиметься поруч із вашим нікнеймом.",
+    "Set your custom title or badge (up to 24 characters) to be displayed next to your username."
+  ],
+  "Запомнить пароль и больше не спрашивать": [
+    "Запам'ятати пароль і більше не запитувати",
+    "Remember password and do not ask again"
+  ],
+  "Звёздная искра": [
+    "Зоряна іскра",
+    "Star Spark"
+  ],
+  "Здесь живет секрет художников...": [
+    "Тут живе секрет художників...",
+    "The secret of artists lives here..."
+  ],
+  "Золотая": [
+    "Золота",
+    "Gold"
+  ],
+  "Золотое прикосновение": [
+    "Золотий дотик",
+    "Golden Touch"
+  ],
+  "Золотой статус Premium": [
+    "Золотий статус Premium",
+    "Golden Premium Status"
+  ],
+  "Игры": [
+    "Ігри",
+    "Games"
+  ],
+  "Использовано: {used}": [
+    "Використано: {used}",
+    "Used: {used}"
+  ],
+  "Использовано: {used} из {limit}": [
+    "Використано: {used} з {limit}",
+    "Used: {used} of {limit}"
+  ],
+  "История": [
+    "Історія",
+    "History"
+  ],
+  "История пуста": [
+    "Історія порожня",
+    "History is empty"
+  ],
+  "Кастомный бейдж успешно сохранен": [
+    "Кастомний бейдж успішно збережено",
+    "Custom badge saved successfully"
+  ],
+  "Кастомный титул": [
+    "Кастомний титул",
+    "Custom title"
+  ],
+  "Кастомный титул / бейдж": [
+    "Кастомний титул / бейдж",
+    "Custom title / badge"
+  ],
+  "Кибер": [
+    "Кібер",
+    "Cyber"
+  ],
+  "Кибер-Художник": [
+    "Кібер-Художник",
+    "Cyber Artist"
+  ],
+  "Киберпанк": [
+    "Кіберпанк",
+    "Cyberpunk"
+  ],
+  "Ключи шифрования успешно восстановлены из Google Drive.": [
+    "Ключі шифрування успішно відновлено з Google Drive.",
+    "Encryption keys successfully restored from Google Drive."
+  ],
+  "Кто может видеть мою подпись": [
+    "Хто може бачити мій підпис",
+    "Who can see my signature"
+  ],
+  "Кто может видеть список и количество моих друзей": [
+    "Хто може бачити список і кількість моїх друзів",
+    "Who can see my friend list and friend count"
+  ],
+  "Максимальная выгода": [
+    "Максимальна вигода",
+    "Best value"
+  ],
+  "Максимум возможностей для вашего аккаунта": [
+    "Максимум можливостей для вашого акаунта",
+    "Maximum capabilities for your account"
+  ],
+  "Мгновенная доставка сигналов и облачных бэкапов": [
+    "Миттєва доставка сигналів та хмарних бекапів",
+    "Instant signal delivery and cloud backups"
+  ],
+  "Навсегда": [
+    "Назавжди",
+    "Lifetime"
+  ],
+  "Нажмите, чтобы открыть управление хранилищем Google": [
+    "Натисніть, щоб відкрити керування сховищем Google",
+    "Click to open Google storage management"
+  ],
+  "Настройка видимости вашей подписи в профиле": [
+    "Налаштування видимості вашого підпису в профілі",
+    "Configure signature visibility on your profile"
+  ],
+  "Настройка видимости ваших друзей в профиле": [
+    "Налаштування видимості ваших друзів у профілі",
+    "Configure friends visibility on your profile"
+  ],
+  "Не удалось авторизоваться в Google.": [
+    "Не вдалося авторизуватися в Google.",
+    "Failed to authenticate with Google."
+  ],
+  "Не удалось войти. Проверьте пароль или попробуйте позже.": [
+    "Не вдалося увійти. Перевірте пароль або спробуйте пізніше.",
+    "Failed to sign in. Check password or try again later."
+  ],
+  "Не удалось сохранить бейдж": [
+    "Не вдалося зберегти бейдж",
+    "Failed to save badge"
+  ],
+  "Не установлен": [
+    "Не встановлено",
+    "Not set"
+  ],
+  "Неверный логин или пароль. Проверьте введенные данные.": [
+    "Невірний логін або пароль. Перевірте введені дані.",
+    "Invalid username or password. Please check your credentials."
+  ],
+  "Некорректный формат логина. Используйте латинские буквы (A–Z), цифры (0–9) и символ подчеркивания (3–24 символа).": [
+    "Некоректний формат логіна. Використовуйте латинські літери (A–Z), цифри (0–9) та символ підкреслення (3–24 символи).",
+    "Invalid username format. Use Latin letters (A–Z), numbers (0–9), and underscore (3–24 characters)."
+  ],
+  "Неограниченные комнаты, устройства Tapo и Wake-on-LAN": [
+    "Необмежені кімнати, пристрої Tapo та Wake-on-LAN",
+    "Unlimited rooms, Tapo devices, and Wake-on-LAN"
+  ],
+  "Нет резервной копии": [
+    "Немає резервної копії",
+    "No backup found"
+  ],
+  "Обеспечь полугодовую броню для своего виртуального дома": [
+    "Забезпеч піврічну броню для свого віртуального дому",
+    "Secure a half-year armor for your virtual home"
+  ],
+  "Объявления и важные сообщения от администрации": [
+    "Оголошення та важливі повідомлення від адміністрації",
+    "Announcements and critical messages from administration"
+  ],
+  "Открыть коллекцию пасхалок": [
+    "Відкрити колекцію великодок",
+    "Open Easter Egg Collection"
+  ],
+  "Отлично!": [
+    "Чудово!",
+    "Great!"
+  ],
+  "Оформить Premium": [
+    "Оформити Premium",
+    "Get Premium"
+  ],
+  "Оформить от $4.99": [
+    "Оформити від $4.99",
+    "Get from $4.99"
+  ],
+  "Оформление...": [
+    "Оформлення...",
+    "Processing..."
+  ],
+  "Очистить": [
+    "Очистити",
+    "Clear"
+  ],
+  "Ошибка оформления подписки": [
+    "Помилка оформлення підписки",
+    "Subscription processing error"
+  ],
+  "Ошибка подключения к серверу": [
+    "Помилка підключення до сервера",
+    "Server connection error"
+  ],
+  "Пароль не соответствует требованиям безопасности (минимум 8 символов).": [
+    "Пароль не відповідає вимогам безпеки (мінімум 8 символів).",
+    "Password does not meet security requirements (minimum 8 characters)."
+  ],
+  "Пасхалка добавлена в вашу коллекцию в профиле.": [
+    "Великодку додано до вашої колекції у профілі.",
+    "Easter egg added to your collection in your profile."
+  ],
+  "Пасхалка найдена: «Кибер-Художник»!": [
+    "Великодку знайдено: «Кібер-Художник»!",
+    "Easter egg found: 'Cyber Artist'!"
+  ],
+  "Первый импульс": [
+    "Перший імпульс",
+    "First Pulse"
+  ],
+  "Перейти на сайт": [
+    "Перейти на сайт",
+    "Go to website"
+  ],
+  "Переход на проверенный ресурс": [
+    "Перехід на перевірений ресурс",
+    "Proceed to verified resource"
+  ],
+  "Переход по внешней ссылке": [
+    "Перехід за зовнішнім посиланням",
+    "External link redirect"
+  ],
+  "Персональная подпись в профиле": [
+    "Персональний підпис у профілі",
+    "Personal profile signature"
+  ],
+  "Подключено": [
+    "Підключено",
+    "Connected"
+  ],
+  "Подписка активна": [
+    "Підписка активна",
+    "Subscription active"
+  ],
+  "Подписка оформлена & Пасхалка открыта! 🎉": [
+    "Підписку оформлено & Великодку відкрито! 🎉",
+    "Subscription Activated & Easter Egg Unlocked! 🎉"
+  ],
+  "Подпись": [
+    "Підпис",
+    "Signature"
+  ],
+  "Поздравляем!": [
+    "Вітаємо!",
+    "Congratulations!"
+  ],
+  "Поздравляем! Вы активировали 1 Год Premium и открыли секретную пасхалку «Хранитель эпохи»!": [
+    "Вітаємо! Ви активували 1 Рік Premium і відкрили секретну великодку «Хранитель епохи»!",
+    "Congratulations! You activated 1 Year of Premium and unlocked the secret 'Epoch Keeper' Easter egg!"
+  ],
+  "Поздравляем! Вы активировали 6 месяцев Premium и открыли секретную пасхалку «Сезонный страж»!": [
+    "Вітаємо! Ви активували 6 місяців Premium і відкрили секретну великодку «Сезонний страж»!",
+    "Congratulations! You activated 6 Months of Premium and unlocked the secret 'Season Guardian' Easter egg!"
+  ],
+  "Поздравляем! Вы активировали бессрочный статус Lifetime VIP и разблокировали легендарную пасхалку «Властелин бесконечности»!": [
+    "Вітаємо! Ви активували безстроковий статус Lifetime VIP і розблокували легендарну великодку «Володар нескінченності»!",
+    "Congratulations! You activated Lifetime VIP and unlocked the legendary 'Infinity Overlord' Easter egg!"
+  ],
+  "Поздравляем! Вы активировали подписку CybLight Premium и разблокировали секретную пасхалку «Золотое прикосновение»!": [
+    "Вітаємо! Ви активували підписку CybLight Premium і розблокували секретну великодку «Золотий дотик»!",
+    "Congratulations! You activated CybLight Premium and unlocked the secret 'Golden Touch' Easter egg!"
+  ],
+  "Поздравляем! Вы запустили свой первый месяц Premium и открыли секретную пасхалку «Первый импульс»!": [
+    "Вітаємо! Ви запустили свій перший місяць Premium і відкрили секретну великодку «Перший імпульс»!",
+    "Congratulations! You launched your first month of Premium and unlocked the secret 'First Pulse' Easter egg!"
+  ],
+  "Полгода несокрушимой защиты и премиальной мощи аккаунта 🛡️⚡": [
+    "Півроку незламного захисту та преміальної могутності акаунта 🛡️⚡",
+    "Half a year of impenetrable defense and premium power for your account 🛡️⚡"
+  ],
+  "Получи бессрочный доступ ко всем возможностям экосистемы CybLight навсегда": [
+    "Отримай безстроковий доступ до всіх можливостей екосистеми CybLight назавжди",
+    "Get lifetime access to all capabilities of the CybLight ecosystem forever"
+  ],
+  "Пользователь с таким именем не найден.": [
+    "Користувача з таким ім'ям не знайдено.",
+    "User with this name was not found."
+  ],
+  "Пользователь с такими данными уже существует.": [
+    "Користувач із такими даними вже існує.",
+    "A user with these credentials already exists."
+  ],
+  "Попробуй найти скрытую реакцию на элементы своего профиля": [
+    "Спробуй знайти приховану реакцію на елементи свого профілю",
+    "Try to discover hidden reactions on your profile elements"
+  ],
+  "Популярный выбор": [
+    "Популярний вибір",
+    "Popular choice"
+  ],
+  "Последнее сохранение": [
+    "Останнє збереження",
+    "Last saved"
+  ],
+  "Предпросмотр": [
+    "Попередній перегляд",
+    "Preview"
+  ],
+  "Премиум темы": [
+    "Преміум теми",
+    "Premium themes"
+  ],
+  "Прикоснись к миру эксклюзивных возможностей и премиального статуса": [
+    "Доторкнися до світу ексклюзивних можливостей та преміального статусу",
+    "Touch the world of exclusive capabilities and premium status"
+  ],
+  "Приоритетная E2EE-синхронизация": [
+    "Пріоритетна E2EE-синхронізація",
+    "Priority E2EE synchronization"
+  ],
+  "Приоритетная поддержка": [
+    "Пріоритетна підтримка",
+    "Priority support"
+  ],
+  "Проверенный ресурс:": [
+    "Перевірений ресурс:",
+    "Verified resource:"
+  ],
+  "Проверка безопасности не пройдена. Пожалуйста, повторите попытку.": [
+    "Перевірка безпеки не пройдена. Будь ласка, повторіть спробу.",
+    "Security check failed. Please try again."
+  ],
+  "Продлить Premium": [
+    "Продовжити Premium",
+    "Extend Premium"
+  ],
+  "Произошла ошибка при выполнении запроса": [
+    "Сталася помилка під час виконання запиту",
+    "An error occurred while processing the request"
+  ],
+  "Прямой доступ к разработчикам 24/7": [
+    "Прямий доступ до розробників 24/7",
+    "Direct 24/7 access to developers"
+  ],
+  "Рамка аватара": [
+    "Рамка аватара",
+    "Avatar frame"
+  ],
+  "Расскажите о себе подробнее (до 1000 символов)...": [
+    "Розкажіть про себе детальніше (до 1000 символів)...",
+    "Tell us more about yourself (up to 1000 characters)..."
+  ],
+  "Резервная копия": [
+    "Резервна копія",
+    "Backup"
+  ],
+  "Сделай первый решительный шаг в мир премиальных технологий": [
+    "Зроби перший рішучий крок у світ преміальних технологій",
+    "Take the first decisive step into the world of premium technology"
+  ],
+  "Сезонный страж": [
+    "Сезонний страж",
+    "Season Guardian"
+  ],
+  "Секретная пасхалка найдена!": [
+    "Секретну великодку знайдено!",
+    "Secret Easter egg found!"
+  ],
+  "Секретное достижение разблокировано": [
+    "Секретне досягнення розблоковано",
+    "Secret achievement unlocked"
+  ],
+  "Секретный ритм найден! ✨": [
+    "Секретний ритм знайдено! ✨",
+    "Secret rhythm found! ✨"
+  ],
+  "Сессия истекла. Пожалуйста, войдите в аккаунт заново.": [
+    "Сесія закінчилася. Будь ласка, увійдіть в акаунт знову.",
+    "Session expired. Please sign in to your account again."
+  ],
+  "Символы": [
+    "Символи",
+    "Symbols"
+  ],
+  "Слишком много запросов. Пожалуйста, подождите немного и попробуйте снова.": [
+    "Забагато запитів. Будь ласка, зачекайте трохи і спробуйте знову.",
+    "Too many requests. Please wait a moment and try again."
+  ],
+  "Смайлики для бейджа": [
+    "Смайлики для бейджа",
+    "Badge emojis"
+  ],
+  "Сохранение и восстановление только ключей шифрования в Google Drive. Доступ только у приложения CybLight и только к созданным им файлам.": [
+    "Збереження та відновлення лише ключів шифрування в Google Drive. Доступ має тільки застосунок CybLight і лише до створених ним файлів.",
+    "Stores and restores only encryption keys in Google Drive. Access is restricted to CybLight and only to files created by it."
+  ],
+  "Статус": [
+    "Статус",
+    "Status"
+  ],
+  "Стиль": [
+    "Стиль",
+    "Style"
+  ],
+  "Текст бейджа": [
+    "Текст бейджа",
+    "Badge text"
+  ],
+  "Текст бейджа содержит недопустимые или 18+ выражения": [
+    "Текст бейджа містить неприпустимі або 18+ вирази",
+    "Badge text contains prohibited or 18+ terms"
+  ],
+  "Текст содержит недопустимые или 18+ выражения.": [
+    "Текст містить неприпустимі або 18+ вирази.",
+    "Text contains prohibited or 18+ terms."
+  ],
+  "Текущее имя пользователя": [
+    "Поточне ім'я користувача",
+    "Current username"
+  ],
+  "Тема оформления": [
+    "Тема оформлення",
+    "Interface theme"
+  ],
+  "Ты запустил свой первый месяц Premium и начал путь к вершине CybLight 🚀": [
+    "Ти запустив свій перший місяць Premium і розпочав шлях до вершини CybLight 🚀",
+    "You launched your first month of Premium and began your journey to the summit of CybLight 🚀"
+  ],
+  "Ты обрел статус CybLight Premium и золотое сияние превосходства 👑✨": [
+    "Ти здобув статус CybLight Premium і золоте сяйво досконалості 👑✨",
+    "You achieved CybLight Premium status and the golden radiance of excellence 👑✨"
+  ],
+  "Ты открыл секретный неоновый режим и квантовое сияние профиля 🎨✨": [
+    "Ти відкрив секретний неоновий режим і квантове сяйво профілю 🎨✨",
+    "You unlocked the secret neon mode and quantum profile radiance 🎨✨"
+  ],
+  "Ты пробудил звёздный вихрь и тайную силу своего бейджа ⭐💫": [
+    "Ти пробудив зоряний вихор і таємну силу свого бейджа ⭐💫",
+    "You awakened the stellar vortex and the secret power of your badge ⭐💫"
+  ],
+  "Уникальный бейдж рядом с никнеймом (до 24 символов, только для Premium)": [
+    "Унікальний бейдж поруч із нікнеймом (до 24 символів, тільки для Premium)",
+    "Unique badge next to your username (up to 24 chars, Premium only)"
+  ],
+  "Управление": [
+    "Керування",
+    "Management"
+  ],
+  "Устройства": [
+    "Пристрої",
+    "Devices"
+  ],
+  "Хранилище Google": [
+    "Сховище Google",
+    "Google Storage"
+  ],
+  "Хранитель эпохи": [
+    "Хранитель епохи",
+    "Epoch Keeper"
+  ],
+  "Целый год неограниченной свободы, высших лимитов и почета 🏛️⌛": [
+    "Цілий рік необмеженої свободи, найвищих лімітів та шани 🏛️⌛",
+    "A full year of unlimited freedom, top limits, and prestige 🏛️⌛"
+  ],
+  "Что входит в подписку:": [
+    "Що входить до підписки:",
+    "What is included in the subscription:"
+  ],
+  "Эксклюзив": [
+    "Ексклюзив",
+    "Exclusive"
+  ],
+  "Эксклюзивные аватары": [
+    "Ексклюзивні аватари",
+    "Exclusive avatars"
+  ],
+  "Эксклюзивные неоновые и анимированные рамки для подписчиков CybLight Premium.": [
+    "Ексклюзивні неонові та анімовані рамки для підписників CybLight Premium.",
+    "Exclusive neon and animated frames for CybLight Premium subscribers."
+  ],
+  "Эксклюзивные темы и аватары": [
+    "Ексклюзивні теми та аватари",
+    "Exclusive themes and avatars"
+  ],
+  "Эксклюзивный значок в профиле, чатах и SmartHome Hub": [
+    "Ексклюзивний значок у профілі, чатах та SmartHome Hub",
+    "Exclusive badge in profile, chats, and SmartHome Hub"
+  ],
+  "Это закрытый профиль": [
+    "Це закритий профіль",
+    "This is a private profile"
+  ],
+  "Это имя пользователя зарезервировано администрацией сайта": [
+    "Це ім'я користувача зарезервовано адміністрацією сайту",
+    "This username is reserved by site administration"
+  ],
+  "Это имя пользователя зарезервировано администрацией сайта. Пожалуйста, выберите другое имя.": [
+    "Це ім'я користувача зарезервовано адміністрацією сайту. Будь ласка, оберіть інше ім'я.",
+    "This username is reserved by site administration. Please choose another username."
+  ],
+  "Это имя пользователя уже занято. Пожалуйста, выберите другое имя.": [
+    "Це ім'я користувача вже зайняте. Будь ласка, оберіть інше ім'я.",
+    "This username is already taken. Please choose another username."
+  ],
+  "Это проверенный ресурс, который заслуживает доверия — здесь можно найти достоверную информацию и ответы на многие жизненные вопросы.": [
+    "Це перевірений ресурс, який заслуговує на довіру — тут можна знайти достовірну інформацію та відповіді на багато життєвих питань.",
+    "This is a verified trustworthy resource offering reliable information and answers to many life questions."
+  ],
+  "Этот адрес электронной почты уже зарегистрирован в системе.": [
+    "Ця адреса електронної пошти вже зареєстрована в системі.",
+    "This email address is already registered in the system."
+  ],
+  "Этот аккаунт заблокирован.": [
+    "Цей акаунт заблоковано.",
+    "This account has been banned."
+  ],
+  "осталось": [
+    "залишилося",
+    "remaining"
+  ],
+  "⭐ Эксклюзивные рамки аватара доступны только для подписчиков CybLight Premium": [
+    "⭐ Ексклюзивні рамки аватара доступні лише для підписників CybLight Premium",
+    "⭐ Exclusive avatar frames are available only to CybLight Premium subscribers"
+  ],
+  "🎊 Вечный статус навсегда вписан в историю!": [
+    "🎊 Вічний статус назавжди вписано в історію!",
+    "🎊 Eternal status inscribed into history forever!"
+  ],
+  "🎊 Годовая эпоха под контролем!": [
+    "🎊 Річна епоха під контролем!",
+    "🎊 Annual epoch under control!"
+  ],
+  "🎊 Звёздный мастер пробуждён!": [
+    "🎊 Зоряний майстер пробуджений!",
+    "🎊 Stellar Master Awakened!"
+  ],
+  "🎊 Золотой статус активирован!": [
+    "🎊 Золотий статус активовано!",
+    "🎊 Golden status activated!"
+  ],
+  "🎊 Месячный импульс на максимуме!": [
+    "🎊 Місячний імпульс на максимумі!",
+    "🎊 Monthly pulse at maximum!"
+  ],
+  "🎊 Полугодовой щит активен!": [
+    "🎊 Піврічний щит активний!",
+    "🎊 Half-year shield active!"
+  ],
+  "🎊 Творческий потенциал разблокирован!": [
+    "🎊 Творчий потенціал розблоковано!",
+    "🎊 Creative potential unlocked!"
+  ],
+  "💡 Подсказка: активируй бессрочный тариф Premium Навсегда": [
+    "💡 Підказка: активуй безстроковий тариф Premium Назавжди",
+    "💡 Hint: activate the Lifetime Premium plan"
+  ],
+  "💡 Подсказка: верхушка карандаша скрывает ритм творчества...": [
+    "💡 Підказка: верхівка олівця приховує ритм творчості...",
+    "💡 Hint: the tip of the pencil hides the rhythm of creativity..."
+  ],
+  "💡 Подсказка: оформи подписку Premium на 1 Год": [
+    "💡 Підказка: оформи підписку Premium на 1 Рік",
+    "💡 Hint: subscribe to 1 Year of Premium"
+  ],
+  "💡 Подсказка: оформи подписку Premium на 1 Месяц": [
+    "💡 Підказка: оформи підписку Premium на 1 Місяць",
+    "💡 Hint: subscribe to 1 Month of Premium"
+  ],
+  "💡 Подсказка: оформи подписку Premium на 6 Месяцев": [
+    "💡 Підказка: оформи підписку Premium на 6 Місяців",
+    "💡 Hint: subscribe to 6 Months of Premium"
+  ],
+  "💡 Подсказка: оформи подписку Premium на сайте": [
+    "💡 Підказка: оформи підписку Premium на сайті",
+    "💡 Hint: subscribe to Premium on the website"
+  ],
+  "💡 Подсказка: тапни 5 раз подряд по своему бейджу в профиле": [
+    "💡 Підказка: тапни 5 разів поспіль по своєму бейджу в профілі",
+    "💡 Hint: tap 5 times in a row on your badge in your profile"
+  ],
+  "🔓 Пользователь {name} разблокирован": [
+    "🔓 Користувача {name} розблоковано",
+    "🔓 User {name} unblocked"
+  ],
+  "🚫 Пользователь {name} заблокирован": [
+    "🚫 Користувача {name} заблоковано",
+    "🚫 User {name} blocked"
+  ],
+  "Безопасная оплата": [
+    "Безпечна оплата",
+    "Secure payment"
+  ],
+  "Создание сессии Stripe...": [
+    "Створення сесії Stripe...",
+    "Creating Stripe session..."
+  ],
+  "Переход к оплате Stripe...": [
+    "Перехід до оплати Stripe...",
+    "Redirecting to Stripe..."
+  ],
+  "Продлить через Stripe": [
+    "Продовжити через Stripe",
+    "Renew with Stripe"
+  ],
+  "Оплатить через Stripe": [
+    "Оплатити через Stripe",
+    "Pay with Stripe"
+  ],
+  "Оформление подписки Premium было отменено.": [
+    "Оформлення підписки Premium було скасовано.",
+    "Premium subscription checkout was cancelled."
+  ],
+  "Еквайринг Monobank": [
+    "Еквайринг Monobank",
+    "Monobank Acquiring"
+  ],
+  "Создание счета Monobank...": [
+    "Створення рахунку Monobank...",
+    "Creating Monobank invoice..."
+  ],
+  "Переход к оплате Monobank...": [
+    "Перехід до оплати Monobank...",
+    "Redirecting to Monobank..."
+  ],
+  "Продлить через Monobank": [
+    "Продовжити через Monobank",
+    "Renew with Monobank"
+  ],
+  "Оплатить через Monobank": [
+    "Оплатити через Monobank",
+    "Pay with Monobank"
+  ]
+}

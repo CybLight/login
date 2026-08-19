@@ -5,7 +5,7 @@
 import { getLocale, getLocaleLabel, localePath, sitePath, t } from '@/i18n';
 import { buildAuthFooter } from '@/ui/auth-footer';
 import { formatPublicId, getTabTitle, getUserStatus, renderTabContent } from './tabs-render';
-import { getAvatarInnerHtml } from './avatar';
+import { getAvatarInnerHtml, getAvatarFrameClass } from './avatar';
 import { escapeHtml } from '@/utils';
 
 /**
@@ -35,6 +35,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
     role === 'owner' ||
     user.flags?.includes('admin') ||
     user.flags?.includes('owner');
+  const avatarFrameClass = getAvatarFrameClass((maybe.avatarFrame as string) || (maybe.avatar_frame as string), Boolean(user.isPremium));
 
   return `
     <div class="account-page">
@@ -67,7 +68,7 @@ export function renderAccountPage(tab: string, user: AppUser): string {
             </button>
             <button
               type="button"
-              class="account-avatar-btn"
+              class="account-avatar-btn ${avatarFrameClass}"
               id="accountAvatarBtn"
               aria-haspopup="true"
               aria-expanded="false"

@@ -37,6 +37,17 @@ export function isAvatarUrl(value: string): boolean {
   );
 }
 
+export function getAvatarFrameClass(frameRaw: string | undefined | null, isPremium?: boolean): string {
+  const frame = String(frameRaw || '').trim();
+  if (frame && frame !== 'frame-none') {
+    return `avatar-frame--${frame.replace(/^frame-/, '')}`;
+  }
+  if (isPremium) {
+    return 'avatar-frame--neon-orange';
+  }
+  return '';
+}
+
 export function getAvatarInnerHtml(avatarRaw: string | undefined, login: string): string {
   const avatarValue = String(avatarRaw || '').trim();
 

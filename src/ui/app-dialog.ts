@@ -50,10 +50,16 @@ function defaultTitle(tone: AppDialogTone): string {
 }
 
 function toneIcon(tone: AppDialogTone): string {
-  if (tone === 'error') return '✕';
-  if (tone === 'warn') return '⚠';
-  if (tone === 'success') return '✓';
-  return 'ℹ';
+  if (tone === 'error') {
+    return `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="rgba(239, 68, 68, 0.18)"/><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+  }
+  if (tone === 'warn') {
+    return `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" fill="rgba(245, 158, 11, 0.2)" stroke="currentColor"/><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+  }
+  if (tone === 'success') {
+    return `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="rgba(16, 185, 129, 0.18)"/><polyline points="16 9 10 15 8 13"></polyline></svg>`;
+  }
+  return `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8" fill="rgba(56, 189, 248, 0.18)"/><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
 }
 
 function formatMessage(message: string): string {
@@ -102,8 +108,10 @@ function finishDialog(value: boolean | string | null): void {
   void pumpQueue();
 }
 
-function bindCloseOnBackdrop(root: HTMLElement, onCancel: () => void): void {
-  root.querySelector('[data-dialog-close]')?.addEventListener('click', onCancel);
+function bindCloseOnBackdrop(root: HTMLElement, onClose: () => void): void {
+  const backdrop = root.querySelector('[data-dialog-close]');
+  if (!backdrop) return;
+  backdrop.addEventListener('click', onClose, { once: true });
 }
 
 function openDialog(request: DialogRequest): void {
@@ -120,7 +128,7 @@ function openDialog(request: DialogRequest): void {
   const card = root.querySelector('.cyb-app-dialog__card') as HTMLElement;
 
   root.className = `cyb-app-dialog cyb-app-dialog--${tone}`;
-  iconEl.textContent = toneIcon(tone);
+  iconEl.innerHTML = toneIcon(tone);
   titleEl.textContent = title;
   messageEl.innerHTML = formatMessage(request.message);
 

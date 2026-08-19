@@ -6,6 +6,7 @@ import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell } from '@/ui';
 import { getStorage, setStorage, escapeHtml, apiCall } from '@/utils';
+import { formatApiError } from '@/utils/apiErrors';
 import { captchaService, syncEasterAfterLogin } from '@/services';
 import { initPasswordEyes, shakeElement } from '@/components/password/password-helpers';
 
@@ -221,7 +222,7 @@ export async function renderPassword(): Promise<void> {
 
           showMsg(
             'error',
-            data?.error ? t('Ошибка: {error}', { error: data.error }) : t('Не удалось войти. Попробуй позже.')
+            formatApiError(data?.error, t('Не удалось войти. Проверьте пароль или попробуйте позже.'))
           );
           return;
         }

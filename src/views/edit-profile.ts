@@ -28,6 +28,11 @@ interface EditableProfile {
     gender?: string;
     dob?: string;
   };
+  isPremium?: boolean;
+  premiumUntil?: number | null;
+  premiumTier?: string | null;
+  avatarFrame?: string | null;
+  avatar_frame?: string | null;
 }
 
 // Доступные аватары
@@ -53,6 +58,16 @@ export const EXCLUSIVE_AVATARS = [
   { id: 'avatar-star', emoji: '⭐', label: 'Звезда' },
   { id: 'avatar-robot', emoji: '🤖', label: 'Робот' },
   { id: 'avatar-diamond', emoji: '💎', label: 'Алмаз' },
+];
+
+export const AVATAR_FRAMES = [
+  { id: 'frame-none', icon: '⭕', label: 'Без рамки', desc: 'Стандартный вид' },
+  { id: 'frame-neon-orange', icon: '🔥', label: 'Неоновый Огонь', desc: 'Оранжевый неон (По умолчанию)', premium: true },
+  { id: 'frame-cyber-cyan', icon: '⚡', label: 'Кибер Неон', desc: 'Электрический бирюзовый', premium: true },
+  { id: 'frame-golden-crown', icon: '👑', label: 'Золотая Роскошь', desc: 'Королевский золотой блеск', premium: true },
+  { id: 'frame-amethyst-violet', icon: '🔮', label: 'Аметистовый Вихрь', desc: 'Магическое фиолетовое сияние', premium: true },
+  { id: 'frame-emerald-matrix', icon: '💚', label: 'Изумрудная Матрица', desc: 'Кислотный кибер-неон', premium: true },
+  { id: 'frame-rainbow-chroma', icon: '🌈', label: 'Хрома Волна', desc: 'RGB радужный спектр', premium: true },
 ];
 
 /**
@@ -172,14 +187,14 @@ export function canUseExclusiveAvatar(profile: EditableProfile, avatarId: string
     return flags.includes('verified');
   }
 
-  // Огонь - для VIP
+  // Огонь - для VIP и Premium
   if (avatarId === 'avatar-fire') {
-    return role === 'vip' || flags.includes('vip');
+    return profile.isPremium || role === 'vip' || role === 'premium' || flags.includes('vip') || flags.includes('premium');
   }
 
-  // Звезда - для выдающихся
+  // Звезда - для выдающихся и Premium
   if (avatarId === 'avatar-star') {
-    return flags.includes('outstanding');
+    return profile.isPremium || role === 'premium' || flags.includes('outstanding') || flags.includes('premium');
   }
 
   // Робот - для ботов
@@ -189,7 +204,7 @@ export function canUseExclusiveAvatar(profile: EditableProfile, avatarId: string
 
   // Алмаз - для premium
   if (avatarId === 'avatar-diamond') {
-    return role === 'premium' || flags.includes('premium') || flags.includes('sponsor');
+    return profile.isPremium || role === 'premium' || flags.includes('premium') || flags.includes('sponsor');
   }
 
   return false;
@@ -262,6 +277,30 @@ export async function renderEditProfile(): Promise<void> {
            title="${escapeHtml(lockTitle)}">
         <div class="avatar-badge">${avatar.emoji}</div>
         ${!isUnlocked ? `<div class="avatar-lock-icon">🔒</div>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  const isPremiumUser = Boolean(profile.isPremium);
+  const activeFrame = profile.avatarFrame || profile.avatar_frame || (isPremiumUser ? 'frame-neon-orange' : 'frame-none');
+
+  const avatarFrameOptionsHtml = AVATAR_FRAMES.map((frame) => {
+    const isUnlocked = !frame.premium || isPremiumUser || canUseExclusiveAvatar(profile, 'avatar-crown');
+    const isSelected = activeFrame === frame.id;
+    const lockTitle = isUnlocked
+      ? t(frame.label)
+      : `${t(frame.label)} (${t('Доступно для CybLight Premium')})`;
+
+    return `
+      <div class="frame-option ${isSelected ? 'selected' : ''} ${!isUnlocked ? 'locked' : ''}" 
+           data-frame="${frame.id}"
+           title="${escapeHtml(lockTitle)}">
+        <div class="frame-preview-circle ${frame.id !== 'frame-none' ? `avatar-frame--${frame.id.replace(/^frame-/, '')}` : ''}">
+          ${frame.icon}
+        </div>
+        <div class="frame-option-name">${t(frame.label)}</div>
+        <div class="frame-option-desc">${t(frame.desc)}</div>
+        ${!isUnlocked ? `<div class="frame-lock-badge">🔒</div>` : ''}
       </div>
     `;
   }).join('');
@@ -352,7 +391,7 @@ export async function renderEditProfile(): Promise<void> {
             </div>
             <div id="usernameHints" style="margin-top: 10px; margin-bottom: 8px;"></div>
             <div class="username-limit-warning" style="font-size: 12px; color: #ff9800; background: rgba(255, 152, 0, 0.1); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255, 152, 0, 0.2); margin-top: 12px; line-height: 1.4; ${profile.canChangeUsername ? '' : 'display: none;'}">
-              ⚠️ ${t('Имя пользователя можно менять не чаще одного раза в 30 дней.')}
+              ${profile.isPremium ? `⭐ <strong>CybLight Premium:</strong> ${t('Для вас смена имени пользователя доступна без ограничений!')}` : `⚠️ ${t('Имя пользователя можно менять не чаще одного раза в 30 дней.')}`}
             </div>
           </div>
         </div>
@@ -383,6 +422,15 @@ export async function renderEditProfile(): Promise<void> {
               </div>
               <div class="avatar-grid">
                 ${exclusiveAvatarOptionsHtml}
+              </div>
+            </div>
+            <div class="avatar-section" style="margin-top: 24px;">
+              <div class="avatar-section-header">
+                <h3 class="avatar-section-title">✨ ${t('Рамка аватара')}</h3>
+                <p class="avatar-section-subtitle">${t('Эксклюзивные неоновые и анимированные рамки для подписчиков CybLight Premium.')}</p>
+              </div>
+              <div class="avatar-frames-grid">
+                ${avatarFrameOptionsHtml}
               </div>
             </div>
             <div class="privacy-setting">
@@ -1212,6 +1260,24 @@ function initAvatarSelection(setSelectedAvatar: (avatarId: string) => void): voi
       }
     });
   });
+
+  const frameOptions = document.querySelectorAll('.frame-option');
+  frameOptions.forEach((option) => {
+    option.addEventListener('click', () => {
+      if (option.classList.contains('locked')) {
+        const msgEl = document.getElementById('editProfileMsg') as HTMLDivElement | null;
+        if (msgEl) {
+          msgEl.className = 'msg msg-error';
+          msgEl.textContent = t('⭐ Эксклюзивные рамки аватара доступны только для подписчиков CybLight Premium');
+          msgEl.style.display = 'block';
+          msgEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        return;
+      }
+      frameOptions.forEach((opt) => opt.classList.remove('selected'));
+      option.classList.add('selected');
+    });
+  });
 }
 
 /**
@@ -1430,12 +1496,16 @@ function initSaveProfile(profile: EditableProfile, getSelectedAvatar: () => stri
         dob: (document.getElementById('privacyDob') as HTMLSelectElement).value,
       };
 
-      // Получаем выбранный аватар
+      // Получаем выбранный аватар и рамку
       const selectedAvatarEl = document.querySelector('.avatar-option.selected') as HTMLElement;
       const avatar = selectedAvatarEl?.dataset.avatar || getSelectedAvatar();
+      const selectedFrameEl = document.querySelector('.frame-option.selected') as HTMLElement;
+      const defaultFrame = profile.avatarFrame || profile.avatar_frame || (profile.isPremium ? 'frame-neon-orange' : 'frame-none');
+      const avatarFrame = selectedFrameEl?.dataset.frame || defaultFrame;
 
       const updateData: Record<string, unknown> = {
         avatar: avatar,
+        avatarFrame: avatarFrame,
         bio: bio || null,
         aboutMe: aboutMe || null,
         gender,

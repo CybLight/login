@@ -6,6 +6,8 @@ import { t, localePath } from '@/i18n';
 import { Router } from '@/router/Router';
 import { setAppContent, shell, showAppAlert } from '@/ui';
 import { setStorage, apiCall } from '@/utils';
+import { formatApiError } from '@/utils/apiErrors';
+import { isReservedUsername } from '@/utils/reservedUsernames';
 import { authService, captchaService, pushLocalEasterFlagsToServer } from '@/services';
 import { initPasswordEyes } from '@/components/password/password-helpers';
 import { attachPasswordHints } from '@/components/password/password-hints';
@@ -154,6 +156,13 @@ export async function renderSignup(): Promise<void> {
         });
         return;
       }
+      if (isReservedUsername(login)) {
+        await showAppAlert(
+          t('Это имя пользователя зарезервировано администрацией сайта. Пожалуйста, выберите другое имя.'),
+          { tone: 'warn' }
+        );
+        return;
+      }
 
       // Проверка совпадения паролей
       if (!pass1) {
@@ -212,7 +221,8 @@ export async function renderSignup(): Promise<void> {
           // Сброс капчи
           await captchaService.reset();
 
-          await showAppAlert(data.error || t('Ошибка регистрации'), { tone: 'error' });
+          const friendlyMessage = formatApiError(data?.error, t('Ошибка регистрации'));
+          await showAppAlert(friendlyMessage, { tone: 'error' });
           return;
         }
 

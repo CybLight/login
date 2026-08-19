@@ -24,12 +24,16 @@ import {
   showSettingsAboutModal,
   showSettingsGenderModal,
   showSettingsDobModal,
+  showSettingsCustomBadgeModal,
+  openPremiumModal,
+  showEasterUnlockCelebrationModal,
 } from './modals';
 import { updateNavBadges, setNavBadge, updateChatUnreadBadges, fetchUnreadSummaryData } from './unread';
 import { isEmailVerified } from './account-utils';
 import { getAvatarInnerHtml } from './avatar';
 import { STANDARD_AVATARS, EXCLUSIVE_AVATARS } from '../edit-profile';
 import { getLocale, localeTag } from '@/i18n';
+import { bindBadgeEasterEgg } from '@/components/easter/badge-easter';
 
 interface ApiMessage {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -260,6 +264,86 @@ export function bindAccountHandlers(
   // Bind copy buttons (copy to clipboard)
   bindCopyButtons(api);
 
+  // Check for Monobank / Stripe Checkout return
+  const searchParams = new URLSearchParams(window.location.search);
+  if (searchParams.get('mono_success') === 'true' || searchParams.get('premium_success') === 'true') {
+    const invoiceId = searchParams.get('invoice_id');
+    const sessionId = searchParams.get('session_id');
+    const planId = searchParams.get('plan_id') || localStorage.getItem('cyb_pending_premium_plan') || 'month_1';
+
+    // Clean URL without full reload
+    const cleanUrl = window.location.pathname + (window.location.hash || '');
+    window.history.replaceState({}, document.title, cleanUrl);
+
+    const verifyEndpoint = invoiceId
+      ? `/premium/verify-mono-invoice?invoice_id=${encodeURIComponent(invoiceId)}&plan_id=${planId}`
+      : sessionId
+      ? `/premium/verify-session?session_id=${encodeURIComponent(sessionId)}`
+      : null;
+
+    if (verifyEndpoint) {
+      apiCall(verifyEndpoint)
+        .then(async (res) => {
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.ok) {
+            user.isPremium = true;
+            if (data.premiumUntil) user.premiumUntil = data.premiumUntil;
+
+            let modalIcon = '👑';
+            let modalTitle = t('Золотое прикосновение');
+            let modalSubtitle = t('Подписка оформлена & Пасхалка открыта! 🎉');
+            let modalDesc = t('Поздравляем! Вы активировали подписку CybLight Premium и разблокировали секретную пасхалку «Золотое прикосновение»!');
+            let targetCardId = 'easterCardGoldenTouch';
+
+            if (planId === 'month_1') {
+              localStorage.setItem('cyb_first_pulse_unlocked', '1');
+              modalIcon = '🚀';
+              modalTitle = t('Первый импульс');
+              modalSubtitle = t('1 Месяц Premium & Пасхалка открыта! 🚀');
+              modalDesc = t('Поздравляем! Вы запустили свой первый месяц Premium и открыли секретную пасхалку «Первый импульс»!');
+              targetCardId = 'easterCardFirstPulse';
+            } else if (planId === 'month_6') {
+              localStorage.setItem('cyb_season_guardian_unlocked', '1');
+              modalIcon = '🛡️';
+              modalTitle = t('Сезонный страж');
+              modalSubtitle = t('6 Месяцев Premium & Пасхалка открыта! 🛡️');
+              modalDesc = t('Поздравляем! Вы активировали 6 месяцев Premium и открыли секретную пасхалку «Сезонный страж»!');
+              targetCardId = 'easterCardSeasonGuardian';
+            } else if (planId === 'year_1') {
+              localStorage.setItem('cyb_epoch_keeper_unlocked', '1');
+              modalIcon = '⏳';
+              modalTitle = t('Хранитель эпохи');
+              modalSubtitle = t('1 Год Premium & Пасхалка открыта! ⏳');
+              modalDesc = t('Поздравляем! Вы активировали 1 Год Premium и открыли секретную пасхалку «Хранитель эпохи»!');
+              targetCardId = 'easterCardEpochKeeper';
+            } else if (planId === 'lifetime') {
+              localStorage.setItem('cyb_infinity_overlord_unlocked', '1');
+              modalIcon = '♾️';
+              modalTitle = t('Властелин бесконечности');
+              modalSubtitle = t('Lifetime VIP & Высшая пасхалка открыта! 🌌👑');
+              modalDesc = t('Поздравляем! Вы активировали бессрочный статус Lifetime VIP и разблокировали легендарную пасхалку «Властелин бесконечности»!');
+              targetCardId = 'easterCardInfinityOverlord';
+            }
+
+            showEasterUnlockCelebrationModal({
+              icon: modalIcon,
+              title: modalTitle,
+              subtitle: modalSubtitle,
+              description: modalDesc,
+              hint: t('Вам доступны 10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и кастомный титул.'),
+              targetCardId,
+              subtab: 'site',
+            });
+          }
+        })
+        .catch((err) => console.error('Error verifying payment session:', err));
+    }
+  } else if (searchParams.get('mono_cancel') === 'true' || searchParams.get('premium_cancel') === 'true') {
+    const cleanUrl = window.location.pathname + (window.location.hash || '');
+    window.history.replaceState({}, document.title, cleanUrl);
+    showMsg('info', t('Оформление подписки Premium было отменено.'));
+  }
+
   // Tab navigation
   document.querySelectorAll('.account-nav button').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -279,6 +363,13 @@ export function bindAccountHandlers(
     Router.navigate('account-settings');
   });
 
+  document.getElementById('openPremiumCardBtn')?.addEventListener('click', () => {
+    openPremiumModal(user, () => {
+      // Reload profile after subscription update
+      window.location.reload();
+    });
+  });
+
   // Logout handler (кнопка в сайдбаре + в меню аватара)
   document.querySelectorAll('#logoutBtn, #headerLogoutBtn').forEach((logoutBtn) => {
     logoutBtn.addEventListener('click', async () => {
@@ -295,6 +386,9 @@ export function bindAccountHandlers(
       Router.navigate('username');
     });
   });
+
+  // Badge Easter Egg (Star Spark)
+  bindBadgeEasterEgg();
 
   // Security tab handlers
   if (_tab === 'security') {
@@ -323,6 +417,7 @@ export function bindAccountHandlers(
     bindSettingsNotificationsHandlers(user);
     bindSettingsAccountFieldsHandlers(user, api);
     bindSettingsSecurityTransitions(user);
+    bindThemeHandlers(user);
     void bindSettingsPrivacyHandlers(user, api);
     void bindBlockedUsersHandlers(api);
   }
@@ -543,6 +638,38 @@ function bindSettingsNotificationsHandlers(user: AppUser): void {
     } finally {
       checkbox.disabled = false;
     }
+  });
+}
+
+/**
+ * Привязать обработчики для выбора темы оформления
+ */
+function bindThemeHandlers(user: AppUser): void {
+  const savedTheme = localStorage.getItem('cyb_account_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  const cards = document.querySelectorAll<HTMLButtonElement>('.stg-theme-card');
+  cards.forEach(card => {
+    const theme = card.dataset.theme;
+    if (theme === savedTheme) {
+      cards.forEach(c => c.classList.remove('is-active'));
+      card.classList.add('is-active');
+    }
+
+    card.addEventListener('click', () => {
+      const isPremiumTheme = card.dataset.premiumTheme === 'true';
+      if (isPremiumTheme && !user.isPremium) {
+        openPremiumModal(user, () => window.location.reload());
+        return;
+      }
+
+      if (theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('cyb_account_theme', theme);
+        cards.forEach(c => c.classList.remove('is-active'));
+        card.classList.add('is-active');
+      }
+    });
   });
 }
 
@@ -807,6 +934,22 @@ function bindEasterSubTabs(): void {
       if (tabId) activate(tabId);
     });
   });
+
+  // Auto-scroll and highlight target easter card if requested
+  const targetCardId = sessionStorage.getItem('cyb_easter_target_card');
+  if (targetCardId) {
+    sessionStorage.removeItem('cyb_easter_target_card');
+    setTimeout(() => {
+      const card = document.getElementById(targetCardId) || document.querySelector(`.${targetCardId}`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('easter-card--highlight');
+        setTimeout(() => {
+          card.classList.remove('easter-card--highlight');
+        }, 3500);
+      }
+    }, 200);
+  }
 }
 
 /**
@@ -860,6 +1003,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
         canChangeUsername,
         usernameChangedAt,
         role: user.role,
+        isPremium: Boolean(user.isPremium),
         onSave: async (newUsername) => {
           try {
             const res = await apiCall('/profile/update', {
@@ -885,9 +1029,11 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
               return { ok: true };
             } else {
               let errorMsg = t('Не удалось сохранить имя пользователя');
-              if (data.error === 'username_exists' || data.error === 'already_exists') {
+              if (data.error === 'username_exists' || data.error === 'already_exists' || data.error === 'Username already taken') {
                 errorMsg = t('Это имя пользователя уже занято');
-              } else if (data.error === 'invalid_username') {
+              } else if (data.error === 'reserved_username') {
+                errorMsg = t('Это имя пользователя зарезервировано администрацией сайта');
+              } else if (data.error === 'invalid_username' || data.error === 'Invalid username format') {
                 errorMsg = t('Недопустимый формат имени пользователя');
               }
               return { ok: false, error: errorMsg };
@@ -974,12 +1120,14 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
   const changeAboutBtn = document.getElementById('stgChangeAboutBtn') as HTMLButtonElement | null;
   const changeGenderBtn = document.getElementById('stgChangeGenderBtn') as HTMLButtonElement | null;
   const changeDobBtn = document.getElementById('stgChangeDobBtn') as HTMLButtonElement | null;
+  const changeCustomBadgeBtn = document.getElementById('stgChangeCustomBadgeBtn') as HTMLButtonElement | null;
 
   let loadedProfile: Partial<AppUser> = {
     avatar: user.avatar,
     bio: user.bio,
     aboutMe: user.aboutMe,
     gender: user.gender,
+    customBadge: user.customBadge,
     dateOfBirth: user.dateOfBirth,
     role: user.role,
     flags: user.flags,
@@ -1240,6 +1388,44 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
               return { ok: true };
             } else {
               return { ok: false, error: data.error || t('Не удалось обновить дату рождения') };
+            }
+          } catch {
+            return { ok: false, error: t('Ошибка сети или сервера') };
+          }
+        },
+      });
+    });
+  }
+
+  if (changeCustomBadgeBtn) {
+    changeCustomBadgeBtn.addEventListener('click', () => {
+      if (!user.isPremium) {
+        openPremiumModal(user, () => window.location.reload());
+        return;
+      }
+
+      showSettingsCustomBadgeModal({
+        currentBadge: user.customBadge || loadedProfile.customBadge || '',
+        onSave: async (newBadge) => {
+          try {
+            const res = await apiCall('/profile/update', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ customBadge: newBadge }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.ok) {
+              user.customBadge = newBadge;
+              loadedProfile.customBadge = newBadge;
+              const valEl = document.getElementById('stgCustomBadgeValue');
+              if (valEl) {
+                valEl.textContent = newBadge || t('Не установлен');
+              }
+              api.showMsg('ok', t('Кастомный бейдж успешно сохранен'));
+              return { ok: true };
+            } else {
+              return { ok: false, error: data.error || t('Не удалось сохранить бейдж') };
             }
           } catch {
             return { ok: false, error: t('Ошибка сети или сервера') };

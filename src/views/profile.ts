@@ -4,12 +4,14 @@
 
 import { bindProfileMirrorEaster } from '@/components/easter/profile-mirror';
 import { t, sitePath, getLocale, getLocaleLabel, localePath, localeTag, type Locale } from '@/i18n';
+import { getAvatarFrameClass } from './account/avatar';
 import { apiCall, escapeHtml, renderPresenceChip } from '@/utils';
 import { allowsFunctionalConsent } from '@/utils/privacy-guard';
 import { Router } from '@/router/Router';
 import { showAppConfirm, showAppPrompt } from '@/ui';
 import { buildAuthFooter } from '@/ui/auth-footer';
 import { openReportUserModal } from '@/ui/report-modal';
+import { bindBadgeEasterEgg } from '@/components/easter/badge-easter';
 
 interface PublicProfile {
   id?: string;
@@ -31,6 +33,11 @@ interface PublicProfile {
   twoFactorEnabled?: boolean;
   isOnline?: boolean;
   lastSeenAt?: number | null;
+  isPremium?: boolean;
+  premiumTier?: string | null;
+  customBadge?: string | null;
+  avatarFrame?: string | null;
+  avatar_frame?: string | null;
   [key: string]: unknown;
 }
 
@@ -161,6 +168,16 @@ function buildProfileBadges(profile: PublicProfile): string {
   const badges: string[] = [];
   const flags = profile.flags || [];
 
+  // Premium (⭐ Premium)
+  if (profile.isPremium || flags.includes('premium') || flags.includes('sponsor')) {
+    badges.push('<span class="chip badge badge--premium" title="CybLight Premium">⭐ Premium</span>');
+  }
+
+  // Custom Badge / Title (👑 Premium perk)
+  if (profile.customBadge) {
+    badges.push(`<span class="chip badge badge--custom" title="${t('Кастомный титул')}">${escapeHtml(String(profile.customBadge))}</span>`);
+  }
+
   // 2FA
   if (profile.twoFactorEnabled || flags.includes('2fa')) {
     badges.push(
@@ -171,11 +188,6 @@ function buildProfileBadges(profile: PublicProfile): string {
   // Developer
   if (flags.includes('dev') || flags.includes('developer')) {
     badges.push(`<span class="chip badge badge--dev" title="${t('Разработчик')}">Dev</span>`);
-  }
-
-  // Premium / Sponsor
-  if (flags.includes('premium') || flags.includes('sponsor')) {
-    badges.push('<span class="chip badge badge--premium" title="Premium">★</span>');
   }
 
   // Helper / Contributor
@@ -1021,9 +1033,70 @@ export async function renderPublicProfile(username: string): Promise<void> {
       }
       .badge--premium,
       .status--premium {
-        color: #fbbf24;
-        border-color: rgba(251,191,36,.5);
-        background: rgba(251,191,36,.16);
+        color: #ffffff !important;
+        font-weight: 800 !important;
+        position: relative !important;
+        overflow: hidden !important;
+        background: linear-gradient(135deg, rgba(234, 179, 8, 0.32) 0%, rgba(245, 158, 11, 0.5) 50%, rgba(217, 119, 6, 0.32) 100%) !important;
+        border: 1px solid rgba(251, 191, 36, 0.8) !important;
+        box-shadow: 0 0 14px -2px rgba(234, 179, 8, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), 0 0 10px rgba(234, 179, 8, 0.7) !important;
+        letter-spacing: 0.3px !important;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        animation: premiumPulse 3s ease-in-out infinite alternate !important;
+      }
+      .badge--premium::before,
+      .status--premium::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -150%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.15) 20%,
+          rgba(255, 255, 255, 0.8) 50%,
+          rgba(255, 255, 255, 0.15) 80%,
+          transparent 100%
+        );
+        transform: skewX(-25deg);
+        animation: premiumShimmer 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        pointer-events: none;
+      }
+      .badge--premium:hover,
+      .status--premium:hover {
+        transform: translateY(-1px) scale(1.06) !important;
+        border-color: rgba(254, 240, 138, 0.95) !important;
+        box-shadow: 0 0 24px rgba(234, 179, 8, 0.75), inset 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+      }
+      .badge--custom {
+        color: #fef08a;
+        border-color: rgba(234, 179, 8, 0.5);
+        background: linear-gradient(135deg, rgba(234, 179, 8, 0.18), rgba(249, 115, 22, 0.18));
+        box-shadow: 0 0 10px rgba(234, 179, 8, 0.25);
+        font-weight: 700;
+      }
+      .easter-badge-spin {
+        animation: badgeSpinAndGlow 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+      }
+      @keyframes badgeSpinAndGlow {
+        0% { transform: scale(1) rotate(0deg); }
+        50% { transform: scale(1.3) rotate(180deg); filter: drop-shadow(0 0 16px #fbbf24); }
+        100% { transform: scale(1) rotate(360deg); }
+      }
+      .badge-sparkle-particle {
+        position: fixed;
+        pointer-events: none;
+        z-index: 99999;
+        font-size: 16px;
+        user-select: none;
+        animation: particleFly 0.8s ease-out forwards;
+      }
+      @keyframes particleFly {
+        0% { opacity: 1; transform: translate(0, 0) scale(1); }
+        100% { opacity: 0; transform: translate(var(--tx, 0px), var(--ty, -40px)) scale(0.3); }
       }
       .badge--ok,
       .badge--info,
@@ -1498,6 +1571,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
   if (profile.isPrivate) {
     document.title = `${String(profile.username || profile.login || username)} — CybLight`;
     const avatarEmoji = getAvatarEmoji(profile.avatar || '');
+    const avatarFrameClass = getAvatarFrameClass(profile.avatarFrame as string || profile.avatar_frame as string, Boolean(profile.isPremium));
     const roleClass = getRoleClass(profile.role);
     const roleLabel = getRoleLabel(profile.role, profile.flags);
     const badgesHtml = buildProfileBadges(profile);
@@ -1509,7 +1583,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
       <div class="profile-container">
         <div class="profile-header">
           <div class="profile-info">
-            <div class="profile-avatar" id="profileAvatar">${avatarEmoji}</div>
+            <div class="profile-avatar ${avatarFrameClass}" id="profileAvatar">${avatarEmoji}</div>
             <div class="profile-details">
               <h1>
                 ${escapeHtml(profile.username || profile.login || '')}
@@ -1574,12 +1648,14 @@ export async function renderPublicProfile(username: string): Promise<void> {
 
     bindProfileHeaderHandlers();
     bindProfileFriendActions(username);
+    bindBadgeEasterEgg(app);
     return;
   }
 
   document.title = `${String(profile.username || profile.login || username)} — CybLight`;
 
   const avatarEmoji = getAvatarEmoji(profile.avatar || '');
+  const avatarFrameClass = getAvatarFrameClass(profile.avatarFrame as string || profile.avatar_frame as string, Boolean(profile.isPremium));
   const roleClass = getRoleClass(profile.role);
   const roleLabel = getRoleLabel(profile.role, profile.flags);
   const badgesHtml = buildProfileBadges(profile);
@@ -1592,7 +1668,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
     <div class="profile-container">
       <div class="profile-header">
         <div class="profile-info">
-          <div class="profile-avatar" id="profileAvatar">${avatarEmoji}</div>
+          <div class="profile-avatar ${avatarFrameClass}" id="profileAvatar">${avatarEmoji}</div>
           <div class="profile-details">
             <h1>
               ${escapeHtml(profile.username || profile.login || '')}
@@ -1676,6 +1752,8 @@ export async function renderPublicProfile(username: string): Promise<void> {
     enabled: Boolean(isSelf && currentUser),
     username: String(profile.username || profile.login || username),
   });
+
+  bindBadgeEasterEgg(app);
 
   const shareBtn = app.querySelector('[data-share-profile]') as HTMLButtonElement | null;
   if (shareBtn) {

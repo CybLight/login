@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { supplementalTriples } from './supplemental-triples.mjs';
 import part4 from './supplemental-part4.json' with { type: 'json' };
 import part5 from './supplemental-part5.json' with { type: 'json' };
+import part6 from './supplemental-part6.json' with { type: 'json' };
 import ukOverrides from './uk-overrides.json' with { type: 'json' };
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -486,8 +487,9 @@ const triples = [
 
 const part4Triples = Object.entries(part4).map(([ru, [uk, en]]) => [ru, uk, en]);
 const part5Triples = Object.entries(part5).map(([ru, [uk, en]]) => [ru, uk, en]);
+const part6Triples = Object.entries(part6).map(([ru, [uk, en]]) => [ru, uk, en]);
 const merged = new Map();
-for (const row of [...triples, ...supplementalTriples, ...part4Triples, ...part5Triples]) {
+for (const row of [...triples, ...supplementalTriples, ...part4Triples, ...part5Triples, ...part6Triples]) {
   merged.set(row[0], row);
 }
 const allTriples = [...merged.values()];
@@ -504,4 +506,4 @@ const outDir = path.join(ROOT, 'src/i18n/locales');
 fs.mkdirSync(outDir, { recursive: true });
 fs.writeFileSync(path.join(outDir, 'uk.ts'), toTs('uk', ukEntries), 'utf8');
 fs.writeFileSync(path.join(outDir, 'en.ts'), toTs('en', enEntries), 'utf8');
-console.log('Generated', allTriples.length, 'translation pairs', `(${supplementalTriples.length + part4Triples.length + part5Triples.length} supplemental)`);
+console.log('Generated', allTriples.length, 'translation pairs', `(${supplementalTriples.length + part4Triples.length + part5Triples.length + part6Triples.length} supplemental)`);
