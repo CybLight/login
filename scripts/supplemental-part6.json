@@ -23,9 +23,9 @@
     "10x Ліміти",
     "10x Limits"
   ],
-  "10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и VIP-комнаты": [
-    "10x ліміти API, безлімітний SmartHome Hub, ексклюзивні теми, 2.5x монет та VIP-кімнати",
-    "10x API limits, unlimited SmartHome Hub, exclusive themes, 2.5x coins and VIP rooms"
+  "10x лимиты API, безлимитный Smart Home Hub, эксклюзивные темы, 2.5x монет и VIP-комнаты": [
+    "10x ліміти API, безлімітний Smart Home Hub, ексклюзивні теми, 2.5x монет та VIP-кімнати",
+    "10x API limits, unlimited Smart Home Hub, exclusive themes, 2.5x coins and VIP rooms"
   ],
   "6 Месяцев": [
     "6 Місяців",
@@ -63,9 +63,9 @@
     "Безлімітний Hub",
     "Unlimited Hub"
   ],
-  "Безлимитный SmartHome Hub": [
-    "Безлімітний SmartHome Hub",
-    "Unlimited SmartHome Hub"
+  "Безлимитный Smart Home Hub": [
+    "Безлімітний Smart Home Hub",
+    "Unlimited Smart Home Hub"
   ],
   "Бессрочно (⭐ Premium)": [
     "Безстроково (⭐ Premium)",
@@ -83,9 +83,9 @@
     "Безстроковий статус Lifetime VIP і повний доступ до всіх можливостей CybLight 🌌👑",
     "Lifetime VIP status and full access to all CybLight features forever 🌌👑"
   ],
-  "Вам доступны 10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и кастомный титул.": [
-    "Вам доступні 10x ліміти API, безлімітний SmartHome Hub, ексклюзивні теми, 2.5x монет та кастомний титул.",
-    "You have access to 10x API limits, unlimited SmartHome Hub, exclusive themes, 2.5x coins, and a custom badge."
+  "Вам доступны 10x лимиты API, безлимитный Smart Home Hub, эксклюзивные темы, 2.5x монет и кастомный титул.": [
+    "Вам доступні 10x ліміти API, безлімітний Smart Home Hub, ексклюзивні теми, 2.5x монет та кастомний титул.",
+    "You have access to 10x API limits, unlimited Smart Home Hub, exclusive themes, 2.5x coins, and a custom badge."
   ],
   "Вау, круто!": [
     "Вау, круто!",
@@ -683,9 +683,9 @@
     "Ексклюзивні теми та аватари",
     "Exclusive themes and avatars"
   ],
-  "Эксклюзивный значок в профиле, чатах и SmartHome Hub": [
-    "Ексклюзивний значок у профілі, чатах та SmartHome Hub",
-    "Exclusive badge in profile, chats, and SmartHome Hub"
+  "Эксклюзивный значок в профиле, чатах и Smart Home Hub": [
+    "Ексклюзивний значок у профілі, чатах та Smart Home Hub",
+    "Exclusive badge in profile, chats, and Smart Home Hub"
   ],
   "Это закрытый профиль": [
     "Це закритий профіль",
@@ -918,5 +918,441 @@
   "Email адрес аккаунта уже был изменён на другой.": [
     "Email адресу акаунта вже було змінено на іншу.",
     "Account email address has already been changed."
+  ],
+  "Тарифы и подписка": [
+    "Тарифи та підписка",
+    "Pricing & Plans"
+  ],
+  "Добро пожаловать": [
+    "Ласкаво просимо",
+    "Welcome"
+  ],
+  "Тарифные планы CybLight": [
+    "Тарифні плани CybLight",
+    "CybLight Pricing Plans"
+  ],
+  "Выберите идеальный план для себя": [
+    "Виберіть ідеальний план для себе",
+    "Choose the perfect plan for you"
+  ],
+  "Прозрачная оплата через Paddle с безопасной защитой, автоматической конвертацией валют и мгновенной активацией.": [
+    "Прозора оплата через Paddle із безпечним захистом, автоматичною конвертацією валют та миттєвою активацією.",
+    "Transparent payment via Paddle with secure protection, auto currency conversion, and instant activation."
+  ],
+  "Ошибка конфигурации Paddle": [
+    "Помилка конфігурації Paddle",
+    "Paddle Configuration Error"
+  ],
+  "Ежемесячно": [
+    "Щомісячно",
+    "Monthly"
+  ],
+  "Ежегодно": [
+    "Щорічно",
+    "Yearly"
+  ],
+  "Выгодная годовая подписка": [
+    "Вигідна річна підписка",
+    "Great value yearly plan"
+  ],
+  "Оформить": [
+    "Оформити",
+    "Subscribe"
+  ],
+  "Безопасная оплата через Paddle": [
+    "Безпечна оплата через Paddle",
+    "Secure payment via Paddle"
+  ],
+  "Подписку можно отменить в любой момент в личном кабинете. Никаких скрытых платежей.": [
+    "Підписку можна скасувати будь-якої миті в особистому кабінеті. Жодних прихованих платежів.",
+    "Cancel subscription anytime in your account. No hidden fees."
+  ],
+  "Открытие кассы...": [
+    "Відкриття каси...",
+    "Opening checkout..."
+  ],
+  "Не удалось открыть окно оплаты Paddle": [
+    "Не вдалося відкрити вікно оплати Paddle",
+    "Failed to open Paddle checkout overlay"
+  ],
+  "Оплата успешно завершена": [
+    "Оплату успішно завершено",
+    "Payment completed successfully"
+  ],
+  "Добро пожаловать в CybLight!": [
+    "Ласкаво просимо до CybLight!",
+    "Welcome to CybLight!"
+  ],
+  "Ваша подписка успешно оформлена через Paddle. Все привилегии тарифа, увеличенные лимиты API и функции SmartHome Hub активированы.": [
+    "Вашу підписку успішно оформлено через Paddle. Усі привілеї тарифу, збільшені ліміти API та функції SmartHome Hub активовано.",
+    "Your subscription was successfully processed via Paddle. All plan perks, increased API limits, and SmartHome Hub features are activated."
+  ],
+  "Перейти в личный кабинет": [
+    "Перейти в особистий кабінет",
+    "Go to dashboard"
+  ],
+  "На главную страницу": [
+    "На головну сторінку",
+    "Go to home page"
+  ],
+  "/ год": [
+    "/ рік",
+    "/ year"
+  ],
+  "/ мес": [
+    "/ міс",
+    "/ month"
+  ],
+  "Базовый набор возможностей для личного использования и быстрого старта.": [
+    "Базовий набір можливостей для особистого використання та швидкого старту.",
+    "Essential features for personal use and quick start."
+  ],
+  "Идеальный выбор для активных пользователей и энтузиастов умного дома.": [
+    "Ідеальний вибір для активних користувачів та ентузіастів розумного дому.",
+    "Perfect choice for power users and smart home enthusiasts."
+  ],
+  "Максимум мощности для разработчиков, команд и профессионалов.": [
+    "Максимум потужності для розробників, команд та професіоналів.",
+    "Maximum power for developers, teams, and professionals."
+  ],
+  "Стандартные лимиты запросов к API": [
+    "Стандартні ліміти запитів до API",
+    "Standard API rate limits"
+  ],
+  "До 3 комнат в SmartHome Hub": [
+    "До 3 кімнат у SmartHome Hub",
+    "Up to 3 rooms in SmartHome Hub"
+  ],
+  "Базовая E2EE синхронизация": [
+    "Базова E2EE синхронізація",
+    "Basic E2EE synchronization"
+  ],
+  "Стандартный набор аватаров": [
+    "Стандартний набір аватарів",
+    "Standard avatar set"
+  ],
+  "Поддержка в сообществе": [
+    "Підтримка у спільноті",
+    "Community support"
+  ],
+  "10x увеличенные лимиты API": [
+    "10x збільшені ліміти API",
+    "10x increased API limits"
+  ],
+  "Безлимитный SmartHome Hub (Tapo, WoL)": [
+    "Безлімітний SmartHome Hub (Tapo, WoL)",
+    "Unlimited SmartHome Hub (Tapo, WoL)"
+  ],
+  "Мгновенная приоритетная E2EE синхронизация": [
+    "Миттєва пріоритетна E2EE синхронізація",
+    "Instant priority E2EE synchronization"
+  ],
+  "Все эксклюзивные неоновые рамки аватара": [
+    "Усі ексклюзивні неонові рамки аватара",
+    "All exclusive neon avatar frames"
+  ],
+  "Золотой значок и кастомный титул/бейдж": [
+    "Золотий значок та кастомний титул/бейдж",
+    "Golden badge & custom profile title/badge"
+  ],
+  "Приоритетная поддержка 24/7": [
+    "Пріоритетна підтримка 24/7",
+    "Priority 24/7 support"
+  ],
+  "Безлимитные лимиты API и выделенный канал": [
+    "Безлімітні ліміти API та виділений канал",
+    "Unlimited API limits & dedicated channel"
+  ],
+  "Все возможности Pro тарифа": [
+    "Усі можливості Pro тарифу",
+    "All Pro plan features included"
+  ],
+  "Ранний доступ ко всем новым функциям": [
+    "Ранній доступ до всіх нових функцій",
+    "Early access to all new features"
+  ],
+  "Прямой закрытый чат с разработчиками": [
+    "Прямий закритий чат із розробниками",
+    "Direct private chat with developers"
+  ],
+  "Кастомные интеграции и расширенный аудит": [
+    "Кастомні інтеграції та розширений аудит",
+    "Custom integrations & advanced audit"
+  ],
+  "VIP ∞ статус в системе CybLight": [
+    "VIP ∞ статус у системі CybLight",
+    "VIP ∞ status across CybLight Network"
+  ],
+  "VIP Максимум": [
+    "VIP Максимум",
+    "VIP Maximum"
+  ],
+  "10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и VIP-комнаты": [
+    "10x ліміти API, безлімітний Smart Home Hub, ексклюзивні теми, 2.5x монет та VIP-кімнати",
+    "10x API limits, unlimited Smart Home Hub, exclusive themes, 2.5x coins and VIP rooms"
+  ],
+  "Безлимитный SmartHome Hub": [
+    "Безлімітний Smart Home Hub",
+    "Unlimited Smart Home Hub"
+  ],
+  "Вам доступны 10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и кастомный титул.": [
+    "Вам доступні 10x ліміти API, безлімітний Smart Home Hub, ексклюзивні теми, 2.5x монет та кастомний титул.",
+    "You have access to 10x API limits, unlimited Smart Home Hub, exclusive themes, 2.5x coins, and a custom badge."
+  ],
+  "Эксклюзивный значок в профиле, чатах и SmartHome Hub": [
+    "Ексклюзивний значок у профілі, чатах та Smart Home Hub",
+    "Exclusive badge in profile, chats, and Smart Home Hub"
+  ],
+  "Золотой значок Premium": [
+    "Золотий значок Premium",
+    "Golden Premium badge"
+  ],
+  "Кастомный титул/бейдж": [
+    "Кастомний титул/бейдж",
+    "Custom profile title/badge"
+  ],
+  "Управление подпиской": [
+    "Керування підпискою",
+    "Subscription Management"
+  ],
+  "Активна до": [
+    "Активна до",
+    "Active until"
+  ],
+  "Не активна": [
+    "Не активна",
+    "Inactive"
+  ],
+  "Отмена через квитанцию Paddle": [
+    "Скасування через квитанцію Paddle",
+    "Cancellation via Paddle receipt"
+  ],
+  "В каждом письме с чеком от Paddle есть прямая ссылка «Manage Subscription» для мгновенной отмены автопродления в 1 клик.": [
+    "У кожному листі з чеком від Paddle є пряме посилання «Manage Subscription» для миттєвого скасування автопродовження в 1 клік.",
+    "Every email receipt from Paddle contains a direct 'Manage Subscription' link to cancel auto-renewal in 1 click."
+  ],
+  "Сохранение оплаченного периода": [
+    "Збереження оплаченого періоду",
+    "Retention of paid period"
+  ],
+  "При отмене подписки все преимущества и возможности тарифа остаются доступны вам до окончания оплаченного срока.": [
+    "При скасуванні підписки всі переваги та можливості тарифу залишаються доступними вам до завершення оплаченого терміну.",
+    "When canceling a subscription, all plan perks and features remain fully accessible until the end of the paid billing period."
+  ],
+  "Сменить тариф": [
+    "Змінити тариф",
+    "Change plan"
+  ],
+  "Запросить отмену через поддержку": [
+    "Запитати скасування через підтримку",
+    "Request cancellation via support"
+  ],
+  "Отменить автопродление подписки": [
+    "Скасувати автопродовження підписки",
+    "Cancel subscription auto-renewal"
+  ],
+  "Автопродление отключено": [
+    "Автопродовження вимкнено",
+    "Auto-renewal disabled"
+  ],
+  "Вы уверены, что хотите отменить автопродление подписки? Все возможности тарифа останутся доступны до конца оплаченного периода.": [
+    "Ви впевнені, що хочете скасувати автопродовження підписки? Усі можливості тарифу залишаться доступними до завершення оплаченого періоду.",
+    "Are you sure you want to cancel subscription auto-renewal? All plan perks will remain fully available until the end of the paid period."
+  ],
+  "Ошибка при отмене подписки": [
+    "Помилка при скасуванні підписки",
+    "Error canceling subscription"
+  ],
+  "Отмена автопродления": [
+    "Скасування автопродовження",
+    "Cancel auto-renewal"
+  ],
+  "Вы действительно хотите отключить автопродление подписки CybLight Premium?": [
+    "Ви дійсно бажаєте вимкнути автопродовження підписки CybLight Premium?",
+    "Are you sure you want to turn off CybLight Premium auto-renewal?"
+  ],
+  "Все преимущества тарифа останутся активными до окончания оплаченного срока. После этого списания прекратятся.": [
+    "Усі переваги тарифу залишаться активними до завершення оплаченого терміну. Після цього списання припиняться.",
+    "All plan perks will remain fully active until the end of the paid period. No further charges will occur."
+  ],
+  "Да, отключить автопродление": [
+    "Так, вимкнути автопродовження",
+    "Yes, turn off auto-renewal"
+  ],
+  "Оставить подписку": [
+    "Залишити підписку",
+    "Keep subscription"
+  ],
+  "Автопродление успешно отключено": [
+    "Автопродовження успішно вимкнено",
+    "Auto-renewal successfully disabled"
+  ],
+  "Обложка профиля (Баннер)": [
+    "Обкладинка профілю (Банер)",
+    "Profile Cover (Banner)"
+  ],
+  "Обложка профиля": [
+    "Обкладинка профілю",
+    "Profile Cover"
+  ],
+  "Обложка": [
+    "Обкладинка",
+    "Cover"
+  ],
+  "Установлена": [
+    "Встановлена",
+    "Set"
+  ],
+  "Обложка не установлена": [
+    "Обкладинка не встановлена",
+    "No cover set"
+  ],
+  "Загрузить обложку": [
+    "Завантажити обкладинку",
+    "Upload cover"
+  ],
+  "Изменить обложку": [
+    "Змінити обкладинку",
+    "Change cover"
+  ],
+  "Удалить обложку": [
+    "Видалити обкладинку",
+    "Delete cover"
+  ],
+  "Нажмите, чтобы добавить обложку": [
+    "Натисніть, щоб додати обкладинку",
+    "Click to add a cover"
+  ],
+  "Рекомендуется разрешение 1200 × 480 и размер менее 10 МБ": [
+    "Рекомендується роздільна здатність 1200 × 480 і розмір менше 10 МБ",
+    "Recommended resolution 1200 × 480 and size under 10 MB"
+  ],
+  "Загрузка обложки...": [
+    "Завантаження обкладинки...",
+    "Uploading cover..."
+  ],
+  "Обложка успешно обновлена!": [
+    "Обкладинку успішно оновлено!",
+    "Cover successfully updated!"
+  ],
+  "Обложка удалена": [
+    "Обкладинку видалено",
+    "Cover deleted"
+  ],
+  "Вы уверены, что хотите удалить обложку профиля?": [
+    "Ви впевнені, що хочете видалити обкладинку профілю?",
+    "Are you sure you want to delete your profile cover?"
+  ],
+  "Пожалуйста, выберите файл изображения (JPG, PNG, WEBP)": [
+    "Будь ласка, виберіть файл зображення (JPG, PNG, WEBP)",
+    "Please select an image file (JPG, PNG, WEBP)"
+  ],
+  "Файл слишком большой. Максимальный размер 10 МБ": [
+    "Файл занадто великий. Максимальний розмір 10 МБ",
+    "File is too large. Maximum size 10 MB"
+  ],
+  "Ошибка при загрузке обложки": [
+    "Помилка при завантаженні обкладинки",
+    "Error uploading cover"
+  ],
+  "Не удалось загрузить обложку. Проверьте соединение.": [
+    "Не вдалося завантажити обкладинку. Перевірте з'єднання.",
+    "Failed to upload cover. Please check your connection."
+  ],
+  "Ошибка при удалении обложки": [
+    "Помилка при видаленні обкладинки",
+    "Error deleting cover"
+  ],
+  "Широкий баннер в шапке вашего профиля": [
+    "Широкий банер у шапці вашого профілю",
+    "Wide banner at the top of your profile"
+  ],
+  "Не установлена": [
+    "Не встановлена",
+    "Not set"
+  ],
+  "Настройка области обзора баннера": [
+    "Налаштування області огляду банера",
+    "Banner view area adjustment"
+  ],
+  "Настройка области обзора": [
+    "Налаштування області огляду",
+    "View area adjustment"
+  ],
+  "Перетащите изображение или используйте ползунок, чтобы выбрать видимую часть обложки": [
+    "Перетягніть зображення або скористайтеся повзунком, щоб вибрати видиму частину обкладинки",
+    "Drag the image or use the slider to select the visible part of the banner"
+  ],
+  "Перетащите изображение или используйте ползунок, чтобы настроить фокус обложки:": [
+    "Перетягніть зображення або скористайтеся повзунком, щоб налаштувати фокус обкладинки:",
+    "Drag the image or use the slider to adjust banner focus:"
+  ],
+  "Потяните вверх/вниз для смещения": [
+    "Потягніть вгору/вниз для зміщення",
+    "Drag up/down to offset"
+  ],
+  "Вертикальное смещение:": [
+    "Вертикальне зміщення:",
+    "Vertical offset:"
+  ],
+  "Верх (0%)": [
+    "Верх (0%)",
+    "Top (0%)"
+  ],
+  "25%": [
+    "25%",
+    "25%"
+  ],
+  "Центр (50%)": [
+    "Центр (50%)",
+    "Center (50%)"
+  ],
+  "75%": [
+    "75%",
+    "75%"
+  ],
+  "Низ (100%)": [
+    "Низ (100%)",
+    "Bottom (100%)"
+  ],
+  "Позиция": [
+    "Позиція",
+    "Position"
+  ],
+  "💾 Сохранить позицию": [
+    "💾 Зберегти позицію",
+    "💾 Save position"
+  ],
+  "Позиция обложки сохранена!": [
+    "Позицію обкладинки збережено!",
+    "Banner position saved!"
+  ],
+  "Ошибка сохранения позиции": [
+    "Помилка збереження позиції",
+    "Failed to save position"
+  ],
+  "Электронная почта аккаунта": [
+    "Електронна пошта акаунту",
+    "Account email address"
+  ],
+  "Указанный пол": [
+    "Вказана стать",
+    "Specified gender"
+  ],
+  "Дата вашего рождения": [
+    "Дата вашого народження",
+    "Your date of birth"
+  ],
+  "О себе / Подпись": [
+    "Про себе / Підпис",
+    "About me / Signature"
+  ],
+  "Не указана": [
+    "Не вказана",
+    "Not specified"
+  ],
+  "Не указан": [
+    "Не вказаний",
+    "Not specified"
   ]
 }

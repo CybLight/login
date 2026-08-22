@@ -33,6 +33,9 @@ export class Router {
     '2fa',
     'terms',
     'privacy',
+    'pricing',
+    'premium',
+    'welcome',
   ]);
 
   private static handlers: Record<string, RouteHandler> = {};
@@ -64,6 +67,9 @@ export class Router {
     profile: 'Профиль',
     terms: 'Условия использования',
     privacy: 'Политика конфиденциальности',
+    pricing: 'Тарифы и подписка',
+    premium: 'Тарифы и подписка',
+    welcome: 'Добро пожаловать',
   };
 
   private static pathWithoutLocale(): string {

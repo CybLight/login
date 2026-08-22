@@ -102,6 +102,10 @@ export function renderAccountPage(tab: string, user: AppUser): string {
                 <span class="account-user-menu__id" title="${t('ID пользователя')}">${escapeHtml(userPublicId)}</span>
               </div>
               <div class="account-user-menu__divider"></div>
+              <button class="account-user-menu__premium" id="headerPremiumBtn" type="button" aria-label="${t('Тарифы и подписка')}" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 14px; border: 1px solid rgba(234, 179, 8, 0.35); background: rgba(234, 179, 8, 0.12); color: #fef08a; font-weight: 700; border-radius: 8px; cursor: pointer; margin-bottom: 6px; font-size: 13px; transition: background 0.2s ease;">
+                <span>👑</span>
+                <span>${t('Тарифы и подписка')}</span>
+              </button>
               <button class="account-user-menu__edit" id="headerEditAccountBtn" type="button" aria-label="${t('Изменить аккаунт')}">${t('Изменить аккаунт')}</button>
               <button class="account-user-menu__logout" id="headerLogoutBtn" type="button" aria-label="${t('Выйти')}">${t('Выйти')}</button>
             </div>
@@ -180,6 +184,11 @@ export function renderAccountPage(tab: string, user: AppUser): string {
             </button>
 
             <div class="nav-divider"></div>
+
+            <button type="button" class="account-nav-btn--premium" id="sidebarPremiumBtn" title="CybLight Premium" aria-label="👑 CybLight Premium">
+              <span class="nav-icon">👑</span> <span class="nav-text">Premium</span>
+              <span class="premium-nav-sparkle">⭐</span>
+            </button>
 
             <button data-tab="easter" ${tab === 'easter' ? 'class="active"' : ''} title="${t('Пасхалки')}" aria-label="🍓 ${t('Пасхалки')}">
               <span class="nav-icon">🍓</span> <span class="nav-text">${t('Пасхалки')}</span>

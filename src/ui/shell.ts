@@ -4,11 +4,11 @@
 
 import { buildAuthFooter, initFooterLangSwitcher } from '@/ui/auth-footer';
 
-export function shell(contentHtml: string): string {
+export function shell(contentHtml: string, wrapClass: string = ''): string {
   return `
     <div class="auth-shell">
       <main id="main-content" class="auth-center" tabindex="-1">
-        <div class="auth-content-wrap">
+        <div class="auth-content-wrap ${wrapClass}">
           ${contentHtml}
         </div>
       </main>

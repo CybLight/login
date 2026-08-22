@@ -14,6 +14,10 @@ export interface User {
   avatar?: string;
   avatarUrl?: string;
   avatar_url?: string;
+  bannerUrl?: string | null;
+  banner_url?: string | null;
+  bannerPosition?: string | null;
+  banner_position?: string | null;
   bio?: string;
   aboutMe?: string;
   about_me?: string;
@@ -52,6 +56,12 @@ export interface UserProfile {
   id: string;
   username: string;
   avatar?: string;
+  avatarUrl?: string;
+  avatar_url?: string;
+  bannerUrl?: string | null;
+  banner_url?: string | null;
+  bannerPosition?: string | null;
+  banner_position?: string | null;
   bio?: string;
   aboutMe?: string;
   role: string;

@@ -48,6 +48,8 @@ import {
   renderAccount,
   renderPublicProfile,
   renderEditProfile,
+  renderPricing,
+  renderWelcome,
 } from '@/views';
 
 function initGlobalUiDelegation(): void {
@@ -171,6 +173,9 @@ export async function initApp(): Promise<void> {
   Router.on('privacy', () => {
     window.location.replace(sitePath('privacy'));
   });
+  Router.on('pricing', renderPricing);
+  Router.on('premium', renderPricing);
+  Router.on('welcome', renderWelcome);
 
   logger.info('Routes registered');
 

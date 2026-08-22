@@ -27,6 +27,10 @@ type User = {
   avatar?: string;
   avatarUrl?: string;
   avatar_url?: string;
+  bannerUrl?: string | null;
+  banner_url?: string | null;
+  bannerPosition?: string | null;
+  banner_position?: string | null;
   avatarFrame?: string | null;
   avatar_frame?: string | null;
   bio?: string;
@@ -250,8 +254,67 @@ function renderProfileTab(user: User): string {
       </span>`
     : "";
 
+  const emailText = user.email || t('Не указан');
+
+  const gender = user.gender;
+  const currentGenderText =
+    gender === 'male'
+      ? `♂️ ${t('Мужской')}`
+      : gender === 'female'
+        ? `♀️ ${t('Женский')}`
+        : t('Не указано');
+
+  const dob = user.dateOfBirth || user.date_of_birth;
+  const currentDobText = dob
+    ? new Date(dob).toLocaleDateString(localeTag(getLocale()))
+    : t('Не указана');
+
+  const bio = user.bio || (user as any).aboutMe || (user as any).about_me;
+
+  const bannerUrl = user.bannerUrl || user.banner_url;
+  const bannerPosition = user.bannerPosition || user.banner_position || '50% 50%';
+
   return `
-    <section class="profile-hero">
+    <section class="profile-hero ${bannerUrl ? 'has-banner' : ''}" id="profileHeroSection">
+      ${
+        bannerUrl
+          ? `
+        <img src="${escapeHtml(bannerUrl)}" alt="${t('Обложка профиля')}" class="profile-hero__banner-img" id="profileHeroBannerImg" style="object-position: ${escapeHtml(bannerPosition)};" />
+        <div class="profile-hero__banner-overlay"></div>
+      `
+          : ''
+      }
+
+      <div class="profile-hero__banner-actions" id="profileHeroBannerActions">
+        ${
+          bannerUrl
+            ? `
+          <button type="button" class="profile-hero__banner-btn" id="profileHeroBannerUploadBtn" title="${t('Изменить обложку')}">
+            <span>📷</span>
+            <span>${t('Обложка')}</span>
+          </button>
+          <button type="button" class="profile-hero__banner-btn" id="profileHeroBannerPosBtn" title="${t('Настройка области обзора')}">
+            <span>⚙️</span>
+            <span>${t('Позиция')}</span>
+          </button>
+          <button type="button" class="profile-hero__banner-btn profile-hero__banner-btn--danger" id="profileHeroBannerRemoveBtn" title="${t('Удалить обложку')}">
+            <span>🗑️</span>
+          </button>
+        `
+            : `
+          <button type="button" class="profile-hero__banner-btn" id="profileHeroBannerUploadBtn" title="${t('Добавить обложку')}">
+            <span>📷</span>
+            <span>${t('Добавить обложку')}</span>
+          </button>
+        `
+        }
+      </div>
+
+      <div class="profile-banner__spinner" id="profileHeroBannerSpinner" style="display: none;">
+        <span class="loading-spinner"></span>
+        <span>${t('Загрузка обложки...')}</span>
+      </div>
+
       <div class="profile-hero__left">
         <div class="profile-avatar ${avatarFrameClass}" id="accountProfileAvatar" aria-hidden="true">
           ${avatarInnerHtml}
@@ -323,7 +386,45 @@ function renderProfileTab(user: User): string {
         <div class="info-card__value">${escapeHtml(createdAt)}</div>
         <div class="info-card__hint">${t('Создано в системе')}</div>
       </article>
+
+      <article class="info-card">
+        <div class="info-card__label">Email</div>
+        <div class="info-card__value" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span>${escapeHtml(emailText)}</span>
+          ${
+            user.email
+              ? emailVerified
+                ? `<span class="sec-badge sec-badge--ok" style="font-size: 11px; padding: 2px 7px;">${t('Подтвержден')}</span>`
+                : `<span class="sec-badge sec-badge--warn" style="font-size: 11px; padding: 2px 7px;">${t('Не подтвержден')}</span>`
+              : ''
+          }
+        </div>
+        <div class="info-card__hint">${t('Электронная почта аккаунта')}</div>
+      </article>
+
+      <article class="info-card">
+        <div class="info-card__label">${t('Пол')}</div>
+        <div class="info-card__value">${escapeHtml(currentGenderText)}</div>
+        <div class="info-card__hint">${t('Указанный пол')}</div>
+      </article>
+
+      <article class="info-card">
+        <div class="info-card__label">${t('Дата рождения')}</div>
+        <div class="info-card__value">${escapeHtml(currentDobText)}</div>
+        <div class="info-card__hint">${t('Дата вашего рождения')}</div>
+      </article>
     </section>
+
+    ${
+      bio
+        ? `
+      <section class="info-card" style="margin-top: 10px; width: 100%; box-sizing: border-box;">
+        <div class="info-card__label">${t('О себе / Подпись')}</div>
+        <div class="info-card__value" style="font-size: 14px; font-weight: 500; line-height: 1.5; color: #e2e8f0; word-break: break-word; white-space: pre-wrap; margin-top: 6px;">${escapeHtml(bio)}</div>
+      </section>
+    `
+        : ''
+    }
 
     ${(() => {
       if (user.isPremium) {
@@ -389,7 +490,7 @@ function renderProfileTab(user: User): string {
                     <span class="profile-premium-banner__tier-chip">⭐ ${t('Эксклюзив')}</span>
                   </div>
                   <div class="profile-premium-banner__subtitle">
-                    ${t('10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и VIP-комнаты')}
+                    ${t('10x лимиты API, безлимитный Smart Home Hub, эксклюзивные темы, 2.5x монет и VIP-комнаты')}
                   </div>
                 </div>
               </div>
@@ -579,6 +680,23 @@ function renderSettingsTab(user: User): string {
           <button type="button" class="stg-btn ${user.isPremium ? 'stg-btn--secondary' : 'stg-btn--primary'}" id="stgChangeAvatarFrameBtn">
             ${user.isPremium ? t('Изменить') : t('⭐ Premium')}
           </button>
+        </div>
+
+        <div class="stg-field">
+          <div class="stg-field__left">
+            <span class="stg-field__icon" id="stgBannerIcon" style="font-size: 24px;">🖼️</span>
+            <div class="stg-field__body">
+              <div class="stg-field__label">${t('Обложка профиля')}</div>
+              <div class="stg-field__value" id="stgBannerValue">
+                ${user.bannerUrl || user.banner_url
+                  ? `<span class="chip badge badge--ok" style="background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.4); color: #86efac;">${t('Установлена')}</span>`
+                  : `<span class="stg-field__empty">${t('Не установлена')}</span>`
+                }
+              </div>
+              <div class="stg-field__hint">${t('Широкий баннер в шапке вашего профиля')}</div>
+            </div>
+          </div>
+          <button type="button" class="stg-btn stg-btn--secondary" id="stgChangeBannerBtn">${t('Изменить')}</button>
         </div>
 
         <div class="stg-field">

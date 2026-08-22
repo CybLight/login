@@ -36,6 +36,10 @@ interface PublicProfile {
   isPremium?: boolean;
   premiumTier?: string | null;
   customBadge?: string | null;
+  bannerUrl?: string | null;
+  banner_url?: string | null;
+  bannerPosition?: string | null;
+  banner_position?: string | null;
   avatarFrame?: string | null;
   avatar_frame?: string | null;
   [key: string]: unknown;
@@ -966,6 +970,8 @@ export async function renderPublicProfile(username: string): Promise<void> {
       .profile-details h1 {
         margin: 0;
         font-size: 38px;
+        font-weight: 950;
+        color: #ffffff !important;
         line-height: 1.1;
         display: flex;
         align-items: center;
@@ -974,6 +980,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
         min-width: 0;
         overflow-wrap: anywhere;
         word-break: break-word;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95), 0 0 20px rgba(255, 255, 255, 0.35);
       }
       .profile-status-badges {
         margin-top: 10px;
@@ -986,12 +993,13 @@ export async function renderPublicProfile(username: string): Promise<void> {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 4px 10px;
+        padding: 5px 12px;
         border-radius: 999px;
-        border: 1px solid rgba(255,255,255,.18);
-        background: rgba(255,255,255,.06);
+        border: 1px solid rgba(255,255,255,.2);
+        background: #0f172a;
         font-size: 12px;
         font-weight: 700;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
       }
       .status .dot {
         width: 7px;
@@ -1001,15 +1009,15 @@ export async function renderPublicProfile(username: string): Promise<void> {
       }
       .status--owner,
       .badge--owner {
-        color: #f59e0b;
-        border-color: rgba(245,158,11,.48);
-        background: rgba(245,158,11,.16);
+        color: #fbbf24;
+        border-color: #d97706;
+        background: #2d1a04;
       }
       .status--admin,
       .badge--admin {
-        color: #ef4444;
-        border-color: rgba(239,68,68,.5);
-        background: rgba(239,68,68,.16);
+        color: #f87171;
+        border-color: #dc2626;
+        background: #2f0d0d;
       }
       .status--mod,
       .badge--mod,
@@ -1022,14 +1030,31 @@ export async function renderPublicProfile(username: string): Promise<void> {
       .status--dev,
       .status--verified,
       .status--active {
-        color: #60a5fa;
-        border-color: rgba(96,165,250,.46);
-        background: rgba(96,165,250,.16);
+        color: #93c5fd;
+        border-color: #2563eb;
+        background: #0b1f3a;
+      }
+      .status--online {
+        color: #4ade80;
+        border-color: #16a34a;
+        background: #062b1b;
+      }
+      .status--offline {
+        color: #94a3b8;
+        border-color: #334155;
+        background: #172033;
+      }
+      .status--newbie,
+      .status--regular,
+      .status--veteran {
+        color: #c084fc;
+        border-color: #7c3aed;
+        background: #1c1033;
       }
       .badge--dev {
         color: #f472b6;
-        border-color: rgba(244,114,182,.5);
-        background: rgba(244,114,182,.16);
+        border-color: #db2777;
+        background: #2d0e23;
       }
       .badge--premium,
       .status--premium {
@@ -1037,9 +1062,9 @@ export async function renderPublicProfile(username: string): Promise<void> {
         font-weight: 800 !important;
         position: relative !important;
         overflow: hidden !important;
-        background: linear-gradient(135deg, rgba(234, 179, 8, 0.32) 0%, rgba(245, 158, 11, 0.5) 50%, rgba(217, 119, 6, 0.32) 100%) !important;
-        border: 1px solid rgba(251, 191, 36, 0.8) !important;
-        box-shadow: 0 0 14px -2px rgba(234, 179, 8, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
+        background: linear-gradient(135deg, #b45309 0%, #d97706 50%, #92400e 100%) !important;
+        border: 1px solid #fbbf24 !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5), 0 0 14px rgba(245, 158, 11, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.5) !important;
         text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), 0 0 10px rgba(234, 179, 8, 0.7) !important;
         letter-spacing: 0.3px !important;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -1073,9 +1098,9 @@ export async function renderPublicProfile(username: string): Promise<void> {
       }
       .badge--custom {
         color: #fef08a;
-        border-color: rgba(234, 179, 8, 0.5);
-        background: linear-gradient(135deg, rgba(234, 179, 8, 0.18), rgba(249, 115, 22, 0.18));
-        box-shadow: 0 0 10px rgba(234, 179, 8, 0.25);
+        border-color: #d97706;
+        background: #2d1a04;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
         font-weight: 700;
       }
       .easter-badge-spin {
@@ -1102,8 +1127,8 @@ export async function renderPublicProfile(username: string): Promise<void> {
       .badge--info,
       .badge--beta {
         color: #34d399;
-        border-color: rgba(52,211,153,.48);
-        background: rgba(52,211,153,.15);
+        border-color: #059669;
+        background: #052a1d;
       }
       .profile-joined {
         margin: 10px 0 0;
@@ -1184,11 +1209,12 @@ export async function renderPublicProfile(username: string): Promise<void> {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 6px 12px;
+        padding: 6px 14px;
         border-radius: 999px;
-        border: 1px solid rgba(103, 232, 249, .35);
-        background: rgba(34, 211, 238, .12);
-        color: #d9f8ff;
+        border: 1px solid #0891b2;
+        background: #082433;
+        color: #a5f3fc;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
       }
       .profile-friends-value {
         font-weight: 800;
@@ -1197,21 +1223,22 @@ export async function renderPublicProfile(username: string): Promise<void> {
       }
       .profile-friends-label {
         font-size: 13px;
-        opacity: .9;
+        opacity: .95;
       }
       .profile-signature-pill {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 6px 14px;
+        padding: 7px 16px;
         border-radius: 12px;
-        border: 1px solid rgba(192, 132, 252, .38);
-        background: linear-gradient(135deg, rgba(168, 85, 247, .16) 0%, rgba(147, 51, 234, .1) 100%);
+        border: 1px solid #7e22ce;
+        background: #1b1130;
         color: #f3e8ff;
         font-size: 13.5px;
         font-weight: 500;
         max-width: 100%;
         box-sizing: border-box;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
       }
       .profile-signature-icon {
         font-size: 15px;
@@ -1577,11 +1604,22 @@ export async function renderPublicProfile(username: string): Promise<void> {
     const badgesHtml = buildProfileBadges(profile);
     const presenceHtml = renderPresenceChip(profile);
 
+    const bannerUrl = profile.bannerUrl || profile.banner_url;
+    const bannerPosition = profile.bannerPosition || profile.banner_position || '50% 50%';
+
     app.innerHTML = `
       ${profileStyles}
       ${buildProfileHeader(username, Boolean(currentUser), String(profile.username || profile.login || username), currentUser?.role)}
       <div class="profile-container">
-        <div class="profile-header">
+        <div class="profile-header ${bannerUrl ? 'has-banner' : ''}">
+          ${
+            bannerUrl
+              ? `
+            <img src="${escapeHtml(String(bannerUrl))}" alt="${t('Обложка профиля')}" class="profile-header__banner-img" style="object-position: ${escapeHtml(String(bannerPosition))};" />
+            <div class="profile-header__banner-overlay"></div>
+          `
+              : ''
+          }
           <div class="profile-info">
             <div class="profile-avatar ${avatarFrameClass}" id="profileAvatar">${avatarEmoji}</div>
             <div class="profile-details">
@@ -1662,11 +1700,22 @@ export async function renderPublicProfile(username: string): Promise<void> {
   const presenceHtml = renderPresenceChip(profile);
   const hasFriendsCount = typeof profile.friendsCount === 'number';
 
+  const bannerUrl = profile.bannerUrl || profile.banner_url;
+  const bannerPosition = profile.bannerPosition || profile.banner_position || '50% 50%';
+
   app.innerHTML = `
     ${profileStyles}
     ${buildProfileHeader(username, Boolean(currentUser), String(profile.username || profile.login || username), currentUser?.role)}
     <div class="profile-container">
-      <div class="profile-header">
+      <div class="profile-header ${bannerUrl ? 'has-banner' : ''}">
+        ${
+          bannerUrl
+            ? `
+          <img src="${escapeHtml(String(bannerUrl))}" alt="${t('Обложка профиля')}" class="profile-header__banner-img" style="object-position: ${escapeHtml(String(bannerPosition))};" />
+          <div class="profile-header__banner-overlay"></div>
+        `
+            : ''
+        }
         <div class="profile-info">
           <div class="profile-avatar ${avatarFrameClass}" id="profileAvatar">${avatarEmoji}</div>
           <div class="profile-details">

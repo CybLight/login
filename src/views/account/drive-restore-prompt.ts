@@ -144,8 +144,13 @@ function showRestoreChoiceModal(): Promise<'drive' | 'qr' | null> {
     wrap.className = 'account-notice-modal';
     wrap.innerHTML = `
       <div class="account-notice-backdrop"></div>
-      <div class="account-notice-card" role="dialog" aria-modal="true" style="max-width: 500px;">
-        <div class="account-notice-head">🔑 ${escapeHtml(t('Настройка шифрования'))}</div>
+      <div class="account-notice-card" role="dialog" aria-modal="true" style="max-width: 500px; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div class="account-notice-head" style="margin-bottom: 0;">🔑 ${escapeHtml(t('Настройка шифрования'))}</div>
+          <button type="button" class="account-notice-esc-btn" id="restoreChoiceEscBtn" title="${escapeHtml(t('Закрыть (ESC)'))}">
+            <span>ESC</span>
+          </button>
+        </div>
         <p class="account-notice-text" style="margin-bottom: 20px; line-height: 1.5; color: var(--color-text-secondary, #ccc);">
           ${escapeHtml(t('Ключи шифрования не найдены в этом браузере. Выберите способ восстановления доступа к вашим чатам:'))}
         </p>
@@ -192,6 +197,9 @@ function showRestoreChoiceModal(): Promise<'drive' | 'qr' | null> {
       wrap.remove();
       resolve(value);
     };
+
+    wrap.querySelector('#restoreChoiceEscBtn')?.addEventListener('click', () => close(null));
+    wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', () => close(null));
 
     let hoverCount = 0;
     const cancelBtn = wrap.querySelector('#restoreChoiceCancelBtn') as HTMLElement;

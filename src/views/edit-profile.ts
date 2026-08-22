@@ -7,12 +7,17 @@ import { buildAuthFooter, initFooterLangSwitcher } from '@/ui/auth-footer';
 import { apiCall, escapeHtml } from '@/utils';
 import { Router } from '@/router/Router';
 import { pushLocalEasterFlagsToServer } from '@/services';
+import { showBannerPositionModal } from './account/modals';
 
 interface EditableProfile {
   id?: string;
   username?: string;
   avatar?: string;
   avatarUrl?: string;
+  bannerUrl?: string | null;
+  banner_url?: string | null;
+  bannerPosition?: string | null;
+  banner_position?: string | null;
   bio?: string;
   aboutMe?: string;
   gender?: string;
@@ -439,10 +444,54 @@ export async function renderEditProfile(): Promise<void> {
             <div class="privacy-setting">
               <label>${t('Кому видно:')}</label>
               <select id="privacyAvatar" class="input">
-                <option value="everyone" ${profile.privacy.avatar === 'everyone' ? 'selected' : ''}>${t('Всем')}</option>
-                <option value="friends" ${profile.privacy.avatar === 'friends' ? 'selected' : ''}>${t('Только друзьям')}</option>
-                <option value="nobody" ${profile.privacy.avatar === 'nobody' ? 'selected' : ''}>${t('Никому')}</option>
+                <option value="everyone" ${profile.privacy?.avatar === 'everyone' ? 'selected' : ''}>${t('Всем')}</option>
+                <option value="friends" ${profile.privacy?.avatar === 'friends' ? 'selected' : ''}>${t('Только друзьям')}</option>
+                <option value="nobody" ${profile.privacy?.avatar === 'nobody' ? 'selected' : ''}>${t('Никому')}</option>
               </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Banner Section -->
+        <div class="accordion-item">
+          <div class="accordion-header">
+            <div class="accordion-header-left">
+              <div class="accordion-header-title-row">
+                <span class="accordion-header-icon" style="font-size: 24px;">🖼️</span>
+                <h2>${t('Обложка профиля (Баннер)')}</h2>
+              </div>
+              <span class="current-value" id="editProfileBannerStatusText">${profile.bannerUrl || profile.banner_url ? t('Установлена') : t('Не указано')}</span>
+            </div>
+            <button class="btn-accordion" data-section="banner" aria-label="${t('Изменить')}">${t('Изменить')}</button>
+          </div>
+          <div class="accordion-content" id="section-banner" style="display:none;">
+            <div class="banner-edit-section" style="display: flex; flex-direction: column; gap: 14px;">
+              <div class="profile-banner ${profile.bannerUrl || profile.banner_url ? 'has-banner' : ''}" id="editProfileBannerPreview" style="height: 140px; margin-bottom: 0;">
+                ${
+                  profile.bannerUrl || profile.banner_url
+                    ? `<img src="${escapeHtml(String(profile.bannerUrl || profile.banner_url))}" alt="${t('Обложка')}" class="profile-banner__img" id="editProfileBannerImg" style="object-position: ${escapeHtml(String(profile.bannerPosition || profile.banner_position || '50% 50%'))};" /><div class="profile-banner__overlay"></div>`
+                    : `<div class="profile-banner__placeholder"><span class="profile-banner__placeholder-icon">🖼️</span><span class="profile-banner__placeholder-title">${t('Обложка не установлена')}</span></div>`
+                }
+                <div class="profile-banner__spinner" id="editProfileBannerSpinner" style="display: none;">
+                  <span class="loading-spinner"></span>
+                  <span>${t('Загрузка обложки...')}</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" id="editProfileBannerUploadBtn" style="flex: 1; min-width: 130px; justify-content: center;">
+                  <span>📷 ${t('Загрузить')}</span>
+                </button>
+                <button type="button" class="btn btn-secondary" id="editProfileBannerPosBtn" style="flex: 1; min-width: 130px; justify-content: center; ${profile.bannerUrl || profile.banner_url ? '' : 'display: none;'}">
+                  <span>⚙️ ${t('Позиция')}</span>
+                </button>
+                <button type="button" class="btn btn-outline" id="editProfileBannerRemoveBtn" style="flex: 1; min-width: 110px; justify-content: center; color: #f87171; border-color: rgba(239, 68, 68, 0.4); ${profile.bannerUrl || profile.banner_url ? '' : 'display: none;'}">
+                  <span>🗑️ ${t('Удалить')}</span>
+                </button>
+                <input type="file" id="editProfileBannerFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;" />
+              </div>
+              <p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.4;">
+                ${t('Рекомендуется разрешение 1200 × 480 и размер менее 10 МБ')}
+              </p>
             </div>
           </div>
         </div>
@@ -613,9 +662,181 @@ export async function renderEditProfile(): Promise<void> {
   };
 
   initAvatarSelection(setSelectedAvatar);
+  initBannerEdit(profile);
   initUsernameCheck(profile);
   initSaveProfile(profile, getSelectedAvatar);
   initCyberArtistEasterEgg();
+}
+
+/**
+ * Инициализировать редактирование и загрузку баннера
+ */
+function initBannerEdit(profile: EditableProfile): void {
+  const uploadBtn = document.getElementById('editProfileBannerUploadBtn');
+  const posBtn = document.getElementById('editProfileBannerPosBtn');
+  const removeBtn = document.getElementById('editProfileBannerRemoveBtn');
+  const fileInput = document.getElementById('editProfileBannerFileInput') as HTMLInputElement | null;
+  const preview = document.getElementById('editProfileBannerPreview');
+  const spinner = document.getElementById('editProfileBannerSpinner');
+  const statusText = document.getElementById('editProfileBannerStatusText');
+
+  if (!uploadBtn || !fileInput || !preview) return;
+
+  const openPicker = () => fileInput.click();
+
+  uploadBtn.addEventListener('click', openPicker);
+  preview.addEventListener('click', () => {
+    if (!preview.classList.contains('has-banner')) {
+      openPicker();
+    }
+  });
+
+  posBtn?.addEventListener('click', () => {
+    const currentBannerUrl = profile.bannerUrl || profile.banner_url;
+    if (!currentBannerUrl) return;
+
+    showBannerPositionModal({
+      bannerUrl: currentBannerUrl,
+      currentPosition: profile.bannerPosition || profile.banner_position || '50% 50%',
+      onSave: async (newPos) => {
+        try {
+          const res = await apiCall('/profile/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bannerPosition: newPos }),
+          });
+          if (res.ok) {
+            profile.bannerPosition = newPos;
+            profile.banner_position = newPos;
+            const img = document.getElementById('editProfileBannerImg');
+            if (img) img.style.objectPosition = newPos;
+            return { ok: true };
+          }
+          return { ok: false, error: t('Ошибка сохранения позиции') };
+        } catch {
+          return { ok: false, error: t('Ошибка сети') };
+        }
+      },
+    });
+  });
+
+  removeBtn?.addEventListener('click', async () => {
+    if (!confirm(t('Вы уверены, что хотите удалить обложку профиля?'))) return;
+
+    if (spinner) spinner.style.display = 'flex';
+    try {
+      const res = await apiCall('/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bannerUrl: '' }),
+      });
+      if (res.ok) {
+        profile.bannerUrl = null;
+        profile.banner_url = null;
+        preview.className = 'profile-banner';
+        preview.innerHTML = `
+          <div class="profile-banner__placeholder">
+            <span class="profile-banner__placeholder-icon">🖼️</span>
+            <span class="profile-banner__placeholder-title">${t('Обложка не установлена')}</span>
+          </div>
+          <div class="profile-banner__spinner" id="editProfileBannerSpinner" style="display: none;">
+            <span class="loading-spinner"></span>
+            <span>${t('Загрузка обложки...')}</span>
+          </div>
+        `;
+        if (posBtn) posBtn.style.display = 'none';
+        if (removeBtn) removeBtn.style.display = 'none';
+        if (statusText) statusText.textContent = t('Не указано');
+      } else {
+        alert(t('Ошибка при удалении обложки'));
+      }
+    } catch (err) {
+      console.error('Error removing banner:', err);
+      alert(t('Ошибка сети'));
+    } finally {
+      if (spinner) spinner.style.display = 'none';
+    }
+  });
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert(t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP)'));
+      fileInput.value = '';
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert(t('Файл слишком большой. Максимальный размер 10 МБ'));
+      fileInput.value = '';
+      return;
+    }
+
+    if (spinner) spinner.style.display = 'flex';
+
+    const formData = new FormData();
+    formData.append('banner', file);
+
+    try {
+      const res = await apiCall('/profile/banner/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && (data.ok || data.url || data.bannerUrl || data.data)) {
+        const newUrl = data.bannerUrl || data.url || data.data;
+        profile.bannerUrl = newUrl;
+        profile.banner_url = newUrl;
+        preview.className = 'profile-banner has-banner';
+        preview.innerHTML = `
+          <img src="${escapeHtml(newUrl)}" alt="${t('Обложка')}" class="profile-banner__img" id="editProfileBannerImg" style="object-position: ${escapeHtml(String(profile.bannerPosition || profile.banner_position || '50% 50%'))};" />
+          <div class="profile-banner__overlay"></div>
+          <div class="profile-banner__spinner" id="editProfileBannerSpinner" style="display: none;">
+            <span class="loading-spinner"></span>
+            <span>${t('Загрузка обложки...')}</span>
+          </div>
+        `;
+        if (posBtn) posBtn.style.display = 'inline-flex';
+        if (removeBtn) removeBtn.style.display = 'inline-flex';
+        if (statusText) statusText.textContent = t('Установлена');
+
+        // Immediately open repositioner
+        showBannerPositionModal({
+          bannerUrl: newUrl,
+          currentPosition: profile.bannerPosition || profile.banner_position || '50% 50%',
+          onSave: async (newPos) => {
+            try {
+              const updateRes = await apiCall('/profile/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bannerPosition: newPos }),
+              });
+              if (updateRes.ok) {
+                profile.bannerPosition = newPos;
+                profile.banner_position = newPos;
+                const img = document.getElementById('editProfileBannerImg');
+                if (img) img.style.objectPosition = newPos;
+                return { ok: true };
+              }
+              return { ok: false, error: t('Ошибка сохранения позиции') };
+            } catch {
+              return { ok: false, error: t('Ошибка сети') };
+            }
+          },
+        });
+      } else {
+        alert(data?.error || t('Ошибка при загрузке обложки'));
+      }
+    } catch (err) {
+      console.error('Banner upload error:', err);
+      alert(t('Не удалось загрузить обложку. Проверьте соединение.'));
+    } finally {
+      if (spinner) spinner.style.display = 'none';
+      fileInput.value = '';
+    }
+  });
 }
 
 /**

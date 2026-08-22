@@ -996,6 +996,429 @@ export function showSettingsAvatarFrameModal(opts: {
   });
 }
 
+export function showSettingsBannerModal(opts: {
+  user: { bannerUrl?: string | null; banner_url?: string | null };
+  onUpdated: (newUrl: string | null) => void;
+}): Promise<void> {
+  const old = document.getElementById('settingsBannerModal');
+  old?.remove();
+
+  return new Promise((resolve) => {
+    const wrap = document.createElement('div');
+    wrap.id = 'settingsBannerModal';
+    wrap.className = 'account-notice-modal';
+
+    let currentUrl = opts.user.bannerUrl || opts.user.banner_url || null;
+
+    wrap.innerHTML = `
+      <div class="account-notice-backdrop"></div>
+      <div class="account-notice-card" style="width: min(92vw, 540px) !important; padding: 24px !important; border-radius: 20px !important;" role="dialog" aria-modal="true" aria-labelledby="stgBannerTitle">
+        <div id="stgBannerTitle" class="account-notice-head" style="font-size: 20px !important; font-weight: 700 !important; margin-bottom: 16px !important;">🖼️ ${t('Обложка профиля')}</div>
+        
+        <div class="banner-edit-section" style="display: flex; flex-direction: column; gap: 14px;">
+          <div class="profile-banner ${currentUrl ? 'has-banner' : ''}" id="stgModalBannerPreview" style="height: 150px; margin-bottom: 0;">
+            ${
+              currentUrl
+                ? `<img src="${escapeHtml(String(currentUrl))}" alt="${t('Обложка')}" class="profile-banner__img" id="stgModalBannerImg" style="object-position: ${escapeHtml((opts.user as any).bannerPosition || (opts.user as any).banner_position || '50% 50%')};" /><div class="profile-banner__overlay"></div>`
+                : `<div class="profile-banner__placeholder"><span class="profile-banner__placeholder-icon">🖼️</span><span class="profile-banner__placeholder-title">${t('Обложка не установлена')}</span></div>`
+            }
+            <div class="profile-banner__spinner" id="stgModalBannerSpinner" style="display: none;">
+              <span class="loading-spinner"></span>
+              <span>${t('Загрузка обложки...')}</span>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary" id="stgModalBannerUploadBtn" style="flex: 1; min-width: 130px; justify-content: center;">
+              <span>📷 ${t('Загрузить')}</span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="stgModalBannerPosBtn" style="flex: 1; min-width: 130px; justify-content: center; ${currentUrl ? '' : 'display: none;'}">
+              <span>⚙️ ${t('Позиция')}</span>
+            </button>
+            <button type="button" class="btn btn-outline" id="stgModalBannerRemoveBtn" style="flex: 1; min-width: 110px; justify-content: center; color: #f87171; border-color: rgba(239, 68, 68, 0.4); ${currentUrl ? '' : 'display: none;'}">
+              <span>🗑️ ${t('Удалить')}</span>
+            </button>
+            <input type="file" id="stgModalBannerFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;" />
+          </div>
+          <p style="font-size: 12px; color: #94a3b8; margin: 0; line-height: 1.4;">
+            ${t('Рекомендуется разрешение 1200 × 480 и размер менее 10 МБ')}
+          </p>
+        </div>
+
+        <div id="stgBannerError" class="input-error-msg" style="color: #f87171; font-size: 13px; margin-top: 8px; display: none;"></div>
+
+        <div class="account-notice-actions account-notice-actions--end" style="display: flex !important; gap: 12px !important; justify-content: flex-end !important; margin-top: 20px !important;">
+          <button type="button" class="btn btn-outline" id="stgBannerCloseBtn">${t('Закрыть')}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(wrap);
+
+    const dialogEl = wrap.querySelector('.account-notice-card') as HTMLElement;
+    const close = createModalCloser(wrap, dialogEl, resolve);
+
+    wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', () => close());
+    wrap.querySelector('#stgBannerCloseBtn')?.addEventListener('click', () => close());
+
+    const uploadBtn = wrap.querySelector('#stgModalBannerUploadBtn') as HTMLButtonElement | null;
+    const posBtn = wrap.querySelector('#stgModalBannerPosBtn') as HTMLButtonElement | null;
+    const removeBtn = wrap.querySelector('#stgModalBannerRemoveBtn') as HTMLButtonElement | null;
+    const fileInput = wrap.querySelector('#stgModalBannerFileInput') as HTMLInputElement | null;
+    const preview = wrap.querySelector('#stgModalBannerPreview') as HTMLElement | null;
+    const spinner = wrap.querySelector('#stgModalBannerSpinner') as HTMLElement | null;
+    const errEl = wrap.querySelector('#stgBannerError') as HTMLElement | null;
+
+    const openPicker = () => fileInput?.click();
+
+    uploadBtn?.addEventListener('click', openPicker);
+    preview?.addEventListener('click', () => {
+      if (!preview.classList.contains('has-banner')) {
+        openPicker();
+      }
+    });
+
+    posBtn?.addEventListener('click', () => {
+      if (!currentUrl) return;
+      showBannerPositionModal({
+        bannerUrl: currentUrl,
+        currentPosition: (opts.user as any).bannerPosition || (opts.user as any).banner_position || '50% 50%',
+        onSave: async (newPos) => {
+          try {
+            const res = await apiCall('/profile/update', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bannerPosition: newPos }),
+            });
+            if (res.ok) {
+              (opts.user as any).bannerPosition = newPos;
+              (opts.user as any).banner_position = newPos;
+              const img = document.getElementById('stgModalBannerImg');
+              if (img) img.style.objectPosition = newPos;
+              const heroImg = document.getElementById('profileHeroBannerImg');
+              if (heroImg) heroImg.style.objectPosition = newPos;
+              return { ok: true };
+            }
+            return { ok: false, error: t('Ошибка сохранения позиции') };
+          } catch {
+            return { ok: false, error: t('Ошибка сети') };
+          }
+        },
+      });
+    });
+
+    removeBtn?.addEventListener('click', async () => {
+      if (!confirm(t('Вы уверены, что хотите удалить обложку профиля?'))) return;
+      if (spinner) spinner.style.display = 'flex';
+      if (errEl) errEl.style.display = 'none';
+
+      try {
+        const res = await apiCall('/profile/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bannerUrl: '' }),
+        });
+        if (res.ok) {
+          currentUrl = null;
+          opts.user.bannerUrl = null;
+          opts.user.banner_url = null;
+          opts.onUpdated(null);
+          if (preview) {
+            preview.className = 'profile-banner';
+            preview.innerHTML = `
+              <div class="profile-banner__placeholder">
+                <span class="profile-banner__placeholder-icon">🖼️</span>
+                <span class="profile-banner__placeholder-title">${t('Обложка не установлена')}</span>
+              </div>
+              <div class="profile-banner__spinner" id="stgModalBannerSpinner" style="display: none;">
+                <span class="loading-spinner"></span>
+                <span>${t('Загрузка обложки...')}</span>
+              </div>
+            `;
+          }
+          if (posBtn) posBtn.style.display = 'none';
+          if (removeBtn) removeBtn.style.display = 'none';
+        } else {
+          const d = await res.json().catch(() => ({}));
+          if (errEl) {
+            errEl.textContent = d?.error || t('Ошибка при удалении обложки');
+            errEl.style.display = 'block';
+          }
+        }
+      } catch (err) {
+        console.error('Error removing banner:', err);
+        if (errEl) {
+          errEl.textContent = t('Ошибка сети');
+          errEl.style.display = 'block';
+        }
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+      }
+    });
+
+    fileInput?.addEventListener('change', async () => {
+      const file = fileInput.files?.[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        if (errEl) {
+          errEl.textContent = t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP)');
+          errEl.style.display = 'block';
+        }
+        fileInput.value = '';
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        if (errEl) {
+          errEl.textContent = t('Файл слишком большой. Максимальный размер 10 МБ');
+          errEl.style.display = 'block';
+        }
+        fileInput.value = '';
+        return;
+      }
+
+      if (spinner) spinner.style.display = 'flex';
+      if (errEl) errEl.style.display = 'none';
+
+      const formData = new FormData();
+      formData.append('banner', file);
+
+      try {
+        const res = await apiCall('/profile/banner/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && (data.ok || data.url || data.bannerUrl || data.data)) {
+          const newUrl = data.bannerUrl || data.url || data.data;
+          currentUrl = newUrl;
+          opts.user.bannerUrl = newUrl;
+          opts.user.banner_url = newUrl;
+          opts.onUpdated(newUrl);
+          if (preview) {
+            preview.className = 'profile-banner has-banner';
+            preview.innerHTML = `
+              <img src="${escapeHtml(newUrl)}" alt="${t('Обложка')}" class="profile-banner__img" id="stgModalBannerImg" />
+              <div class="profile-banner__overlay"></div>
+              <div class="profile-banner__spinner" id="stgModalBannerSpinner" style="display: none;">
+                <span class="loading-spinner"></span>
+                <span>${t('Загрузка обложки...')}</span>
+              </div>
+            `;
+          }
+          if (posBtn) posBtn.style.display = 'inline-flex';
+          if (removeBtn) removeBtn.style.display = 'inline-flex';
+
+          // Open repositioner immediately
+          showBannerPositionModal({
+            bannerUrl: newUrl,
+            currentPosition: (opts.user as any).bannerPosition || (opts.user as any).banner_position || '50% 50%',
+            onSave: async (pos) => {
+              try {
+                const updateRes = await apiCall('/profile/update', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ bannerPosition: pos }),
+                });
+                if (updateRes.ok) {
+                  (opts.user as any).bannerPosition = pos;
+                  (opts.user as any).banner_position = pos;
+                  const img = document.getElementById('stgModalBannerImg');
+                  if (img) img.style.objectPosition = pos;
+                  const heroImg = document.getElementById('profileHeroBannerImg');
+                  if (heroImg) heroImg.style.objectPosition = pos;
+                  return { ok: true };
+                }
+                return { ok: false, error: t('Ошибка сохранения позиции') };
+              } catch {
+                return { ok: false, error: t('Ошибка сети') };
+              }
+            },
+          });
+        } else {
+          if (errEl) {
+            errEl.textContent = data?.error || t('Ошибка при загрузке обложки');
+            errEl.style.display = 'block';
+          }
+        }
+      } catch (err) {
+        console.error('Banner upload error:', err);
+        if (errEl) {
+          errEl.textContent = t('Не удалось загрузить обложку. Проверьте соединение.');
+          errEl.style.display = 'block';
+        }
+      } finally {
+        if (spinner) spinner.style.display = 'none';
+        fileInput.value = '';
+      }
+    });
+  });
+}
+
+/**
+ * Модальное окно настройки области обзора (позиции) баннера
+ */
+export function showBannerPositionModal(opts: {
+  bannerUrl: string;
+  currentPosition?: string;
+  onSave: (position: string) => Promise<{ ok: boolean; error?: string }>;
+}): Promise<void> {
+  const old = document.getElementById('bannerPositionModal');
+  old?.remove();
+
+  return new Promise((resolve) => {
+    const wrap = document.createElement('div');
+    wrap.id = 'bannerPositionModal';
+    wrap.className = 'account-notice-modal';
+
+    let currentY = 50;
+    if (opts.currentPosition) {
+      const parts = opts.currentPosition.trim().split(' ');
+      if (parts.length >= 2) {
+        const yStr = parts[1].replace('%', '');
+        const parsed = parseInt(yStr, 10);
+        if (!isNaN(parsed)) currentY = Math.max(0, Math.min(100, parsed));
+      } else {
+        const parsed = parseInt(parts[0].replace('%', ''), 10);
+        if (!isNaN(parsed)) currentY = Math.max(0, Math.min(100, parsed));
+      }
+    }
+
+    wrap.innerHTML = `
+      <div class="account-notice-backdrop"></div>
+      <div class="account-notice-card" style="width: min(92vw, 560px) !important; padding: 24px !important; border-radius: 22px !important;" role="dialog" aria-modal="true" aria-labelledby="bannerPosTitle">
+        <div id="bannerPosTitle" class="account-notice-head" style="font-size: 20px !important; font-weight: 700 !important; margin-bottom: 12px !important; display: flex; align-items: center; gap: 8px;">
+          <span>⚙️</span>
+          <span>${t('Настройка области обзора')}</span>
+        </div>
+
+        <p style="font-size: 13px; color: #94a3b8; margin: 0 0 14px 0; line-height: 1.4;">
+          ${t('Перетащите изображение или используйте ползунок, чтобы настроить фокус обложки:')}
+        </p>
+
+        <div class="banner-position-preview-frame" id="bannerPosFrame" title="${t('Потяните вверх/вниз для смещения')}">
+          <img src="${escapeHtml(opts.bannerUrl)}" alt="${t('Обложка')}" class="banner-position-preview-img" id="bannerPosPreviewImg" style="object-position: 50% ${currentY}%;" />
+          <div class="profile-hero__banner-overlay" style="opacity: 0.35;"></div>
+          <div class="banner-position-preview-badge" id="bannerPosBadge">${currentY}%</div>
+        </div>
+
+        <div class="banner-position-controls">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <label for="bannerPosSlider" style="font-size: 12.5px; font-weight: 600; color: #cbd5e1;">${t('Вертикальное смещение:')}</label>
+            <span id="bannerPosValueLabel" style="font-size: 13px; font-weight: 700; color: #ff7f27;">${currentY}%</span>
+          </div>
+          <input type="range" id="bannerPosSlider" min="0" max="100" value="${currentY}" class="input" style="padding: 0; height: 6px; cursor: pointer; accent-color: #ff7f27;" />
+
+          <div class="banner-position-presets">
+            <button type="button" class="banner-position-preset-btn ${currentY === 0 ? 'active' : ''}" data-pos="0">⬆️ ${t('Верх (0%)')}</button>
+            <button type="button" class="banner-position-preset-btn ${currentY === 25 ? 'active' : ''}" data-pos="25">${t('25%')}</button>
+            <button type="button" class="banner-position-preset-btn ${currentY === 50 ? 'active' : ''}" data-pos="50">⏺️ ${t('Центр (50%)')}</button>
+            <button type="button" class="banner-position-preset-btn ${currentY === 75 ? 'active' : ''}" data-pos="75">${t('75%')}</button>
+            <button type="button" class="banner-position-preset-btn ${currentY === 100 ? 'active' : ''}" data-pos="100">⬇️ ${t('Низ (100%)')}</button>
+          </div>
+        </div>
+
+        <div id="bannerPosError" class="input-error-msg" style="color: #f87171; font-size: 13px; margin-top: 10px; display: none;"></div>
+
+        <div class="account-notice-actions account-notice-actions--end" style="display: flex !important; gap: 12px !important; justify-content: flex-end !important; margin-top: 20px !important;">
+          <button type="button" class="btn btn-outline" id="bannerPosCancelBtn">${t('Отмена')}</button>
+          <button type="button" class="btn btn-primary" id="bannerPosSaveBtn">${t('💾 Сохранить позицию')}</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(wrap);
+
+    const dialogEl = wrap.querySelector('.account-notice-card') as HTMLElement;
+    const close = createModalCloser(wrap, dialogEl, resolve);
+
+    wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', () => close());
+    wrap.querySelector('#bannerPosCancelBtn')?.addEventListener('click', () => close());
+
+    const previewImg = wrap.querySelector('#bannerPosPreviewImg') as HTMLImageElement;
+    const slider = wrap.querySelector('#bannerPosSlider') as HTMLInputElement;
+    const badge = wrap.querySelector('#bannerPosBadge') as HTMLElement;
+    const valLabel = wrap.querySelector('#bannerPosValueLabel') as HTMLElement;
+    const frame = wrap.querySelector('#bannerPosFrame') as HTMLElement;
+    const saveBtn = wrap.querySelector('#bannerPosSaveBtn') as HTMLButtonElement;
+    const errEl = wrap.querySelector('#bannerPosError') as HTMLElement;
+    const presetBtns = wrap.querySelectorAll('.banner-position-preset-btn');
+
+    const updatePos = (newY: number) => {
+      currentY = Math.max(0, Math.min(100, Math.round(newY)));
+      if (previewImg) previewImg.style.objectPosition = `50% ${currentY}%`;
+      if (slider) slider.value = String(currentY);
+      if (badge) badge.textContent = `${currentY}%`;
+      if (valLabel) valLabel.textContent = `${currentY}%`;
+
+      presetBtns.forEach((btn) => {
+        const p = parseInt(btn.getAttribute('data-pos') || '-1', 10);
+        btn.classList.toggle('active', p === currentY);
+      });
+    };
+
+    slider?.addEventListener('input', () => {
+      updatePos(Number(slider.value));
+    });
+
+    presetBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const p = parseInt(btn.getAttribute('data-pos') || '50', 10);
+        updatePos(p);
+      });
+    });
+
+    // Drag to reposition inside frame
+    let isDragging = false;
+    let startY = 0;
+    let startVal = currentY;
+
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      isDragging = true;
+      startY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      startVal = currentY;
+      document.body.style.userSelect = 'none';
+    };
+
+    const onPointerMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDragging) return;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const deltaY = clientY - startY;
+      const frameHeight = frame.getBoundingClientRect().height || 180;
+      const percentChange = -(deltaY / frameHeight) * 100;
+      updatePos(startVal + percentChange);
+    };
+
+    const onPointerUp = () => {
+      isDragging = false;
+      document.body.style.userSelect = '';
+    };
+
+    frame.addEventListener('mousedown', onPointerDown);
+    frame.addEventListener('touchstart', onPointerDown, { passive: true });
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('touchmove', onPointerMove, { passive: true });
+    window.addEventListener('mouseup', onPointerUp);
+    window.addEventListener('touchend', onPointerUp);
+
+    saveBtn.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      if (errEl) errEl.style.display = 'none';
+      const posStr = `50% ${currentY}%`;
+      const res = await opts.onSave(posStr);
+      saveBtn.disabled = false;
+      if (res.ok) {
+        close();
+      } else if (res.error) {
+        if (errEl) {
+          errEl.textContent = res.error;
+          errEl.style.display = 'block';
+        }
+      }
+    });
+  });
+}
+
 export function showSettingsBioModal(opts: {
   currentBio: string;
   onSave: (newBio: string) => Promise<{ ok: boolean; error?: string }>;
@@ -1572,7 +1995,9 @@ export function detectUserCurrency(): 'USD' | 'EUR' | 'UAH' {
     if (saved && (saved === 'USD' || saved === 'EUR' || saved === 'UAH')) {
       return saved;
     }
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 
   // 2. Language check (if user is on Ukrainian locale -> default to UAH)
   try {
@@ -1580,7 +2005,9 @@ export function detectUserCurrency(): 'USD' | 'EUR' | 'UAH' {
     if (currentLocale === 'uk') {
       return 'UAH';
     }
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 
   // 3. Timezone detection
   try {
@@ -1607,7 +2034,9 @@ export function detectUserCurrency(): 'USD' | 'EUR' | 'UAH' {
     if (euroZones.some((ez) => tz.startsWith(ez) || tz === ez)) {
       return 'EUR';
     }
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 
   // 4. Browser languages
   try {
@@ -1616,7 +2045,9 @@ export function detectUserCurrency(): 'USD' | 'EUR' | 'UAH' {
     if (['de', 'fr', 'it', 'es', 'nl', 'pt', 'el', 'fi', 'et', 'lv', 'lt', 'sk', 'sl'].some((l) => lang.startsWith(l))) {
       return 'EUR';
     }
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 
   return 'USD';
 }
@@ -1665,8 +2096,8 @@ export function openPremiumModal(user: Partial<User> | Record<string, unknown>, 
   ];
 
   const benefits = [
-    { icon: '⭐', title: t('Золотой статус Premium'), desc: t('Эксклюзивный значок в профиле, чатах и SmartHome Hub') },
-    { icon: '🏠', title: t('Безлимитный SmartHome Hub'), desc: t('Неограниченные комнаты, устройства Tapo и Wake-on-LAN') },
+    { icon: '⭐', title: t('Золотой статус Premium'), desc: t('Эксклюзивный значок в профиле, чатах и Smart Home Hub') },
+    { icon: '🏠', title: t('Безлимитный Smart Home Hub'), desc: t('Неограниченные комнаты, устройства Tapo и Wake-on-LAN') },
     { icon: '🎨', title: t('Эксклюзивные темы и аватары'), desc: t('Доступ ко всем премиум-темам, стилям оформления и градиентам') },
     { icon: '⚡', title: t('Приоритетная E2EE-синхронизация'), desc: t('Мгновенная доставка сигналов и облачных бэкапов') },
     { icon: '🛡️', title: t('Приоритетная поддержка'), desc: t('Прямой доступ к разработчикам 24/7') },
@@ -1802,7 +2233,9 @@ export function openPremiumModal(user: Partial<User> | Record<string, unknown>, 
           selectedCurrency = curr;
           try {
             localStorage.setItem('cyb_preferred_currency', curr);
-          } catch {}
+          } catch {
+            /* ignore */
+          }
           wrap.innerHTML = renderModalHtml();
           bindEvents();
         }
@@ -1903,7 +2336,7 @@ export function openPremiumModal(user: Partial<User> | Record<string, unknown>, 
               title: modalTitle,
               subtitle: modalSubtitle,
               description: modalDesc,
-              hint: t('Вам доступны 10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и кастомный титул.'),
+              hint: t('Вам доступны 10x лимиты API, безлимитный Smart Home Hub, эксклюзивные темы, 2.5x монет и кастомный титул.'),
               targetCardId,
               subtab: 'site',
             });
@@ -2036,5 +2469,226 @@ export function showEasterUnlockCelebrationModal(opts: EasterCelebrationOpts): v
     }
   });
 }
+
+export function showSubscriptionManagementModal(user: Partial<User> | Record<string, unknown>): void {
+  const old = document.getElementById('subscriptionManagementModal');
+  old?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = 'subscriptionManagementModal';
+  wrap.className = 'account-notice-modal';
+
+  const now = Date.now();
+  const premiumUntil = user.premiumUntil ? Number(user.premiumUntil) : 0;
+  const isLifetime = premiumUntil > now + 100 * 365 * 24 * 3600 * 1000;
+  const expiryText = isLifetime
+    ? t('Бессрочный доступ (VIP Lifetime)')
+    : premiumUntil > now
+      ? `${t('Активна до')} ${new Date(premiumUntil).toLocaleDateString(getLocale() === 'uk' ? 'uk-UA' : getLocale() === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}`
+      : t('Не активна');
+
+  wrap.innerHTML = `
+    <div class="account-notice-backdrop"></div>
+    <div
+      class="account-notice-card"
+      style="width: min(94vw, 500px) !important; max-height: 90vh !important; overflow-y: auto !important; padding: 26px !important; border-radius: 24px !important; background: #0f172a !important; border: 1px solid rgba(234, 179, 8, 0.35) !important; box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 35px rgba(234, 179, 8, 0.15) !important; text-align: left;"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="subModalTitle"
+    >
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <div id="subModalTitle" style="font-size: 20px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 22px;">👑</span>
+          <span style="background: linear-gradient(90deg, #fff, #fef08a); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${t('Управление подпиской')}</span>
+        </div>
+        <button type="button" id="subModalCloseIcon" style="background: rgba(255,255,255,0.08); border: none; color: #94a3b8; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;" aria-label="${t('Закрыть')}">✕</button>
+      </div>
+
+      <!-- Current plan card -->
+      <div style="background: linear-gradient(135deg, rgba(234, 179, 8, 0.15), rgba(245, 158, 11, 0.05)); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 18px; padding: 18px 20px; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <span style="font-size: 17px; font-weight: 800; color: #fef08a;">CybLight Premium</span>
+          <span style="font-size: 12px; font-weight: 900; background: linear-gradient(135deg, #f59e0b, #eab308); color: #000; padding: 3px 12px; border-radius: 999px;">⭐ ${t('Активна')}</span>
+        </div>
+        <div style="font-size: 13px; color: #cbd5e1; font-weight: 500;">
+          ${expiryText}
+        </div>
+      </div>
+
+      <!-- Instructions block -->
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
+        <div style="display: flex; gap: 12px; align-items: flex-start; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); padding: 14px 16px; border-radius: 14px;">
+          <div style="font-size: 22px; line-height: 1; flex-shrink: 0;">📧</div>
+          <div style="font-size: 13px; color: #cbd5e1; line-height: 1.5;">
+            <strong style="color: #ffffff; display: block; margin-bottom: 2px;">${t('Отмена через квитанцию Paddle')}</strong>
+            ${t('В каждом письме с чеком от Paddle есть прямая ссылка «Manage Subscription» для мгновенной отмены автопродления в 1 клик.')}
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: flex-start; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); padding: 14px 16px; border-radius: 14px;">
+          <div style="font-size: 22px; line-height: 1; flex-shrink: 0;">🛡️</div>
+          <div style="font-size: 13px; color: #cbd5e1; line-height: 1.5;">
+            <strong style="color: #ffffff; display: block; margin-bottom: 2px;">${t('Сохранение оплаченного периода')}</strong>
+            ${t('При отмене подписки все преимущества и возможности тарифа остаются доступны вам до окончания оплаченного срока.')}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" class="btn btn-primary" id="subModalChangePlanBtn" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700; border-radius: 12px;">
+          <span>✨ ${t('Сменить тариф')}</span>
+        </button>
+
+        <button type="button" class="btn btn-outline" id="subModalCancelBtn" style="width: 100%; justify-content: center; padding: 12px; display: flex; align-items: center; gap: 8px; font-weight: 600; border-radius: 12px; background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5;">
+          <span>🛑 ${t('Отменить автопродление подписки')}</span>
+        </button>
+
+        <button type="button" class="btn btn-outline" id="subModalCloseBtn" style="width: 100%; justify-content: center; padding: 10px; border-color: transparent; color: #94a3b8; font-weight: 600;">
+          ${t('Закрыть')}
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(wrap);
+
+  const dialogEl = wrap.querySelector('.account-notice-card') as HTMLElement;
+  const close = createModalCloser(wrap, dialogEl);
+
+  wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', close);
+  wrap.querySelector('#subModalCloseIcon')?.addEventListener('click', close);
+  wrap.querySelector('#subModalCloseBtn')?.addEventListener('click', close);
+
+  wrap.querySelector('#subModalChangePlanBtn')?.addEventListener('click', () => {
+    close();
+    Router.navigate('pricing');
+  });
+
+  const cancelBtn = wrap.querySelector('#subModalCancelBtn') as HTMLButtonElement | null;
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', () => {
+      showCancelSubscriptionConfirmModal(user, () => {
+        cancelBtn.style.background = 'rgba(34, 197, 94, 0.12)';
+        cancelBtn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
+        cancelBtn.style.color = '#86efac';
+        cancelBtn.textContent = `✅ ${t('Автопродление отключено')}`;
+        setTimeout(() => {
+          close();
+        }, 1200);
+      });
+    });
+  }
+}
+
+export function showCancelSubscriptionConfirmModal(
+  user: Partial<User> | Record<string, unknown>,
+  onSuccess?: () => void
+): void {
+  const old = document.getElementById('cancelSubscriptionConfirmModal');
+  old?.remove();
+
+  const wrap = document.createElement('div');
+  wrap.id = 'cancelSubscriptionConfirmModal';
+  wrap.className = 'account-notice-modal';
+
+  const now = Date.now();
+  const premiumUntil = user.premiumUntil ? Number(user.premiumUntil) : 0;
+  const expiryDate = premiumUntil > now
+    ? new Date(premiumUntil).toLocaleDateString(getLocale() === 'uk' ? 'uk-UA' : getLocale() === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+
+  wrap.innerHTML = `
+    <div class="account-notice-backdrop" style="z-index: 10010;"></div>
+    <div
+      class="account-notice-card"
+      style="z-index: 10011; width: min(92vw, 440px) !important; padding: 28px 24px !important; border-radius: 24px !important; background: #0f172a !important; border: 1px solid rgba(239, 68, 68, 0.35) !important; box-shadow: 0 20px 50px rgba(0,0,0,0.85), 0 0 35px rgba(239, 68, 68, 0.15) !important; text-align: center;"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div style="width: 58px; height: 58px; margin: 0 auto 16px; border-radius: 50%; background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.1)); border: 1px solid rgba(239, 68, 68, 0.4); display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);">
+        🛑
+      </div>
+
+      <h3 style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 0 0 10px; letter-spacing: -0.3px;">
+        ${t('Отмена автопродления')}
+      </h3>
+
+      <p style="font-size: 14px; color: #cbd5e1; line-height: 1.55; margin: 0 0 18px;">
+        ${t('Вы действительно хотите отключить автопродление подписки CybLight Premium?')}
+      </p>
+
+      <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px 16px; margin-bottom: 22px; text-align: left; display: flex; gap: 12px; align-items: flex-start;">
+        <span style="font-size: 20px; line-height: 1; flex-shrink: 0;">🛡️</span>
+        <span style="font-size: 13px; color: #94a3b8; line-height: 1.45;">
+          ${expiryDate ? `${t('Все преимущества тарифа останутся активными до')} <strong style="color: #fff;">${expiryDate}</strong>. ${t('После этого списания прекратятся.')}` : t('Все преимущества тарифа останутся активными до окончания оплаченного срока. После этого списания прекратятся.')}
+        </span>
+      </div>
+
+      <div id="cancelConfirmError" style="display: none; color: #f87171; font-size: 13px; margin-bottom: 12px;"></div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button type="button" class="btn" id="cancelConfirmAcceptBtn" style="width: 100%; justify-content: center; padding: 13px; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; border: none; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35); cursor: pointer; font-size: 14px;">
+          <span>${t('Да, отключить автопродление')}</span>
+        </button>
+
+        <button type="button" class="btn btn-outline" id="cancelConfirmKeepBtn" style="width: 100%; justify-content: center; padding: 12px; font-weight: 600; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); color: #f8fafc; cursor: pointer; font-size: 14px;">
+          ${t('Оставить подписку')}
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(wrap);
+
+  const dialogEl = wrap.querySelector('.account-notice-card') as HTMLElement;
+  const close = createModalCloser(wrap, dialogEl);
+
+  wrap.querySelector('.account-notice-backdrop')?.addEventListener('click', close);
+  wrap.querySelector('#cancelConfirmKeepBtn')?.addEventListener('click', close);
+
+  const acceptBtn = wrap.querySelector('#cancelConfirmAcceptBtn') as HTMLButtonElement;
+  const errBox = wrap.querySelector('#cancelConfirmError') as HTMLElement;
+
+  acceptBtn?.addEventListener('click', async () => {
+    acceptBtn.disabled = true;
+    acceptBtn.textContent = t('Отмена...');
+    if (errBox) errBox.style.display = 'none';
+
+    try {
+      const res = await apiCall('/premium/cancel', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        acceptBtn.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
+        acceptBtn.style.boxShadow = '0 4px 15px rgba(34, 197, 94, 0.35)';
+        acceptBtn.textContent = `✅ ${t('Автопродление успешно отключено')}`;
+        setTimeout(() => {
+          close();
+          onSuccess?.();
+        }, 1200);
+      } else {
+        acceptBtn.disabled = false;
+        acceptBtn.textContent = t('Да, отключить автопродление');
+        if (errBox) {
+          errBox.textContent = data?.error || data?.message || t('Ошибка при отмене подписки');
+          errBox.style.display = 'block';
+        }
+      }
+    } catch (err) {
+      console.error('Cancel sub error:', err);
+      acceptBtn.disabled = false;
+      acceptBtn.textContent = t('Да, отключить автопродление');
+      if (errBox) {
+        errBox.textContent = t('Ошибка сети или сервера');
+        errBox.style.display = 'block';
+      }
+    }
+  });
+}
+
+
 
 

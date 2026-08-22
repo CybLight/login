@@ -21,13 +21,15 @@ import {
   showSettingsEmailModal,
   showSettingsAvatarModal,
   showSettingsAvatarFrameModal,
+  showSettingsBannerModal,
+  showBannerPositionModal,
   showSettingsBioModal,
   showSettingsAboutModal,
   showSettingsGenderModal,
   showSettingsDobModal,
   showSettingsCustomBadgeModal,
-  openPremiumModal,
   showEasterUnlockCelebrationModal,
+  showSubscriptionManagementModal,
 } from './modals';
 import { updateNavBadges, setNavBadge, updateChatUnreadBadges, fetchUnreadSummaryData } from './unread';
 import { isEmailVerified } from './account-utils';
@@ -331,7 +333,7 @@ export function bindAccountHandlers(
               title: modalTitle,
               subtitle: modalSubtitle,
               description: modalDesc,
-              hint: t('Вам доступны 10x лимиты API, безлимитный SmartHome Hub, эксклюзивные темы, 2.5x монет и кастомный титул.'),
+              hint: t('Вам доступны 10x лимиты API, безлимитный Smart Home Hub, эксклюзивные темы, 2.5x монет и кастомный титул.'),
               targetCardId,
               subtab: 'site',
             });
@@ -364,12 +366,19 @@ export function bindAccountHandlers(
     Router.navigate('account-settings');
   });
 
-  document.getElementById('openPremiumCardBtn')?.addEventListener('click', () => {
-    openPremiumModal(user, () => {
-      // Reload profile after subscription update
-      window.location.reload();
-    });
-  });
+  const handlePremiumAction = () => {
+    const now = Date.now();
+    const isPremium = Boolean(user.isPremium || (user.premiumUntil && Number(user.premiumUntil) > now));
+    if (isPremium) {
+      showSubscriptionManagementModal(user);
+    } else {
+      Router.navigate('pricing');
+    }
+  };
+
+  document.getElementById('openPremiumCardBtn')?.addEventListener('click', handlePremiumAction);
+  document.getElementById('headerPremiumBtn')?.addEventListener('click', handlePremiumAction);
+  document.getElementById('sidebarPremiumBtn')?.addEventListener('click', handlePremiumAction);
 
   // Logout handler (кнопка в сайдбаре + в меню аватара)
   document.querySelectorAll('#logoutBtn, #headerLogoutBtn').forEach((logoutBtn) => {
@@ -390,6 +399,9 @@ export function bindAccountHandlers(
 
   // Badge Easter Egg (Star Spark)
   bindBadgeEasterEgg();
+
+  // Profile Banner handlers
+  bindProfileBannerHandlers(user, api);
 
   // Security tab handlers
   if (_tab === 'security') {
@@ -660,7 +672,7 @@ function bindThemeHandlers(user: AppUser): void {
     card.addEventListener('click', () => {
       const isPremiumTheme = card.dataset.premiumTheme === 'true';
       if (isPremiumTheme && !user.isPremium) {
-        openPremiumModal(user, () => window.location.reload());
+        Router.navigate('pricing');
         return;
       }
 
@@ -830,6 +842,161 @@ function bindProfileTabHandlers(user: AppUser, api: ApiMessage): void {
       api.showMsg('error', 'Ошибка сети');
       (deleteBtn as HTMLButtonElement).disabled = false;
       deleteBtn.innerHTML = '<span class="nav-icon" style="font-size: 18px; margin-right: 8px;">🗑️</span> Удалить аккаунт';
+    }
+  });
+}
+
+/**
+ * Привязать обработчики для загрузки, настройки позиции и удаления баннера профиля
+ */
+function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
+  const fileInput = document.getElementById('profileBannerFileInput') as HTMLInputElement | null;
+  const uploadBtn = document.getElementById('profileHeroBannerUploadBtn');
+  const posBtn = document.getElementById('profileHeroBannerPosBtn');
+  const removeBtn = document.getElementById('profileHeroBannerRemoveBtn');
+  const spinner = document.getElementById('profileHeroBannerSpinner');
+
+  if (!fileInput) return;
+
+  const openPicker = () => {
+    fileInput.click();
+  };
+
+  uploadBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openPicker();
+  });
+
+  posBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const currentBannerUrl = user.bannerUrl || user.banner_url;
+    if (!currentBannerUrl) return;
+
+    showBannerPositionModal({
+      bannerUrl: currentBannerUrl,
+      currentPosition: user.bannerPosition || user.banner_position || '50% 50%',
+      onSave: async (newPos) => {
+        try {
+          const res = await apiCall('/profile/update', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bannerPosition: newPos }),
+          });
+          if (res.ok) {
+            user.bannerPosition = newPos;
+            user.banner_position = newPos;
+            const heroImg = document.getElementById('profileHeroBannerImg');
+            if (heroImg) heroImg.style.objectPosition = newPos;
+            api.showMsg('ok', t('Позиция обложки сохранена!'));
+            return { ok: true };
+          }
+          return { ok: false, error: t('Ошибка сохранения позиции') };
+        } catch {
+          return { ok: false, error: t('Ошибка сети') };
+        }
+      },
+    });
+  });
+
+  removeBtn?.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (!confirm(t('Вы уверены, что хотите удалить обложку профиля?'))) return;
+
+    if (spinner) spinner.style.display = 'flex';
+    try {
+      const res = await apiCall('/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bannerUrl: '' }),
+      });
+      if (res.ok) {
+        user.bannerUrl = null;
+        user.banner_url = null;
+        api.showMsg('ok', t('Обложка удалена'));
+        Router.navigate('account-profile');
+      } else {
+        const d = await res.json().catch(() => ({}));
+        api.showMsg('error', d?.error || t('Ошибка при удалении обложки'));
+      }
+    } catch (err) {
+      console.error('Error removing banner:', err);
+      api.showMsg('error', t('Ошибка сети'));
+    } finally {
+      if (spinner) spinner.style.display = 'none';
+    }
+  });
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      api.showMsg('error', t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP)'));
+      fileInput.value = '';
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      api.showMsg('error', t('Файл слишком большой. Максимальный размер 10 МБ'));
+      fileInput.value = '';
+      return;
+    }
+
+    if (spinner) spinner.style.display = 'flex';
+
+    const formData = new FormData();
+    formData.append('banner', file);
+
+    try {
+      const res = await apiCall('/profile/banner/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && (data.ok || data.url || data.bannerUrl || data.data)) {
+        const newUrl = data.bannerUrl || data.url || data.data;
+        user.bannerUrl = newUrl;
+        user.banner_url = newUrl;
+        api.showMsg('ok', t('Обложка успешно обновлена!'));
+        Router.navigate('account-profile');
+
+        // Prompt position adjuster immediately after upload
+        setTimeout(() => {
+          showBannerPositionModal({
+            bannerUrl: newUrl,
+            currentPosition: user.bannerPosition || user.banner_position || '50% 50%',
+            onSave: async (newPos) => {
+              try {
+                const updateRes = await apiCall('/profile/update', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ bannerPosition: newPos }),
+                });
+                if (updateRes.ok) {
+                  user.bannerPosition = newPos;
+                  user.banner_position = newPos;
+                  const heroImg = document.getElementById('profileHeroBannerImg');
+                  if (heroImg) heroImg.style.objectPosition = newPos;
+                  api.showMsg('ok', t('Позиция обложки сохранена!'));
+                  return { ok: true };
+                }
+                return { ok: false, error: t('Ошибка сохранения позиции') };
+              } catch {
+                return { ok: false, error: t('Ошибка сети') };
+              }
+            },
+          });
+        }, 300);
+      } else {
+        api.showMsg('error', data?.error || t('Ошибка при загрузке обложки'));
+      }
+    } catch (err) {
+      console.error('Banner upload error:', err);
+      api.showMsg('error', t('Не удалось загрузить обложку. Проверьте соединение.'));
+    } finally {
+      if (spinner) spinner.style.display = 'none';
+      fileInput.value = '';
     }
   });
 }
@@ -1118,6 +1285,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
 
   const changeAvatarBtn = document.getElementById('stgChangeAvatarBtn') as HTMLButtonElement | null;
   const changeAvatarFrameBtn = document.getElementById('stgChangeAvatarFrameBtn') as HTMLButtonElement | null;
+  const changeBannerBtn = document.getElementById('stgChangeBannerBtn') as HTMLButtonElement | null;
   const changeBioBtn = document.getElementById('stgChangeBioBtn') as HTMLButtonElement | null;
   const changeAboutBtn = document.getElementById('stgChangeAboutBtn') as HTMLButtonElement | null;
   const changeGenderBtn = document.getElementById('stgChangeGenderBtn') as HTMLButtonElement | null;
@@ -1127,6 +1295,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
   let loadedProfile: Partial<AppUser> = {
     avatar: user.avatar,
     avatarFrame: user.avatarFrame || user.avatar_frame,
+    bannerUrl: user.bannerUrl || user.banner_url,
     bio: user.bio,
     aboutMe: user.aboutMe,
     gender: user.gender,
@@ -1307,7 +1476,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
   if (changeAvatarFrameBtn) {
     changeAvatarFrameBtn.addEventListener('click', () => {
       if (!user.isPremium) {
-        openPremiumModal(user);
+        Router.navigate('pricing');
         return;
       }
       showSettingsAvatarFrameModal({
@@ -1317,7 +1486,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
           avatar_frame: user.avatarFrame || user.avatar_frame || loadedProfile.avatarFrame,
           isPremium: Boolean(user.isPremium),
         },
-        onOpenPremium: () => openPremiumModal(user),
+        onOpenPremium: () => Router.navigate('pricing'),
         onSave: async (newFrame) => {
           try {
             const res = await apiCall('/profile/update', {
@@ -1337,6 +1506,27 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
           } catch {
             return { ok: false, error: t('Ошибка сети или сервера') };
           }
+        },
+      });
+    });
+  }
+
+  if (changeBannerBtn) {
+    changeBannerBtn.addEventListener('click', () => {
+      showSettingsBannerModal({
+        user,
+        onUpdated: (newUrl) => {
+          user.bannerUrl = newUrl;
+          user.banner_url = newUrl;
+          loadedProfile.bannerUrl = newUrl;
+          loadedProfile.banner_url = newUrl;
+          const bannerValEl = document.getElementById('stgBannerValue');
+          if (bannerValEl) {
+            bannerValEl.innerHTML = newUrl
+              ? `<span class="chip badge badge--ok" style="background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.4); color: #86efac;">${t('Установлена')}</span>`
+              : `<span class="stg-field__empty">${t('Не установлена')}</span>`;
+          }
+          api.showMsg('ok', newUrl ? t('Обложка успешно обновлена!') : t('Обложка удалена'));
         },
       });
     });
@@ -1477,7 +1667,7 @@ function bindSettingsAccountFieldsHandlers(user: AppUser, api: ApiMessage): void
   if (changeCustomBadgeBtn) {
     changeCustomBadgeBtn.addEventListener('click', () => {
       if (!user.isPremium) {
-        openPremiumModal(user, () => window.location.reload());
+        Router.navigate('pricing');
         return;
       }
 

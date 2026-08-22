@@ -15,3 +15,5 @@ export * from './done';
 export * from './account';
 export * from './profile';
 export * from './edit-profile';
+export * from './pricing';
+export * from './welcome';

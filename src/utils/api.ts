@@ -28,13 +28,20 @@ export async function apiCall(
       console.log('apiCall:', options.method || 'GET', url);
     }
 
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+    const requestHeaders: Record<string, string> = {
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      ...((options.headers as Record<string, string>) || {}),
+    };
+    if (isFormData) {
+      delete requestHeaders['Content-Type'];
+      delete requestHeaders['content-type'];
+    }
+
     const response = await fetch(url, {
       ...options,
       credentials: options.credentials || 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(options.headers || {}),
-      },
+      headers: requestHeaders,
       signal: controller.signal,
     });
 

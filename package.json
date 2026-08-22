@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@getmaapp/signal-wasm": "^0.2.0",
+    "@paddle/paddle-js": "^1.6.4",
     "minimatch": "^9.0.9",
     "qrcodejs": "^1.0.0"
   },
