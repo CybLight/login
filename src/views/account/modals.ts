@@ -997,7 +997,12 @@ export function showSettingsAvatarFrameModal(opts: {
 }
 
 export function showSettingsBannerModal(opts: {
-  user: { bannerUrl?: string | null; banner_url?: string | null };
+  user: {
+    bannerUrl?: string | null;
+    banner_url?: string | null;
+    bannerPosition?: string | null;
+    banner_position?: string | null;
+  };
   onUpdated: (newUrl: string | null) => void;
 }): Promise<void> {
   const old = document.getElementById('settingsBannerModal');
@@ -1019,7 +1024,7 @@ export function showSettingsBannerModal(opts: {
           <div class="profile-banner ${currentUrl ? 'has-banner' : ''}" id="stgModalBannerPreview" style="height: 150px; margin-bottom: 0;">
             ${
               currentUrl
-                ? `<img src="${escapeHtml(String(currentUrl))}" alt="${t('Обложка')}" class="profile-banner__img" id="stgModalBannerImg" style="object-position: ${escapeHtml((opts.user as any).bannerPosition || (opts.user as any).banner_position || '50% 50%')};" /><div class="profile-banner__overlay"></div>`
+                ? `<img src="${escapeHtml(String(currentUrl))}" alt="${t('Обложка')}" class="profile-banner__img" id="stgModalBannerImg" style="object-position: ${escapeHtml(String(opts.user.bannerPosition || opts.user.banner_position || '50% 50%'))};" /><div class="profile-banner__overlay"></div>`
                 : `<div class="profile-banner__placeholder"><span class="profile-banner__placeholder-icon">🖼️</span><span class="profile-banner__placeholder-title">${t('Обложка не установлена')}</span></div>`
             }
             <div class="profile-banner__spinner" id="stgModalBannerSpinner" style="display: none;">
@@ -1081,7 +1086,7 @@ export function showSettingsBannerModal(opts: {
       if (!currentUrl) return;
       showBannerPositionModal({
         bannerUrl: currentUrl,
-        currentPosition: (opts.user as any).bannerPosition || (opts.user as any).banner_position || '50% 50%',
+        currentPosition: String(opts.user.bannerPosition || opts.user.banner_position || '50% 50%'),
         onSave: async (newPos) => {
           try {
             const res = await apiCall('/profile/update', {
@@ -1090,8 +1095,8 @@ export function showSettingsBannerModal(opts: {
               body: JSON.stringify({ bannerPosition: newPos }),
             });
             if (res.ok) {
-              (opts.user as any).bannerPosition = newPos;
-              (opts.user as any).banner_position = newPos;
+              opts.user.bannerPosition = newPos;
+              opts.user.banner_position = newPos;
               const img = document.getElementById('stgModalBannerImg');
               if (img) img.style.objectPosition = newPos;
               const heroImg = document.getElementById('profileHeroBannerImg');
@@ -1212,7 +1217,7 @@ export function showSettingsBannerModal(opts: {
           // Open repositioner immediately
           showBannerPositionModal({
             bannerUrl: newUrl,
-            currentPosition: (opts.user as any).bannerPosition || (opts.user as any).banner_position || '50% 50%',
+            currentPosition: String(opts.user.bannerPosition || opts.user.banner_position || '50% 50%'),
             onSave: async (pos) => {
               try {
                 const updateRes = await apiCall('/profile/update', {
@@ -1221,8 +1226,8 @@ export function showSettingsBannerModal(opts: {
                   body: JSON.stringify({ bannerPosition: pos }),
                 });
                 if (updateRes.ok) {
-                  (opts.user as any).bannerPosition = pos;
-                  (opts.user as any).banner_position = pos;
+                  opts.user.bannerPosition = pos;
+                  opts.user.banner_position = pos;
                   const img = document.getElementById('stgModalBannerImg');
                   if (img) img.style.objectPosition = pos;
                   const heroImg = document.getElementById('profileHeroBannerImg');

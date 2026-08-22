@@ -17,13 +17,18 @@ export async function renderPricing(): Promise<void> {
   // Отключаем фоновую анимацию клубничек для чистого строгого вида
   document.body.classList.add('no-strawberries');
 
-  let currentInterval: BillingInterval = 'month';
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoTier = urlParams.get('tier')?.toLowerCase();
+  const autoInterval = urlParams.get('interval')?.toLowerCase();
+
+  let currentInterval: BillingInterval = (autoInterval === 'year' || autoInterval === 'yearly') ? 'year' : 'month';
   let detectedCountry: string | undefined = undefined;
   let pricePreviewData: PricePreviewResponse | null = null;
   let isLoadingPrices = true;
   let configError: string | null = null;
   let userEmail: string | undefined = undefined;
-  let currentUser: { login?: string; username?: string; email?: string } | null = null;
+  let currentUser: { id?: number | string; login?: string; username?: string; email?: string } | null = null;
+  let hasAutoOpenedCheckout = false;
 
   // Render initial loading state
   renderPage();
@@ -73,6 +78,34 @@ export async function renderPricing(): Promise<void> {
   }
 
   renderPage();
+
+  // Auto-open Paddle Checkout if ?tier= was requested
+  if (!hasAutoOpenedCheckout && autoTier && !isLoadingPrices) {
+    hasAutoOpenedCheckout = true;
+    const matchedTier = PRICING_TIERS.find((t) => t.name.toLowerCase() === autoTier);
+    if (matchedTier) {
+      const activePriceId = matchedTier.priceId[currentInterval];
+      if (activePriceId) {
+        setTimeout(async () => {
+          try {
+            await openPaddleCheckout({
+              priceId: activePriceId,
+              userEmail,
+              countryCode: detectedCountry,
+              customData: {
+                userId: currentUser?.id ? String(currentUser.id) : '',
+                userLogin: currentUser?.login || currentUser?.username || '',
+                tier: matchedTier.name,
+                interval: currentInterval,
+              },
+            });
+          } catch (err) {
+            console.warn('[PADDLE] Auto-checkout open failed:', err);
+          }
+        }, 350);
+      }
+    }
+  }
 
   function getFormattedPrice(priceId: string): string {
     if (isLoadingPrices) {
@@ -406,6 +439,8 @@ export async function renderPricing(): Promise<void> {
             userEmail,
             countryCode: detectedCountry,
             customData: {
+              userId: currentUser?.id ? String(currentUser.id) : '',
+              userLogin: currentUser?.login || currentUser?.username || '',
               tier: tierName || '',
               interval: currentInterval,
             },
