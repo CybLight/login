@@ -173,6 +173,12 @@ export async function initApp(): Promise<void> {
   Router.on('privacy', () => {
     window.location.replace(sitePath('privacy'));
   });
+  Router.on('refund', () => {
+    window.location.replace(sitePath('refund'));
+  });
+  Router.on('refund-policy', () => {
+    window.location.replace(sitePath('refund'));
+  });
   Router.on('pricing', renderPricing);
   Router.on('premium', renderPricing);
   Router.on('welcome', renderWelcome);

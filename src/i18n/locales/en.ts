@@ -1433,4 +1433,9 @@ export const en: Record<string, string> = {
   "Дата вашего рождения": "Your date of birth",
   "О себе / Подпись": "About me / Signature",
   "Не указан": "Not specified",
+  "Политика возврата": "Refund Policy",
+  "Политикой возврата": "Refund Policy",
+  "Условиями использования": "Terms of Service",
+  "Политикой конфиденциальности": "Privacy Policy",
+  "Платежи безопасно обрабатываются Paddle. Оформляя подписку, вы соглашаетесь с {termsLink}, {privacyLink} и {refundLink} (14 дней гарантии возврата средств).": "Payments are securely processed by Paddle. By subscribing you agree to our {termsLink}, {privacyLink}, and {refundLink} (14-day money-back guarantee).",
 };

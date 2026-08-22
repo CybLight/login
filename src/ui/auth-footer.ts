@@ -12,6 +12,7 @@ export function buildAuthFooter(options: AuthFooterOptions = {}): string {
   const homeUrl = sitePath('', locale);
   const termsUrl = sitePath('terms', locale);
   const privacyUrl = sitePath('privacy', locale);
+  const refundUrl = sitePath('refund', locale);
   const contactAdminUrl = localePath('contact-admin', locale);
   const langHref = (code: Locale) => localePath(stripLocalePrefix().path, code);
 
@@ -74,6 +75,7 @@ export function buildAuthFooter(options: AuthFooterOptions = {}): string {
         <div class="footer-legal">
           <a href="${termsUrl}" target="_blank" rel="noopener">${t('Условия использования')}</a>
           <a href="${privacyUrl}" target="_blank" rel="noopener">${t('Политика конфиденциальности')}</a>
+          <a href="${refundUrl}" target="_blank" rel="noopener">${t('Политика возврата')}</a>
           <a href="#" class="jsPrivacySettings">${t('Настройки конфиденциальности')}</a>
         </div>
       </div>

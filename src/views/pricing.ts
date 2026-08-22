@@ -328,8 +328,15 @@ export async function renderPricing(): Promise<void> {
                   <span>Google Pay</span>
                 </div>
               </div>
-              <p style="font-size: 13px; color: #64748b; margin: 0; line-height: 1.4;">
+              <p style="font-size: 13px; color: #64748b; margin: 0 0 10px 0; line-height: 1.4;">
                 ${t('Подписку можно отменить в любой момент в личном кабинете. Никаких скрытых платежей.')}
+              </p>
+              <p style="font-size: 12.5px; color: #94a3b8; margin: 0; line-height: 1.5;">
+                ${t('Платежи безопасно обрабатываются Paddle. Оформляя подписку, вы соглашаетесь с {termsLink}, {privacyLink} и {refundLink} (14 дней гарантии возврата средств).', {
+                  termsLink: `<a href="${sitePath('terms', getLocale())}" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">${t('Условиями использования')}</a>`,
+                  privacyLink: `<a href="${sitePath('privacy', getLocale())}" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">${t('Политикой конфиденциальности')}</a>`,
+                  refundLink: `<a href="${sitePath('refund', getLocale())}" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">${t('Политикой возврата')}</a>`,
+                })}
               </p>
             </div>
 

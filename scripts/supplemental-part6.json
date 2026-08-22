@@ -1354,5 +1354,25 @@
   "Не указан": [
     "Не вказаний",
     "Not specified"
+  ],
+  "Политика возврата": [
+    "Політика повернення",
+    "Refund Policy"
+  ],
+  "Политикой возврата": [
+    "Політикою повернення",
+    "Refund Policy"
+  ],
+  "Условиями использования": [
+    "Умовами використання",
+    "Terms of Service"
+  ],
+  "Политикой конфиденциальности": [
+    "Політикою конфіденційності",
+    "Privacy Policy"
+  ],
+  "Платежи безопасно обрабатываются Paddle. Оформляя подписку, вы соглашаетесь с {termsLink}, {privacyLink} и {refundLink} (14 дней гарантии возврата средств).": [
+    "Платежі безпечно обробляються Paddle. Оформлюючи підписку, ви погоджуєтесь з {termsLink}, {privacyLink} та {refundLink} (14 днів гарантії повернення коштів).",
+    "Payments are securely processed by Paddle. By subscribing you agree to our {termsLink}, {privacyLink}, and {refundLink} (14-day money-back guarantee)."
   ]
 }
