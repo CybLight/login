@@ -1199,7 +1199,7 @@ export function showSettingsBannerModal(opts: {
           currentUrl = newUrl;
           opts.user.bannerUrl = newUrl;
           opts.user.banner_url = newUrl;
-          opts.onUpdated(newUrl);
+
           if (preview) {
             preview.className = 'profile-banner has-banner';
             preview.innerHTML = `
@@ -1232,6 +1232,7 @@ export function showSettingsBannerModal(opts: {
                   if (img) img.style.objectPosition = pos;
                   const heroImg = document.getElementById('profileHeroBannerImg');
                   if (heroImg) heroImg.style.objectPosition = pos;
+                  opts.onUpdated(newUrl);
                   return { ok: true };
                 }
                 return { ok: false, error: t('Ошибка сохранения позиции') };
@@ -1341,6 +1342,15 @@ export function showBannerPositionModal(opts: {
     wrap.querySelector('#bannerPosCancelBtn')?.addEventListener('click', () => close());
 
     const previewImg = wrap.querySelector('#bannerPosPreviewImg') as HTMLImageElement;
+    if (previewImg) {
+      previewImg.onerror = () => {
+        // Fallback retry with cache-busting timestamp
+        if (opts.bannerUrl && !previewImg.src.includes('?t=')) {
+          const sep = opts.bannerUrl.includes('?') ? '&' : '?';
+          previewImg.src = `${opts.bannerUrl}${sep}t=${Date.now()}`;
+        }
+      };
+    }
     const slider = wrap.querySelector('#bannerPosSlider') as HTMLInputElement;
     const badge = wrap.querySelector('#bannerPosBadge') as HTMLElement;
     const valLabel = wrap.querySelector('#bannerPosValueLabel') as HTMLElement;
