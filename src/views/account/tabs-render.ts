@@ -269,7 +269,7 @@ function renderProfileTab(user: User): string {
     ? new Date(dob).toLocaleDateString(localeTag(getLocale()))
     : t('Не указана');
 
-  const bio = user.bio || (user as any).aboutMe || (user as any).about_me;
+  const bio = user.bio || user.aboutMe || user.about_me;
 
   const bannerUrl = user.bannerUrl || user.banner_url;
   const bannerPosition = user.bannerPosition || user.banner_position || '50% 50%';
@@ -286,6 +286,7 @@ function renderProfileTab(user: User): string {
       }
 
       <div class="profile-hero__banner-actions" id="profileHeroBannerActions">
+        <input type="file" id="profileBannerFileInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display: none;" />
         ${
           bannerUrl
             ? `

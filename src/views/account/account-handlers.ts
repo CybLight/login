@@ -850,16 +850,27 @@ function bindProfileTabHandlers(user: AppUser, api: ApiMessage): void {
  * Привязать обработчики для загрузки, настройки позиции и удаления баннера профиля
  */
 function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
-  const fileInput = document.getElementById('profileBannerFileInput') as HTMLInputElement | null;
+  let fileInput = document.getElementById('profileBannerFileInput') as HTMLInputElement | null;
   const uploadBtn = document.getElementById('profileHeroBannerUploadBtn');
   const posBtn = document.getElementById('profileHeroBannerPosBtn');
   const removeBtn = document.getElementById('profileHeroBannerRemoveBtn');
   const spinner = document.getElementById('profileHeroBannerSpinner');
 
-  if (!fileInput) return;
+  if (!fileInput) {
+    fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = 'profileBannerFileInput';
+    fileInput.accept = 'image/jpeg,image/png,image/webp,image/gif';
+    fileInput.style.display = 'none';
+    const bannerActions = document.getElementById('profileHeroBannerActions') || document.body;
+    bannerActions.appendChild(fileInput);
+  }
 
   const openPicker = () => {
-    fileInput.click();
+    if (fileInput) {
+      fileInput.value = '';
+      fileInput.click();
+    }
   };
 
   uploadBtn?.addEventListener('click', (e) => {
