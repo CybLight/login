@@ -1296,6 +1296,9 @@ export function showBannerPositionModal(opts: {
       }
     }
 
+    const rawUrl = typeof opts?.bannerUrl === 'string' ? opts.bannerUrl : String(opts?.bannerUrl || '');
+    const safeBannerUrl = escapeHtml(rawUrl);
+
     wrap.innerHTML = `
       <div class="account-notice-backdrop"></div>
       <div class="account-notice-card" style="width: min(92vw, 560px) !important; padding: 24px !important; border-radius: 22px !important;" role="dialog" aria-modal="true" aria-labelledby="bannerPosTitle">
@@ -1309,7 +1312,7 @@ export function showBannerPositionModal(opts: {
         </p>
 
         <div class="banner-position-preview-frame" id="bannerPosFrame" title="${t('Потяните вверх/вниз для смещения')}">
-          <img src="${escapeHtml(opts.bannerUrl)}" alt="${t('Обложка')}" class="banner-position-preview-img" id="bannerPosPreviewImg" style="object-position: 50% ${currentY}%;" />
+          <img src="${safeBannerUrl}" alt="${t('Обложка')}" class="banner-position-preview-img" id="bannerPosPreviewImg" style="object-position: 50% ${currentY}%;" />
           <div class="profile-hero__banner-overlay" style="opacity: 0.35;"></div>
           <div class="banner-position-preview-badge" id="bannerPosBadge">${currentY}%</div>
         </div>
@@ -1350,10 +1353,10 @@ export function showBannerPositionModal(opts: {
     const previewImg = wrap.querySelector('#bannerPosPreviewImg') as HTMLImageElement;
     if (previewImg) {
       previewImg.onerror = () => {
-        // Fallback retry with cache-busting timestamp
-        if (opts.bannerUrl && !previewImg.src.includes('?t=')) {
-          const sep = opts.bannerUrl.includes('?') ? '&' : '?';
-          previewImg.src = `${opts.bannerUrl}${sep}t=${Date.now()}`;
+        previewImg.onerror = null;
+        if (rawUrl && !previewImg.src.includes('?t=')) {
+          const sep = rawUrl.includes('?') ? '&' : '?';
+          previewImg.src = `${rawUrl}${sep}t=${Date.now()}`;
         }
       };
     }
