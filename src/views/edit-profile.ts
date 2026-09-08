@@ -7,7 +7,7 @@ import { buildAuthFooter, initFooterLangSwitcher } from '@/ui/auth-footer';
 import { apiCall, escapeHtml } from '@/utils';
 import { Router } from '@/router/Router';
 import { pushLocalEasterFlagsToServer } from '@/services';
-import { showBannerPositionModal } from './account/modals';
+import { showBannerPositionModal, showAccountConfirmModal, showAccountNoticeModal } from './account/modals';
 
 interface EditableProfile {
   id?: string;
@@ -721,7 +721,13 @@ function initBannerEdit(profile: EditableProfile): void {
   });
 
   removeBtn?.addEventListener('click', async () => {
-    if (!confirm(t('Вы уверены, что хотите удалить обложку профиля?'))) return;
+    const confirmed = await showAccountConfirmModal({
+      title: t('Удаление обложки'),
+      text: t('Вы уверены, что хотите удалить обложку профиля?'),
+      confirmText: t('Удалить'),
+      cancelText: t('Отмена'),
+    });
+    if (!confirmed) return;
 
     if (spinner) spinner.style.display = 'flex';
     try {
@@ -748,11 +754,11 @@ function initBannerEdit(profile: EditableProfile): void {
         if (removeBtn) removeBtn.style.display = 'none';
         if (statusText) statusText.textContent = t('Не указано');
       } else {
-        alert(t('Ошибка при удалении обложки'));
+        showAccountNoticeModal('error', t('Ошибка при удалении обложки'));
       }
     } catch (err) {
       console.error('Error removing banner:', err);
-      alert(t('Ошибка сети'));
+      showAccountNoticeModal('error', t('Ошибка сети'));
     } finally {
       if (spinner) spinner.style.display = 'none';
     }
@@ -763,13 +769,13 @@ function initBannerEdit(profile: EditableProfile): void {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert(t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP)'));
+      showAccountNoticeModal('warn', t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP)'));
       fileInput.value = '';
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert(t('Файл слишком большой. Максимальный размер 10 МБ'));
+      showAccountNoticeModal('warn', t('Файл слишком большой. Максимальный размер 10 МБ'));
       fileInput.value = '';
       return;
     }
@@ -827,11 +833,11 @@ function initBannerEdit(profile: EditableProfile): void {
           },
         });
       } else {
-        alert(data?.error || t('Ошибка при загрузке обложки'));
+        showAccountNoticeModal('error', data?.error || t('Ошибка при загрузке обложки'));
       }
     } catch (err) {
       console.error('Banner upload error:', err);
-      alert(t('Не удалось загрузить обложку. Проверьте соединение.'));
+      showAccountNoticeModal('error', t('Не удалось загрузить обложку. Проверьте соединение.'));
     } finally {
       if (spinner) spinner.style.display = 'none';
       fileInput.value = '';

@@ -10,6 +10,7 @@ import { Router } from '@/router/Router';
 import { PRICING_TIERS } from '@/config/pricing-tiers';
 import { getPaddlePricePreview, openPaddleCheckout, getPaddleInstance } from '@/services/paddle';
 import type { PricePreviewResponse } from '@paddle/paddle-js';
+import { showAccountNoticeModal } from './account/modals';
 
 type BillingInterval = 'month' | 'year';
 
@@ -448,7 +449,7 @@ export async function renderPricing(): Promise<void> {
         } catch (err: unknown) {
           console.error('[PADDLE] Checkout open failed:', err);
           const errorMsg = err instanceof Error ? err.message : t('Не удалось открыть окно оплаты Paddle');
-          alert(errorMsg);
+          showAccountNoticeModal('error', errorMsg);
         } finally {
           button.disabled = false;
           button.innerHTML = originalText;

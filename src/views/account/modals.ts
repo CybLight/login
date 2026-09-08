@@ -1112,7 +1112,13 @@ export function showSettingsBannerModal(opts: {
     });
 
     removeBtn?.addEventListener('click', async () => {
-      if (!confirm(t('Вы уверены, что хотите удалить обложку профиля?'))) return;
+      const confirmed = await showAccountConfirmModal({
+        title: t('Удаление обложки'),
+        text: t('Вы уверены, что хотите удалить обложку профиля?'),
+        confirmText: t('Удалить'),
+        cancelText: t('Отмена'),
+      });
+      if (!confirmed) return;
       if (spinner) spinner.style.display = 'flex';
       if (errEl) errEl.style.display = 'none';
 

@@ -911,7 +911,13 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
 
   removeBtn?.addEventListener('click', async (e) => {
     e.stopPropagation();
-    if (!confirm(t('Вы уверены, что хотите удалить обложку профиля?'))) return;
+    const confirmed = await showAccountConfirmModal({
+      title: t('Удаление обложки'),
+      text: t('Вы уверены, что хотите удалить обложку профиля?'),
+      confirmText: t('Удалить'),
+      cancelText: t('Отмена'),
+    });
+    if (!confirmed) return;
 
     if (spinner) spinner.style.display = 'flex';
     try {
