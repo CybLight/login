@@ -12,6 +12,7 @@ import { showAppConfirm, showAppPrompt } from '@/ui';
 import { buildAuthFooter } from '@/ui/auth-footer';
 import { openReportUserModal } from '@/ui/report-modal';
 import { bindBadgeEasterEgg } from '@/components/easter/badge-easter';
+import { getBannerImgStyle } from '@/utils/banner';
 
 interface PublicProfile {
   id?: string;
@@ -1615,7 +1616,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
           ${
             bannerUrl
               ? `
-            <img src="${escapeHtml(String(bannerUrl))}" alt="${t('Обложка профиля')}" class="profile-header__banner-img" style="object-position: ${escapeHtml(String(bannerPosition))};" />
+            <img src="${escapeHtml(String(bannerUrl))}" alt="${t('Обложка профиля')}" class="profile-header__banner-img" style="${getBannerImgStyle(bannerPosition)}" />
             <div class="profile-header__banner-overlay"></div>
           `
               : ''
@@ -1711,7 +1712,7 @@ export async function renderPublicProfile(username: string): Promise<void> {
         ${
           bannerUrl
             ? `
-          <img src="${escapeHtml(String(bannerUrl))}" alt="${t('Обложка профиля')}" class="profile-header__banner-img" style="object-position: ${escapeHtml(String(bannerPosition))};" />
+          <img src="${escapeHtml(String(bannerUrl))}" alt="${t('Обложка профиля')}" class="profile-header__banner-img" style="${getBannerImgStyle(bannerPosition)}" />
           <div class="profile-header__banner-overlay"></div>
         `
             : ''

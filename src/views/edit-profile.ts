@@ -8,6 +8,7 @@ import { apiCall, escapeHtml } from '@/utils';
 import { Router } from '@/router/Router';
 import { pushLocalEasterFlagsToServer } from '@/services';
 import { showBannerPositionModal, showAccountConfirmModal, showAccountNoticeModal } from './account/modals';
+import { getBannerImgStyle } from '@/utils/banner';
 
 interface EditableProfile {
   id?: string;
@@ -469,7 +470,7 @@ export async function renderEditProfile(): Promise<void> {
               <div class="profile-banner ${profile.bannerUrl || profile.banner_url ? 'has-banner' : ''}" id="editProfileBannerPreview" style="height: 140px; margin-bottom: 0;">
                 ${
                   profile.bannerUrl || profile.banner_url
-                    ? `<img src="${escapeHtml(String(profile.bannerUrl || profile.banner_url))}" alt="${t('Обложка')}" class="profile-banner__img" id="editProfileBannerImg" style="object-position: ${escapeHtml(String(profile.bannerPosition || profile.banner_position || '50% 50%'))};" /><div class="profile-banner__overlay"></div>`
+                    ? `<img src="${escapeHtml(String(profile.bannerUrl || profile.banner_url))}" alt="${t('Обложка')}" class="profile-banner__img" id="editProfileBannerImg" style="${getBannerImgStyle(profile.bannerPosition || profile.banner_position)}" /><div class="profile-banner__overlay"></div>`
                     : `<div class="profile-banner__placeholder"><span class="profile-banner__placeholder-icon">🖼️</span><span class="profile-banner__placeholder-title">${t('Обложка не установлена')}</span></div>`
                 }
                 <div class="profile-banner__spinner" id="editProfileBannerSpinner" style="display: none;">
@@ -709,7 +710,7 @@ function initBannerEdit(profile: EditableProfile): void {
             profile.bannerPosition = newPos;
             profile.banner_position = newPos;
             const img = document.getElementById('editProfileBannerImg');
-            if (img) img.style.objectPosition = newPos;
+            if (img) img.style.cssText = getBannerImgStyle(newPos);
             return { ok: true };
           }
           return { ok: false, error: t('Ошибка сохранения позиции') };
@@ -803,7 +804,7 @@ function initBannerEdit(profile: EditableProfile): void {
         profile.banner_url = newUrl;
         preview.className = 'profile-banner has-banner';
         preview.innerHTML = `
-          <img src="${escapeHtml(newUrl)}" alt="${t('Обложка')}" class="profile-banner__img" id="editProfileBannerImg" style="object-position: ${escapeHtml(String(profile.bannerPosition || profile.banner_position || '50% 50%'))};" />
+          <img src="${escapeHtml(newUrl)}" alt="${t('Обложка')}" class="profile-banner__img" id="editProfileBannerImg" style="${getBannerImgStyle(profile.bannerPosition || profile.banner_position)}" />
           <div class="profile-banner__overlay"></div>
           <div class="profile-banner__spinner" id="editProfileBannerSpinner" style="display: none;">
             <span class="loading-spinner"></span>
@@ -829,7 +830,7 @@ function initBannerEdit(profile: EditableProfile): void {
                 profile.bannerPosition = newPos;
                 profile.banner_position = newPos;
                 const img = document.getElementById('editProfileBannerImg');
-                if (img) img.style.objectPosition = newPos;
+                if (img) img.style.cssText = getBannerImgStyle(newPos);
                 return { ok: true };
               }
               return { ok: false, error: t('Ошибка сохранения позиции') };

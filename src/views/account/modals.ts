@@ -7,6 +7,7 @@ import { initPasswordEyes } from '@/components/password/password-helpers';
 import type { User } from '@/types';
 import { Router } from '@/router/Router';
 import { containsProfanity } from '@/utils/profanityFilter';
+import { parseBannerPosition, formatBannerPosition, getBannerImgStyle, applyBannerImgStyle } from '@/utils/banner';
 
 function createModalCloser(
   wrap: HTMLElement,
@@ -1024,7 +1025,7 @@ export function showSettingsBannerModal(opts: {
           <div class="profile-banner ${currentUrl ? 'has-banner' : ''}" id="stgModalBannerPreview" style="height: 150px; margin-bottom: 0;">
             ${
               currentUrl
-                ? `<img src="${escapeHtml(String(currentUrl))}" alt="${t('Обложка')}" class="profile-banner__img" id="stgModalBannerImg" style="object-position: ${escapeHtml(String(opts.user.bannerPosition || opts.user.banner_position || '50% 50%'))};" /><div class="profile-banner__overlay"></div>`
+                ? `<img src="${escapeHtml(String(currentUrl))}" alt="${t('Обложка')}" class="profile-banner__img" id="stgModalBannerImg" style="${getBannerImgStyle(opts.user.bannerPosition || opts.user.banner_position)}" /><div class="profile-banner__overlay"></div>`
                 : `<div class="profile-banner__placeholder"><span class="profile-banner__placeholder-icon">🖼️</span><span class="profile-banner__placeholder-title">${t('Обложка не установлена')}</span></div>`
             }
             <div class="profile-banner__spinner" id="stgModalBannerSpinner" style="display: none;">
@@ -1097,10 +1098,8 @@ export function showSettingsBannerModal(opts: {
             if (res.ok) {
               opts.user.bannerPosition = newPos;
               opts.user.banner_position = newPos;
-              const img = document.getElementById('stgModalBannerImg');
-              if (img) img.style.objectPosition = newPos;
-              const heroImg = document.getElementById('profileHeroBannerImg');
-              if (heroImg) heroImg.style.objectPosition = newPos;
+              applyBannerImgStyle(document.getElementById('stgModalBannerImg'), newPos);
+              applyBannerImgStyle(document.getElementById('profileHeroBannerImg'), newPos);
               return { ok: true };
             }
             return { ok: false, error: t('Ошибка сохранения позиции') };
@@ -1240,10 +1239,8 @@ export function showSettingsBannerModal(opts: {
                 if (updateRes.ok) {
                   opts.user.bannerPosition = pos;
                   opts.user.banner_position = pos;
-                  const img = document.getElementById('stgModalBannerImg');
-                  if (img) img.style.objectPosition = pos;
-                  const heroImg = document.getElementById('profileHeroBannerImg');
-                  if (heroImg) heroImg.style.objectPosition = pos;
+                  applyBannerImgStyle(document.getElementById('stgModalBannerImg'), pos);
+                  applyBannerImgStyle(document.getElementById('profileHeroBannerImg'), pos);
                   opts.onUpdated(newUrl);
                   return { ok: true };
                 }
@@ -1289,18 +1286,9 @@ export function showBannerPositionModal(opts: {
     wrap.id = 'bannerPositionModal';
     wrap.className = 'account-notice-modal';
 
-    let currentY = 50;
-    if (opts.currentPosition) {
-      const parts = opts.currentPosition.trim().split(' ');
-      if (parts.length >= 2) {
-        const yStr = parts[1].replace('%', '');
-        const parsed = parseInt(yStr, 10);
-        if (!isNaN(parsed)) currentY = Math.max(0, Math.min(100, parsed));
-      } else {
-        const parsed = parseInt(parts[0].replace('%', ''), 10);
-        if (!isNaN(parsed)) currentY = Math.max(0, Math.min(100, parsed));
-      }
-    }
+    const parsed = parseBannerPosition(opts.currentPosition);
+    let currentY = parsed.y;
+    let currentZoom = parsed.zoom;
 
     const rawUrl = typeof opts?.bannerUrl === 'string' ? opts.bannerUrl : String(opts?.bannerUrl || '');
     const safeBannerUrl = escapeHtml(rawUrl);
@@ -1310,32 +1298,54 @@ export function showBannerPositionModal(opts: {
       <div class="account-notice-card" style="width: min(92vw, 560px) !important; padding: 24px !important; border-radius: 22px !important;" role="dialog" aria-modal="true" aria-labelledby="bannerPosTitle">
         <div id="bannerPosTitle" class="account-notice-head" style="font-size: 20px !important; font-weight: 700 !important; margin-bottom: 12px !important; display: flex; align-items: center; gap: 8px;">
           <span>⚙️</span>
-          <span>${t('Настройка области обзора')}</span>
+          <span>${t('Настройка области обзора и зума')}</span>
         </div>
 
         <p style="font-size: 13px; color: #94a3b8; margin: 0 0 14px 0; line-height: 1.4;">
-          ${t('Перетащите изображение или используйте ползунок, чтобы настроить фокус обложки:')}
+          ${t('Перетащите изображение для смещения, используйте колесико мыши или ползунки для настройки фокуса и масштаба:')}
         </p>
 
-        <div class="banner-position-preview-frame" id="bannerPosFrame" title="${t('Потяните вверх/вниз для смещения')}">
-          <img src="${safeBannerUrl}" alt="${t('Обложка')}" class="banner-position-preview-img" id="bannerPosPreviewImg" style="object-position: 50% ${currentY}%;" />
+        <div class="banner-position-preview-frame" id="bannerPosFrame" title="${t('Потяните вверх/вниз для смещения, колесико мыши для масштаба')}">
+          <img src="${safeBannerUrl}" alt="${t('Обложка')}" class="banner-position-preview-img" id="bannerPosPreviewImg" style="object-position: 50% ${currentY}%; transform: scale(${(currentZoom / 100).toFixed(2)}); transform-origin: 50% ${currentY}%;" />
           <div class="profile-hero__banner-overlay" style="opacity: 0.35;"></div>
-          <div class="banner-position-preview-badge" id="bannerPosBadge">${currentY}%</div>
+          <div class="banner-position-preview-badge banner-position-preview-badge--left" id="bannerPosBadge">↕️ ${currentY}%</div>
+          <div class="banner-position-preview-badge banner-position-preview-badge--right" id="bannerZoomBadge">🔍 ${currentZoom}%</div>
         </div>
 
         <div class="banner-position-controls">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-            <label for="bannerPosSlider" style="font-size: 12.5px; font-weight: 600; color: #cbd5e1;">${t('Вертикальное смещение:')}</label>
-            <span id="bannerPosValueLabel" style="font-size: 13px; font-weight: 700; color: #ff7f27;">${currentY}%</span>
-          </div>
-          <input type="range" id="bannerPosSlider" min="0" max="100" value="${currentY}" class="input" style="padding: 0; height: 6px; cursor: pointer; accent-color: #ff7f27;" />
+          <!-- Вертикальное смещение -->
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px;">
+              <label for="bannerPosSlider" style="font-size: 12.5px; font-weight: 600; color: #cbd5e1;">${t('Вертикальное смещение:')}</label>
+              <span id="bannerPosValueLabel" style="font-size: 13px; font-weight: 700; color: #ff7f27;">${currentY}%</span>
+            </div>
+            <input type="range" id="bannerPosSlider" min="0" max="100" value="${currentY}" class="input" style="padding: 0; height: 6px; cursor: pointer; accent-color: #ff7f27; width: 100%;" />
 
-          <div class="banner-position-presets">
-            <button type="button" class="banner-position-preset-btn ${currentY === 0 ? 'active' : ''}" data-pos="0">⬆️ ${t('Верх (0%)')}</button>
-            <button type="button" class="banner-position-preset-btn ${currentY === 25 ? 'active' : ''}" data-pos="25">${t('25%')}</button>
-            <button type="button" class="banner-position-preset-btn ${currentY === 50 ? 'active' : ''}" data-pos="50">⏺️ ${t('Центр (50%)')}</button>
-            <button type="button" class="banner-position-preset-btn ${currentY === 75 ? 'active' : ''}" data-pos="75">${t('75%')}</button>
-            <button type="button" class="banner-position-preset-btn ${currentY === 100 ? 'active' : ''}" data-pos="100">⬇️ ${t('Низ (100%)')}</button>
+            <div class="banner-position-presets" style="margin-top: 8px;">
+              <button type="button" class="banner-position-preset-btn ${currentY === 0 ? 'active' : ''}" data-pos="0">⬆️ ${t('Верх (0%)')}</button>
+              <button type="button" class="banner-position-preset-btn ${currentY === 25 ? 'active' : ''}" data-pos="25">${t('25%')}</button>
+              <button type="button" class="banner-position-preset-btn ${currentY === 50 ? 'active' : ''}" data-pos="50">⏺️ ${t('Центр (50%)')}</button>
+              <button type="button" class="banner-position-preset-btn ${currentY === 75 ? 'active' : ''}" data-pos="75">${t('75%')}</button>
+              <button type="button" class="banner-position-preset-btn ${currentY === 100 ? 'active' : ''}" data-pos="100">⬇️ ${t('Низ (100%)')}</button>
+            </div>
+          </div>
+
+          <!-- Масштаб (зум) -->
+          <div>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px;">
+              <label for="bannerZoomSlider" style="font-size: 12.5px; font-weight: 600; color: #cbd5e1;">${t('Масштаб (зум):')}</label>
+              <span id="bannerZoomValueLabel" style="font-size: 13px; font-weight: 700; color: #38bdf8;">${currentZoom}%</span>
+            </div>
+            <input type="range" id="bannerZoomSlider" min="50" max="250" value="${currentZoom}" class="input" style="padding: 0; height: 6px; cursor: pointer; accent-color: #38bdf8; width: 100%;" />
+
+            <div class="banner-position-presets" style="margin-top: 8px;">
+              <button type="button" class="banner-position-preset-btn" data-zoom-step="-10">➖ -10%</button>
+              <button type="button" class="banner-position-preset-btn ${currentZoom === 100 ? 'active' : ''}" data-zoom="100">100% (1.0x)</button>
+              <button type="button" class="banner-position-preset-btn ${currentZoom === 125 ? 'active' : ''}" data-zoom="125">125%</button>
+              <button type="button" class="banner-position-preset-btn ${currentZoom === 150 ? 'active' : ''}" data-zoom="150">150%</button>
+              <button type="button" class="banner-position-preset-btn ${currentZoom === 200 ? 'active' : ''}" data-zoom="200">200%</button>
+              <button type="button" class="banner-position-preset-btn" data-zoom-step="10">➕ +10%</button>
+            </div>
           </div>
         </div>
 
@@ -1343,7 +1353,7 @@ export function showBannerPositionModal(opts: {
 
         <div class="account-notice-actions account-notice-actions--end" style="display: flex !important; gap: 12px !important; justify-content: flex-end !important; margin-top: 20px !important;">
           <button type="button" class="btn btn-outline" id="bannerPosCancelBtn">${t('Отмена')}</button>
-          <button type="button" class="btn btn-primary" id="bannerPosSaveBtn">${t('💾 Сохранить позицию')}</button>
+          <button type="button" class="btn btn-primary" id="bannerPosSaveBtn">${t('💾 Сохранить')}</button>
         </div>
       </div>
     `;
@@ -1371,37 +1381,87 @@ export function showBannerPositionModal(opts: {
         }
       };
     }
-    const slider = wrap.querySelector('#bannerPosSlider') as HTMLInputElement;
-    const badge = wrap.querySelector('#bannerPosBadge') as HTMLElement;
-    const valLabel = wrap.querySelector('#bannerPosValueLabel') as HTMLElement;
+    const posSlider = wrap.querySelector('#bannerPosSlider') as HTMLInputElement;
+    const zoomSlider = wrap.querySelector('#bannerZoomSlider') as HTMLInputElement;
+    const posBadge = wrap.querySelector('#bannerPosBadge') as HTMLElement;
+    const zoomBadge = wrap.querySelector('#bannerZoomBadge') as HTMLElement;
+    const posValLabel = wrap.querySelector('#bannerPosValueLabel') as HTMLElement;
+    const zoomValLabel = wrap.querySelector('#bannerZoomValueLabel') as HTMLElement;
     const frame = wrap.querySelector('#bannerPosFrame') as HTMLElement;
     const saveBtn = wrap.querySelector('#bannerPosSaveBtn') as HTMLButtonElement;
     const errEl = wrap.querySelector('#bannerPosError') as HTMLElement;
-    const presetBtns = wrap.querySelectorAll('.banner-position-preset-btn');
+    const posPresetBtns = wrap.querySelectorAll('[data-pos]');
+    const zoomPresetBtns = wrap.querySelectorAll('[data-zoom]');
+
+    const renderPreview = () => {
+      if (previewImg) {
+        previewImg.style.objectPosition = `50% ${currentY}%`;
+        previewImg.style.transform = `scale(${(currentZoom / 100).toFixed(2)})`;
+        previewImg.style.transformOrigin = `50% ${currentY}%`;
+      }
+    };
 
     const updatePos = (newY: number) => {
       currentY = Math.max(0, Math.min(100, Math.round(newY)));
-      if (previewImg) previewImg.style.objectPosition = `50% ${currentY}%`;
-      if (slider) slider.value = String(currentY);
-      if (badge) badge.textContent = `${currentY}%`;
-      if (valLabel) valLabel.textContent = `${currentY}%`;
+      renderPreview();
+      if (posSlider) posSlider.value = String(currentY);
+      if (posBadge) posBadge.textContent = `↕️ ${currentY}%`;
+      if (posValLabel) posValLabel.textContent = `${currentY}%`;
 
-      presetBtns.forEach((btn) => {
+      posPresetBtns.forEach((btn) => {
         const p = parseInt(btn.getAttribute('data-pos') || '-1', 10);
         btn.classList.toggle('active', p === currentY);
       });
     };
 
-    slider?.addEventListener('input', () => {
-      updatePos(Number(slider.value));
+    const updateZoom = (newZoom: number) => {
+      currentZoom = Math.max(50, Math.min(250, Math.round(newZoom)));
+      renderPreview();
+      if (zoomSlider) zoomSlider.value = String(currentZoom);
+      if (zoomBadge) zoomBadge.textContent = `🔍 ${currentZoom}%`;
+      if (zoomValLabel) zoomValLabel.textContent = `${currentZoom}%`;
+
+      zoomPresetBtns.forEach((btn) => {
+        const z = parseInt(btn.getAttribute('data-zoom') || '-1', 10);
+        btn.classList.toggle('active', z === currentZoom);
+      });
+    };
+
+    posSlider?.addEventListener('input', () => {
+      updatePos(Number(posSlider.value));
     });
 
-    presetBtns.forEach((btn) => {
+    zoomSlider?.addEventListener('input', () => {
+      updateZoom(Number(zoomSlider.value));
+    });
+
+    posPresetBtns.forEach((btn) => {
       btn.addEventListener('click', () => {
         const p = parseInt(btn.getAttribute('data-pos') || '50', 10);
         updatePos(p);
       });
     });
+
+    wrap.querySelectorAll('[data-zoom]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const z = parseInt(btn.getAttribute('data-zoom') || '100', 10);
+        updateZoom(z);
+      });
+    });
+
+    wrap.querySelectorAll('[data-zoom-step]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const step = parseInt(btn.getAttribute('data-zoom-step') || '0', 10);
+        updateZoom(currentZoom + step);
+      });
+    });
+
+    // Wheel to Zoom
+    frame.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const step = e.deltaY < 0 ? 5 : -5;
+      updateZoom(currentZoom + step);
+    }, { passive: false });
 
     // Drag to reposition inside frame
     let isDragging = false;
@@ -1439,7 +1499,7 @@ export function showBannerPositionModal(opts: {
     saveBtn.addEventListener('click', async () => {
       saveBtn.disabled = true;
       if (errEl) errEl.style.display = 'none';
-      const posStr = `50% ${currentY}%`;
+      const posStr = formatBannerPosition(currentY, currentZoom);
       const res = await opts.onSave(posStr);
       saveBtn.disabled = false;
       if (res.ok) {

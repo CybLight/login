@@ -37,6 +37,7 @@ import { getAvatarInnerHtml, getAvatarFrameClass } from './avatar';
 import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, AVATAR_FRAMES } from '../edit-profile';
 import { getLocale, localeTag } from '@/i18n';
 import { bindBadgeEasterEgg } from '@/components/easter/badge-easter';
+import { getBannerImgStyle } from '@/utils/banner';
 
 interface ApiMessage {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -897,7 +898,7 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
             user.bannerPosition = newPos;
             user.banner_position = newPos;
             const heroImg = document.getElementById('profileHeroBannerImg');
-            if (heroImg) heroImg.style.objectPosition = newPos;
+            if (heroImg) heroImg.style.cssText = getBannerImgStyle(newPos);
             api.showMsg('ok', t('Позиция обложки сохранена!'));
             return { ok: true };
           }
@@ -1001,7 +1002,7 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
                   user.bannerPosition = newPos;
                   user.banner_position = newPos;
                   const heroImg = document.getElementById('profileHeroBannerImg');
-                  if (heroImg) heroImg.style.objectPosition = newPos;
+                  if (heroImg) heroImg.style.cssText = getBannerImgStyle(newPos);
                   api.showMsg('ok', t('Позиция обложки сохранена!'));
                   return { ok: true };
                 }

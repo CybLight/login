@@ -18,6 +18,7 @@ import {
 } from "./easter-v010-render";
 import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, AVATAR_FRAMES } from "../edit-profile";
 import { detectUserCurrency } from "./modals";
+import { getBannerImgStyle } from "@/utils/banner";
 
 type User = {
   id?: string;
@@ -279,7 +280,7 @@ function renderProfileTab(user: User): string {
       ${
         bannerUrl
           ? `
-        <img src="${escapeHtml(bannerUrl)}" alt="${t('Обложка профиля')}" class="profile-hero__banner-img" id="profileHeroBannerImg" style="object-position: ${escapeHtml(bannerPosition)};" />
+        <img src="${escapeHtml(bannerUrl)}" alt="${t('Обложка профиля')}" class="profile-hero__banner-img" id="profileHeroBannerImg" style="${getBannerImgStyle(bannerPosition)}" />
         <div class="profile-hero__banner-overlay"></div>
       `
           : ''

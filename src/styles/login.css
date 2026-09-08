@@ -2395,8 +2395,7 @@ body.no-strawberries .strawberry-ring-wave {
 .banner-position-preview-badge {
   position: absolute;
   bottom: 10px;
-  left: 10px;
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.85);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   padding: 4px 10px;
@@ -2409,17 +2408,28 @@ body.no-strawberries .strawberry-ring-wave {
   z-index: 3;
 }
 
+.banner-position-preview-badge--left {
+  left: 10px;
+}
+
+.banner-position-preview-badge--right {
+  right: 10px;
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
 .banner-position-controls {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   margin-top: 16px;
 }
 
 .banner-position-presets {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .banner-position-preset-btn {
