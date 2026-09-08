@@ -3,17 +3,21 @@
  */
 
 export interface BannerPositionData {
+  x: number;
   y: number;
   zoom: number;
 }
 
 export function parseBannerPosition(raw?: string | null): BannerPositionData {
+  let x = 50;
   let y = 50;
   let zoom = 100;
-  if (!raw || typeof raw !== 'string') return { y, zoom };
+  if (!raw || typeof raw !== 'string') return { x, y, zoom };
 
   const parts = raw.trim().split(/\s+/);
   if (parts.length >= 2) {
+    const xParsed = parseInt(parts[0].replace(/[^0-9-]/g, ''), 10);
+    if (!isNaN(xParsed)) x = Math.max(0, Math.min(100, xParsed));
     const yParsed = parseInt(parts[1].replace(/[^0-9-]/g, ''), 10);
     if (!isNaN(yParsed)) y = Math.max(0, Math.min(100, yParsed));
   } else if (parts.length === 1 && parts[0]) {
@@ -34,26 +38,28 @@ export function parseBannerPosition(raw?: string | null): BannerPositionData {
     }
   }
 
-  return { y, zoom };
+  return { x, y, zoom };
 }
 
-export function formatBannerPosition(y: number, zoom: number = 100): string {
+export function formatBannerPosition(x: number = 50, y: number = 50, zoom: number = 100): string {
+  const safeX = Math.max(0, Math.min(100, Math.round(x)));
   const safeY = Math.max(0, Math.min(100, Math.round(y)));
   const safeZoom = Math.max(50, Math.min(300, Math.round(zoom)));
-  return `50% ${safeY}% ${safeZoom}%`;
+  return `${safeX}% ${safeY}% ${safeZoom}%`;
 }
 
 export function getBannerImgStyle(raw?: string | null): string {
-  const { y, zoom } = parseBannerPosition(raw);
+  const { x, y, zoom } = parseBannerPosition(raw);
   const scaleVal = (zoom / 100).toFixed(2);
-  return `object-position: 50% ${y}%; transform: scale(${scaleVal}); transform-origin: 50% ${y}%;`;
+  return `object-position: ${x}% ${y}%; transform: scale(${scaleVal}); transform-origin: ${x}% ${y}%;`;
 }
 
 export function applyBannerImgStyle(el: HTMLElement | null, raw?: string | null): void {
   if (!el) return;
-  const { y, zoom } = parseBannerPosition(raw);
-  el.style.objectPosition = `50% ${y}%`;
+  const { x, y, zoom } = parseBannerPosition(raw);
+  el.style.objectPosition = `${x}% ${y}%`;
   el.style.transform = `scale(${(zoom / 100).toFixed(2)})`;
-  el.style.transformOrigin = `50% ${y}%`;
+  el.style.transformOrigin = `${x}% ${y}%`;
 }
+
 
