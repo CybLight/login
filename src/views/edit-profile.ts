@@ -780,7 +780,12 @@ function initBannerEdit(profile: EditableProfile): void {
       return;
     }
 
-    const localPreviewUrl = URL.createObjectURL(file);
+    const localPreviewUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
     if (spinner) spinner.style.display = 'flex';
 
     const formData = new FormData();

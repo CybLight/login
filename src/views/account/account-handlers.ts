@@ -959,7 +959,13 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
       return;
     }
 
-    const previewBlobUrl = URL.createObjectURL(file);
+    const previewDataUrl = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+
     if (spinner) spinner.style.display = 'flex';
 
     const formData = new FormData();
@@ -982,7 +988,7 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
         // Prompt position adjuster immediately after upload
         setTimeout(() => {
           showBannerPositionModal({
-            bannerUrl: previewBlobUrl || newUrl,
+            bannerUrl: previewDataUrl || newUrl,
             currentPosition: user.bannerPosition || user.banner_position || '50% 50%',
             onSave: async (newPos) => {
               try {

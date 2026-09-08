@@ -1188,7 +1188,12 @@ export function showSettingsBannerModal(opts: {
         return;
       }
 
-      const localPreviewUrl = URL.createObjectURL(file);
+      const localPreviewUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+      });
       if (spinner) spinner.style.display = 'flex';
       if (errEl) errEl.style.display = 'none';
 
