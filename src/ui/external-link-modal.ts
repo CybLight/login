@@ -14,13 +14,16 @@ export function isInternalUrl(url: string): boolean {
   if (!url) return true;
   const trimmed = url.trim();
 
-  // Игнорируем якоря, js-схемы, почту, телефон
+  // Игнорируем якоря, js-схемы, почту, телефон, blob, data, about
   if (
     trimmed.startsWith('#') ||
     trimmed.startsWith('/') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('data:') ||
     trimmed.startsWith('javascript:') ||
     trimmed.startsWith('mailto:') ||
-    trimmed.startsWith('tel:')
+    trimmed.startsWith('tel:') ||
+    trimmed.startsWith('about:')
   ) {
     return true;
   }
@@ -35,7 +38,9 @@ export function isInternalUrl(url: string): boolean {
       host === 'cyblight.org' ||
       host.endsWith('.cyblight.org') ||
       host === 'localhost' ||
-      host === '127.0.0.1'
+      host === '127.0.0.1' ||
+      parsed.protocol === 'blob:' ||
+      parsed.protocol === 'data:'
     ) {
       return true;
     }
@@ -163,6 +168,11 @@ export function initExternalLinkGuard(): void {
 
       const linkEl = target.closest('a[href], [data-external-url], [data-open-url]') as HTMLElement | null;
       if (!linkEl) return;
+
+      // Не перехватываем ссылки для скачивания файлов (download)
+      if (linkEl.hasAttribute('download') || linkEl.getAttribute('download') !== null) {
+        return;
+      }
 
       const href = linkEl.getAttribute('href') || linkEl.getAttribute('data-external-url') || linkEl.getAttribute('data-open-url');
       if (!href) return;
