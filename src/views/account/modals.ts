@@ -1212,7 +1212,7 @@ export function showSettingsBannerModal(opts: {
             `;
           }
           if (posBtn) posBtn.style.display = 'inline-flex';
-          if (removeBtn) removeBtn.style.display = 'inline-flex';
+          close();
 
           // Open repositioner immediately
           showBannerPositionModal({

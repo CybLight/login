@@ -2389,6 +2389,7 @@ body.no-strawberries .strawberry-ring-wave {
   object-fit: cover;
   pointer-events: none;
   transition: none;
+  z-index: 1;
 }
 
 .banner-position-preview-badge {
@@ -2405,6 +2406,7 @@ body.no-strawberries .strawberry-ring-wave {
   color: #fbbf24;
   border: 1px solid rgba(251, 191, 36, 0.3);
   pointer-events: none;
+  z-index: 3;
 }
 
 .banner-position-controls {

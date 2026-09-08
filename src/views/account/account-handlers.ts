@@ -866,16 +866,16 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
     bannerActions.appendChild(fileInput);
   }
 
-  const openPicker = () => {
-    if (fileInput) {
-      fileInput.value = '';
-      fileInput.click();
-    }
-  };
-
   uploadBtn?.addEventListener('click', (e) => {
     e.stopPropagation();
-    openPicker();
+    showSettingsBannerModal({
+      user,
+      onUpdated: (newUrl) => {
+        user.bannerUrl = newUrl;
+        user.banner_url = newUrl;
+        Router.navigate('account-profile');
+      },
+    });
   });
 
   posBtn?.addEventListener('click', (e) => {
