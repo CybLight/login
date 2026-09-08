@@ -1188,6 +1188,7 @@ export function showSettingsBannerModal(opts: {
         return;
       }
 
+      const localPreviewUrl = URL.createObjectURL(file);
       if (spinner) spinner.style.display = 'flex';
       if (errEl) errEl.style.display = 'none';
 
@@ -1220,9 +1221,9 @@ export function showSettingsBannerModal(opts: {
           if (posBtn) posBtn.style.display = 'inline-flex';
           close();
 
-          // Open repositioner immediately
+          // Open repositioner immediately with local preview URL
           showBannerPositionModal({
-            bannerUrl: newUrl,
+            bannerUrl: localPreviewUrl || newUrl,
             currentPosition: String(opts.user.bannerPosition || opts.user.banner_position || '50% 50%'),
             onSave: async (pos) => {
               try {
@@ -1352,11 +1353,16 @@ export function showBannerPositionModal(opts: {
 
     const previewImg = wrap.querySelector('#bannerPosPreviewImg') as HTMLImageElement;
     if (previewImg) {
+      let retryCount = 0;
       previewImg.onerror = () => {
-        previewImg.onerror = null;
-        if (rawUrl && !previewImg.src.includes('?t=')) {
-          const sep = rawUrl.includes('?') ? '&' : '?';
-          previewImg.src = `${rawUrl}${sep}t=${Date.now()}`;
+        if (retryCount < 3 && rawUrl && !rawUrl.startsWith('blob:') && !rawUrl.startsWith('data:')) {
+          retryCount++;
+          setTimeout(() => {
+            const sep = rawUrl.includes('?') ? '&' : '?';
+            previewImg.src = `${rawUrl}${sep}t=${Date.now()}`;
+          }, retryCount * 400);
+        } else {
+          previewImg.onerror = null;
         }
       };
     }

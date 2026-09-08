@@ -780,6 +780,7 @@ function initBannerEdit(profile: EditableProfile): void {
       return;
     }
 
+    const localPreviewUrl = URL.createObjectURL(file);
     if (spinner) spinner.style.display = 'flex';
 
     const formData = new FormData();
@@ -808,9 +809,9 @@ function initBannerEdit(profile: EditableProfile): void {
         if (removeBtn) removeBtn.style.display = 'inline-flex';
         if (statusText) statusText.textContent = t('Установлена');
 
-        // Immediately open repositioner
+        // Immediately open repositioner with local preview URL
         showBannerPositionModal({
-          bannerUrl: newUrl,
+          bannerUrl: localPreviewUrl || newUrl,
           currentPosition: profile.bannerPosition || profile.banner_position || '50% 50%',
           onSave: async (newPos) => {
             try {

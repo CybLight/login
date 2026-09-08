@@ -959,6 +959,7 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
       return;
     }
 
+    const previewBlobUrl = URL.createObjectURL(file);
     if (spinner) spinner.style.display = 'flex';
 
     const formData = new FormData();
@@ -981,7 +982,7 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
         // Prompt position adjuster immediately after upload
         setTimeout(() => {
           showBannerPositionModal({
-            bannerUrl: newUrl,
+            bannerUrl: previewBlobUrl || newUrl,
             currentPosition: user.bannerPosition || user.banner_position || '50% 50%',
             onSave: async (newPos) => {
               try {
@@ -1004,7 +1005,7 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
               }
             },
           });
-        }, 300);
+        }, 150);
       } else {
         api.showMsg('error', data?.error || t('Ошибка при загрузке обложки'));
       }
