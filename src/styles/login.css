@@ -2205,7 +2205,8 @@ body.no-strawberries .strawberry-ring-wave {
 
 .profile-hero.has-banner {
   border-color: rgba(255, 255, 255, 0.16);
-  min-height: 140px;
+  min-height: 220px;
+  padding: 28px 22px;
 }
 
 .profile-hero__banner-img {
@@ -2216,11 +2217,7 @@ body.no-strawberries .strawberry-ring-wave {
   object-fit: cover;
   z-index: 0;
   pointer-events: none;
-  transition: object-position 0.2s ease, transform 0.4s ease;
-}
-
-.profile-hero:hover .profile-hero__banner-img {
-  transform: scale(1.02);
+  transition: object-position 0.2s ease;
 }
 
 .profile-hero__banner-overlay {
@@ -2366,7 +2363,7 @@ body.no-strawberries .strawberry-ring-wave {
 .banner-position-preview-frame {
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 200px;
   border-radius: 14px;
   overflow: hidden;
   border: 1.5px solid rgba(255, 127, 39, 0.5);
