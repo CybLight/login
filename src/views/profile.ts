@@ -1212,10 +1212,12 @@ export async function renderPublicProfile(username: string): Promise<void> {
         gap: 8px;
         padding: 6px 14px;
         border-radius: 999px;
-        border: 1px solid #0891b2;
-        background: #082433;
+        border: 1px solid rgba(8, 145, 178, 0.7);
+        background: rgba(8, 36, 51, 0.85);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
         color: #a5f3fc;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       }
       .profile-friends-value {
         font-weight: 800;
@@ -1232,14 +1234,16 @@ export async function renderPublicProfile(username: string): Promise<void> {
         gap: 8px;
         padding: 7px 16px;
         border-radius: 12px;
-        border: 1px solid #7e22ce;
-        background: #1b1130;
+        border: 1px solid rgba(126, 34, 206, 0.7);
+        background: rgba(27, 17, 48, 0.85);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
         color: #f3e8ff;
         font-size: 13.5px;
         font-weight: 500;
         max-width: 100%;
         box-sizing: border-box;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
       }
       .profile-signature-icon {
         font-size: 15px;
