@@ -50,16 +50,41 @@ export function parseUA(ua: string = ''): ParsedUA {
               ? 'Linux'
               : 'Unknown';
 
+  const isSmartHomeHub = /Smart\s*Home\s*Hub/i.test(ua);
+  const isCybLightAndroid = /CybLight-Android/i.test(ua);
+
   // Device type
-  const isTablet = isIpad || /\bTablet\b/i.test(ua) || (isAndroid && !/\bMobile\b/i.test(ua));
-  const isPhone = isIphone || (isAndroid && /\bMobile\b/i.test(ua));
-  const type = (isTablet ? 'tablet' : isPhone ? 'phone' : 'pc') as 'phone' | 'tablet' | 'pc';
+  let type: 'phone' | 'tablet' | 'pc';
+  if (isSmartHomeHub || isCybLightAndroid) {
+    type = /\bTablet\b/i.test(ua) ? 'tablet' : 'phone';
+  } else {
+    const isTablet = isIpad || /\bTablet\b/i.test(ua) || (isAndroid && !/\bMobile\b/i.test(ua));
+    const isPhone = isIphone || (isAndroid && /\bMobile\b/i.test(ua));
+    type = (isTablet ? 'tablet' : isPhone ? 'phone' : 'pc') as 'phone' | 'tablet' | 'pc';
+  }
 
   // Device model
   let device = '';
   let model = '';
 
-  if (isAndroid) {
+  if (isSmartHomeHub) {
+    const vm = ua.match(/Smart\s*Home\s*Hub\/([^\s(]+)/i);
+    const dm = ua.match(/\((Android\s+[^;)]+)(?:;\s*([^)]+))?\)/i);
+    const versionMatch = vm?.[1] || '1.0.0';
+    browser = 'Smart Home Hub';
+    version = versionMatch;
+    const rawDev = dm?.[2]?.trim() || '';
+    device = rawDev && !/smart\s*home\s*hub/i.test(rawDev) ? rawDev : 'Android Device';
+    model = `Smart Home Hub ${versionMatch}`;
+  } else if (isCybLightAndroid) {
+    const vm = ua.match(/CybLight-Android\/([^\s(]+)/i);
+    const dm = ua.match(/\((Android\s+[^;)]+)(?:;\s*([^)]+))?\)/i);
+    const versionMatch = vm?.[1] || '';
+    browser = 'CybLight';
+    version = versionMatch;
+    device = dm?.[2]?.trim() || 'Android Device';
+    model = versionMatch ? `CybLight ${versionMatch}` : 'CybLight App';
+  } else if (isAndroid) {
     const dm = ua.match(/Android\s[\d.]+;\s([^;]+?)\sBuild/i);
     model = dm?.[1]?.trim() || '';
     device = 'Android';
@@ -80,7 +105,7 @@ export function parseUA(ua: string = ''): ParsedUA {
   }
 
   // App marker
-  const isApp = /CybLightApp|Electron|Tauri|QtWebEngine/i.test(ua);
+  const isApp = /CybLightApp|Electron|Tauri|QtWebEngine|Smart\s*Home\s*Hub|CybLight-Android/i.test(ua);
 
   return { os, browser, version, type, device, model, isApp };
 }
@@ -98,7 +123,7 @@ export function getDeviceIconSvg(uaStr: string = '', parsedUA: ParsedUA | null =
   const SVG_PC = `<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2 1C0.895431 1 0 1.89543 0 3V10C0 11.1046 0.895431 12 2 12H7V14H3.5C3.22386 14 3 14.2239 3 14.5C3 14.7761 3.22386 15 3.5 15H12.5Z"></path></svg>`;
 
   if (p.type === 'tablet') return SVG_TABLET;
-  if (p.type === 'phone') return SVG_PHONE;
+  if (p.type === 'phone' || /Android|iPhone/i.test(p.os || '')) return SVG_PHONE;
   if (p.isApp) return SVG_PC;
 
   return SVG_BROWSER;

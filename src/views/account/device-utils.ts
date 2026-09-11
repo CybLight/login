@@ -13,7 +13,40 @@ export interface ParsedUA {
 export function parseUA(ua: string = ''): ParsedUA {
   ua = String(ua);
 
+  if (/Smart\s*Home\s*Hub/i.test(ua)) {
+    const versionMatch = ua.match(/Smart\s*Home\s*Hub\/([^\s(]+)/i);
+    const deviceMatch = ua.match(/\((Android\s+[^;)]+)(?:;\s*([^)]+))?\)/i);
+    const androidVersion = deviceMatch?.[1]?.replace(/^Android\s+/i, '').trim();
+    const rawDeviceName = deviceMatch?.[2]?.trim() || '';
+    const deviceName = rawDeviceName && !/smart\s*home\s*hub/i.test(rawDeviceName) ? rawDeviceName : 'Android Device';
+
+    const appVersion = versionMatch ? `Smart Home Hub ${versionMatch[1]}` : 'Smart Home Hub 1.0.0';
+
+    return {
+      os: androidVersion ? `Android ${androidVersion}` : 'Android',
+      browser: 'Smart Home Hub',
+      version: versionMatch?.[1] || '1.0.0',
+      type: /\bTablet\b/i.test(ua) ? 'tablet' : 'phone',
+      device: deviceName,
+      model: appVersion,
+      isApp: true
+    };
+  }
+
   if (/CybLight-Android/i.test(ua)) {
+    if (/SmartHomeHub/i.test(ua)) {
+      const deviceMatch = ua.match(/\((Android\s+[^;)]+)(?:;\s*([^)]+))?\)/i);
+      const androidVersion = deviceMatch?.[1]?.replace(/^Android\s+/i, '').trim();
+      return {
+        os: androidVersion ? `Android ${androidVersion}` : 'Android',
+        browser: 'Smart Home Hub',
+        version: '1.0.0',
+        type: 'phone',
+        device: 'Android Device',
+        model: 'Smart Home Hub 1.0.0',
+        isApp: true
+      };
+    }
     const versionMatch = ua.match(/CybLight-Android\/([^\s(]+)/i);
     const deviceMatch = ua.match(/\((Android\s+[^;)]+)(?:;\s*([^)]+))?\)/i);
     const androidVersion = deviceMatch?.[1]?.replace(/^Android\s+/i, '').trim();
@@ -132,7 +165,7 @@ export function getDeviceIconSvg(uaStr: string = '', parsedUA: ParsedUA | null =
   const isDesktopApp = /Electron|CybLightApp|CybLightDesktop/i.test(ua) || p.isApp;
 
   if (p.type === 'tablet') return SVG_TABLET;
-  if (p.type === 'phone') return SVG_PHONE;
+  if (p.type === 'phone' || /Android|iPhone/i.test(p.os || '')) return SVG_PHONE;
   if (isDesktopApp) return SVG_PC;
 
   return SVG_BROWSER;

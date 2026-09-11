@@ -70,35 +70,68 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
         const ua = parseUA(s.user_agent || '');
         const isCur = s.id === currentSessionId;
 
-        const deviceIconSvg = getDeviceIconSvg(s.user_agent || '', ua);
+        const isSmartHomeHub = /Smart\s*Home\s*Hub/i.test(s.user_agent || '') ||
+          /Smart\s*Home\s*Hub/i.test(s.browser || '') ||
+          /Smart\s*Home\s*Hub/i.test(ua.browser || '');
+
+        const isCybLightApp = /CybLight-Android|CybLightApp/i.test(s.user_agent || '') ||
+          /CybLight/i.test(s.browser || '') ||
+          /CybLight/i.test(ua.browser || '');
+
+        const isApp = ua.isApp || isSmartHomeHub || isCybLightApp;
+
+        let devType = ua.type;
+        if ((isSmartHomeHub || isCybLightApp || (s.os || ua.os || '').toLowerCase().includes('android')) && devType !== 'tablet') {
+          devType = 'phone';
+        }
+
+        const deviceIconSvg = getDeviceIconSvg(s.user_agent || '', { ...ua, type: devType, isApp });
         const browser = s.browser || ua.browser || 'Browser';
         let os = s.os || ua.os || 'Unknown OS';
 
         let line1 = '';
         let line2 = '';
 
-        if (ua.isApp) {
+        if (isApp) {
+          const defaultAppTitle = isSmartHomeHub ? 'Smart Home Hub' : 'CybLight App';
+          const defaultAppModel = isSmartHomeHub
+            ? (ua.version ? `Smart Home Hub ${ua.version}` : 'Smart Home Hub 1.0.0')
+            : (ua.version ? `CybLight ${ua.version}` : 'CybLight App');
+
           const devName = String(s.device_name || s.device || ua.device || '').trim();
-          line1 = devName && devName.toLowerCase() !== 'pc' ? devName : 'CybLight App';
-          line2 = String(s.model || ua.model || '').trim();
+          line1 = devName && devName.toLowerCase() !== 'pc' && !/Smart\s*Home\s*Hub/i.test(devName)
+            ? devName
+            : '';
+          line2 = String(s.model || ua.model || (isSmartHomeHub ? defaultAppModel : '')).trim();
 
           if (os.includes(' - ')) {
             const parts = os.split(' - ');
             os = parts[0].trim();
-            if ((line1 === 'CybLight App' || !line1) && parts[1]) {
+            if (!line1 && parts[1]) {
               line1 = parts[1].trim();
             }
           } else if (os.includes(' · ')) {
             const parts = os.split(' · ');
             os = parts[0].trim();
-            if ((line1 === 'CybLight App' || !line1) && parts[1]) {
+            if (!line1 && parts[1]) {
               line1 = parts[1].trim();
             }
           }
+
+          if (!line1) {
+            line1 = defaultAppTitle;
+          }
         } else {
-          const isAdminSession = (s.user_agent || '').includes('CybLightAdmin');
-          line1 = isAdminSession ? t('Панель администратора') : browser;
-          line2 = ua.version ? `${browser} ${ua.version}` : '';
+          if (os.includes(' · ')) {
+            const parts = os.split(' · ');
+            os = parts[0].trim();
+            line1 = parts[1].trim();
+            line2 = browser;
+          } else {
+            const isAdminSession = (s.user_agent || '').includes('CybLightAdmin');
+            line1 = isAdminSession ? t('Панель администратора') : browser;
+            line2 = ua.version ? `${browser} ${ua.version}` : '';
+          }
         }
 
         const loc = [s.city, s.region, countryFull(s.country)].filter(Boolean).join(', ') || '—';
@@ -110,7 +143,7 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
           <td data-label="${t('Устройство')}">
             <div class="dev">
               <div class="dev-top">
-                <span class="dev-ico dev-ico--${ua.type}" aria-hidden="true">
+                <span class="dev-ico dev-ico--${devType}" aria-hidden="true">
                   ${deviceIconSvg}
                 </span>
 
