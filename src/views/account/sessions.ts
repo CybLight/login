@@ -2,7 +2,7 @@ import { t } from '@/i18n';
 import { Router } from '@/router/Router';
 import type { SessionListItem } from '@/types';
 import { apiCall, escapeHtml } from '@/utils';
-import { countryFull, fmtTs, getDeviceIconSvg, parseUA } from './device-utils';
+import { countryFull, fmtTs, formatDeviceName, getDeviceIconSvg, parseUA } from './device-utils';
 import { showAccountRadioModal } from './modals';
 
 type ApiMessage = {
@@ -98,7 +98,8 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
             ? (ua.version ? `Smart Home Hub ${ua.version}` : 'Smart Home Hub 1.0.0')
             : (ua.version ? `CybLight ${ua.version}` : 'CybLight App');
 
-          const devName = String(s.device_name || s.device || ua.device || '').trim();
+          const rawDevName = String(s.device_name || s.device || ua.device || '').trim();
+          const devName = formatDeviceName(rawDevName);
           line1 = devName && devName.toLowerCase() !== 'pc' && !/Smart\s*Home\s*Hub/i.test(devName)
             ? devName
             : '';
@@ -108,24 +109,26 @@ async function loadSessions(container: HTMLElement, api: ApiMessage): Promise<vo
             const parts = os.split(' - ');
             os = parts[0].trim();
             if (!line1 && parts[1]) {
-              line1 = parts[1].trim();
+              line1 = formatDeviceName(parts[1].trim());
             }
           } else if (os.includes(' · ')) {
             const parts = os.split(' · ');
             os = parts[0].trim();
             if (!line1 && parts[1]) {
-              line1 = parts[1].trim();
+              line1 = formatDeviceName(parts[1].trim());
             }
           }
 
           if (!line1) {
             line1 = defaultAppTitle;
+          } else {
+            line1 = formatDeviceName(line1);
           }
         } else {
           if (os.includes(' · ')) {
             const parts = os.split(' · ');
             os = parts[0].trim();
-            line1 = parts[1].trim();
+            line1 = formatDeviceName(parts[1].trim());
             line2 = browser;
           } else {
             const isAdminSession = (s.user_agent || '').includes('CybLightAdmin');

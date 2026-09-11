@@ -10,6 +10,23 @@ export interface ParsedUA {
   isApp: boolean;
 }
 
+export function formatDeviceName(name: string): string {
+  if (!name) return '';
+  return name
+    .split(/\s+/)
+    .map((word) => {
+      // Don't modify camelCase names like iPhone, iPad, macOS
+      if (/^[a-z][A-Z]/.test(word)) {
+        return word;
+      }
+      if (/^[a-z]/.test(word)) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }
+      return word;
+    })
+    .join(' ');
+}
+
 export function parseUA(ua: string = ''): ParsedUA {
   ua = String(ua);
 
@@ -18,7 +35,7 @@ export function parseUA(ua: string = ''): ParsedUA {
     const deviceMatch = ua.match(/\((Android\s+[^;)]+)(?:;\s*([^)]+))?\)/i);
     const androidVersion = deviceMatch?.[1]?.replace(/^Android\s+/i, '').trim();
     const rawDeviceName = deviceMatch?.[2]?.trim() || '';
-    const deviceName = rawDeviceName && !/smart\s*home\s*hub/i.test(rawDeviceName) ? rawDeviceName : 'Android Device';
+    const deviceName = rawDeviceName && !/smart\s*home\s*hub/i.test(rawDeviceName) ? formatDeviceName(rawDeviceName) : 'Android Device';
 
     const appVersion = versionMatch ? `Smart Home Hub ${versionMatch[1]}` : 'Smart Home Hub 1.0.0';
 
@@ -50,7 +67,8 @@ export function parseUA(ua: string = ''): ParsedUA {
     const versionMatch = ua.match(/CybLight-Android\/([^\s(]+)/i);
     const deviceMatch = ua.match(/\((Android\s+[^;)]+)(?:;\s*([^)]+))?\)/i);
     const androidVersion = deviceMatch?.[1]?.replace(/^Android\s+/i, '').trim();
-    const deviceName = deviceMatch?.[2]?.trim() || '';
+    const rawDeviceName = deviceMatch?.[2]?.trim() || '';
+    const deviceName = rawDeviceName ? formatDeviceName(rawDeviceName) : '';
 
     const appVersion = versionMatch ? `CybLight ${versionMatch[1]}` : 'CybLight App';
 
