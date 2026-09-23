@@ -8,14 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_LOG_LEVEL?: string;
   readonly VITE_API_TIMEOUT_MS?: string;
   readonly VITE_GOOGLE_DRIVE_CLIENT_ID?: string;
-  readonly VITE_PADDLE_ENVIRONMENT?: string;
-  readonly VITE_PADDLE_CLIENT_TOKEN?: string;
-  readonly VITE_PADDLE_PRICE_STARTER_MONTH?: string;
-  readonly VITE_PADDLE_PRICE_STARTER_YEAR?: string;
-  readonly VITE_PADDLE_PRICE_PRO_MONTH?: string;
-  readonly VITE_PADDLE_PRICE_PRO_YEAR?: string;
-  readonly VITE_PADDLE_PRICE_ADVANCED_MONTH?: string;
-  readonly VITE_PADDLE_PRICE_ADVANCED_YEAR?: string;
+  readonly VITE_MONOBANK_JAR_SEND_ID?: string;
 }
 
 interface ImportMeta {

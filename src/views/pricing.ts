@@ -1,145 +1,100 @@
 /**
- * 3-Tier Pricing Page View with Paddle Live / Sandbox Checkout
+ * CybLight Premium Pricing Page View with Monobank Jar Integration (1m, 3m, 6m, 1y)
  */
 
-import { getLocale, getLocaleLabel, localePath, sitePath, t } from '@/i18n';
+import { getLocale, localePath, sitePath, t } from '@/i18n';
 import { setAppContent } from '@/ui';
 import { buildAuthFooter } from '@/ui/auth-footer';
 import { apiCall, escapeHtml } from '@/utils';
-import { Router } from '@/router/Router';
-import { PRICING_TIERS } from '@/config/pricing-tiers';
-import { getPaddlePricePreview, openPaddleCheckout, getPaddleInstance } from '@/services/paddle';
-import type { PricePreviewResponse } from '@paddle/paddle-js';
-import { showAccountNoticeModal } from './account/modals';
-
-type BillingInterval = 'month' | 'year';
+import { PRICING_PLANS, type PricingPlan } from '@/config/pricing-tiers';
 
 export async function renderPricing(): Promise<void> {
-  // Отключаем фоновую анимацию клубничек для чистого строгого вида
   document.body.classList.add('no-strawberries');
 
   const urlParams = new URLSearchParams(window.location.search);
-  const autoTier = urlParams.get('tier')?.toLowerCase();
-  const autoInterval = urlParams.get('interval')?.toLowerCase();
+  const autoPlanId = urlParams.get('plan')?.toLowerCase() || urlParams.get('tier')?.toLowerCase();
 
-  let currentInterval: BillingInterval = (autoInterval === 'year' || autoInterval === 'yearly') ? 'year' : 'month';
-  let detectedCountry: string | undefined = undefined;
-  let pricePreviewData: PricePreviewResponse | null = null;
-  let isLoadingPrices = true;
-  let configError: string | null = null;
-  let userEmail: string | undefined = undefined;
-  let currentUser: { id?: number | string; login?: string; username?: string; email?: string } | null = null;
-  let hasAutoOpenedCheckout = false;
+  let currentUser: { id?: string | number; login?: string; username?: string; email?: string } | null = null;
+  let isPremium = false;
+  let premiumUntil: number | null = null;
+  let jarSendId = import.meta.env.VITE_MONOBANK_JAR_SEND_ID || 'cyblight_jar';
+  let pollIntervalId: any = null;
 
-  // Render initial loading state
-  renderPage();
-
-  // Load user data if signed in
+  // Load user data & jar info in parallel
   try {
-    const meRes = await apiCall('/auth/me');
-    if (meRes.ok) {
-      const meData = await meRes.json().catch(() => ({}));
+    const [meRes, jarRes] = await Promise.allSettled([
+      apiCall('/auth/me'),
+      apiCall('/premium/mono-jar-info'),
+    ]);
+
+    if (meRes.status === 'fulfilled' && meRes.value.ok) {
+      const meData = await meRes.value.json().catch(() => ({}));
       if (meData?.ok && meData.user) {
         currentUser = meData.user;
-        if (meData.user.email) {
-          userEmail = meData.user.email;
+      }
+    }
+
+    if (jarRes.status === 'fulfilled' && jarRes.value.ok) {
+      const jarData = await jarRes.value.json().catch(() => ({}));
+      if (jarData?.ok && jarData.jarInfo?.sendId) {
+        jarSendId = jarData.jarInfo.sendId;
+      }
+    }
+
+    // Also check premium status if user is logged in
+    if (currentUser) {
+      const statusRes = await apiCall('/premium/status');
+      if (statusRes.ok) {
+        const statusData = await statusRes.json().catch(() => ({}));
+        if (statusData?.ok) {
+          isPremium = Boolean(statusData.isPremium);
+          premiumUntil = statusData.premiumUntil ? Number(statusData.premiumUntil) : null;
         }
       }
     }
-  } catch {
-    // Non-blocking: guests can also purchase
-  }
-
-  // Detect country server-side
-  try {
-    const geoRes = await apiCall('/geo');
-    if (geoRes.ok) {
-      const geoData = await geoRes.json().catch(() => ({}));
-      if (geoData?.ok && geoData.country && /^[A-Z]{2}$/i.test(geoData.country)) {
-        detectedCountry = geoData.country.toUpperCase();
-      }
-    }
   } catch (err) {
-    console.warn('[PADDLE] Geo detection error, will use IP-based fallback:', err);
-  }
-
-  // Load price preview from Paddle
-  try {
-    await getPaddleInstance();
-
-    // Collect all price IDs (both monthly and yearly for all tiers)
-    const allPriceIds = PRICING_TIERS.flatMap((tier) => [tier.priceId.month, tier.priceId.year]).filter(Boolean);
-
-    pricePreviewData = await getPaddlePricePreview(allPriceIds, detectedCountry);
-    isLoadingPrices = false;
-  } catch (err: unknown) {
-    console.error('[PADDLE] Initialization or PricePreview error:', err);
-    isLoadingPrices = false;
-    configError = err instanceof Error ? err.message : 'Не удалось загрузить цены Paddle. Проверьте настройки конфигурации в .env.';
+    console.warn('[PRICING] Error loading user / jar info:', err);
   }
 
   renderPage();
 
-  // Auto-open Paddle Checkout if ?tier= was requested
-  if (!hasAutoOpenedCheckout && autoTier && !isLoadingPrices) {
-    hasAutoOpenedCheckout = true;
-    const matchedTier = PRICING_TIERS.find((t) => t.name.toLowerCase() === autoTier);
-    if (matchedTier) {
-      const activePriceId = matchedTier.priceId[currentInterval];
-      if (activePriceId) {
-        setTimeout(async () => {
-          try {
-            await openPaddleCheckout({
-              priceId: activePriceId,
-              userEmail,
-              countryCode: detectedCountry,
-              customData: {
-                userId: currentUser?.id ? String(currentUser.id) : '',
-                userLogin: currentUser?.login || currentUser?.username || '',
-                tier: matchedTier.name,
-                interval: currentInterval,
-              },
-            });
-          } catch (err) {
-            console.warn('[PADDLE] Auto-checkout open failed:', err);
-          }
-        }, 350);
-      }
+  // Auto-open modal if requested via URL param
+  if (autoPlanId) {
+    const matched = PRICING_PLANS.find(
+      (p) => p.id.toLowerCase() === autoPlanId || p.id.includes(autoPlanId)
+    );
+    if (matched) {
+      setTimeout(() => openPaymentModal(matched), 300);
     }
   }
 
-  function getFormattedPrice(priceId: string): string {
-    if (isLoadingPrices) {
-      return '...';
+  function getFormattedExpiry(): string {
+    if (!premiumUntil) return '';
+    try {
+      return new Date(premiumUntil).toLocaleDateString(getLocale() === 'en' ? 'en-US' : 'ru-RU', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return '';
     }
-
-    if (!pricePreviewData || !pricePreviewData.data?.details?.lineItems) {
-      return '—';
-    }
-
-    const item = pricePreviewData.data.details.lineItems.find(
-      (li) => li.price?.id === priceId
-    );
-
-    if (item && item.formattedTotals?.total) {
-      return item.formattedTotals.total;
-    }
-
-    return '—';
   }
 
   function renderPage(): void {
-    const tierCardsHtml = PRICING_TIERS.map((tier) => {
-      const activePriceId = tier.priceId[currentInterval];
-      const formattedPrice = getFormattedPrice(activePriceId);
-      const isPopular = Boolean(tier.popular);
-      const intervalLabel = currentInterval === 'year' ? t('/ год') : t('/ мес');
+    const userLogin = currentUser?.login || currentUser?.username || '';
 
-      const featuresHtml = tier.features
+    const planCardsHtml = PRICING_PLANS.map((plan) => {
+      const isPopular = Boolean(plan.popular);
+      const discountHtml = plan.discountBadge
+        ? `<span class="pricing-discount-pill">${escapeHtml(plan.discountBadge)}</span>`
+        : '';
+
+      const featuresHtml = plan.features
         .map(
           (feat) => `
-          <li style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; font-size: 14px; color: #cbd5e1; line-height: 1.4;">
-            <span style="color: #10b981; font-weight: 900; font-size: 16px; line-height: 1; flex-shrink: 0; margin-top: 2px;">✓</span>
+          <li class="pricing-feature-item">
+            <span class="pricing-feature-check">✓</span>
             <span>${escapeHtml(t(feat))}</span>
           </li>
         `
@@ -147,373 +102,307 @@ export async function renderPricing(): Promise<void> {
         .join('');
 
       return `
-        <div class="pricing-card ${isPopular ? 'pricing-card--popular' : ''}" style="
-          position: relative;
-          background: ${isPopular ? 'linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)' : 'rgba(15, 23, 42, 0.85)'};
-          border: 1px solid ${isPopular ? 'rgba(251, 191, 36, 0.7)' : 'rgba(255, 255, 255, 0.12)'};
-          border-radius: 24px;
-          padding: 32px 28px;
-          display: flex;
-          flex-direction: column;
-          box-shadow: ${isPopular ? '0 20px 50px -10px rgba(234, 179, 8, 0.25), 0 0 30px rgba(234, 179, 8, 0.15)' : '0 10px 30px rgba(0, 0, 0, 0.5)'};
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          transform: ${isPopular ? 'scale(1.03)' : 'none'};
-          z-index: ${isPopular ? '2' : '1'};
-        ">
-          ${
-            tier.badge
-              ? `
-            <div style="
-              position: absolute;
-              top: -14px;
-              left: 50%;
-              transform: translateX(-50%);
-              background: linear-gradient(135deg, #f59e0b, #eab308);
-              color: #000;
-              font-size: 11px;
-              font-weight: 900;
-              text-transform: uppercase;
-              letter-spacing: 0.8px;
-              padding: 4px 14px;
-              border-radius: 999px;
-              box-shadow: 0 4px 14px rgba(234, 179, 8, 0.4);
-            ">
-              ${escapeHtml(t(tier.badge))}
+        <div class="pricing-card ${isPopular ? 'pricing-card--popular' : ''}">
+          ${isPopular ? `<div class="pricing-card-badge">${t('Популярный выбор')}</div>` : ''}
+          <div class="pricing-card-header">
+            <div class="pricing-card-top-row">
+              <span class="pricing-plan-badge">${escapeHtml(plan.badge || '⭐')}</span>
+              ${discountHtml}
             </div>
-          `
-              : ''
-          }
-
-          <div style="margin-bottom: 20px; text-align: center;">
-            <h3 style="font-size: 24px; font-weight: 800; color: #ffffff; margin: 0 0 8px 0; letter-spacing: -0.5px;">
-              ${escapeHtml(tier.name)}
-            </h3>
-            <p style="font-size: 13px; color: #94a3b8; line-height: 1.45; min-height: 38px; margin: 0;">
-              ${escapeHtml(t(tier.description))}
-            </p>
+            <h3 class="pricing-card-title">${escapeHtml(t(plan.name))}</h3>
+            <div class="pricing-card-price-row">
+              <div class="pricing-card-price-main">${plan.priceUah} ₴</div>
+              <div class="pricing-card-price-usd">~$${plan.priceUsd}</div>
+            </div>
+            <div class="pricing-card-period">${escapeHtml(t(plan.periodLabel))}</div>
           </div>
 
-          <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); text-align: center;">
-            <div style="display: flex; align-items: baseline; justify-content: center; gap: 6px;">
-              <span style="font-size: 38px; font-weight: 900; color: #ffffff; letter-spacing: -1px; font-variant-numeric: tabular-nums;">
-                ${escapeHtml(formattedPrice)}
-              </span>
-              <span style="font-size: 14px; font-weight: 600; color: #94a3b8;">
-                ${escapeHtml(intervalLabel)}
-              </span>
-            </div>
-            ${
-              currentInterval === 'year'
-                ? `<div style="font-size: 12px; color: #38bdf8; font-weight: 600; margin-top: 4px; text-align: center;">⚡ ${t('Выгодная годовая подписка')}</div>`
-                : ''
-            }
-          </div>
-
-          <ul style="list-style: none; padding: 0; margin: 0 0 32px 0; flex: 1;">
+          <ul class="pricing-features-list">
             ${featuresHtml}
           </ul>
 
-          <button 
+          <button
             type="button"
-            class="subscribe-btn"
-            data-tier="${escapeHtml(tier.name)}"
-            data-price-id="${escapeHtml(activePriceId)}"
-            style="
-              width: 100%;
-              padding: 14px 20px;
-              border-radius: 14px;
-              font-size: 15px;
-              font-weight: 800;
-              cursor: pointer;
-              transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              gap: 8px;
-              border: none;
-              background: ${isPopular ? 'linear-gradient(135deg, #f59e0b 0%, #eab308 100%)' : 'rgba(255, 255, 255, 0.1)'};
-              color: ${isPopular ? '#000000' : '#ffffff'};
-              box-shadow: ${isPopular ? '0 4px 20px rgba(234, 179, 8, 0.4)' : 'none'};
-            "
+            class="pricing-action-btn ${isPopular ? 'pricing-action-btn--primary' : ''}"
+            data-plan-id="${plan.id}"
           >
-            <span>${t('Оформить')} ${escapeHtml(tier.name)}</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
+            ${isPremium ? t('Продлить подписку') : t('Выбрать тариф')}
           </button>
         </div>
       `;
     }).join('');
 
-    setAppContent(`
-      <style>
-        .pricing-grid {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 24px;
-          align-items: stretch;
-          margin-bottom: 48px;
-          width: 100%;
-        }
-        @media (max-width: 992px) {
-          .pricing-grid {
-            grid-template-columns: 1fr;
-            max-width: 480px;
-            margin-left: auto;
-            margin-right: auto;
-          }
-        }
-      </style>
-      <div class="account-page pricing-view" style="min-height: 100vh; display: flex; flex-direction: column; background: transparent;">
-        ${buildPricingHeader()}
-        <main id="main-content" class="auth-center" tabindex="-1" style="flex: 1; width: 100%; display: flex; justify-content: center; padding: 0;">
-          <div class="pricing-page" style="width: 100%; max-width: 1160px; margin: 0 auto; padding: 28px 14px 80px;">
-            
-            <!-- Header -->
-            <div style="text-align: center; margin-bottom: 36px;">
-              <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 999px; background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.35); color: #fef08a; font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px;">
-                <span>👑</span>
-                <span>${t('Тарифные планы CybLight')}</span>
-              </div>
-              <h1 style="font-size: clamp(32px, 5vw, 48px); font-weight: 900; color: #ffffff; letter-spacing: -1.2px; margin: 0 0 14px 0; background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 50%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                ${t('Выберите идеальный план для себя')}
-              </h1>
-              <p style="font-size: 16px; color: #94a3b8; max-width: 620px; margin: 0 auto; line-height: 1.5;">
-                ${t('Прозрачная оплата через Paddle с безопасной защитой, автоматической конвертацией валют и мгновенной активацией.')}
-              </p>
-            </div>
-
-            ${
-              configError
-                ? `
-              <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 16px; padding: 16px 20px; margin-bottom: 30px; color: #fca5a5; font-size: 14px; text-align: center;">
-                <strong>⚠️ ${t('Ошибка конфигурации Paddle')}:</strong> ${escapeHtml(configError)}
-              </div>
-            `
-                : ''
-            }
-
-            <!-- Billing Interval Toggle -->
-            <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 44px;">
-              <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 999px; padding: 4px; display: inline-flex; align-items: center; position: relative;">
-                <button 
-                  type="button" 
-                  id="billingMonthlyBtn" 
-                  style="
-                    padding: 10px 24px;
-                    border-radius: 999px;
-                    font-size: 14px;
-                    font-weight: 700;
-                    border: none;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    background: ${currentInterval === 'month' ? 'linear-gradient(135deg, #f59e0b, #eab308)' : 'transparent'};
-                    color: ${currentInterval === 'month' ? '#000000' : '#94a3b8'};
-                  "
-                >
-                  ${t('Ежемесячно')}
-                </button>
-                <button 
-                  type="button" 
-                  id="billingYearlyBtn" 
-                  style="
-                    padding: 10px 24px;
-                    border-radius: 999px;
-                    font-size: 14px;
-                    font-weight: 700;
-                    border: none;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    background: ${currentInterval === 'year' ? 'linear-gradient(135deg, #f59e0b, #eab308)' : 'transparent'};
-                    color: ${currentInterval === 'year' ? '#000000' : '#94a3b8'};
-                  "
-                >
-                  <span>${t('Ежегодно')}</span>
-                  <span style="font-size: 11px; font-weight: 900; background: ${currentInterval === 'year' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(34, 197, 94, 0.2)'}; color: ${currentInterval === 'year' ? '#000' : '#4ade80'}; padding: 2px 8px; border-radius: 999px;">-20%</span>
-                </button>
+    const userStatusBanner = currentUser
+      ? `
+        <div class="pricing-user-status-banner">
+          <div class="status-user-info">
+            <span class="status-avatar-icon">👑</span>
+            <div>
+              <div class="status-user-name"><strong>@${escapeHtml(userLogin)}</strong></div>
+              <div class="status-badge-text">
+                ${
+                  isPremium
+                    ? `<span style="color:#10b981;font-weight:700;">${t('Premium активен')}</span> (${t('до')} ${getFormattedExpiry()})`
+                    : `<span style="color:#94a3b8;">${t('Базовый аккаунт (Free)')}</span>`
+                }
               </div>
             </div>
-
-            <!-- 3 Tiers Grid -->
-            <div class="pricing-grid">
-              ${tierCardsHtml}
-            </div>
-
-            <!-- Security & Payment Methods Footer -->
-            <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 24px; padding: 22px 24px; text-align: center; max-width: 860px; margin: 0 auto; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);">
-              <div style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
-                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; font-size: 13.5px; font-weight: 700; white-space: nowrap;">
-                  <span style="font-size: 17px; line-height: 1;">🔒</span>
-                  <span>${t('Безопасная оплата через Paddle')}</span>
-                </div>
-                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; font-size: 13.5px; font-weight: 700; white-space: nowrap;">
-                  <span style="font-size: 17px; line-height: 1;">💳</span>
-                  <span>Visa / Mastercard</span>
-                </div>
-                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; font-size: 13.5px; font-weight: 700; white-space: nowrap;">
-                  <span style="font-size: 17px; line-height: 1;">🍏</span>
-                  <span>Apple Pay</span>
-                </div>
-                <div style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); color: #e2e8f0; font-size: 13.5px; font-weight: 700; white-space: nowrap;">
-                  <span style="font-size: 17px; line-height: 1;">🌐</span>
-                  <span>Google Pay</span>
-                </div>
-              </div>
-              <p style="font-size: 13px; color: #64748b; margin: 0 0 10px 0; line-height: 1.4;">
-                ${t('Подписку можно отменить в любой момент в личном кабинете. Никаких скрытых платежей.')}
-              </p>
-              <p style="font-size: 12.5px; color: #94a3b8; margin: 0; line-height: 1.5;">
-                ${t('Платежи безопасно обрабатываются Paddle. Оформляя подписку, вы соглашаетесь с {termsLink}, {privacyLink} и {refundLink} (14 дней гарантии возврата средств).', {
-                  termsLink: `<a href="${sitePath('terms', getLocale())}" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">${t('Условиями использования')}</a>`,
-                  privacyLink: `<a href="${sitePath('privacy', getLocale())}" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">${t('Политикой конфиденциальности')}</a>`,
-                  refundLink: `<a href="${sitePath('refund', getLocale())}" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">${t('Политикой возврата')}</a>`,
-                })}
-              </p>
-            </div>
-
           </div>
-        </main>
-        ${buildAuthFooter({ showLangSwitcher: false, showHackedLink: false })}
+          <a href="${localePath('/account-settings')}" class="status-dashboard-link">
+            ${t('Настройки профиля')} ›
+          </a>
+        </div>
+      `
+      : `
+        <div class="pricing-guest-banner">
+          <span>${t('Вы не вошли в аккаунт.')}</span>
+          <a href="${localePath('/login')}" class="pricing-guest-login-link">${t('Войти в аккаунт')}</a>
+          <span>${t('чтобы подписка активировалась на ваш профиль.')}</span>
+        </div>
+      `;
+
+    const html = `
+      <div class="pricing-wrapper">
+        <header class="pricing-top-bar">
+          <a href="${sitePath('/')}" class="pricing-back-link">
+            ← ${t('На главную')}
+          </a>
+          <h1 class="pricing-page-title">CybLight Premium</h1>
+          <a href="${localePath('/account-settings')}" class="pricing-profile-link">
+            ${userLogin ? `@${escapeHtml(userLogin)}` : t('Профиль')}
+          </a>
+        </header>
+
+        <div class="pricing-hero">
+          <h2>${t('Инвестируйте в полный контроль умного дома')}</h2>
+          <p>${t('Выберите удобный период: безлимитный Smart Home Hub, приоритетная E2EE синхронизация и эксклюзивные функции.')}</p>
+          ${userStatusBanner}
+        </div>
+
+        <div class="pricing-cards-grid">
+          ${planCardsHtml}
+        </div>
+
+        <div class="pricing-monobank-info-card">
+          <div class="mono-info-icon">🏦</div>
+          <div class="mono-info-content">
+            <h4>${t('Безопасная оплата через Monobank Банку')}</h4>
+            <p>${t('Оплата картами любого банка мира, Apple Pay или Google Pay без скрытых комиссий. Подписка активируется автоматически после поступления средств.')}</p>
+          </div>
+        </div>
+
+        <div class="pricing-faq-section">
+          <h3>${t('Часто задаваемые вопросы')}</h3>
+          <div class="pricing-faq-grid">
+            <div class="faq-card">
+              <h4>${t('Как происходит оплата?')}</h4>
+              <p>${t('Вы переходите в официальную Банку Monobank и оплачиваете любой картой, Apple Pay или Google Pay. В комментарии обязательно указывается ваш логин CybLight.')}</p>
+            </div>
+            <div class="faq-card">
+              <h4>${t('Как быстро активируется Premium?')}</h4>
+              <p>${t('Автоматически в течение 5–60 секунд после подтверждения транзакции банком.')}</p>
+            </div>
+            <div class="faq-card">
+              <h4>${t('Что если у меня уже есть активная подписка?')}</h4>
+              <p>${t('Новый период просто прибавится к текущему сроку действия без потери оплаченных дней.')}</p>
+            </div>
+            <div class="faq-card">
+              <h4>${t('Нужна помощь с оплатой?')}</h4>
+              <p>${t('Напишите в нашу службу поддержки support@cyblight.org, и мы оперативно поможем.')}</p>
+            </div>
+          </div>
+        </div>
+
+        ${buildAuthFooter()}
       </div>
-    `);
 
-    // Bind event listeners
-    const langBtn = document.getElementById('pricingLangBtn');
-    const langMenu = document.getElementById('pricingLangMenu');
-    langBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isHidden = langMenu?.hasAttribute('hidden');
-      if (isHidden) {
-        langMenu?.removeAttribute('hidden');
-        langBtn.setAttribute('aria-expanded', 'true');
-      } else {
-        langMenu?.setAttribute('hidden', '');
-        langBtn.setAttribute('aria-expanded', 'false');
-      }
-    });
+      <!-- Monobank Jar Modal Container -->
+      <div id="monoPaymentModalOverlay" class="mono-modal-overlay" style="display:none;"></div>
+    `;
 
-    document.addEventListener('click', () => {
-      langMenu?.setAttribute('hidden', '');
-      langBtn?.setAttribute('aria-expanded', 'false');
-    });
+    setAppContent(html);
+    attachEvents();
+  }
 
-    document.getElementById('pricingAccountBtn')?.addEventListener('click', () => {
-      Router.navigate('account-profile');
-    });
-
-    document.getElementById('pricingSigninBtn')?.addEventListener('click', () => {
-      Router.navigate('login');
-    });
-
-    document.getElementById('billingMonthlyBtn')?.addEventListener('click', () => {
-      if (currentInterval !== 'month') {
-        currentInterval = 'month';
-        renderPage();
-      }
-    });
-
-    document.getElementById('billingYearlyBtn')?.addEventListener('click', () => {
-      if (currentInterval !== 'year') {
-        currentInterval = 'year';
-        renderPage();
-      }
-    });
-
-    document.querySelectorAll('.subscribe-btn').forEach((btn) => {
-      btn.addEventListener('click', async (e) => {
-        const button = e.currentTarget as HTMLButtonElement;
-        const priceId = button.dataset.priceId;
-        const tierName = button.dataset.tier;
-
-        if (!priceId) return;
-
-        const originalText = button.innerHTML;
-        button.disabled = true;
-        button.innerHTML = `<span>⏳ ${t('Открытие кассы...')}</span>`;
-
-        try {
-          await openPaddleCheckout({
-            priceId,
-            userEmail,
-            countryCode: detectedCountry,
-            customData: {
-              userId: currentUser?.id ? String(currentUser.id) : '',
-              userLogin: currentUser?.login || currentUser?.username || '',
-              tier: tierName || '',
-              interval: currentInterval,
-            },
-          });
-        } catch (err: unknown) {
-          console.error('[PADDLE] Checkout open failed:', err);
-          const errorMsg = err instanceof Error ? err.message : t('Не удалось открыть окно оплаты Paddle');
-          showAccountNoticeModal('error', errorMsg);
-        } finally {
-          button.disabled = false;
-          button.innerHTML = originalText;
+  function attachEvents(): void {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('[data-plan-id]');
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const planId = btn.getAttribute('data-plan-id');
+        const plan = PRICING_PLANS.find((p) => p.id === planId);
+        if (plan) {
+          openPaymentModal(plan);
         }
       });
     });
   }
 
-  function buildPricingHeader(): string {
-    const locale = getLocale();
-    const homeUrl = sitePath('', locale);
-    const displayName = currentUser?.login || currentUser?.username || 'CybLight Premium';
+  function openPaymentModal(plan: PricingPlan): void {
+    const overlay = document.getElementById('monoPaymentModalOverlay');
+    if (!overlay) return;
 
-    const headerAction = currentUser
-      ? `
-        <button type="button" class="account-mobile-header__signin" id="pricingAccountBtn" aria-label="${t('Личный кабинет')}" style="display: flex; align-items: center; gap: 6px; padding: 7px 16px;">
-          <span style="font-size: 15px;">👤</span>
-          <span>${t('Личный кабинет')}</span>
-        </button>
-      `
-      : `
-        <button type="button" class="account-mobile-header__signin" id="pricingSigninBtn" aria-label="${t('Войти')}">
-          ${t('Войти')}
-        </button>
-      `;
+    const userLogin = currentUser?.login || currentUser?.username || '';
+    const paymentUrl = `https://send.monobank.ua/jar/${jarSendId}?a=${plan.priceUah}${userLogin ? `&t=${encodeURIComponent(userLogin)}` : ''}`;
+    const qrCodeApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&format=svg&data=${encodeURIComponent(paymentUrl)}`;
 
-    return `
-      <header class="account-mobile-header" aria-label="${t('Тарифы и подписка')}">
-        <div class="account-mobile-header__inner">
-          <a href="${homeUrl}" class="account-mobile-header__logo" aria-label="${t('Главная страница')}">
-            <img src="/assets/img/logo.svg" alt="CybLight" />
-          </a>
-          <div class="account-mobile-header__info">
-            <div class="account-mobile-header__title">${t('Тарифы и подписка')}</div>
-            <div class="account-mobile-header__login">${escapeHtml(displayName)}</div>
-          </div>
-          <div class="account-header-actions">
-            <button
-              type="button"
-              class="account-lang-btn"
-              id="pricingLangBtn"
-              aria-haspopup="true"
-              aria-expanded="false"
-              aria-label="${t('Выбор языка')}"
-              title="${t('Язык')}"
-            >
-              <svg class="cl-language" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M3.814 16.464a.501.501 0 00.65-.278L5.54 13.5h2.923l1.074 2.686a.5.5 0 00.928-.372l-3-7.5a.52.52 0 00-.928 0l-3 7.5a.5.5 0 00.278.65zM7 9.846L8.061 12.5H5.94zM6 7.5a.5.5 0 00.224-.053l2-1a.5.5 0 10-.448-.894l-2 1A.5.5 0 006 7.5zM11.75 14.25a2.025 2.025 0 001.75 2.25 2.584 2.584 0 001.482-.431c.039.088.07.152.075.162a.5.5 0 00.887-.461 4.654 4.654 0 01-.15-.368c.176-.168.359-.348.56-.548a11.374 11.374 0 001.92-2.652A1.55 1.55 0 0119 13.5a2.082 2.082 0 01-1.607 2.012.5.5 0 00.107.988.506.506 0 00.107-.012A3.055 3.055 0 0020 13.5a2.542 2.542 0 00-1.283-2.205c.16-.364.244-.6.255-.63a.5.5 0 10-.944-.33 7.97 7.97 0 01-.225.552 5.11 5.11 0 00-2.482-.21c.04-.428.091-.845.153-1.229 1.427-.123 3.04-.44 3.124-.458a.5.5 0 00-.196-.98c-.019.003-1.43.283-2.736.418.162-.761.31-1.273.313-1.284a.5.5 0 10-.958-.288c-.016.053-.206.695-.393 1.64-.041 0-.088.004-.128.004h-2a.5.5 0 000 1h1.955c-.072.476-.134.985-.17 1.517a4.001 4.001 0 00-2.535 3.233zm1.75 1.25c-.362 0-.75-.502-.75-1.25a2.82 2.82 0 011.506-2.094 11.674 11.674 0 00.384 2.927 1.684 1.684 0 01-1.14.417zm2.604-3.897a4.4 4.4 0 011.251.193 10.325 10.325 0 01-1.708 2.35l-.163.162A11.04 11.04 0 0115.25 12c0-.093.008-.185.01-.278a3.318 3.318 0 01.844-.12z M22.5 3h-21a.5.5 0 00-.5.5v16a.5.5 0 00.5.5H10v3.5a.5.5 0 00.854.354L14.707 20H22.5a.5.5 0 00.5-.5v-16a.5.5 0 00-.5-.5zM22 19h-7.5a.5.5 0 00-.354.146L11 22.293V19.5a.5.5 0 00-.5-.5H2V4h20z"></path>
-              </svg>
-              <span class="account-lang-btn__label">${getLocaleLabel(locale)}</span>
-            </button>
+    overlay.innerHTML = `
+      <div class="mono-modal-card">
+        <button type="button" class="mono-modal-close" id="closeMonoModalBtn" aria-label="Закрыть">✕</button>
 
-            <div class="account-lang-menu" id="pricingLangMenu" hidden>
-              <ul role="listbox">
-                <li><a href="${localePath('pricing', 'ru')}" class="${locale === 'ru' ? 'is-active' : ''}" hreflang="ru">🇷🇺 ${t('Русский')}</a></li>
-                <li><a href="${localePath('pricing', 'uk')}" class="${locale === 'uk' ? 'is-active' : ''}" hreflang="uk">🇺🇦 Українська</a></li>
-                <li><a href="${localePath('pricing', 'en')}" class="${locale === 'en' ? 'is-active' : ''}" hreflang="en">🇬🇧 English</a></li>
-              </ul>
-            </div>
-
-            ${headerAction}
+        <div class="mono-modal-header">
+          <div class="mono-modal-jar-icon">🏦</div>
+          <div>
+            <h3 class="mono-modal-title">${t('Оплата подписки')}</h3>
+            <div class="mono-modal-subtitle">${escapeHtml(t(plan.name))} — <strong>${plan.priceUah} ₴</strong> (~$${plan.priceUsd})</div>
           </div>
         </div>
-      </header>
+
+        ${
+          !userLogin
+            ? `
+          <div class="mono-modal-warning-box">
+            ⚠️ <strong>${t('Внимание:')}</strong> ${t('Вы не вошли в аккаунт. Перед оплатой введите ваш точный логин CybLight:')}
+            <div style="margin-top:8px;">
+              <input type="text" id="manualLoginInput" class="mono-input" placeholder="${t('Ваш логин в CybLight')}" value="" />
+            </div>
+          </div>
+        `
+            : `
+          <div class="mono-modal-account-box">
+            <span>${t('Получатель подписки:')}</span>
+            <span class="mono-modal-account-pill">@${escapeHtml(userLogin)}</span>
+          </div>
+        `
+        }
+
+        <div class="mono-modal-steps">
+          <div class="mono-step-item">
+            <span class="mono-step-num">1</span>
+            <div class="mono-step-desc">
+              ${t('Нажмите кнопку ниже или отсканируйте QR-код для перехода в Банку Monobank:')}
+            </div>
+          </div>
+          <div class="mono-step-item">
+            <span class="mono-step-num">2</span>
+            <div class="mono-step-desc">
+              ${t('Убедитесь, что в поле «Коментар» указан логин')} <strong>@${escapeHtml(userLogin || 'ваш_логин')}</strong>.
+            </div>
+          </div>
+          <div class="mono-step-item">
+            <span class="mono-step-num">3</span>
+            <div class="mono-step-desc">
+              ${t('Оплатите через Apple Pay, Google Pay или карту любого банка.')}
+            </div>
+          </div>
+        </div>
+
+        <div class="mono-modal-actions">
+          <a
+            href="${paymentUrl}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mono-pay-btn"
+            id="openMonoJarBtn"
+          >
+            <span>🏦 ${t('Оплатить')} ${plan.priceUah} ₴ ${t('в Monobank')}</span>
+            <span style="font-size:12px;opacity:0.85;">(Apple Pay / GPay / Карта) ↗</span>
+          </a>
+
+          <div class="mono-qr-wrapper">
+            <div class="mono-qr-label">${t('Или отсканируйте QR-код телефоном:')}</div>
+            <img src="${qrCodeApiUrl}" alt="Monobank QR" class="mono-qr-img" width="160" height="160" />
+          </div>
+
+          <div class="mono-check-status-wrap">
+            <button type="button" class="mono-check-btn" id="checkMonoPaymentBtn">
+              🔄 ${t('Я оплатил (Проверить статус)')}
+            </button>
+            <div id="monoCheckStatusMsg" class="mono-status-msg">
+              <span class="mono-pulse-dot"></span> ${t('Ожидание подтверждения оплаты...')}
+            </div>
+          </div>
+        </div>
+      </div>
     `;
+
+    overlay.style.display = 'flex';
+
+    // Modal Close
+    document.getElementById('closeMonoModalBtn')?.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closeModal();
+    });
+
+    // Manual login input listener if guest
+    const manualInput = document.getElementById('manualLoginInput') as HTMLInputElement | null;
+    if (manualInput) {
+      manualInput.addEventListener('input', () => {
+        const customLogin = manualInput.value.trim();
+        const updatedUrl = `https://send.monobank.ua/jar/${jarSendId}?a=${plan.priceUah}${customLogin ? `&t=${encodeURIComponent(customLogin)}` : ''}`;
+        const payBtn = document.getElementById('openMonoJarBtn') as HTMLAnchorElement | null;
+        if (payBtn) payBtn.href = updatedUrl;
+      });
+    }
+
+    // Manual Check Button
+    document.getElementById('checkMonoPaymentBtn')?.addEventListener('click', () => {
+      checkPaymentStatus(true);
+    });
+
+    // Start background auto-polling every 4 seconds
+    startPolling();
+  }
+
+  function closeModal(): void {
+    const overlay = document.getElementById('monoPaymentModalOverlay');
+    if (overlay) overlay.style.display = 'none';
+    stopPolling();
+  }
+
+  function startPolling(): void {
+    stopPolling();
+    pollIntervalId = setInterval(async () => {
+      await checkPaymentStatus(false);
+    }, 4000);
+  }
+
+  function stopPolling(): void {
+    if (pollIntervalId) {
+      clearInterval(pollIntervalId);
+      pollIntervalId = null;
+    }
+  }
+
+  async function checkPaymentStatus(showFeedback = true): Promise<void> {
+    const statusMsg = document.getElementById('monoCheckStatusMsg');
+    if (showFeedback && statusMsg) {
+      statusMsg.innerHTML = `🔄 ${t('Проверяем зачисление...')}`;
+    }
+
+    try {
+      const res = await apiCall('/premium/check-mono-jar-payment');
+      if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (data?.ok && data.isPremium) {
+          stopPolling();
+          if (statusMsg) {
+            statusMsg.innerHTML = `<span style="color:#10b981;font-weight:700;">✅ ${t('Оплата успешно подтверждена! Premium активирован.')}</span>`;
+          }
+
+          // Show success celebration
+          setTimeout(() => {
+            closeModal();
+            renderPricing();
+          }, 1500);
+          return;
+        }
+      }
+
+      if (showFeedback && statusMsg) {
+        statusMsg.innerHTML = `⏳ ${t('Платёж пока в обработке банком. Обычно это занимает от 5 до 30 секунд.')}`;
+      }
+    } catch {
+      // Ignore background network errors
+    }
   }
 }

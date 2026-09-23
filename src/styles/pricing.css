@@ -1,0 +1,574 @@
+/* CybLight Premium Pricing & Monobank Modal Styles */
+
+.pricing-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  color: #f1f5f9;
+  font-family: inherit;
+}
+
+.pricing-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  gap: 16px;
+}
+
+.pricing-back-link,
+.pricing-profile-link {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.pricing-back-link:hover,
+.pricing-profile-link:hover {
+  color: #ff7f27;
+}
+
+.pricing-page-title {
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #ff7f27, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pricing-hero {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 40px;
+}
+
+.pricing-hero h2 {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #ffffff;
+}
+
+.pricing-hero p {
+  font-size: 16px;
+  color: #94a3b8;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.pricing-user-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 127, 39, 0.3);
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.status-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-avatar-icon {
+  font-size: 24px;
+}
+
+.status-user-name {
+  font-size: 15px;
+  color: #ffffff;
+}
+
+.status-badge-text {
+  font-size: 13px;
+}
+
+.status-dashboard-link {
+  color: #ff7f27;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-dashboard-link:hover {
+  text-decoration: underline;
+}
+
+.pricing-guest-banner {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px dashed #475569;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+.pricing-guest-login-link {
+  color: #ff7f27;
+  font-weight: 700;
+  text-decoration: none;
+  margin: 0 4px;
+}
+
+.pricing-guest-login-link:hover {
+  text-decoration: underline;
+}
+
+/* Pricing Grid */
+.pricing-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.pricing-card {
+  position: relative;
+  background: #182234;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 28px 22px 24px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  border-color: #ff7f27;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.pricing-card--popular {
+  border: 2px solid #ff7f27;
+  background: #1b263b;
+  box-shadow: 0 8px 24px rgba(255, 127, 39, 0.15);
+}
+
+.pricing-card-badge {
+  position: absolute;
+  top: -12px;
+  right: 18px;
+  background: linear-gradient(135deg, #ff7f27, #e05e00);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+}
+
+.pricing-card-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.pricing-plan-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fbbf24;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.pricing-discount-pill {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.pricing-card-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 12px;
+  color: #ffffff;
+}
+
+.pricing-card-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.pricing-card-price-main {
+  font-size: 32px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.pricing-card-price-usd {
+  font-size: 14px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.pricing-card-period {
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.pricing-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  flex: 1;
+}
+
+.pricing-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.pricing-feature-check {
+  color: #10b981;
+  font-weight: 900;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.pricing-action-btn {
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #475569;
+  background: #273549;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.pricing-action-btn:hover {
+  background: #334155;
+  border-color: #64748b;
+}
+
+.pricing-action-btn--primary {
+  background: linear-gradient(135deg, #ff7f27, #e05e00);
+  border: none;
+  box-shadow: 0 4px 14px rgba(255, 127, 39, 0.35);
+}
+
+.pricing-action-btn--primary:hover {
+  background: linear-gradient(135deg, #ff8e40, #ea6c0e);
+  box-shadow: 0 6px 18px rgba(255, 127, 39, 0.45);
+}
+
+/* Monobank Info Box */
+.pricing-monobank-info-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 48px;
+}
+
+.mono-info-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.mono-info-content h4 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #ffffff;
+}
+
+.mono-info-content p {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* FAQ */
+.pricing-faq-section h3 {
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.pricing-faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-bottom: 48px;
+}
+
+.faq-card {
+  background: #182234;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.faq-card h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: #ffffff;
+}
+
+.faq-card p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Modal */
+.mono-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.mono-modal-card {
+  position: relative;
+  background: #182234;
+  border: 1px solid #475569;
+  border-radius: 18px;
+  max-width: 480px;
+  width: 100%;
+  padding: 28px 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.mono-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.mono-modal-close:hover {
+  color: #ffffff;
+}
+
+.mono-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.mono-modal-jar-icon {
+  font-size: 32px;
+}
+
+.mono-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+.mono-modal-subtitle {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.mono-modal-warning-box {
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 13px;
+  color: #fef08a;
+  margin-bottom: 16px;
+}
+
+.mono-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.mono-modal-account-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #cbd5e1;
+  margin-bottom: 18px;
+}
+
+.mono-modal-account-pill {
+  background: #ff7f27;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.mono-modal-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.mono-step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.mono-step-num {
+  background: #334155;
+  color: #ff7f27;
+  font-weight: 800;
+  font-size: 12px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.mono-step-desc {
+  font-size: 13px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.mono-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mono-pay-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #ff7f27, #e05e00);
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: 0 6px 18px rgba(255, 127, 39, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mono-pay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(255, 127, 39, 0.5);
+}
+
+.mono-qr-wrapper {
+  text-align: center;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.mono-qr-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.mono-qr-img {
+  background: #ffffff;
+  padding: 6px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.mono-check-status-wrap {
+  text-align: center;
+}
+
+.mono-check-btn {
+  width: 100%;
+  padding: 10px 14px;
+  background: #273549;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.mono-check-btn:hover {
+  background: #334155;
+}
+
+.mono-status-msg {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 8px;
+}
+
+.mono-pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+  border-radius: 50%;
+  margin-right: 4px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}

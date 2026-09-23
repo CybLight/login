@@ -6,6 +6,7 @@
 import '@/styles/global.css';
 import '@/styles/login.css';
 import '@/styles/accessibility.css';
+import '@/styles/pricing.css';
 
 import { initLocaleRouting, t, sitePath } from '@/i18n';
 import { Router } from '@/router/Router';
