@@ -2668,18 +2668,18 @@ export function showSubscriptionManagementModal(user: Partial<User> | Record<str
       <!-- Instructions block -->
       <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px;">
         <div style="display: flex; gap: 12px; align-items: flex-start; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); padding: 14px 16px; border-radius: 14px;">
-          <div style="font-size: 22px; line-height: 1; flex-shrink: 0;">📧</div>
+          <div style="font-size: 22px; line-height: 1; flex-shrink: 0;">🛡️</div>
           <div style="font-size: 13px; color: #cbd5e1; line-height: 1.5;">
-            <strong style="color: #ffffff; display: block; margin-bottom: 2px;">${t('Отмена через квитанцию Paddle')}</strong>
-            ${t('В каждом письме с чеком от Paddle есть прямая ссылка «Manage Subscription» для мгновенной отмены автопродления в 1 клик.')}
+            <strong style="color: #ffffff; display: block; margin-bottom: 2px;">${t('Без скрытых списаний')}</strong>
+            ${t('Оплата через Monobank безопасна и не создает регулярных списаний с карты. Продление тарифа происходит только по вашему решению.')}
           </div>
         </div>
 
         <div style="display: flex; gap: 12px; align-items: flex-start; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); padding: 14px 16px; border-radius: 14px;">
-          <div style="font-size: 22px; line-height: 1; flex-shrink: 0;">🛡️</div>
+          <div style="font-size: 22px; line-height: 1; flex-shrink: 0;">⏱️</div>
           <div style="font-size: 13px; color: #cbd5e1; line-height: 1.5;">
             <strong style="color: #ffffff; display: block; margin-bottom: 2px;">${t('Сохранение оплаченного периода')}</strong>
-            ${t('При отмене подписки все преимущества и возможности тарифа остаются доступны вам до окончания оплаченного срока.')}
+            ${t('Все функции и увеличенные лимиты тарифа гарантированно активны до окончания срока действия.')}
           </div>
         </div>
       </div>
@@ -2687,11 +2687,7 @@ export function showSubscriptionManagementModal(user: Partial<User> | Record<str
       <!-- Action buttons -->
       <div style="display: flex; flex-direction: column; gap: 10px;">
         <button type="button" class="btn btn-primary" id="subModalChangePlanBtn" style="width: 100%; justify-content: center; padding: 12px; font-weight: 700; border-radius: 12px;">
-          <span>✨ ${t('Сменить тариф')}</span>
-        </button>
-
-        <button type="button" class="btn btn-outline" id="subModalCancelBtn" style="width: 100%; justify-content: center; padding: 12px; display: flex; align-items: center; gap: 8px; font-weight: 600; border-radius: 12px; background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.35); color: #fca5a5;">
-          <span>🛑 ${t('Отменить автопродление подписки')}</span>
+          <span>✨ ${isLifetime ? t('Тарифные планы') : t('Продлить или сменить тариф')}</span>
         </button>
 
         <button type="button" class="btn btn-outline" id="subModalCloseBtn" style="width: 100%; justify-content: center; padding: 10px; border-color: transparent; color: #94a3b8; font-weight: 600;">
@@ -2714,21 +2710,6 @@ export function showSubscriptionManagementModal(user: Partial<User> | Record<str
     close();
     Router.navigate('pricing');
   });
-
-  const cancelBtn = wrap.querySelector('#subModalCancelBtn') as HTMLButtonElement | null;
-  if (cancelBtn) {
-    cancelBtn.addEventListener('click', () => {
-      showCancelSubscriptionConfirmModal(user, () => {
-        cancelBtn.style.background = 'rgba(34, 197, 94, 0.12)';
-        cancelBtn.style.borderColor = 'rgba(34, 197, 94, 0.4)';
-        cancelBtn.style.color = '#86efac';
-        cancelBtn.textContent = `✅ ${t('Автопродление отключено')}`;
-        setTimeout(() => {
-          close();
-        }, 1200);
-      });
-    });
-  }
 }
 
 export function showCancelSubscriptionConfirmModal(

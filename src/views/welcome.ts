@@ -1,5 +1,5 @@
 /**
- * Welcome View - Success page after successful Paddle Checkout redirect (/welcome)
+ * Welcome View - Success page after successful payment (/welcome)
  */
 
 import { t } from '@/i18n';
@@ -89,7 +89,7 @@ export function renderWelcome(): void {
         </h1>
 
         <p style="font-size: 15px; color: #cbd5e1; line-height: 1.55; margin: 0 0 28px 0;">
-          ${t('Ваша подписка успешно оформлена через Paddle. Все привилегии тарифа, увеличенные лимиты API и функции Smart Home Hub активированы.')}
+          ${t('Ваша подписка успешно оформлена. Все привилегии тарифа, увеличенные лимиты API и функции Smart Home Hub активированы.')}
         </p>
 
         <div style="display: flex; flex-direction: column; gap: 12px;">
