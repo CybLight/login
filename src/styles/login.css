@@ -395,6 +395,9 @@
 
 .footer-text {
   font-size: 14px;
+  color: #facc15;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.45);
 }
 
 .footer-links {

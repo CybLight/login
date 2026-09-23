@@ -190,7 +190,7 @@ export async function renderPricing(): Promise<void> {
             <div class="pricing-faq-grid">
               <div class="faq-card">
                 <h4>${t('Как происходит оплата?')}</h4>
-                <p>${t('Вы переходите в официальную Банку Monobank и оплачиваете любой картой, Apple Pay или Google Pay. В комментарии обязательно указывается ваш логин CybLight.')}</p>
+                <p>${t('Вы переходите в официальную Банку Monobank и оплачиваете любой картой, Apple Pay или Google Pay. В комментарии обязательно указывается ваш логин на сайте CybLight.')}</p>
               </div>
               <div class="faq-card">
                 <h4>${t('Как быстро активируется Premium?')}</h4>
