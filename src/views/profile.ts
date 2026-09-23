@@ -4,6 +4,7 @@
 
 import { bindProfileMirrorEaster } from '@/components/easter/profile-mirror';
 import { t, sitePath, getLocale, getLocaleLabel, localePath, localeTag, type Locale } from '@/i18n';
+import '@/styles/account-render.css';
 import { getAvatarFrameClass } from './account/avatar';
 import { apiCall, escapeHtml, renderPresenceChip } from '@/utils';
 import { allowsFunctionalConsent } from '@/utils/privacy-guard';
@@ -333,10 +334,17 @@ function buildProfileLangSwitcher(profileRoute: string): string {
   `;
 }
 
-function buildProfileHeader(profileRoute: string, isLoggedIn: boolean, subtitle?: string, userRole?: string): string {
+export function buildProfileHeader(
+  profileRoute: string,
+  isLoggedIn: boolean,
+  subtitle?: string,
+  userRole?: string,
+  title?: string
+): string {
   const locale = getLocale();
   const homeUrl = sitePath('', locale);
   const displayName = subtitle ?? profileRoute;
+  const headerTitle = title ?? t('Профиль');
   const headerAction = isLoggedIn
     ? `
       <button
@@ -408,13 +416,13 @@ function buildProfileHeader(profileRoute: string, isLoggedIn: boolean, subtitle?
     : '';
 
   return `
-    <header class="account-mobile-header" aria-label="${t('Профиль пользователя')}">
+    <header class="account-mobile-header" aria-label="${escapeHtml(headerTitle)}">
       <div class="account-mobile-header__inner">
         <a href="${homeUrl}" class="account-mobile-header__logo" aria-label="${t('Главная страница')}">
           <img src="/assets/img/logo.svg" alt="CybLight" />
         </a>
         <div class="account-mobile-header__info">
-          <div class="account-mobile-header__title">${t('Профиль')}</div>
+          <div class="account-mobile-header__title">${escapeHtml(headerTitle)}</div>
           <div class="account-mobile-header__login">${escapeHtml(displayName)}</div>
         </div>
         <div class="account-header-actions">
@@ -427,7 +435,7 @@ function buildProfileHeader(profileRoute: string, isLoggedIn: boolean, subtitle?
   `;
 }
 
-function buildProfileFooter(): string {
+export function buildProfileFooter(): string {
   return buildAuthFooter({ showLangSwitcher: false, showHackedLink: false });
 }
 
@@ -479,7 +487,7 @@ function bindProfileLangMenu(): void {
   }
 }
 
-function bindProfileHeaderHandlers(): void {
+export function bindProfileHeaderHandlers(): void {
   bindProfileLangMenu();
 
   const signinBtn = document.getElementById('profileSigninBtn');

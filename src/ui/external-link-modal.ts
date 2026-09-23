@@ -37,6 +37,8 @@ export function isInternalUrl(url: string): boolean {
       host === currentHost ||
       host === 'cyblight.org' ||
       host.endsWith('.cyblight.org') ||
+      host === 'monobank.ua' ||
+      host.endsWith('.monobank.ua') ||
       host === 'localhost' ||
       host === '127.0.0.1' ||
       parsed.protocol === 'blob:' ||
@@ -169,8 +171,14 @@ export function initExternalLinkGuard(): void {
       const linkEl = target.closest('a[href], [data-external-url], [data-open-url]') as HTMLElement | null;
       if (!linkEl) return;
 
-      // Не перехватываем ссылки для скачивания файлов (download)
-      if (linkEl.hasAttribute('download') || linkEl.getAttribute('download') !== null) {
+      // Не перехватываем ссылки для скачивания файлов (download) или доверенной оплаты
+      if (
+        linkEl.hasAttribute('download') ||
+        linkEl.getAttribute('download') !== null ||
+        linkEl.hasAttribute('data-skip-external-guard') ||
+        linkEl.closest('[data-skip-external-guard]') ||
+        linkEl.classList.contains('mono-pay-btn')
+      ) {
         return;
       }
 
