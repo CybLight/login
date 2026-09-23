@@ -1,7 +1,7 @@
 /* CybLight Premium Pricing & Monobank Modal Styles */
 
 .pricing-wrapper {
-  max-width: 1200px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 24px 16px 64px;
   color: #f1f5f9;
@@ -121,12 +121,13 @@
   text-decoration: underline;
 }
 
-/* Pricing Grid */
+/* Pricing Grid - 4 cards in one row on desktop */
 .pricing-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
   margin-bottom: 48px;
+  align-items: stretch;
 }
 
 .pricing-card {
@@ -134,7 +135,7 @@
   background: #182234;
   border: 1px solid #334155;
   border-radius: 16px;
-  padding: 28px 22px 24px;
+  padding: 24px 16px 20px;
   display: flex;
   flex-direction: column;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
@@ -571,4 +572,16 @@
   0% { opacity: 0.3; }
   50% { opacity: 1; }
   100% { opacity: 0.3; }
+}
+
+@media (max-width: 1040px) {
+  .pricing-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .pricing-cards-grid {
+    grid-template-columns: 1fr;
+  }
 }
