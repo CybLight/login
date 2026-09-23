@@ -1441,4 +1441,9 @@ export const en: Record<string, string> = {
   "Условиями использования": "Terms of Service",
   "Политикой конфиденциальности": "Privacy Policy",
   "Платежи безопасно обрабатываются Monobank. Оформляя подписку, вы соглашаетесь с {termsLink}, {privacyLink} и {refundLink} (14 дней гарантии возврата средств).": "Payments are securely processed via Monobank. By subscribing you agree to our {termsLink}, {privacyLink}, and {refundLink} (14-day money-back guarantee).",
+  "CybLight — Программные решения и облачная инфраструктура для IoT и умного дома. Все права защищены.": "CybLight — Software solutions and cloud infrastructure for IoT and smart home. All rights reserved.",
+  "УСЛОВИЯ ИСПОЛЬЗОВАНИЯ": "TERMS OF SERVICE",
+  "ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ": "PRIVACY POLICY",
+  "ПОЛИТИКА ВОЗВРАТА": "REFUND POLICY",
+  "НАСТРОЙКИ КОНФИДЕНЦИАЛЬНОСТИ": "PRIVACY SETTINGS",
 };
