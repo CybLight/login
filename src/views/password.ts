@@ -233,6 +233,9 @@ export async function renderPassword(): Promise<void> {
           console.log('[PASSWORD] 2FA required for user:', loginData.userId);
           showMsg('ok', t('Требуется код двухфакторной аутентификации'));
           setStorage('cyb_2fa_userId', loginData.userId, sessionStorage);
+          if (loginData.preAuthToken) {
+            setStorage('cyb_2fa_preAuthToken', loginData.preAuthToken, sessionStorage);
+          }
           Router.navigate('2fa-verify');
           return;
         }

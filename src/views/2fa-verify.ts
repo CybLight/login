@@ -10,6 +10,7 @@ import { syncEasterAfterLogin } from '@/services';
 
 export async function render2FAVerify(): Promise<void> {
   const userId = getStorage('cyb_2fa_userId', '', sessionStorage);
+  const preAuthToken = getStorage('cyb_2fa_preAuthToken', '', sessionStorage);
   if (!userId) {
     Router.navigate('username');
     return;
@@ -70,6 +71,7 @@ export async function render2FAVerify(): Promise<void> {
     backLink.onclick = (e) => {
       e.preventDefault();
       sessionStorage.removeItem('cyb_2fa_userId');
+      sessionStorage.removeItem('cyb_2fa_preAuthToken');
       Router.navigate('username');
     };
   }
@@ -120,6 +122,7 @@ export async function render2FAVerify(): Promise<void> {
           credentials: 'include',
           body: JSON.stringify({
             userId,
+            preAuthToken,
             code,
             rememberDevice,
           }),
@@ -139,8 +142,9 @@ export async function render2FAVerify(): Promise<void> {
         // Успешная верификация
         showMsg('ok', t('Код подтверждён! Переход...'));
 
-        // Очищаем временный userId
+        // Очищаем временный userId и preAuthToken
         sessionStorage.removeItem('cyb_2fa_userId');
+        sessionStorage.removeItem('cyb_2fa_preAuthToken');
 
         // Trusted device token устанавливается сервером через HttpOnly cookie
 
