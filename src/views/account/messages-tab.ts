@@ -1216,6 +1216,7 @@ export function openChatInMessagesTab(
 
   chatWsUnsub = onChatWebSocket((event) => {
     if (state.accountChatFriendId !== friendId) return;
+    if (event.type !== 'message.new' && event.type !== 'message.deleted' && event.type !== 'message.edited') return;
     if (event.peerId !== friendId && event.senderId !== friendId) return;
 
     if (event.type === 'message.new') {

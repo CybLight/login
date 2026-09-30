@@ -21,12 +21,16 @@ export function renderAccountBanned(params: Record<string, unknown> = {}): void 
   if ((params as Record<string, unknown>).reason) {
     try {
       sessionStorage.setItem('cyb_ban_reason', reason);
-    } catch {}
+    } catch {
+      /* ignore storage error */
+    }
   }
   if ((params as Record<string, unknown>).username) {
     try {
       sessionStorage.setItem('cyb_ban_username', username);
-    } catch {}
+    } catch {
+      /* ignore storage error */
+    }
   }
 
   // Убираем no-strawberries класс

@@ -1,13 +1,22 @@
 import { API_BASE } from '@/config/constants';
 import { handleIncomingSessionReset } from '@/crypto/signal/manager';
 
-export type ChatWsEvent = {
-  type: 'message.new' | 'message.deleted' | 'message.edited' | 'crypto.session_reset';
-  messageId: string;
-  senderId: string;
-  peerId: string;
-  createdAt: number;
-};
+export type ChatWsEvent =
+  | {
+      type: 'message.new' | 'message.deleted' | 'message.edited';
+      messageId: string;
+      senderId: string;
+      peerId: string;
+      createdAt: number;
+    }
+  | {
+      type: 'crypto.session_reset';
+      senderId: string;
+    }
+  | {
+      type: 'account.banned';
+      reason?: string;
+    };
 
 type ChatWsListener = (event: ChatWsEvent) => void;
 
@@ -83,8 +92,16 @@ function scheduleReconnect(): void {
 function handleMessage(raw: string): void {
   try {
     const event = JSON.parse(raw) as ChatWsEvent;
+    if (event?.type === 'account.banned') {
+      window.dispatchEvent(
+        new CustomEvent('auth:banned', {
+          detail: { reason: event.reason },
+        })
+      );
+      return;
+    }
     if (event?.type === 'crypto.session_reset') {
-      void handleIncomingSessionReset(event.senderId);
+      if (event.senderId) void handleIncomingSessionReset(event.senderId);
       return;
     }
     if (event?.type !== 'message.new' && event?.type !== 'message.deleted' && event?.type !== 'message.edited') return;

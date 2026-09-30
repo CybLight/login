@@ -50,6 +50,10 @@ export async function renderAccount(tab: string = 'profile'): Promise<void> {
   // Check authorization and get user data
   let user = await authService.checkSession();
   if (!user) {
+    if (sessionStorage.getItem('cyb_ban_reason')) {
+      Router.navigate('account-banned');
+      return;
+    }
     Router.navigate('username');
     return;
   }
@@ -69,6 +73,10 @@ export async function renderAccount(tab: string = 'profile'): Promise<void> {
   }
 
   if (!user) {
+    if (sessionStorage.getItem('cyb_ban_reason')) {
+      Router.navigate('account-banned');
+      return;
+    }
     Router.navigate('username');
     return;
   }

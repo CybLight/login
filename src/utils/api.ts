@@ -67,6 +67,34 @@ export async function apiCall(
       window.dispatchEvent(new CustomEvent('auth:unauthorized'));
     }
 
+    // Auto redirect on 403 if account is banned
+    if (response.status === 403) {
+      const banReasonHeader = response.headers.get('X-Ban-Reason');
+      if (banReasonHeader) {
+        window.dispatchEvent(
+          new CustomEvent('auth:banned', {
+            detail: { reason: banReasonHeader },
+          })
+        );
+      } else {
+        response
+          .clone()
+          .json()
+          .then((data: { error?: string; code?: string; reason?: string }) => {
+            if (data?.error === 'account_banned' || data?.code === 'ACCOUNT_BANNED') {
+              window.dispatchEvent(
+                new CustomEvent('auth:banned', {
+                  detail: { reason: data.reason },
+                })
+              );
+            }
+          })
+          .catch(() => {
+            /* ignore JSON parse failure */
+          });
+      }
+    }
+
     return response;
   } catch (error: unknown) {
     clearTimeout(timeoutId);

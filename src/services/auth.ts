@@ -28,11 +28,32 @@ export const authService = {
           if (data.user.emailVerified === undefined) {
             data.user.emailVerified = !!(data.user.email_verified || data.user.email_verified_at || data.user.emailVerified);
           }
+          if (data.user.username) {
+            try {
+              sessionStorage.setItem('cyb_current_username', data.user.username);
+            } catch {
+              /* ignore storage error */
+            }
+          }
         }
         if (data.user && typeof data.user.gender === 'string') {
           localStorage.setItem('cyb_user_gender', data.user.gender);
         }
         return data.user || null;
+      }
+
+      if (response.status === 403) {
+        const data = await response.clone().json().catch(() => ({}));
+        if (data?.error === 'account_banned' || data?.code === 'ACCOUNT_BANNED' || response.headers.has('X-Ban-Reason')) {
+          const reason = data?.reason || response.headers.get('X-Ban-Reason') || 'Нарушение правил сообщества';
+          try {
+            sessionStorage.setItem('cyb_ban_reason', reason);
+          } catch {
+            /* ignore storage error */
+          }
+          window.dispatchEvent(new CustomEvent('auth:banned', { detail: { reason } }));
+          return null;
+        }
       }
 
       console.log('[AUTH] Session check failed:', response.status);

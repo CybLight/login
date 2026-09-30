@@ -222,6 +222,32 @@ export async function initApp(): Promise<void> {
     Router.navigate('username');
   });
 
+  window.addEventListener('auth:banned', (e: Event) => {
+    const detail = ((e as CustomEvent).detail || {}) as { reason?: string; username?: string };
+    const reason =
+      detail.reason ||
+      sessionStorage.getItem('cyb_ban_reason') ||
+      t('Нарушение правил сообщества');
+    const username =
+      detail.username ||
+      sessionStorage.getItem('cyb_current_username') ||
+      sessionStorage.getItem('cyb_ban_username') ||
+      '';
+
+    authService.clearAuthCookie();
+    setSignalUserId(null);
+
+    try {
+      sessionStorage.setItem('cyb_ban_reason', reason);
+      if (username) sessionStorage.setItem('cyb_ban_username', username);
+    } catch {
+      /* ignore storage access error */
+    }
+
+    NotificationManager.error(t('Ваш аккаунт был заблокирован'));
+    Router.navigate('account-banned', { reason, username });
+  });
+
   logger.info('✅ Application initialized successfully');
 }
 

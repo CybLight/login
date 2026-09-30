@@ -224,7 +224,9 @@ export async function renderPassword(): Promise<void> {
             try {
               sessionStorage.setItem('cyb_ban_reason', banReason);
               sessionStorage.setItem('cyb_ban_username', login);
-            } catch {}
+            } catch {
+              /* ignore storage error */
+            }
 
             Router.navigate('account-banned', { reason: banReason, username: login });
             return;
