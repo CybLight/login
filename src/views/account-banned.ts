@@ -8,8 +8,26 @@ import { setAppContent, shell } from '@/ui';
 import { escapeHtml } from '@/utils';
 
 export function renderAccountBanned(params: Record<string, unknown> = {}): void {
-  const reason = String((params as Record<string, unknown>).reason ?? t('Нарушение правил сообщества'));
-  const username = String((params as Record<string, unknown>).username ?? '');
+  const savedReason = sessionStorage.getItem('cyb_ban_reason');
+  const savedUsername = sessionStorage.getItem('cyb_ban_username');
+
+  const reason = String(
+    (params as Record<string, unknown>).reason ?? savedReason ?? t('Нарушение правил сообщества')
+  );
+  const username = String(
+    (params as Record<string, unknown>).username ?? savedUsername ?? ''
+  );
+
+  if ((params as Record<string, unknown>).reason) {
+    try {
+      sessionStorage.setItem('cyb_ban_reason', reason);
+    } catch {}
+  }
+  if ((params as Record<string, unknown>).username) {
+    try {
+      sessionStorage.setItem('cyb_ban_username', username);
+    } catch {}
+  }
 
   // Убираем no-strawberries класс
   document.body.classList.remove('no-strawberries');

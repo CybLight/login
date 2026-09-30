@@ -215,7 +215,17 @@ export async function renderPassword(): Promise<void> {
             data?.errorCode === 'ACCOUNT_BANNED';
 
           if (isBanned) {
-            const banReason = data?.reason || t('Нарушение правил сообщества');
+            const banReason =
+              data?.reason ||
+              data?.ban_reason ||
+              res.headers.get('X-Ban-Reason') ||
+              t('Нарушение правил сообщества');
+
+            try {
+              sessionStorage.setItem('cyb_ban_reason', banReason);
+              sessionStorage.setItem('cyb_ban_username', login);
+            } catch {}
+
             Router.navigate('account-banned', { reason: banReason, username: login });
             return;
           }
