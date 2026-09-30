@@ -1,5 +1,6 @@
 import { t, getLocale } from '@/i18n';
 import { escapeHtml, apiCall } from '@/utils';
+import { formatApiError } from '@/utils/apiErrors';
 import { setupAccessibleModal } from '@/utils/keyboard';
 import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, AVATAR_FRAMES, canUseExclusiveAvatar } from '../edit-profile';
 import { getAvatarEmoji, getAvatarFrameClass } from './avatar';
@@ -1050,7 +1051,15 @@ export function showSettingsBannerModal(opts: {
           </p>
         </div>
 
-        <div id="stgBannerError" class="input-error-msg" style="color: #f87171; font-size: 13px; margin-top: 8px; display: none;"></div>
+        <div id="stgBannerError" class="modal-banner-alert-box" style="display: none; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); color: #fca5a5; font-size: 13px; line-height: 1.45;">
+          <div style="display: flex; gap: 10px; align-items: flex-start;">
+            <span style="font-size: 18px; line-height: 1; flex-shrink: 0; margin-top: 1px;">🛡️</span>
+            <div style="flex: 1;">
+              <strong id="stgBannerErrorTitle" style="display: block; color: #ef4444; font-size: 13px; margin-bottom: 2px;">${t('Ошибка загрузки')}</strong>
+              <span id="stgBannerErrorText"></span>
+            </div>
+          </div>
+        </div>
 
         <div class="account-notice-actions account-notice-actions--end" style="display: flex !important; gap: 12px !important; justify-content: flex-end !important; margin-top: 20px !important;">
           <button type="button" class="btn btn-outline" id="stgBannerCloseBtn">${t('Закрыть')}</button>
@@ -1073,6 +1082,20 @@ export function showSettingsBannerModal(opts: {
     const preview = wrap.querySelector('#stgModalBannerPreview') as HTMLElement | null;
     const spinner = wrap.querySelector('#stgModalBannerSpinner') as HTMLElement | null;
     const errEl = wrap.querySelector('#stgBannerError') as HTMLElement | null;
+
+    const showError = (message: string, title?: string) => {
+      if (!errEl) return;
+      const titleEl = wrap.querySelector('#stgBannerErrorTitle');
+      const textEl = wrap.querySelector('#stgBannerErrorText');
+      if (titleEl) titleEl.textContent = title || t('Ошибка загрузки');
+      if (textEl) textEl.textContent = message;
+      else errEl.textContent = message;
+      errEl.style.display = 'block';
+    };
+
+    const hideError = () => {
+      if (errEl) errEl.style.display = 'none';
+    };
 
     const openPicker = () => fileInput?.click();
 
@@ -1168,21 +1191,39 @@ export function showSettingsBannerModal(opts: {
     fileInput?.addEventListener('change', async () => {
       const file = fileInput.files?.[0];
       if (!file) return;
+      hideError();
 
-      if (!file.type.startsWith('image/')) {
-        if (errEl) {
-          errEl.textContent = t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP)');
-          errEl.style.display = 'block';
-        }
+      const ext = (file.name ? file.name.split('.').pop() : '')?.toLowerCase() || '';
+
+      // 🛡️ Защита от SVG и XSS инъекций на клиенте
+      if (
+        ext === 'svg' ||
+        file.type.includes('svg') ||
+        file.type.includes('xml') ||
+        file.type.includes('html')
+      ) {
+        showError(
+          t('Загрузка SVG-файлов запрещена в целях безопасности (защита от XSS-атак). Пожалуйста, выберите изображение в формате JPG, PNG или WEBP.'),
+          t('Недопустимый формат файла')
+        );
+        fileInput.value = '';
+        return;
+      }
+
+      if (!['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || !file.type.startsWith('image/')) {
+        showError(
+          t('Неподдерживаемый формат изображения. Допустимы только растровые изображения (JPG, PNG, WEBP, GIF).'),
+          t('Недопустимый формат файла')
+        );
         fileInput.value = '';
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        if (errEl) {
-          errEl.textContent = t('Файл слишком большой. Максимальный размер 10 МБ');
-          errEl.style.display = 'block';
-        }
+        showError(
+          t('Размер файла превышает 10 МБ. Пожалуйста, сожмите изображение или выберите другой файл.'),
+          t('Файл слишком большой')
+        );
         fileInput.value = '';
         return;
       }
@@ -1194,7 +1235,7 @@ export function showSettingsBannerModal(opts: {
         reader.readAsDataURL(file);
       });
       if (spinner) spinner.style.display = 'flex';
-      if (errEl) errEl.style.display = 'none';
+      hideError();
 
       const formData = new FormData();
       formData.append('banner', file);
@@ -1251,17 +1292,12 @@ export function showSettingsBannerModal(opts: {
             },
           });
         } else {
-          if (errEl) {
-            errEl.textContent = data?.error || t('Ошибка при загрузке обложки');
-            errEl.style.display = 'block';
-          }
+          const friendlyMessage = formatApiError(data?.error, t('Не удалось загрузить обложку. Пожалуйста, выберите другой файл.'));
+          showError(friendlyMessage, t('Ошибка загрузки обложки'));
         }
       } catch (err) {
         console.error('Banner upload error:', err);
-        if (errEl) {
-          errEl.textContent = t('Не удалось загрузить обложку. Проверьте соединение.');
-          errEl.style.display = 'block';
-        }
+        showError(t('Не удалось загрузить обложку. Проверьте подключение к сети.'), t('Ошибка сети'));
       } finally {
         if (spinner) spinner.style.display = 'none';
         fileInput.value = '';

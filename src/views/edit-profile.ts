@@ -9,6 +9,7 @@ import { Router } from '@/router/Router';
 import { pushLocalEasterFlagsToServer } from '@/services';
 import { showBannerPositionModal, showAccountConfirmModal, showAccountNoticeModal } from './account/modals';
 import { getBannerImgStyle } from '@/utils/banner';
+import { formatApiError } from '@/utils/apiErrors';
 
 interface EditableProfile {
   id?: string;
@@ -769,8 +770,24 @@ function initBannerEdit(profile: EditableProfile): void {
     const file = fileInput.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      showAccountNoticeModal('warn', t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP)'));
+    const ext = (file.name ? file.name.split('.').pop() : '')?.toLowerCase() || '';
+
+    if (
+      ext === 'svg' ||
+      file.type.includes('svg') ||
+      file.type.includes('xml') ||
+      file.type.includes('html')
+    ) {
+      showAccountNoticeModal(
+        'error',
+        t('Загрузка SVG-файлов запрещена в целях безопасности (защита от XSS-атак). Пожалуйста, выберите изображение в формате JPG, PNG или WEBP.')
+      );
+      fileInput.value = '';
+      return;
+    }
+
+    if (!['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || !file.type.startsWith('image/')) {
+      showAccountNoticeModal('warn', t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP, GIF)'));
       fileInput.value = '';
       return;
     }
@@ -840,7 +857,8 @@ function initBannerEdit(profile: EditableProfile): void {
           },
         });
       } else {
-        showAccountNoticeModal('error', data?.error || t('Ошибка при загрузке обложки'));
+        const friendlyMsg = formatApiError(data?.error, t('Не удалось загрузить обложку. Попробуйте другой файл.'));
+        showAccountNoticeModal('error', friendlyMsg);
       }
     } catch (err) {
       console.error('Banner upload error:', err);

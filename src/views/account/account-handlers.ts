@@ -38,6 +38,7 @@ import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, AVATAR_FRAMES } from '../edit-prof
 import { getLocale, localeTag } from '@/i18n';
 import { bindBadgeEasterEgg } from '@/components/easter/badge-easter';
 import { getBannerImgStyle } from '@/utils/banner';
+import { formatApiError } from '@/utils/apiErrors';
 
 interface ApiMessage {
   showMsg: (type: string, text: string, persist?: boolean) => void;
@@ -948,14 +949,30 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
     const file = fileInput.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith('image/')) {
-      api.showMsg('error', t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP)'));
+    const ext = (file.name ? file.name.split('.').pop() : '')?.toLowerCase() || '';
+
+    if (
+      ext === 'svg' ||
+      file.type.includes('svg') ||
+      file.type.includes('xml') ||
+      file.type.includes('html')
+    ) {
+      showAccountNoticeModal(
+        'error',
+        t('Загрузка SVG-файлов запрещена в целях безопасности (защита от XSS-атак). Пожалуйста, выберите изображение в формате JPG, PNG или WEBP.')
+      );
+      fileInput.value = '';
+      return;
+    }
+
+    if (!['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || !file.type.startsWith('image/')) {
+      showAccountNoticeModal('warn', t('Пожалуйста, выберите файл изображения (JPG, PNG, WEBP, GIF)'));
       fileInput.value = '';
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      api.showMsg('error', t('Файл слишком большой. Максимальный размер 10 МБ'));
+      showAccountNoticeModal('warn', t('Файл слишком большой. Максимальный размер 10 МБ'));
       fileInput.value = '';
       return;
     }
@@ -1014,11 +1031,12 @@ function bindProfileBannerHandlers(user: AppUser, api: ApiMessage): void {
           });
         }, 150);
       } else {
-        api.showMsg('error', data?.error || t('Ошибка при загрузке обложки'));
+        const friendly = formatApiError(data?.error, t('Ошибка при загрузке обложки'));
+        showAccountNoticeModal('error', friendly);
       }
     } catch (err) {
       console.error('Banner upload error:', err);
-      api.showMsg('error', t('Не удалось загрузить обложку. Проверьте соединение.'));
+      showAccountNoticeModal('error', t('Не удалось загрузить обложку. Проверьте соединение с интернетом.'));
     } finally {
       if (spinner) spinner.style.display = 'none';
       fileInput.value = '';

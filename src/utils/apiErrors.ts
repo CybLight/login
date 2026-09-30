@@ -68,6 +68,24 @@ export function formatApiError(rawError: string | undefined | null, fallbackMess
     case 'profanity_detected':
       return t('Текст содержит недопустимые или 18+ выражения.');
 
+    // Загрузка файлов и безопасность
+    case 'svg_not_allowed':
+    case 'svg_forbidden':
+      return t('Загрузка SVG-файлов запрещена в целях безопасности (защита от XSS-атак). Пожалуйста, выберите изображение в формате JPG, PNG, WEBP или GIF.');
+    case 'unsupported_image_type':
+    case 'invalid_image_type':
+    case 'invalid_file_type':
+      return t('Неподдерживаемый формат изображения. Допустимы только растровые изображения (JPG, PNG, WEBP, GIF). Векторные форматы (SVG) и скрипты запрещены.');
+    case 'file_too_large':
+    case 'payload_too_large':
+    case 'image_too_large':
+      return t('Файл слишком большой. Максимально допустимый размер файла составляет 10 МБ.');
+    case 'missing_fields':
+    case 'no_file_uploaded':
+      return t('Файл для загрузки не передан или повреждён.');
+    case 'upload_failed':
+      return t('Не удалось загрузить файл в хранилище. Пожалуйста, попробуйте снова.');
+
     // Токены и подтверждение email
     case 'token_used':
       return t('Эта ссылка уже была использована ранее (email уже подтверждён). Вы можете войти в аккаунт.');
