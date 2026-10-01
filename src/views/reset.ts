@@ -7,7 +7,7 @@ import { Router } from '@/router/Router';
 import { captchaService } from '@/services';
 import { setAppContent, shell, showAppAlert } from '@/ui';
 import { getStorage, apiCall } from '@/utils';
-import { initPasswordEyes, showCompromisedPasswordModal } from '@/components/password';
+import { initPasswordEyes, showCompromisedPasswordModal, attachPasswordHints } from '@/components/password';
 import { formatApiError } from '@/utils/apiErrors';
 
 export async function renderReset(): Promise<void> {
@@ -51,6 +51,7 @@ function renderPasswordResetForm(token: string): void {
             <input class="input" id="p1" type="password" autocomplete="new-password" required />
             <button type="button" class="pass-eye" data-target="p1" aria-label="${t('Показать пароль')}"></button>
           </div>
+          <div id="passHintsReset"></div>
         </div>
 
         <div class="field">
@@ -74,6 +75,12 @@ function renderPasswordResetForm(token: string): void {
   );
 
   initPasswordEyes();
+
+  const p1El = document.getElementById('p1') as HTMLInputElement | null;
+  const hintsEl = document.getElementById('passHintsReset');
+  if (p1El && hintsEl) {
+    attachPasswordHints(p1El, hintsEl);
+  }
 
   const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
