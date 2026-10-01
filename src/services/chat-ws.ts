@@ -80,9 +80,9 @@ function bindPageLifecycleHandlers(): void {
   });
 }
 
-function scheduleReconnect(): void {
+function scheduleReconnect(customDelay?: number): void {
   if (reconnectTimer) return;
-  const delay = Math.min(30_000, 1_000 * 2 ** Math.min(connectAttempts, 5));
+  const delay = customDelay ?? Math.min(30_000, 1_000 * 2 ** Math.min(connectAttempts, 5));
   reconnectTimer = window.setTimeout(() => {
     reconnectTimer = null;
     connectChatWebSocket();
@@ -98,6 +98,7 @@ function handleMessage(raw: string): void {
           detail: { reason: event.reason },
         })
       );
+      disconnectChatWebSocket();
       return;
     }
     if (event?.type === 'crypto.session_reset') {
@@ -150,9 +151,19 @@ export function connectChatWebSocket(): void {
     console.info('[chat-ws] closed', event.code, event.reason || '');
     socket = null;
     clearPingTimer();
+
+    // Прекращаем реконнект при фатальных кодах закрытия (бан, неавторизован)
+    if (event.code === 4001 || event.code === 4003 || event.reason === 'banned') {
+      disconnectChatWebSocket();
+      return;
+    }
+
     if (listeners.size > 0 || keepAlive) {
       connectAttempts += 1;
-      scheduleReconnect();
+      // Если сервер вернул 1008 (too_many_connections), увеличиваем паузу до 45 секунд
+      const isRateLimited = event.code === 1008 || event.reason === 'too_many_connections';
+      const delay = isRateLimited ? 45_000 : undefined;
+      scheduleReconnect(delay);
     }
   });
 
