@@ -43,3 +43,4 @@ Thumbs.db
 # Test & audit artifacts
 coverage/
 axe-results.json
+ChatExport_*/

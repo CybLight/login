@@ -16,6 +16,7 @@ export function hasDeveloperModeAccess(): boolean {
 
 export function setDeveloperModeAccess(): void {
   setStorage(DEVELOPER_MODE_KEY, '1');
+  setStorage(`${DEVELOPER_MODE_KEY}_at`, String(Date.now()));
 }
 
 function isDevFooterPinned(): boolean {

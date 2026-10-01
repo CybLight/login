@@ -316,36 +316,31 @@ export function extractEasterFlags(payload: EasterLoginPayload): ResolvedEasterF
   };
 }
 
-function pullEasterFlagsToStorage(source: ResolvedEasterFlags): void {
+function pullEasterFlagsToStorage(
+  source: ResolvedEasterFlags,
+  timestamps?: Record<string, number | null>
+): void {
   if (!allowsFunctionalConsent()) return;
 
-  if (source.strawberry === true) {
-    localStorage.setItem(EASTER_KEY, '1');
-  }
+  const setItem = (key: string, flag: string, isUnlocked: boolean | undefined) => {
+    if (isUnlocked === true) {
+      localStorage.setItem(key, '1');
+      const ts = timestamps?.[flag];
+      if (ts && ts > 0) {
+        localStorage.setItem(`${key}_at`, String(ts));
+      }
+    }
+  };
 
-  if (source.darkTrigger === true) {
-    localStorage.setItem(DARK_TRIGGER_KEY, '1');
-  }
-
-  if (source.profileMirror === true) {
-    localStorage.setItem(PROFILE_MIRROR_KEY, '1');
-  }
-
-  if (source.lightCatcher === true) {
-    localStorage.setItem(LIGHT_CATCHER_KEY, '1');
-  }
-
-  if (source.postmaster === true) {
-    localStorage.setItem(POSTMASTER_KEY, '1');
-  }
-
-  if (source.developerMode === true) {
-    localStorage.setItem(DEVELOPER_MODE_KEY, '1');
-  }
-
-  if (source.themeFlux === true) {
-    localStorage.setItem(THEME_FLUX_KEY, '1');
-  }
+  setItem(EASTER_KEY, 'strawberry', source.strawberry);
+  setItem(DARK_TRIGGER_KEY, 'darkTrigger', source.darkTrigger);
+  setItem(PROFILE_MIRROR_KEY, 'profileMirror', source.profileMirror);
+  setItem(LIGHT_CATCHER_KEY, 'lightCatcher', source.lightCatcher);
+  setItem(POSTMASTER_KEY, 'postmaster', source.postmaster);
+  setItem(DEVELOPER_MODE_KEY, 'developerMode', source.developerMode);
+  setItem(THEME_FLUX_KEY, 'themeFlux', source.themeFlux);
+  setItem(SKIP_CATCHER_KEY, 'skipCatcher', source.skipCatcher);
+  setItem(CYBER_ARTIST_KEY, 'cyberArtist', source.cyberArtist);
 }
 
 function hasLocalEasterFlag(storageKey: string): boolean {
@@ -393,7 +388,12 @@ export async function pushLocalEasterFlagsToServer(
 }
 
 export async function syncEasterAfterLogin(loginPayload: EasterLoginPayload): Promise<void> {
-  pullEasterFlagsToStorage(extractEasterFlags(loginPayload));
+  const payloadTimestamps =
+    loginPayload?.easter?.timestamps ||
+    loginPayload?.easterTimestamps ||
+    loginPayload?.user?.easterTimestamps ||
+    loginPayload?.user?.easter?.timestamps;
+  pullEasterFlagsToStorage(extractEasterFlags(loginPayload), payloadTimestamps);
 
   try {
     const meRes = await apiCall('/auth/me', {
@@ -406,9 +406,14 @@ export async function syncEasterAfterLogin(loginPayload: EasterLoginPayload): Pr
       return;
     }
 
-    const meData = await meRes.json().catch(() => ({}));
+    const meData = (await meRes.json().catch(() => ({}))) as EasterLoginPayload;
     const serverFlags = extractEasterFlags(meData);
-    pullEasterFlagsToStorage(serverFlags);
+    const serverTimestamps =
+      meData?.user?.easterTimestamps ||
+      meData?.user?.easter?.timestamps ||
+      meData?.easterTimestamps ||
+      meData?.easter?.timestamps;
+    pullEasterFlagsToStorage(serverFlags, serverTimestamps);
     await pushLocalEasterFlagsToServer(serverFlags);
   } catch (syncError) {
     console.warn('[EASTER] Sync skipped:', syncError);

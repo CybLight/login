@@ -16,6 +16,7 @@ let AlexUnlocked = false;
  */
 export function setStrawberryAccess(): void {
   setStorage(EASTER_KEY, '1');
+  setStorage(`${EASTER_KEY}_at`, String(Date.now()));
 }
 
 /**

@@ -1115,7 +1115,7 @@ function bindEasterSubTabs(): void {
   if (!root) return;
 
   const tabs = root.querySelectorAll<HTMLButtonElement>('[data-easter-tab]');
-  const panels = root.querySelectorAll<HTMLElement>('[data-easter-panel]');
+  const panels = document.querySelectorAll<HTMLElement>('[data-easter-panel]');
   if (!tabs.length || !panels.length) return;
 
   const activate = (tabId: string) => {

@@ -1,6 +1,7 @@
 import { t } from '@/i18n';
 import type { UserEasterFlags } from '@/types';
 import { escapeHtml } from '@/utils';
+import { fmtTs } from './device-utils';
 
 function easterFlag(
   easter: UserEasterFlags | undefined,
@@ -204,7 +205,20 @@ const V010_APP_CARDS: V010CardSpec[] = [
   },
 ];
 
-function renderCard(spec: V010CardSpec, unlocked: boolean): string {
+function renderEasterUnlockedTimeHtml(timestamp?: number | null): string {
+  if (!timestamp || typeof timestamp !== 'number' || timestamp <= 0) return '';
+  const formatted = fmtTs(timestamp);
+  if (!formatted || formatted === '—') return '';
+  return `
+    <div class="easter-unlocked-time" title="${t('Время получения')}">
+      <span class="easter-time-icon" aria-hidden="true">🕒</span>
+      <span class="easter-time-label">${t('Получено:')}</span>
+      <span class="easter-time-value">${escapeHtml(formatted)}</span>
+    </div>
+  `;
+}
+
+function renderCard(spec: V010CardSpec, unlocked: boolean, timestamp?: number | null): string {
   const badge = unlocked
     ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
     : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`;
@@ -216,14 +230,21 @@ function renderCard(spec: V010CardSpec, unlocked: boolean): string {
       <div class="easter-card-title">${t(spec.title)}</div>
       <div class="easter-card-desc">${t(unlocked ? spec.descUnlocked : spec.descLocked)}</div>
       ${unlocked ? '' : `<div class="easter-hint">${t(spec.hintLocked)}</div>`}
+      ${unlocked ? renderEasterUnlockedTimeHtml(timestamp) : ''}
     </div>
   `;
 }
 
-export function renderV010AppEasterCards(easter: UserEasterFlags | undefined): string {
-  return V010_APP_CARDS.map((spec) =>
-    renderCard(spec, easterFlag(easter, spec.camel, spec.snake)),
-  ).join('');
+export function renderV010AppEasterCards(
+  easter: UserEasterFlags | undefined,
+  timestamps?: Record<string, number | null>
+): string {
+  const tsMap = timestamps || easter?.timestamps;
+  return V010_APP_CARDS.map((spec) => {
+    const unlocked = easterFlag(easter, spec.camel, spec.snake);
+    const ts = unlocked ? (tsMap?.[spec.camel] ?? (spec.snake ? tsMap?.[spec.snake] : null)) : null;
+    return renderCard(spec, unlocked, ts);
+  }).join('');
 }
 
 export function countV010AppUnlockedEggs(easter: UserEasterFlags | undefined): number {
@@ -242,13 +263,19 @@ export function countV010UnlockedEggs(easter: UserEasterFlags | undefined): numb
   return count;
 }
 
-export function renderFormatMirrorEasterCard(easter: UserEasterFlags | undefined): string {
+export function renderFormatMirrorEasterCard(
+  easter: UserEasterFlags | undefined,
+  timestamps?: Record<string, number | null>
+): string {
   const unlocked = easterFlag(easter, 'formatMirror', 'format_mirror');
   const webToday =
     easter?.formatMirrorWebToday === true || easter?.format_mirror_web_today === true;
   const appToday =
     easter?.formatMirrorAppToday === true || easter?.format_mirror_app_today === true;
   const platformsToday = (webToday ? 1 : 0) + (appToday ? 1 : 0);
+
+  const tsMap = timestamps || easter?.timestamps;
+  const ts = unlocked ? (tsMap?.formatMirror ?? tsMap?.format_mirror ?? null) : null;
 
   const badge = unlocked
     ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
@@ -270,6 +297,7 @@ export function renderFormatMirrorEasterCard(easter: UserEasterFlags | undefined
           ? `<div class="easter-hint">${t('🎊 Формат отражён на обеих платформах!')}</div>`
           : `<div class="easter-hint">${t('💡 Подсказка: жирный, курсив или другой стиль — на сайте и в приложении')}</div>`
       }
+      ${unlocked ? renderEasterUnlockedTimeHtml(ts) : ''}
     </div>
   `;
 }

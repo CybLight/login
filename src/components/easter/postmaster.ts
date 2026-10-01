@@ -15,6 +15,7 @@ export function hasPostmasterAccess(): boolean {
 
 export function setPostmasterAccess(): void {
   setStorage(POSTMASTER_KEY, '1');
+  setStorage(`${POSTMASTER_KEY}_at`, String(Date.now()));
 }
 
 function showPostmasterModal(): Promise<void> {

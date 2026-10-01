@@ -43,6 +43,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   easter?: UserEasterFlags;
+  easterTimestamps?: Record<string, number | null>;
   privacy?: Record<string, string>;
   isPremium?: boolean;
   premiumUntil?: number | null;
@@ -339,12 +340,15 @@ export interface UserEasterFlags {
   epoch_keeper?: boolean;
   infinityOverlord?: boolean;
   infinity_overlord?: boolean;
+  timestamps?: Record<string, number | null>;
 }
 
 export interface EasterLoginPayload {
   easter?: UserEasterFlags;
+  easterTimestamps?: Record<string, number | null>;
   user?: {
     easter?: UserEasterFlags;
+    easterTimestamps?: Record<string, number | null>;
     flags?: string[];
   };
   flags?: string[];

@@ -19,6 +19,7 @@ export function hasProfileMirrorAccess(): boolean {
 
 export function setProfileMirrorAccess(): void {
   setStorage(PROFILE_MIRROR_KEY, "1");
+  setStorage(`${PROFILE_MIRROR_KEY}_at`, String(Date.now()));
 }
 
 function resetClickCounter(): void {

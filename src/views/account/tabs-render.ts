@@ -16,6 +16,7 @@ import {
   renderV010AppEasterCards,
   V010_APP_EGGS_TOTAL,
 } from "./easter-v010-render";
+import { fmtTs } from "./device-utils";
 import { STANDARD_AVATARS, EXCLUSIVE_AVATARS, AVATAR_FRAMES } from "../edit-profile";
 import { detectUserCurrency } from "./modals";
 import { getBannerImgStyle } from "@/utils/banner";
@@ -57,6 +58,7 @@ type User = {
   passChangedAt?: number | string | null;
   pass_changed_at?: number | string | null;
   easter?: UserEasterFlags;
+  easterTimestamps?: Record<string, number | null>;
   pendingEmail?: string | null;
   pending_email?: string | null;
   pendingEmailVerifiedAt?: number | null;
@@ -2052,6 +2054,63 @@ function easterCollectionSummaryHtml(found: number, total: number = EASTER_EGGS_
   return `<div class="easter-collection-summary${completeClass}">${escapeHtml(text)}</div>`;
 }
 
+function getEasterUnlockedTimestamp(
+  user: User | undefined,
+  flagKey: string,
+  storageKey?: string
+): number | null {
+  if (!user) return null;
+
+  const map = user.easterTimestamps || user.easter?.timestamps;
+  if (map && typeof map === "object") {
+    const val = (map as Record<string, number | null>)[flagKey];
+    if (typeof val === "number" && val > 0) return val;
+
+    const snake = flagKey.replace(/[A-Z]/g, (l) => `_${l.toLowerCase()}`);
+    const snakeVal = (map as Record<string, number | null>)[snake];
+    if (typeof snakeVal === "number" && snakeVal > 0) return snakeVal;
+
+    const camel = flagKey.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
+    const camelVal = (map as Record<string, number | null>)[camel];
+    if (typeof camelVal === "number" && camelVal > 0) return camelVal;
+  }
+
+  if (user.easter) {
+    const rawVal = (user.easter as Record<string, unknown>)[flagKey];
+    if (typeof rawVal === "number" && rawVal > 1) {
+      return rawVal;
+    }
+  }
+
+  if (storageKey) {
+    try {
+      const ts = localStorage.getItem(`${storageKey}_at`);
+      if (ts) {
+        const parsed = Number(ts);
+        if (Number.isFinite(parsed) && parsed > 0) return parsed;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  return null;
+}
+
+function renderEasterUnlockedTime(user: User, flagKey: string, storageKey?: string): string {
+  const ts = getEasterUnlockedTimestamp(user, flagKey, storageKey);
+  if (!ts) return "";
+  const formatted = fmtTs(ts);
+  if (!formatted || formatted === "—") return "";
+  return `
+    <div class="easter-unlocked-time" title="${t('Время получения')}">
+      <span class="easter-time-icon" aria-hidden="true">🕒</span>
+      <span class="easter-time-label">${t('Получено:')}</span>
+      <span class="easter-time-value">${escapeHtml(formatted)}</span>
+    </div>
+  `;
+}
+
 function renderEasterTab(user: User): string {
   const hasStrawberry =
     localStorage.getItem("cyb_strawberry_unlocked") === "1" ||
@@ -2268,6 +2327,7 @@ function renderEasterTab(user: User): string {
       : `<div class="easter-hint">${t('💡 Подсказка: исследуй страницы входа...')}</div>`
     }
           ${hasStrawberry ? `<div class="easter-hint">${t('🎊 Поздравляем с находкой!')}</div>` : ""}
+          ${hasStrawberry ? renderEasterUnlockedTime(user, 'strawberry', 'cyb_strawberry_unlocked') : ""}
         </div>
 
         <div class="easter-card easter-card--profile-mirror ${hasProfileMirror ? "" : "locked"}">
@@ -2298,6 +2358,7 @@ function renderEasterTab(user: User): string {
       : `<div class="easter-hint">${t('💡 Подсказка: загляни в свой профиль и посмотри на себя чаще...')}</div>`
     }
           ${hasProfileMirror ? `<div class="easter-hint">${t('🎊 Ты заглянул в своё отражение!')}</div>` : ""}
+          ${hasProfileMirror ? renderEasterUnlockedTime(user, 'profileMirror', 'cyb_profile_mirror_unlocked') : ""}
         </div>
       </div>
 
@@ -2338,6 +2399,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Конгратулейшн, ты настоящий детектив!')}</div>`
       : ""
     }
+          ${hasDarkTrigger ? renderEasterUnlockedTime(user, 'darkTrigger', 'cyb_dark_trigger_unlocked') : ""}
         </div>
 
         <div class="easter-card easter-card--postmaster ${hasPostmaster ? "" : "locked"}">
@@ -2359,6 +2421,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Секрет из ящика входящих пойман!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: загляни в письмо о восстановлении пароля...')}</div>`
     }
+          ${hasPostmaster ? renderEasterUnlockedTime(user, 'postmaster', 'cyb_postmaster_unlocked') : ""}
         </div>
 
         <div class="easter-card easter-card--developer-mode ${hasDeveloperMode ? "" : "locked"}">
@@ -2380,6 +2443,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 console.log("found") — секрет под капотом!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: Загляни под капот сайта')}</div>`
     }
+          ${hasDeveloperMode ? renderEasterUnlockedTime(user, 'developerMode', 'cyb_developer_mode_unlocked') : ""}
         </div>
 
         <div class="easter-card easter-card--theme-flux ${hasThemeFlux ? "" : "locked"}">
@@ -2401,6 +2465,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Свет ↔ тьма — и секрет ваш!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: покачай настроение сайта — свет, тьма, свет...')}</div>`
     }
+          ${hasThemeFlux ? renderEasterUnlockedTime(user, 'themeFlux', 'cyb_theme_flux_unlocked') : ""}
         </div>
 
         <div class="easter-card easter-card--skip-catcher ${hasSkipCatcher ? "" : "locked"}">
@@ -2411,6 +2476,7 @@ function renderEasterTab(user: User): string {
                 <div class="easter-card-title">${t('Неуловимый')}</div>
                 <div class="easter-card-desc">${t('Ты смог поймать кнопку «Пропустить»! Твоя скорость реакции космическая 🚀')}</div>
                 <div class="easter-hint">${t('🎊 Скорость клика на высоте!')}</div>
+                ${renderEasterUnlockedTime(user, 'skipCatcher', 'cyb_skip_catcher_unlocked')}
               `
       : `
                 <span class="easter-card-badge locked">${t('🔒 Скрытая')}</span>
@@ -2447,6 +2513,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Творческий потенциал разблокирован!')}</div>`
       : ""
     }
+          ${hasCyberArtist ? renderEasterUnlockedTime(user, 'cyberArtist', 'cyb_easter_cyber_artist') : ""}
         </div>
 
         <div id="easterCardGoldenTouch" class="easter-card easter-card--golden-touch ${hasGoldenTouch ? "easter-card-rare" : "locked"}">
@@ -2468,6 +2535,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Золотой статус активирован!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на сайте')}</div>`
     }
+          ${hasGoldenTouch ? renderEasterUnlockedTime(user, 'goldenTouch', 'cyb_golden_touch_unlocked') : ""}
         </div>
 
         <div id="easterCardStarSpark" class="easter-card easter-card--star-spark ${hasStarSpark ? "easter-card-rare" : "locked"}">
@@ -2489,6 +2557,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Звёздный мастер пробуждён!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: тапни 5 раз подряд по своему бейджу в профиле')}</div>`
     }
+          ${hasStarSpark ? renderEasterUnlockedTime(user, 'starSpark', 'cyb_star_spark_unlocked') : ""}
         </div>
 
         <div id="easterCardFirstPulse" class="easter-card easter-card--first-pulse ${hasFirstPulse ? "easter-card-rare" : "locked"}">
@@ -2510,6 +2579,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Месячный импульс на максимуме!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на 1 Месяц')}</div>`
     }
+          ${hasFirstPulse ? renderEasterUnlockedTime(user, 'firstPulse', 'cyb_first_pulse_unlocked') : ""}
         </div>
 
         <div id="easterCardSeasonGuardian" class="easter-card easter-card--season-guardian ${hasSeasonGuardian ? "easter-card-rare" : "locked"}">
@@ -2531,6 +2601,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Полугодовой щит активен!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на 6 Месяцев')}</div>`
     }
+          ${hasSeasonGuardian ? renderEasterUnlockedTime(user, 'seasonGuardian', 'cyb_season_guardian_unlocked') : ""}
         </div>
 
         <div id="easterCardEpochKeeper" class="easter-card easter-card--epoch-keeper ${hasEpochKeeper ? "easter-card-rare" : "locked"}">
@@ -2552,6 +2623,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Годовая эпоха под контролем!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на 1 Год')}</div>`
     }
+          ${hasEpochKeeper ? renderEasterUnlockedTime(user, 'epochKeeper', 'cyb_epoch_keeper_unlocked') : ""}
         </div>
 
         <div id="easterCardInfinityOverlord" class="easter-card easter-card--infinity-overlord ${hasInfinityOverlord ? "easter-card-rare" : "locked"}">
@@ -2573,8 +2645,8 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Вечный статус навсегда вписан в историю!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: активируй бессрочный тариф Premium Навсегда')}</div>`
     }
+          ${hasInfinityOverlord ? renderEasterUnlockedTime(user, 'infinityOverlord', 'cyb_infinity_overlord_unlocked') : ""}
         </div>
-      </div>
       </div>
       </div>
 
@@ -2607,6 +2679,7 @@ function renderEasterTab(user: User): string {
       ? `<div class="easter-hint">${t('🎊 Свет пойман — секрет сохранён!')}</div>`
       : `<div class="easter-hint">${t('💡 Подсказка: проверь на прочность версию Android приложения')}</div>`
     }
+          ${hasLightCatcher ? renderEasterUnlockedTime(user, 'lightCatcher', 'cyb_light_catcher_unlocked') : ""}
         </div>
 
         <div class="easter-card easter-card--night-guard ${hasNightGuard ? "" : "locked"}">
@@ -2615,6 +2688,7 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-title">${t('Ночной страж')}</div>
           <div class="easter-card-desc">${hasNightGuard ? t('Ты бодрствуешь в тёмной теме после полуночи') : t('Ночь, тёмная тема и 30 секунд терпения')}</div>
           ${hasNightGuard ? "" : `<div class="easter-hint">${t('💡 Подсказка: включи тёмную тему после 00:00 и останься в приложении')}</div>`}
+          ${hasNightGuard ? renderEasterUnlockedTime(user, 'nightGuard') : ""}
         </div>
 
         <div class="easter-card easter-card--trusted-fingerprint ${hasTrustedFingerprint ? "" : "locked"}">
@@ -2623,6 +2697,7 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-title">${t('Отпечаток доверия')}</div>
           <div class="easter-card-desc">${hasTrustedFingerprint ? t('Сто раз подтвердил вход биометрией') : t('Биометрия должна узнать тебя наизусть')}</div>
           ${hasTrustedFingerprint ? "" : `<div class="easter-hint">${t('💡 Подсказка: разблокируй приложение отпечатком 100 раз')}</div>`}
+          ${hasTrustedFingerprint ? renderEasterUnlockedTime(user, 'trustedFingerprint') : ""}
         </div>
 
         <div class="easter-card easter-card--echo ${hasEcho ? "" : "locked"}">
@@ -2631,6 +2706,7 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-title">${t('Эхо')}</div>
           <div class="easter-card-desc">${hasEcho ? t('Сообщение ушло в полночь — эхо услышано') : t('Отправь сообщение ровно в 23:59')}</div>
           ${hasEcho ? "" : `<div class="easter-hint">${t('💡 Подсказка: поймай минуту перед полуночью в чате')}</div>`}
+          ${hasEcho ? renderEasterUnlockedTime(user, 'echo') : ""}
         </div>
 
         <div class="easter-card easter-card--archivist ${hasArchivist ? "" : "locked"}">
@@ -2639,9 +2715,10 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-title">${t('Архивариус')}</div>
           <div class="easter-card-desc">${hasArchivist ? t('Закрепил, изменил, отреагировал и переслал в одном чате') : t('Освой все инструменты сообщений в одном диалоге')}</div>
           ${hasArchivist ? "" : `<div class="easter-hint">${t('💡 Подсказка: закрепи, измени, поставь реакцию и перешли в одном чате')}</div>`}
+          ${hasArchivist ? renderEasterUnlockedTime(user, 'archivist') : ""}
         </div>
 
-        ${renderV010AppEasterCards(user.easter)}
+        ${renderV010AppEasterCards(user.easter, user.easterTimestamps || user.easter?.timestamps)}
       </div>
       </div>
 
@@ -2661,9 +2738,10 @@ function renderEasterTab(user: User): string {
           <div class="easter-card-desc">${hasBridge ? t('В один день открыл секрет на сайте и в приложении') : t('Найди пасхалки и на сайте, и в приложении в один день')}</div>
           ${hasBridge ? "" : easterProgressHtml(bridgePlatformsToday, 2)}
           ${hasBridge ? `<div class="easter-hint">${t('🎊 CybLight на обоих берегах!')}</div>` : `<div class="easter-hint">${t('💡 Подсказка: исследуй сайт и приложение в один день')}</div>`}
+          ${hasBridge ? renderEasterUnlockedTime(user, 'bridge') : ""}
         </div>
 
-        ${renderFormatMirrorEasterCard(user.easter)}
+        ${renderFormatMirrorEasterCard(user.easter, user.easterTimestamps || user.easter?.timestamps)}
       </div>
       </div>
     </div>
