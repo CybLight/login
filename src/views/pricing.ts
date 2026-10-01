@@ -394,7 +394,7 @@ export async function renderPricing(): Promise<void> {
           setTimeout(() => {
             closeModal();
             triggerPremiumSuccessCelebration(
-              (currentUser as any) || { login: sessionStorage.getItem('cyb_current_username') || 'User' },
+              currentUser || { login: sessionStorage.getItem('cyb_current_username') || 'User' },
               activePayingPlan?.id || 'month_1',
               () => {
                 void renderPricing();
