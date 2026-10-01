@@ -6264,6 +6264,66 @@ body:has(.is-chat-view),
 }
 
 /* ==========================================================================
+   Premium Success Celebration Modal
+   ========================================================================== */
+.premium-success-card {
+  max-width: 500px !important;
+  border-radius: 28px !important;
+  border: 1px solid rgba(234, 179, 8, 0.65) !important;
+  background: linear-gradient(155deg, rgba(26, 20, 42, 0.97) 0%, rgba(38, 28, 12, 0.98) 100%) !important;
+  box-shadow: 0 24px 64px -8px rgba(0, 0, 0, 0.85), 0 0 55px rgba(234, 179, 8, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+  text-align: center !important;
+  padding: 34px 28px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  animation: easterModalAppear 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.premium-success-perks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 18px 0;
+  text-align: left;
+}
+
+@media (max-width: 480px) {
+  .premium-success-perks {
+    grid-template-columns: 1fr;
+  }
+}
+
+.premium-perk-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+.premium-perk-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.premium-perk-text strong {
+  display: block;
+  font-size: 13px;
+  color: #fef08a;
+  line-height: 1.2;
+}
+
+.premium-perk-text span {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
    Easter Card Target Highlight Animation
    ========================================================================== */
 .easter-card--highlight {

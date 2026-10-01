@@ -2643,7 +2643,7 @@ function renderEasterTab(user: User): string {
           </div>
           ${hasInfinityOverlord
       ? `<div class="easter-hint">${t('🎊 Вечный статус навсегда вписан в историю!')}</div>`
-      : `<div class="easter-hint">${t('💡 Подсказка: активируй бессрочный тариф Premium Навсегда')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: получи VIP Lifetime в подарок от Администрации')}</div>`
     }
           ${hasInfinityOverlord ? renderEasterUnlockedTime(user, 'infinityOverlord', 'cyb_infinity_overlord_unlocked') : ""}
         </div>

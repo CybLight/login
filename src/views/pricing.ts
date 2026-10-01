@@ -7,6 +7,7 @@ import { setAppContent } from '@/ui';
 import { apiCall, escapeHtml } from '@/utils';
 import { PRICING_PLANS, type PricingPlan } from '@/config/pricing-tiers';
 import { buildProfileHeader, buildProfileFooter, bindProfileHeaderHandlers } from '@/views/profile';
+import { triggerPremiumSuccessCelebration } from '@/views/account/modals';
 import '@/styles/account-render.css';
 
 export async function renderPricing(): Promise<void> {
@@ -20,6 +21,7 @@ export async function renderPricing(): Promise<void> {
   let premiumUntil: number | null = null;
   let jarSendId = import.meta.env.VITE_MONOBANK_JAR_SEND_ID || 'cyblight_jar';
   let pollIntervalId: ReturnType<typeof setInterval> | null = null;
+  let activePayingPlan: PricingPlan | null = null;
 
   // Load user data & jar info in parallel
   try {
@@ -235,6 +237,7 @@ export async function renderPricing(): Promise<void> {
   }
 
   function openPaymentModal(plan: PricingPlan): void {
+    activePayingPlan = plan;
     const overlay = document.getElementById('monoPaymentModalOverlay');
     if (!overlay) return;
 
@@ -387,11 +390,17 @@ export async function renderPricing(): Promise<void> {
             statusMsg.innerHTML = `<span style="color:#10b981;font-weight:700;">✅ ${t('Оплата успешно подтверждена! Premium активирован.')}</span>`;
           }
 
-          // Show success celebration
+          // Show celebration flow: first Premium modal, then Easter egg modal
           setTimeout(() => {
             closeModal();
-            renderPricing();
-          }, 1500);
+            triggerPremiumSuccessCelebration(
+              (currentUser as any) || { login: sessionStorage.getItem('cyb_current_username') || 'User' },
+              activePayingPlan?.id || 'month_1',
+              () => {
+                void renderPricing();
+              }
+            );
+          }, 1000);
           return;
         }
       }

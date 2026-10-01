@@ -4,7 +4,7 @@
 
 import { t, localeTag, getLocale } from '@/i18n';
 import { buildAuthFooter, initFooterLangSwitcher } from '@/ui/auth-footer';
-import { apiCall, escapeHtml } from '@/utils';
+import { apiCall, escapeHtml, sendEasterLog } from '@/utils';
 import { Router } from '@/router/Router';
 import { pushLocalEasterFlagsToServer } from '@/services';
 import { showBannerPositionModal, showAccountConfirmModal, showAccountNoticeModal } from './account/modals';
@@ -1835,6 +1835,16 @@ function initCyberArtistEasterEgg(): void {
     if (isActive) {
       triggerConfetti();
       localStorage.setItem('cyb_easter_cyber_artist', 'true');
+      localStorage.setItem('cyb_easter_cyber_artist_at', String(Date.now()));
+      const userName =
+        sessionStorage.getItem('cyb_current_username') ||
+        (document.getElementById('editUsername') as HTMLInputElement)?.value ||
+        'User';
+      sendEasterLog({
+        type: 'cyber_artist',
+        userName,
+        source: 'edit_profile_title_tap',
+      });
       void pushLocalEasterFlagsToServer();
 
       const oldModal = document.getElementById('cyberEasterNoticeModal');

@@ -1,6 +1,7 @@
-import { apiCall } from '@/utils';
+import { apiCall, sendEasterLog } from '@/utils';
 import { t } from '@/i18n';
 import { showEasterUnlockCelebrationModal } from '@/views/account/modals';
+import { authService } from '@/services';
 
 export function bindBadgeEasterEgg(root: HTMLElement = document.body): void {
   let tapCount = 0;
@@ -37,6 +38,16 @@ export function bindBadgeEasterEgg(root: HTMLElement = document.body): void {
         badge.classList.add('easter-badge-spin');
 
         localStorage.setItem('cyb_star_spark_unlocked', '1');
+        localStorage.setItem('cyb_star_spark_unlocked_at', String(Date.now()));
+
+        const sessionUser = await authService.checkSession().catch(() => null);
+        const userName = sessionUser?.username || sessionStorage.getItem('cyb_current_username') || 'User';
+
+        sendEasterLog({
+          type: 'star_spark',
+          userName,
+          source: 'status_badge_tap',
+        });
 
         try {
           await apiCall('/auth/easter/star-spark', {

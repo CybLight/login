@@ -28,7 +28,7 @@ import {
   showSettingsGenderModal,
   showSettingsDobModal,
   showSettingsCustomBadgeModal,
-  showEasterUnlockCelebrationModal,
+  triggerPremiumSuccessCelebration,
   showSubscriptionManagementModal,
 } from './modals';
 import { updateNavBadges, setNavBadge, updateChatUnreadBadges, fetchUnreadSummaryData } from './unread';
@@ -293,52 +293,7 @@ export function bindAccountHandlers(
           if (res.ok && data.ok) {
             user.isPremium = true;
             if (data.premiumUntil) user.premiumUntil = data.premiumUntil;
-
-            let modalIcon = '👑';
-            let modalTitle = t('Золотое прикосновение');
-            let modalSubtitle = t('Подписка оформлена & Пасхалка открыта! 🎉');
-            let modalDesc = t('Поздравляем! Вы активировали подписку CybLight Premium и разблокировали секретную пасхалку «Золотое прикосновение»!');
-            let targetCardId = 'easterCardGoldenTouch';
-
-            if (planId === 'month_1') {
-              localStorage.setItem('cyb_first_pulse_unlocked', '1');
-              modalIcon = '🚀';
-              modalTitle = t('Первый импульс');
-              modalSubtitle = t('1 Месяц Premium & Пасхалка открыта! 🚀');
-              modalDesc = t('Поздравляем! Вы запустили свой первый месяц Premium и открыли секретную пасхалку «Первый импульс»!');
-              targetCardId = 'easterCardFirstPulse';
-            } else if (planId === 'month_6') {
-              localStorage.setItem('cyb_season_guardian_unlocked', '1');
-              modalIcon = '🛡️';
-              modalTitle = t('Сезонный страж');
-              modalSubtitle = t('6 Месяцев Premium & Пасхалка открыта! 🛡️');
-              modalDesc = t('Поздравляем! Вы активировали 6 месяцев Premium и открыли секретную пасхалку «Сезонный страж»!');
-              targetCardId = 'easterCardSeasonGuardian';
-            } else if (planId === 'year_1') {
-              localStorage.setItem('cyb_epoch_keeper_unlocked', '1');
-              modalIcon = '⏳';
-              modalTitle = t('Хранитель эпохи');
-              modalSubtitle = t('1 Год Premium & Пасхалка открыта! ⏳');
-              modalDesc = t('Поздравляем! Вы активировали 1 Год Premium и открыли секретную пасхалку «Хранитель эпохи»!');
-              targetCardId = 'easterCardEpochKeeper';
-            } else if (planId === 'lifetime') {
-              localStorage.setItem('cyb_infinity_overlord_unlocked', '1');
-              modalIcon = '♾️';
-              modalTitle = t('Властелин бесконечности');
-              modalSubtitle = t('Lifetime VIP & Высшая пасхалка открыта! 🌌👑');
-              modalDesc = t('Поздравляем! Вы активировали бессрочный статус Lifetime VIP и разблокировали легендарную пасхалку «Властелин бесконечности»!');
-              targetCardId = 'easterCardInfinityOverlord';
-            }
-
-            showEasterUnlockCelebrationModal({
-              icon: modalIcon,
-              title: modalTitle,
-              subtitle: modalSubtitle,
-              description: modalDesc,
-              hint: t('Вам доступны 10x лимиты API, безлимитный Smart Home Hub, эксклюзивные темы, 2.5x монет и кастомный титул.'),
-              targetCardId,
-              subtab: 'site',
-            });
+            triggerPremiumSuccessCelebration(user, planId);
           }
         })
         .catch((err) => console.error('Error verifying payment session:', err));
