@@ -7,7 +7,7 @@ import { Router } from '@/router/Router';
 import { captchaService } from '@/services';
 import { setAppContent, shell, showAppAlert } from '@/ui';
 import { getStorage, apiCall } from '@/utils';
-import { initPasswordEyes } from '@/components/password/password-helpers';
+import { initPasswordEyes, showCompromisedPasswordModal } from '@/components/password';
 import { formatApiError } from '@/utils/apiErrors';
 
 export async function renderReset(): Promise<void> {
@@ -133,6 +133,20 @@ function renderPasswordResetForm(token: string): void {
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
+          if (data?.error === 'password_compromised') {
+            showCompromisedPasswordModal({
+              message: data?.message,
+              onClose: () => {
+                const passInput = document.getElementById('p1') as HTMLInputElement;
+                passInput?.focus();
+                passInput?.select();
+              },
+            });
+            btn.disabled = false;
+            btn.textContent = t('Сохранить пароль');
+            return;
+          }
+
           const errorMsg = data?.message || formatApiError(data?.error, t('Ошибка смены пароля'));
           showMsg('error', errorMsg);
           btn.disabled = false;

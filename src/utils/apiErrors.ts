@@ -29,6 +29,8 @@ export function formatApiError(rawError: string | undefined | null, fallbackMess
       return t('Некорректный формат логина. Используйте латинские буквы (A–Z), цифры (0–9) и символ подчеркивания (3–24 символа).');
     case 'invalid_password':
       return t('Пароль не соответствует требованиям безопасности (минимум 8 символов).');
+    case 'password_compromised':
+      return t('Этот пароль найден в базах утечек данных. Пожалуйста, придумайте более сложный и уникальный пароль.');
     case 'passwords_do_not_match':
       return t('Введенные пароли не совпадают.');
     case 'invalid_credentials':

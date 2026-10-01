@@ -9,7 +9,7 @@ import { setStorage, apiCall } from '@/utils';
 import { formatApiError } from '@/utils/apiErrors';
 import { isReservedUsername } from '@/utils/reservedUsernames';
 import { authService, captchaService, pushLocalEasterFlagsToServer } from '@/services';
-import { initPasswordEyes } from '@/components/password/password-helpers';
+import { initPasswordEyes, showCompromisedPasswordModal } from '@/components/password';
 import { attachPasswordHints } from '@/components/password/password-hints';
 
 export async function renderSignup(): Promise<void> {
@@ -220,6 +220,17 @@ export async function renderSignup(): Promise<void> {
 
           // Сброс капчи
           await captchaService.reset();
+
+          if (data?.error === 'password_compromised') {
+            showCompromisedPasswordModal({
+              message: data?.message,
+              onClose: () => {
+                pass1El?.focus();
+                pass1El?.select();
+              },
+            });
+            return;
+          }
 
           const friendlyMessage = formatApiError(data?.error, t('Ошибка регистрации'));
           await showAppAlert(friendlyMessage, { tone: 'error' });

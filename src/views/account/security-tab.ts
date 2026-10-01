@@ -3,7 +3,7 @@
  */
 
 import { t } from '@/i18n';
-import { initPasswordEyes } from '@/components/password/password-helpers';
+import { initPasswordEyes, showCompromisedPasswordModal } from '@/components/password';
 import type { User as AppUser } from '@/types';
 import { apiCall } from '@/utils';
 import { fmtTs } from './device-utils';
@@ -626,7 +626,18 @@ export function bindSecurityHandlers(deps: SecurityTabDeps): void {
 
       if (!r.ok) {
         const err = String(d?.error || '');
-        if (/same|identical|unchanged|reuse|password_same/i.test(err)) {
+        if (d?.error === 'password_compromised') {
+          showCompromisedPasswordModal({
+            message: d?.message,
+            onClose: () => {
+              passNewInp?.focus();
+              passNewInp?.select();
+            },
+          });
+          setPassHint('error', t('Этот пароль скомпрометирован. Выберите другой пароль.'));
+          api.showMsg('error', t('Этот пароль скомпрометирован. Выберите другой пароль.'), true);
+          markInvalid(passNewInp, true);
+        } else if (/same|identical|unchanged|reuse|password_same/i.test(err)) {
           setPassHint('warn', t('Новый пароль должен отличаться от текущего.'));
           api.showMsg('warn', t('Новый пароль должен отличаться от текущего.'), true);
           markInvalid(passNewInp, true);
