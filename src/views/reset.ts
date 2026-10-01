@@ -7,6 +7,8 @@ import { Router } from '@/router/Router';
 import { captchaService } from '@/services';
 import { setAppContent, shell, showAppAlert } from '@/ui';
 import { getStorage, apiCall } from '@/utils';
+import { initPasswordEyes } from '@/components/password/password-helpers';
+import { formatApiError } from '@/utils/apiErrors';
 
 export async function renderReset(): Promise<void> {
   // Убираем no-strawberries класс
@@ -45,12 +47,18 @@ function renderPasswordResetForm(token: string): void {
       <form id="fReset">
         <div class="field">
           <label class="label" for="p1">${t('Новый пароль')}</label>
-          <input class="input" id="p1" type="password" autocomplete="new-password" required />
+          <div class="pass-wrap">
+            <input class="input" id="p1" type="password" autocomplete="new-password" required />
+            <button type="button" class="pass-eye" data-target="p1" aria-label="${t('Показать пароль')}"></button>
+          </div>
         </div>
 
         <div class="field">
           <label class="label" for="p2">${t('Повтори пароль')}</label>
-          <input class="input" id="p2" type="password" autocomplete="new-password" required />
+          <div class="pass-wrap">
+            <input class="input" id="p2" type="password" autocomplete="new-password" required />
+            <button type="button" class="pass-eye" data-target="p2" aria-label="${t('Показать пароль')}"></button>
+          </div>
         </div>
 
         <div id="msg" class="msg" aria-live="polite" style="display:none;"></div>
@@ -64,6 +72,8 @@ function renderPasswordResetForm(token: string): void {
     </section>
   `)
   );
+
+  initPasswordEyes();
 
   const oldBtn = document.getElementById('scrollTopBtn');
   if (oldBtn) oldBtn.remove();
@@ -123,7 +133,8 @@ function renderPasswordResetForm(token: string): void {
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          showMsg('error', data?.error || t('Ошибка смены пароля'));
+          const errorMsg = data?.message || formatApiError(data?.error, t('Ошибка смены пароля'));
+          showMsg('error', errorMsg);
           btn.disabled = false;
           btn.textContent = t('Сохранить пароль');
           return;
