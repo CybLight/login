@@ -1447,4 +1447,5 @@ export const en: Record<string, string> = {
   "ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ": "PRIVACY POLICY",
   "ПОЛИТИКА ВОЗВРАТА": "REFUND POLICY",
   "НАСТРОЙКИ КОНФИДЕНЦИАЛЬНОСТИ": "PRIVACY SETTINGS",
+  "Содержимое файла не является настоящим изображением. Простая смена расширения (например, .txt на .jpg) отклоняется системой безопасности. Пожалуйста, выберите настоящее изображение (JPG, PNG, WebP или GIF).": "The file content is not a valid image. Simply renaming an extension (e.g. .txt to .jpg) is rejected by security. Please select a genuine image file (JPG, PNG, WebP or GIF).",
 };

@@ -76,6 +76,10 @@ export function formatApiError(rawError: string | undefined | null, fallbackMess
     case 'invalid_image_type':
     case 'invalid_file_type':
       return t('Неподдерживаемый формат изображения. Допустимы только растровые изображения (JPG, PNG, WEBP, GIF). Векторные форматы (SVG) и скрипты запрещены.');
+    case 'invalid_image_content':
+    case 'corrupted_image':
+    case 'invalid_file_signature':
+      return t('Содержимое файла не является настоящим изображением. Простая смена расширения (например, .txt на .jpg) отклоняется системой безопасности. Пожалуйста, выберите настоящее изображение (JPG, PNG, WebP или GIF).');
     case 'file_too_large':
     case 'payload_too_large':
     case 'image_too_large':
