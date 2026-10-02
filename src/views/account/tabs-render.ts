@@ -2030,7 +2030,7 @@ function easterProgressHtml(current: number, total: number): string {
   )}</div>`;
 }
 
-const EASTER_SITE_TOTAL = 14;
+const EASTER_SITE_TOTAL = 15;
 const EASTER_APP_BASE_TOTAL = 5;
 const EASTER_BRIDGE_TOTAL = 2;
 const EASTER_EGGS_TOTAL = EASTER_SITE_TOTAL + EASTER_APP_BASE_TOTAL + V010_APP_EGGS_TOTAL + EASTER_BRIDGE_TOTAL;
