@@ -53,26 +53,48 @@ export async function showPendingRoleNotice(roleNotice?: string | null): Promise
     const cleanTitle = hasEmojiPrefix ? headerTitle : `📢 ${headerTitle}`;
 
     titleHtml = escapeHtml(cleanTitle);
-    badgeHtml = `<span class="chip-sys-badge">📢 ${escapeHtml(t('Системное объявление'))}</span>`;
+
+    const isPremiumNotice = /тариф|premium|vip|подписк/i.test(headerTitle) || /👑/.test(cleanTitle);
+    if (isPremiumNotice) {
+      cardClass = 'account-notice-card--system account-notice-card--premium-notice';
+      badgeHtml = `<span class="chip-sys-badge chip-sys-badge--gold">👑 ${escapeHtml(t('Премиум статус'))}</span>`;
+    } else {
+      badgeHtml = `<span class="chip-sys-badge">📢 ${escapeHtml(t('Системное объявление'))}</span>`;
+    }
 
     // Separate main message from admin note if present
     let mainMessage = bodyText;
     let adminNote = '';
+    let noteLabel = t('Примечание от администрации');
 
-    const noteMarkerRegex = /(?:Примечание администратора|Admin note|Примітка адміністратора)\s*:\s*(.*)/i;
-    const match = bodyText.match(noteMarkerRegex);
-    if (match) {
-      mainMessage = bodyText.substring(0, match.index).trim();
-      adminNote = match[1].trim();
+    const noteMarkerRegex =
+      /(?:Примечание(?:\s+от)?\s+администрации|Примечание\s+администратора|Admin\s+note|Примітка(?:\s+від)?\s+адміністрації|Примітка\s+адміністратора)\s*:\s*([\s\S]*)/i;
+    const reasonMarkerRegex = /(?:Причина|Reason)\s*:\s*([\s\S]*)/i;
+
+    const noteMatch = bodyText.match(noteMarkerRegex);
+    const reasonMatch = bodyText.match(reasonMarkerRegex);
+
+    if (noteMatch) {
+      mainMessage = bodyText.substring(0, noteMatch.index).trim();
+      adminNote = noteMatch[1].trim();
+      noteLabel = t('Примечание от администрации');
+    } else if (reasonMatch) {
+      mainMessage = bodyText.substring(0, reasonMatch.index).trim();
+      adminNote = reasonMatch[1].trim();
+      noteLabel = t('Причина');
     }
+
+    const adminBoxClass = isPremiumNotice
+      ? 'account-notice-admin-box account-notice-admin-box--premium'
+      : 'account-notice-admin-box';
 
     leadTextHtml = `
       <div class="account-notice-main-text">${escapeHtml(mainMessage)}</div>
       ${
         adminNote
           ? `
-            <div class="account-notice-admin-box">
-              <div class="account-notice-admin-box__title">💬 ${escapeHtml(t('Примечание администратора'))}</div>
+            <div class="${adminBoxClass}">
+              <div class="account-notice-admin-box__title">💬 ${escapeHtml(noteLabel)}</div>
               <div class="account-notice-admin-box__text">${escapeHtml(adminNote)}</div>
             </div>
           `

@@ -1264,34 +1264,49 @@ select.input option {
 /* Системные объявления и модальное окно результатов рассмотрения жалоб */
 .account-notice-card--system {
   width: min(92vw, 500px);
-  padding: 24px 24px 22px;
-  border-radius: 20px;
-  background: radial-gradient(120% 80% at 50% 0%, rgba(99, 102, 241, 0.14) 0%, transparent 60%),
+  padding: 26px 26px 24px;
+  border-radius: 24px;
+  background: radial-gradient(120% 80% at 50% 0%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
               linear-gradient(180deg, rgba(20, 24, 45, 0.98) 0%, rgba(12, 15, 30, 0.99) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 30px rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 35px rgba(99, 102, 241, 0.2);
+  backdrop-filter: blur(16px);
+  animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.account-notice-card--premium-notice {
+  background: radial-gradient(120% 80% at 50% 0%, rgba(234, 179, 8, 0.18) 0%, transparent 60%),
+              linear-gradient(180deg, rgba(30, 24, 52, 0.98) 0%, rgba(15, 18, 35, 0.99) 100%);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 40px rgba(234, 179, 8, 0.2);
 }
 
 .account-notice-card--system .account-notice-head {
-  font-size: 18px;
-  font-weight: 700;
-  color: #f3f4f6;
-  margin-bottom: 8px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 10px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.account-notice-card--premium-notice .account-notice-head {
+  color: #fef08a;
+  text-shadow: 0 2px 10px rgba(234, 179, 8, 0.3);
 }
 
 .account-notice-card--system .chip-sys-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   background: rgba(99, 102, 241, 0.15);
   color: #818cf8;
@@ -1299,61 +1314,96 @@ select.input option {
   margin-bottom: 16px;
 }
 
+.account-notice-card--system .chip-sys-badge--gold {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(217, 119, 6, 0.15));
+  color: #fde047;
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.15);
+}
+
 .account-notice-main-text {
-  font-size: 14.5px;
-  color: #d1d5db;
-  line-height: 1.6;
+  font-size: 15px;
+  color: #e2e8f0;
+  line-height: 1.65;
   margin-bottom: 12px;
+  white-space: pre-line;
 }
 
 .account-notice-admin-box {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-left: 3px solid #6366f1;
-  border-radius: 12px;
-  padding: 12px 14px;
-  margin-top: 14px;
-  margin-bottom: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 4px solid #6366f1;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-top: 16px;
+  margin-bottom: 18px;
+}
+
+.account-notice-admin-box--premium {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.08), rgba(168, 85, 247, 0.06));
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  border-left: 4px solid #eab308;
 }
 
 .account-notice-admin-box__title {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   color: #a5b4fc;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 4px;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.account-notice-admin-box--premium .account-notice-admin-box__title {
+  color: #fde047;
 }
 
 .account-notice-admin-box__text {
-  font-size: 13.5px;
-  color: #e0e7ff;
-  line-height: 1.5;
+  font-size: 14px;
+  font-weight: 500;
+  color: #f1f5f9;
+  line-height: 1.55;
+  white-space: pre-line;
 }
 
 .account-notice-card--system .account-notice-actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 18px;
+  margin-top: 20px;
 }
 
 .account-notice-card--system .account-notice-actions .btn {
   width: 100%;
-  padding: 11px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 14px;
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: #ffffff;
   border: none;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.35);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .account-notice-card--system .account-notice-actions .btn:hover {
   background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 6px 24px rgba(99, 102, 241, 0.55);
+  transform: translateY(-1px);
+}
+
+.account-notice-card--premium-notice .account-notice-actions .btn {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.35);
+  color: #ffffff;
+}
+
+.account-notice-card--premium-notice .account-notice-actions .btn:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  box-shadow: 0 6px 26px rgba(245, 158, 11, 0.55);
 }
 
 .account-notice-text {
