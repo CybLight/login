@@ -2148,7 +2148,9 @@ function renderEasterTab(user: User): string {
   if (hasGoldenTouch && localStorage.getItem("cyb_golden_touch_unlocked") !== "1") {
     try {
       localStorage.setItem("cyb_golden_touch_unlocked", "1");
-    } catch {}
+    } catch {
+      // ignore storage errors
+    }
   }
   const hasStarSpark =
     localStorage.getItem("cyb_star_spark_unlocked") === "1" ||
@@ -2161,7 +2163,9 @@ function renderEasterTab(user: User): string {
   if (hasFirstPulse && localStorage.getItem("cyb_first_pulse_unlocked") !== "1") {
     try {
       localStorage.setItem("cyb_first_pulse_unlocked", "1");
-    } catch {}
+    } catch {
+      // ignore storage errors
+    }
   }
   const hasQuantumLeap =
     localStorage.getItem("cyb_quantum_leap_unlocked") === "1" ||
@@ -2170,7 +2174,9 @@ function renderEasterTab(user: User): string {
   if (hasQuantumLeap && localStorage.getItem("cyb_quantum_leap_unlocked") !== "1") {
     try {
       localStorage.setItem("cyb_quantum_leap_unlocked", "1");
-    } catch {}
+    } catch {
+      // ignore storage errors
+    }
   }
   const hasSeasonGuardian =
     localStorage.getItem("cyb_season_guardian_unlocked") === "1" ||
