@@ -2145,6 +2145,11 @@ function renderEasterTab(user: User): string {
     !!user.easter?.goldenTouch ||
     !!user.easter?.golden_touch ||
     !!user.isPremium;
+  if (hasGoldenTouch && localStorage.getItem("cyb_golden_touch_unlocked") !== "1") {
+    try {
+      localStorage.setItem("cyb_golden_touch_unlocked", "1");
+    } catch {}
+  }
   const hasStarSpark =
     localStorage.getItem("cyb_star_spark_unlocked") === "1" ||
     !!user.easter?.starSpark ||
@@ -2153,6 +2158,20 @@ function renderEasterTab(user: User): string {
     localStorage.getItem("cyb_first_pulse_unlocked") === "1" ||
     !!user.easter?.firstPulse ||
     !!user.easter?.first_pulse;
+  if (hasFirstPulse && localStorage.getItem("cyb_first_pulse_unlocked") !== "1") {
+    try {
+      localStorage.setItem("cyb_first_pulse_unlocked", "1");
+    } catch {}
+  }
+  const hasQuantumLeap =
+    localStorage.getItem("cyb_quantum_leap_unlocked") === "1" ||
+    !!user.easter?.quantumLeap ||
+    !!user.easter?.quantum_leap;
+  if (hasQuantumLeap && localStorage.getItem("cyb_quantum_leap_unlocked") !== "1") {
+    try {
+      localStorage.setItem("cyb_quantum_leap_unlocked", "1");
+    } catch {}
+  }
   const hasSeasonGuardian =
     localStorage.getItem("cyb_season_guardian_unlocked") === "1" ||
     !!user.easter?.seasonGuardian ||
@@ -2190,6 +2209,7 @@ function renderEasterTab(user: User): string {
     hasGoldenTouch,
     hasStarSpark,
     hasFirstPulse,
+    hasQuantumLeap,
     hasSeasonGuardian,
     hasEpochKeeper,
     hasInfinityOverlord,
@@ -2580,6 +2600,28 @@ function renderEasterTab(user: User): string {
       : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на 1 Месяц')}</div>`
     }
           ${hasFirstPulse ? renderEasterUnlockedTime(user, 'firstPulse', 'cyb_first_pulse_unlocked') : ""}
+        </div>
+
+        <div id="easterCardQuantumLeap" class="easter-card easter-card--quantum-leap ${hasQuantumLeap ? "easter-card-rare" : "locked"}">
+          ${hasQuantumLeap
+      ? `<span class="easter-card-badge">${t('✓ Найдено')}</span>`
+      : `<span class="easter-card-badge locked">${t('🔒 Закрыто')}</span>`
+    }
+          <span class="easter-card-icon">🌌</span>
+          <div class="easter-card-title">
+            ${t('Квантовый скачок')}
+          </div>
+          <div class="easter-card-desc">
+            ${hasQuantumLeap
+      ? t('Три месяца премиального статуса открыли портал новых возможностей 🌌✨')
+      : t('Разблокируй силу трёх месяцев Premium и шагни на новый уровень')
+    }
+          </div>
+          ${hasQuantumLeap
+      ? `<div class="easter-hint">${t('🎊 Квантовый скачок совершён!')}</div>`
+      : `<div class="easter-hint">${t('💡 Подсказка: оформи подписку Premium на 3 Месяца')}</div>`
+    }
+          ${hasQuantumLeap ? renderEasterUnlockedTime(user, 'quantumLeap', 'cyb_quantum_leap_unlocked') : ""}
         </div>
 
         <div id="easterCardSeasonGuardian" class="easter-card easter-card--season-guardian ${hasSeasonGuardian ? "easter-card-rare" : "locked"}">

@@ -334,6 +334,8 @@ export interface UserEasterFlags {
   star_spark?: boolean;
   firstPulse?: boolean;
   first_pulse?: boolean;
+  quantumLeap?: boolean;
+  quantum_leap?: boolean;
   seasonGuardian?: boolean;
   season_guardian?: boolean;
   epochKeeper?: boolean;

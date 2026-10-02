@@ -2689,6 +2689,20 @@ export function triggerPremiumSuccessCelebration(
     modalSubtitle = t('1 Месяц Premium & Пасхалка открыта! 🚀');
     modalDesc = t('Поздравляем! Вы запустили свой первый месяц Premium и открыли секретную пасхалку «Первый импульс»! Также вам начислена пасхалка «Золотое прикосновение» 👑.');
     targetCardId = 'easterCardFirstPulse';
+  } else if (planId === 'month_3') {
+    localStorage.setItem('cyb_quantum_leap_unlocked', '1');
+    localStorage.setItem('cyb_quantum_leap_unlocked_at', String(now));
+    sendEasterLog({
+      type: 'quantum_leap',
+      userName: (user as User).login || 'User',
+      source: 'premium_activation',
+      page: window.location.href,
+    });
+    modalIcon = '🌌';
+    modalTitle = t('Квантовый скачок');
+    modalSubtitle = t('3 Месяца Premium & Пасхалка открыта! 🌌');
+    modalDesc = t('Поздравляем! Вы активировали 3 месяца Premium и совершили «Квантовый скачок»! Также вам начислена пасхалка «Золотое прикосновение» 👑.');
+    targetCardId = 'easterCardQuantumLeap';
   } else if (planId === 'month_6') {
     localStorage.setItem('cyb_season_guardian_unlocked', '1');
     localStorage.setItem('cyb_season_guardian_unlocked_at', String(now));
